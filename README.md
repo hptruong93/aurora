@@ -1,4 +1,4 @@
-nebula
+aurora
 ======
 
 Virtualization and SDI for wireless access points (SAVI Testbed)
