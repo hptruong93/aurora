@@ -59,12 +59,13 @@ class AuroraArgumentParser(argparse.ArgumentParser):
         
         return parser
         
+
+class AuroraConsole():
+    
+    def main(self, argv):
+        parser = AuroraArgumentParser()
+        params = vars(parser.base_parser().parse_args(argv[1:]))[argv[1]]
+        print params
         
-test = AuroraArgumentParser()
-#print(test.base_parser().parse_args(['-h']))
-print(test.base_parser().parse_args(['wnet-create', 'beast', 'hi']))
-print(test.base_parser().parse_args(['wnet-list', 'yo', 'what']))
-print(test.base_parser().parse_args(['wnet-delete', 'hey', 'ciao']))
-print(test.base_parser().parse_args(['wnet-show', 'good', 'day']))
-print(test.base_parser().parse_args(['wnet-join', 'haha', 'gaga']))
-print(test.base_parser().parse_args(['ap-show', 'bad', 'luck']))
+
+AuroraConsole().main(sys.argv)
