@@ -1,0 +1,162 @@
+[
+    {
+        "optional":[],
+        "positional":[],
+        "subargument": [
+            [
+                "ap-list",
+                {
+                    "action":"store",
+                    "help":"Show a list of all access points",
+                    "nargs":"*",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"ap-list"
+                },
+                [
+                    
+                ]
+            ],
+            [
+                "ap-show",
+                {
+                    "action":"store",
+                    "help":"Show a specific access point",
+                    "nargs":"*",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"ap-show"
+                },
+                [
+                    
+                ]
+            ],
+            [
+                "ap-slice-create",
+                {
+                    "action":"store",
+                    "help":"Create a slice",
+                    "nargs":"*",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"ap-slice-create"
+                },
+                [
+                    
+                ]
+            ],
+            [
+                "ap-slice-delete",
+                {
+                    "action":"store",
+                    "help":"Delete a slice",
+                    "nargs":"*",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"ap-slice-delete"
+                },
+                [
+                    
+                ]
+            ],
+            [
+                "ap-slice-list",
+                {
+                    "action":"store",
+                    "help":"Show a list of all slices",
+                    "nargs":"*",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"ap-slice-list"
+                },
+                [
+                    
+                ]
+            ],
+            [
+                "ap-slice-show",
+                {
+                    "action":"store",
+                    "help":"Show a specific slice",
+                    "nargs":"*",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"ap-slice-show"
+                },
+                [
+                    
+                ]
+            ],
+            [
+                "wnet-create",
+                {
+                    "action":"store",
+                    "help":"Create a wireless network",
+                    "nargs":"*",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"wnet-create"
+                },
+                [
+                    
+                ]
+            ],
+            [
+                "wnet-delete",
+                {
+                    "action":"store",
+                    "help":"Delete a wireless network",
+                    "nargs":"*",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"wnet-delete"
+                },
+                [
+                    
+                ]
+            ],
+            [
+                "wnet-join",
+                {
+                    "action":"store",
+                    "help":"Join a wireless network",
+                    "nargs":"*",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"wnet-join"
+                },
+                [
+                    
+                ]
+            ],
+            [
+                "wnet-list",
+                {
+                    "action":"store",
+                    "help":"Show a list of wireless networks",
+                    "nargs":"*",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"wnet-list"
+                },
+                [
+                    
+                ]
+            ],
+            [
+                "wnet-show",
+                {
+                    "action":"store",
+                    "help":"Show a specific wireless network",
+                    "nargs":"*",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"wnet-show"
+                },
+                [
+                    
+                ]
+            ]
+        ]
+    }
+]

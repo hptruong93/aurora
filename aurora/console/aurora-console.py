@@ -3,9 +3,19 @@
 
 """
 Command-line interface to the Aurora API
+Uses a JSON file for commands
+Format:[
+         {
+          optional:[[oarg1, {attributes}],[oarg2, {attributes}]...], 
+          positional:[[parg1, {attributes}], [parg2, {attributes}]...], 
+          subargument:[[subarg1, {attributes}, [[osarg1, {attributes}], [osarg2, {attributes}]]], [subarg2, {attributes}]...]
+         }
+       ]
 """
 
 import argparse
+import json
+import sys
 
 class AuroraArgumentParser(argparse.ArgumentParser):
     
@@ -15,43 +25,43 @@ class AuroraArgumentParser(argparse.ArgumentParser):
         
         subparsers = parser.add_subparsers()
         
-        subparser_ap_list = subparsers.add_parser('ap-list', help='Show a list of all Access Points')
-        subparser_ap_list.add_argument('ap-list', nargs='*')
+        # Load the JSON file
+        try:
+            JFILE = open('console.json', 'r')
+            JFILE.seek(0)
+            commands = json.load(JFILE)[0]
+        except:
+            print('Error loading json file!')
+            sys.exit(-1)
         
-        subparser_ap_show = subparsers.add_parser('ap-show', help='Show a specific Access Point')
-        subparser_ap_show.add_argument('ap-show', nargs='*')
+        # Load all optional arguments
+        for oarg in commands['optional']:
+            parser.add_argument(oarg[0], action=oarg[1]['action'], nargs=oarg[1]['nargs'], default=oarg[1]['default'],
+                                choices=oarg[1]['choices'], metavar=oarg[1]['metavar'], help=oarg[1]['help'])
+                                
         
-        subparser_ap_slice_create = subparsers.add_parser('ap-slice-create', help='Create a slice')
-        subparser_ap_slice_create.add_argument('ap-slice-create', nargs='*')
-        
-        subparser_ap_slice_delete = subparsers.add_parser('ap-slice-delete', help='Delete a slice')
-        subparser_ap_slice_delete.add_argument('ap-slice-delete', nargs='*')
-
-        subparser_ap_slice_list = subparsers.add_parser('ap-slice-list', help='Show a list of all slices')
-        subparser_ap_slice_list.add_argument('ap-slice-list', nargs='*')
-
-        subparser_ap_slice_show = subparsers.add_parser('ap-slice-show', help='Show a specific slice')
-        subparser_ap_slice_show.add_argument('ap-slice-show', nargs='*')
-        
-        subparser_wnet_create = subparsers.add_parser('wnet-create', help='Create a Wireless Network')
-        subparser_wnet_create.add_argument('wnet-create', nargs='*')
-        
-        subparser_wnet_delete = subparsers.add_parser('wnet-delete', help='Delete a Wireless Network')
-        subparser_wnet_delete.add_argument('wnet-delete', nargs='*')
-        
-        subparser_wnet_join = subparsers.add_parser('wnet-join', help='Join Wireless Networks')
-        subparser_wnet_join.add_argument('wnet-join', nargs='*')
-        
-        subparser_wnet_list = subparsers.add_parser('wnet-list', help='List all Wireless Networks')
-        subparser_wnet_list.add_argument('wnet-list', nargs='*')
-        
-        subparser_wnet_show = subparsers.add_parser('wnet-show', help='Show a specific Wireless Network')
-        subparser_wnet_show.add_argument('wnet-show', nargs='*')
+        # Load all positional arguments
+        for parg in commands['positional']:
+            parser.add_argument(parg[0], action=parg[1]['action'], nargs=parg[1]['nargs'], default=parg[1]['default'],
+                                choices=parg[1]['choices'], metavar=parg[1]['metavar'], help=parg[1]['help'])
+                                
+       
+        # Load all sub arguments
+        for subarg in commands['subargument']:
+            temp_parser = subparsers.add_parser(subarg[0], help=subarg[1]['help'])
+            temp_parser.add_argument(subarg[0], action=subarg[1]['action'], nargs=subarg[1]['nargs'], default=subarg[1]['default'],
+                                     choices=subarg[1]['choices'], metavar=subarg[1]['metavar'])
+            
+            # Load all optional arguments for the current sub arguemnt
+            for osarg in subarg[2]:
+                temp_parser.add_argument(osarg[0], action=osarg[1]['action'], nargs=osarg[1]['nargs'], default=osarg[1]['default'],
+                                         choices=osarg[1]['choices'], metavar=osarg[1]['metavar'], help=osarg[1]['help'])
         
         return parser
         
         
 test = AuroraArgumentParser()
+#print(test.base_parser().parse_args(['-h']))
 print(test.base_parser().parse_args(['wnet-create', 'beast', 'hi']))
 print(test.base_parser().parse_args(['wnet-list', 'yo', 'what']))
 print(test.base_parser().parse_args(['wnet-delete', 'hey', 'ciao']))
