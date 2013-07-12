@@ -1,0 +1,3 @@
+import test
+test = test.Capsulator()
+test.start("eth0","10.5.8.16","tap4#11")

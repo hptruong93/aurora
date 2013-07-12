@@ -18,12 +18,3 @@ def show():
 def list():
 
 def reset():
-"""Wipes all configuration data and deletes any running interfaces."""
-
-def __add_entry():
-
-def __del_entry():
-
-def __mod_entry():
-
-def __clear_entries():
