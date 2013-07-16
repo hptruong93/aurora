@@ -1,18 +1,8 @@
 {
   "veth": {
-    "class": "Veth",
-    "parameters": [
-      "attach_to",
-      "name"
-    ]
+    "class": "Veth"
   },
   "capsulator": {
-    "class": "Capsulator",
-    "parameters": [
-      "attach_to",
-      "forward_to",
-      "tag",
-      "name"
-    ]
+    "class": "Capsulator"
   }
 }

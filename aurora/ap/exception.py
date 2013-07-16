@@ -1,3 +1,4 @@
+# Handles custom exceptions for the Aurora program
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
 class AuroraException(Exception):
@@ -6,7 +7,7 @@ class AuroraException(Exception):
     
     # Based on OpenStack Nova exception setup
     # https://github.com/openstack/nova/blob/master/nova/exception.py
-    message = _("An unknown exception occurred.")
+    message = "An unknown exception occurred."
 
     def __init__(self, message=None, **kwargs):
         self.kwargs = kwargs
@@ -18,8 +19,14 @@ class AuroraException(Exception):
             except Exception:
                 message = self.message
 
-        super(NovaException, self).__init__(message)
+        super(AuroraException, self).__init__(message)
 
 class FlavourNotExist(AuroraException):
     message = "Flavour does not exist!"
+    
+class ModuleNotLoaded(AuroraException):
+    message = "Module not found in loaded module list."
+    
+class PIDNotFound(AuroraException):
+    message = "PID Not found."
 

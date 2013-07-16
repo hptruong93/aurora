@@ -1,11 +1,12 @@
 # Veth class
-# Configures and runs the veth program by Néstor Peña
+# Configures and runs the veth program by Nestor Pena
 # Only known website at time of writing is 
 # http://www.geocities.ws/nestorjpg/veth/index.html
 
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
 import subprocess
+import psutil
 class Veth:    
 
     def __init__(self):
@@ -25,11 +26,18 @@ class Veth:
         else:
             command = ["vethd","-e", attach_to,"-v", name]
 
-        # Launch program
-        process = subprocess.Popen(command)
-        self.process_list[process.pid] = process
+        # Launch program.  Will raise exception if there is an issue.
+        subprocess.check_call(command)
         
-        return process.pid
+        # Since veth forks, we need to find the PID
+        for i in psutil.process_iter():
+            if i.cmdline == command:
+                process = i
+        
+        pid = process.pid
+        self.process_list[pid] = process
+        
+        return pid
         
 
     def stop(self, pid):
@@ -46,6 +54,4 @@ class Veth:
     def kill_all(self):
         """Kills all known vethd processes."""
         for key in self.process_list:
-            process = self.process_list.pop(key)
-            process.terminate()
-            process.wait()
+            stop(key)
