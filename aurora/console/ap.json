@@ -1,0 +1,49 @@
+{
+    "VirtInterfaces": [
+        [
+            "capsulator",
+            {
+                "attach_to":"",
+                "forward_to":"",
+                "name":"",
+                "tag":"",
+                "is_virtual":""
+            }
+        ],
+        [
+            "veth",
+            {
+                "attach_to":"",
+                "name":""
+            }
+        ]
+    ],
+    "VirtBridges": [
+        [
+            "ovs",
+            {
+                
+            }
+        ],
+        [
+            "linux_bridge",
+            {
+                
+            }
+        ]
+    ],
+    "APConfig": [
+        [
+            "openwrt",
+            {
+                
+            }
+        ],
+        [
+            "debian",
+            {
+                
+            }
+        ]
+    ]
+}

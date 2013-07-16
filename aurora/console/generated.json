@@ -1,0 +1,90 @@
+{
+    "APConfig": [
+        [
+            "openwrt", 
+            {
+                "placeholder": "att1"
+            }
+        ], 
+        [
+            "openwrt", 
+            {
+                "placeholder": "att2"
+            }
+        ], 
+        [
+            "debian", 
+            {
+                "placeholder": "att1"
+            }
+        ], 
+        [
+            "debian", 
+            {
+                "placeholder": "att2"
+            }
+        ]
+    ], 
+    "VirtBridges": [
+        [
+            "ovs", 
+            {
+                "placeholder": "att1"
+            }
+        ], 
+        [
+            "ovs", 
+            {
+                "placeholder": "att2"
+            }
+        ], 
+        [
+            "linux_bridge", 
+            {
+                "placeholder": "att1"
+            }
+        ], 
+        [
+            "linux_bridge", 
+            {
+                "placeholder": "att2"
+            }
+        ]
+    ], 
+    "VirtInterfaces": [
+        [
+            "capsulator", 
+            {
+                "attach_to": "att1", 
+                "forward_to": "att2", 
+                "isVirtual": "att5", 
+                "name": "att3", 
+                "tag": "att4"
+            }
+        ], 
+        [
+            "capsulator", 
+            {
+                "attach_to": "att6", 
+                "forward_to": "att7", 
+                "isVirtual": "att0", 
+                "name": "att8", 
+                "tag": "att9"
+            }
+        ], 
+        [
+            "veth", 
+            {
+                "attach_to": "att1", 
+                "name": "att2"
+            }
+        ], 
+        [
+            "veth", 
+            {
+                "attach_to": "att3", 
+                "name": "att4"
+            }
+        ]
+    ]
+}

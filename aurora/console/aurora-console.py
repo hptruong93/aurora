@@ -28,7 +28,6 @@ class AuroraArgumentParser(argparse.ArgumentParser):
         # Load the JSON file
         try:
             JFILE = open('console.json', 'r')
-            JFILE.seek(0)
             commands = json.load(JFILE)[0]
         except:
             print('Error loading json file!')
