@@ -4,9 +4,9 @@
 # http://www.geocities.ws/nestorjpg/veth/index.html
 
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
-
 import subprocess
 import psutil
+import copy
 class Veth:    
 
     def __init__(self):
@@ -26,8 +26,14 @@ class Veth:
         else:
             command = ["vethd","-e", attach_to,"-v", name]
 
+        # TODO: see if subprocess can be replaced with psutil
+        
         # Launch program.  Will raise exception if there is an issue.
         subprocess.check_call(command)
+        
+        # Bring interface up
+        interface_command = [ "ifconfig", name, "up" ]
+        subprocess.check_call(interface_command)
         
         # Since veth forks, we need to find the PID
         for i in psutil.process_iter():
@@ -48,10 +54,12 @@ class Veth:
         process.wait()
 
     def status(self, pid):
-        """Returns the status of the given instance."""
-        return self.process_list.get(pid).poll()
+        """Returns whether or not the given instance is running."""
+        return self.process_list.get(pid).is_running()
     
     def kill_all(self):
         """Kills all known vethd processes."""
-        for key in self.process_list:
-            stop(key)
+        for key in copy.deepcopy(self.process_list):
+            self.stop(key)
+            
+            # change caps to psutil, see if that throws exception

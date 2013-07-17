@@ -2,7 +2,7 @@
 # Configures and runs the capsulator program developed by Stanford (v 0.01b)
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
-import subprocess
+import subprocess, copy, psutil
 class Capsulator:    
 
     def __init__(self):
@@ -27,8 +27,16 @@ class Capsulator:
         else:
             command = ["capsulator","-t", attach_to, "-f", forward_to, "-b", name + "#" + tunnel_tag]
 
+        # TODO: see if subprocess can be replaced completely with psutil
+       
         # Launch process
-        process = subprocess.Popen(command)
+        #process = subprocess.Popen(command)
+        process = psutil.Popen(command)
+        
+        # Bring interface up; this will throw an exception if it fails
+        interface_command = [ "ifconfig", name, "up" ]
+        subprocess.check_call(interface_command)
+        
         self.process_list[process.pid] = [ process , name ]
         
         return process.pid
@@ -44,16 +52,17 @@ class Capsulator:
         process.wait()
         
         # Delete old interface
+        # Will not raise exception if it fails; this is OK
         subprocess.call(["ip", "link", "del", name])
         
         
     def status(self, pid):
-        """Returns the status of the given instance."""
-        return self.process_list.get(pid)[0].poll()
+        """Returns whether or not the given instance is running."""
+        return self.process_list.get(pid)[0].is_running()
         
 
 
     def kill_all(self):
         """Stops all known instances of capsulator."""
-        for key in self.process_list:
-            stop(key)
+        for key in copy.deepcopy(self.process_list):
+            self.stop(key)

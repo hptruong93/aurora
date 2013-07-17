@@ -2,7 +2,7 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 import json, sys, exception, pprint, copy
 class VirtInterfaces:
-    """ Virtual Interface class.
+    """Virtual Interface class.
 
     All commands relating to virtual interfaces directly should be directed to this class.
     It will handle any implementation or program specfic parameters necessary."""
@@ -110,36 +110,38 @@ class VirtInterfaces:
         
     def reset(self):
         """Wipes all configuration data and deletes any running interfaces."""
-        for key in self.interface_list:
+        for key in self.module_list:
             try:
-                self.delete(key)
+                # This will wipe any instances, even if they are not in interface_list
+                key.kill_all()
             except Exception:
-                # Delete the entry in case delete failed
-                self.__del_entry(pid)
+                # Ignore any errors
+                pass
         
+        self.__clear_entries()
         self.__unload_all_modules()
         
     def get_status(self, pid):
-        """Returns the exit status of a given instance."""
+        """Returns wehther or not a given instance is running."""
         # Get flavour -> get the associated module -> get status
         return self.module_list[self.interface_list[pid]["flavour"]].status(pid)
     
     def check_interface(self,pid):
         """Checks to see if an instance has died, and removes it if so."""
-        raise NotImplemented
-        #if (self.get_status(pid) != 0) and (self.get_status(pid) != None) :
-        #    try:
-        #        self.delete(pid)
-        #    except Exception:
-        #        # Delete the entry in case delete failed
-        #        self.__del_entry(pid)
+        status = self.get_status(pid)
+        # False : not running
+        if status == False :
+            try:
+                self.delete(pid)
+            except Exception:
+                # Delete the entry in case delete failed
+                self.__del_entry(pid)
     
     def update_status_all(self):
         """Checks all instances, and removes any that have died."""
-        raise NotImplemented
         # Deepcopying to prevent list modification during iteration
-        #for pid in copy.deepcopy(self.interface_list):
-        #    self.check_interface(pid)
+        for pid in copy.deepcopy(self.interface_list):
+            self.check_interface(pid)
     
     def __add_entry(self, flavour, pid, arguments):
         # Do not want to overwrite if already existing

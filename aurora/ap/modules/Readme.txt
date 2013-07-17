@@ -14,7 +14,7 @@ class Example:
         # Kills the instance
         
     def status(self, pid):
-        # Returns the status
+        # Returns whether or not the given instance is running.
 
     def kill_all(self):
         #Kills all known instances of the virtual interface.
