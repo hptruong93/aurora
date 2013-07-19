@@ -95,10 +95,15 @@ class VirtInterfaces:
             raise exception.PIDNotFound(pid)
         
         entry = self.interface_list[pid]
+        flavour = entry["flavour"]
         # Module should already be loaded
-        manager = self.__get_module(entry["flavour"])
+        manager = self.__get_module(flavour)
         manager.stop(pid)
         self.__del_entry(pid)
+        
+        # if no more instance of the module active, remove module
+        if flavour not in self.interface_list:
+            __unload_module(flavour)
         
     def show(self, pid):
         """Show information about a specific PID."""
