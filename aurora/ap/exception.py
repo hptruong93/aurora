@@ -29,4 +29,7 @@ class ModuleNotLoaded(AuroraException):
     
 class PIDNotFound(AuroraException):
     message = "PID Not found."
+    
+class CommandNotFound(AuroraException):
+    message = "Command is either not valid or not allowed."
 
