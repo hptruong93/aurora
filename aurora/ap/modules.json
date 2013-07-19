@@ -4,5 +4,11 @@
   },
   "capsulator": {
     "class": "Capsulator"
+  },
+  "linux_bridge": {
+    "class": "Brctl"
+  },
+  "ovs": {
+    "class": "OpenVSwitch"
   }
 }
