@@ -26,8 +26,6 @@ class Capsulator:
             command = ["capsulator","-t", attach_to, "-f", forward_to, "-vb", name + "#" + tunnel_tag]
         else:
             command = ["capsulator","-t", attach_to, "-f", forward_to, "-b", name + "#" + tunnel_tag]
-
-        # TODO: see if subprocess can be replaced completely with psutil
        
         # Launch process
         #process = subprocess.Popen(command)

@@ -101,9 +101,14 @@ class VirtInterfaces:
         manager.stop(pid)
         self.__del_entry(pid)
         
-        # if no more instance of the module active, remove module
-        if flavour not in self.interface_list:
-            __unload_module(flavour)
+        # if no more instances of the module are active, remove module
+        flavour_exists = False
+        for i,j in self.interface_list:
+            if j["flavour"] == flavour:
+                flavour_exists = True
+        
+        if not flavour_exists:
+            self.__unload_module(flavour)
         
     def show(self, pid):
         """Show information about a specific PID."""
