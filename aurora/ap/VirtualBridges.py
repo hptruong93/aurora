@@ -1,0 +1,197 @@
+# Virtual Bridge class: configures virtual bridge programs.  
+# Currently covers linux-bridge and OVS
+
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
+import json, sys, exception, pprint, copy
+class VirtualBridges:
+    """Virtual Bridge class.
+
+    All commands relating to virtual interfaces directly should be 
+    directed to this class. It will handle any implementation or program 
+    specfic parameters necessary."""
+    
+    MODULE_JSON_FILE = 'modules.json'
+    MODULES_FOLDER = 'modules'
+
+    def __init__(self):
+        # Create list of all virtual bridges and modules
+        self.bridge_list = {}
+        self.module_list = {}
+        # Load JSON.  Will raise an error if not found, but the code is useless
+        # without it anyways....
+        json_file = open(self.MODULE_JSON_FILE)
+        self.metadata = json.load(json_file)
+        
+    def __load_module(self, flavour):
+        
+        # Try returning an existing module
+        try:
+            return self.__get_module(flavour)
+        # If that fails, load it
+        except exception.ModuleNotLoaded:
+            module_file = __import__(self.MODULES_FOLDER,globals(),locals(),
+                    [flavour]).__dict__[flavour]
+            module_class_name = self.metadata.get(flavour).get('class')
+            module_class = getattr(module_file, module_class_name)
+            module_instance = module_class()
+            # Add to module list
+            self.module_list[flavour] = module_instance
+            # Give an instance
+            return module_instance
+    
+    def __get_module(self,flavour):
+        if flavour in self.module_list:
+            return self.module_list[flavour]
+        else:
+            raise exception.ModuleNotLoaded(flavour)
+    
+    
+    def __unload_module(self,flavour):
+        try:
+            # Stop module before deleting
+            # If module won't stop, an exception will be raised
+            self.module_list[flavour].stop()
+            del self.module_list[flavour]
+        # If module not loaded, ignore
+        except KeyError:
+            pass
+        
+    def __unload_all_modules(self):
+        self.module_list.clear()
+    
+    def __get_module_used(self, bridge):
+        return self.module_list[self.__get_flavour(bridge)]
+        
+    def __get_flavour(self, bridge):
+        return self.bridge_list[bridge]["flavour"]
+    
+    def create_bridge(self, flavour, name):
+        """Create a bridge of type flavour and with the given name."""
+        if flavour not in self.metadata:
+            raise exception.FlavourNotExist(flavour)
+        
+        # Load module
+        program = self.__load_module(flavour)
+        
+        # Module should now be running and we can execute commands
+        # The assumption is that we try and create a bridge before modifying one
+        program.create_bridge(name)
+        
+        # Record the bridge creation
+        self.__add_entry(flavour, name)
+    
+    def delete_bridge(self, name):
+        """Delete a bridge 'name'."""
+        # Raise exception if the bridge does not exist
+        if name not in self.bridge_list:
+            raise exception.BridgeNotFound()
+        
+        flavour = self.__get_flavour(name)
+        module = self.__get_module_used(name)
+        # Delete bridge and then remove entry
+        module.delete_bridge(name)
+        self.__del_entry(name)
+        
+        # If module no longer used, unload it
+        flavour_exists = False
+        for i in self.bridge_list:
+            if self.bridge_list[i]["flavour"] == flavour:
+                flavour_exists = True
+        
+        if not flavour_exists:
+            self.__unload_module(flavour)
+      
+    def modify_bridge(self, bridge, command, parameters=None):
+        """Execute a command on the bridge that modifies it.
+        The user is responsible for properly formatting the command
+        and parameters."""
+        # All sanity checking is assumed to be done by the module
+        # At this level, we do not know what commands are valid or not
+        module = self.__get_module_used(bridge)
+        module.modify_bridge(bridge, command, parameters)
+        
+    def modify_port(self, bridge, port, command, parameters=None):
+        """Execute a command on a port on a bridge that modifies it.
+        The user is responsible for properly formatting the command
+        and parameters."""
+        # All sanity checking is assumed to be done by the module
+        # At this level, we do not know what commands are valid or not
+        module = self.__get_module_used(bridge)
+        module.modify_port(bridge, port, command, parameters)
+            
+    def add_port_to_bridge(self, bridge, port):
+        """Add a port to the specified bridge."""
+        # Find module associated with bridge
+        module = self.__get_module_used(bridge)
+
+        # Any bad input will be handled by the module
+        # Usually the base program will send a non-zero return code
+        # which will in turn raise an exception (i.e. port does not exist)
+        module.add_port(bridge, port)
+        # Record port addition
+        self.__add_entry_port(bridge, port)
+    
+    def delete_port_from_bridge(self, bridge, port):
+        """Delete a port from the specified bridge."""
+        # Find module associated with bridge
+        module = self.__get_module_used(bridge)
+        
+        # Same as add port
+        module.delete_port(bridge, port)
+        self.__del_entry_port(bridge,port)
+    
+    def summary(self):
+        """Print a basic summary of bridges and ports."""
+        pprint.pprint(self.bridge_list)
+    
+    def show(self):
+        """Retrieve and print detailed information from the modules.
+        Usually, this information will be direct from the managing program."""
+        # Go through each module, and print info
+        for flavour in self.module_list:
+            print("Flavour: " + flavour)
+            print(self.module_list[flavour].show())
+    
+    def __add_entry(self, flavour, bridge):
+        # Do not want to overwrite if already existing
+        # Name has to be unique
+        if bridge not in self.bridge_list:
+            self.bridge_list[bridge] = {"flavour" : flavour, "ports" : [] }
+    
+    def __add_entry_port(self, bridge, port):
+        # This will simply add a port to the list.
+        # It will not check if it already exists, as it is assumed
+        # the module in question will complain before any addition
+        # to this list is made.  If the module does allow duplicate port,
+        # there will not be any issues
+        self.bridge_list[bridge]["ports"].append(port)
+        
+    def __del_entry_port(self, bridge, port):
+        try:
+            self.bridge_list[bridge]["ports"].remove(port)
+        # Ignore if port does not exist
+        except ValueError:
+            pass
+    
+    def __del_entry(self, bridge):
+        try:
+            del self.bridge_list[bridge]
+        # If entry does not exist, ignore
+        except KeyError:
+            pass
+
+    def __clear_entries(self):
+        self.bridge_list.clear()
+        
+    def reset(self):
+        """Delete all bridges and all associated information."""
+        # Deep copy to avoid list modification while in use errors
+        for key in copy.deepcopy(self.bridge_list):
+            # Delete bridge should also unload the module when it is time
+            # Module unloading will try and stop the module first,
+            # so everything should be OK
+            self.delete_bridge(key)
+       
+    
+    
+        

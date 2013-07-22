@@ -1,7 +1,7 @@
 # Virtual interface class: sets up, kills or configures virtual interfaces.
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 import json, sys, exception, pprint, copy
-class VirtInterfaces:
+class VirtualInterfaces:
     """Virtual Interface class.
 
     All commands relating to virtual interfaces directly should be directed to this class.
@@ -103,8 +103,8 @@ class VirtInterfaces:
         
         # if no more instances of the module are active, remove module
         flavour_exists = False
-        for i,j in self.interface_list:
-            if j["flavour"] == flavour:
+        for i in self.interface_list:
+            if self.interface_list[i]["flavour"] == flavour:
                 flavour_exists = True
         
         if not flavour_exists:

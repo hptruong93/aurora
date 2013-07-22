@@ -32,4 +32,7 @@ class PIDNotFound(AuroraException):
     
 class CommandNotFound(AuroraException):
     message = "Command is either not valid or not allowed."
+    
+class BridgeNotFound(AuroraException):
+    message = "The bridge does not exist."
 

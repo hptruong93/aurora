@@ -1,7 +1,7 @@
 # Linux bridge module
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
-# If you wish to add functionaility for custom commands
+# If you wish to add functionaility for custom modify type commands
 # i.e. abstracting a long multi-parameter command to a simple one-argument function
 # i.e. application do_something --with=1234 --output=test.db "file.test" -X
 # to module.do_this(1234,test.db)
@@ -10,7 +10,7 @@
 # but more complicated cases (i.e. optional parameters) can easily be added.
 
 import subprocess
-from .. import exception
+import exception
 
 class Brctl:
     """Linux bridge module
@@ -25,26 +25,32 @@ class Brctl:
         # Want to throw exception if we give an invalid command
         # Note: args is a list of arguments
         # Format: [ arg1, arg2, arg3...]
-        command = ["brctl"].extend(args)
+        command = ["brctl"]
+        command.extend(args)
         subprocess.check_call(command)
     
     def __init__(self):
-    pass
+        pass
     
     def start(self):
     # Nothing to start
-    pass
+        pass
     
     def stop(self):
     # Nothing to do
-    pass
+        pass
     
     def create_bridge(self, name):
         """Create a bridge with the given name."""
         self.__exec_command(["addbr",name])
+        # Bring bridge up
+        subprocess.check_call(["ifconfig", name, "up"])
     
     def delete_bridge(self,name):
         """Delete a bridge with the given name."""
+        # Bridge must be brought down first
+        # Ignoring any errors for ifconfig
+        subprocess.call(["ifconfig", name, "down"])
         self.__exec_command(["delbr",name])
         
     def add_port(self, bridge, interface):
@@ -66,7 +72,7 @@ class Brctl:
         hello_time              time*
         max_age                 age*
         bridge_priority         priority*
-        stp                     setting* (boolean True/False)"""
+        stp                     setting* (on/off)"""
         
         if command == "ageing":
             args = [ "setageing", bridge, parameters["age"] ]
@@ -80,7 +86,7 @@ class Brctl:
             args = [ "setbridgeprio", bridge, parameters["priority"] ]
         elif command == "stp":
             args = [ "stp", bridge, parameters["setting"] ]
-        else
+        else:
             raise exception.CommandNotFound()
         
         self.__exec_command(args)
@@ -101,7 +107,7 @@ class Brctl:
         # an error is setportprio BRIDGE PORT PRIO
         if command == "priority":
             args = [ "setportprio", bridge, port, parameters["priority"] ]
-        else
+        else:
             raise exception.CommandNotFound()
         
         self.__exec_command(args)
