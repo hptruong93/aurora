@@ -1,6 +1,6 @@
 # Virtual interface class: sets up, kills or configures virtual interfaces.
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
-import json, sys, exception, pprint, copy
+import json, sys, exception, pprint, copy, atexit
 class VirtualInterfaces:
     """Virtual Interface class.
 
@@ -18,6 +18,9 @@ class VirtualInterfaces:
         # without it anyways....
         json_file = open(self.MODULE_JSON_FILE)
         self.metadata = json.load(json_file)
+        
+        # Cleanup on exit
+        atexit.register(self.reset)
         
     def __load_module(self, flavour):
         
