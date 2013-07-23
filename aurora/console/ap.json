@@ -6,7 +6,7 @@
                 "attach_to":"",
                 "forward_to":"",
                 "name":"",
-                "tag":"",
+                "tunnel_tag":"",
                 "is_virtual":""
             }
         ],
