@@ -2,7 +2,7 @@
 # Currently covers linux-bridge and OVS
 
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
-import json, sys, exception, pprint, copy
+import json, sys, exception, pprint, copy, atexit
 class VirtualBridges:
     """Virtual Bridge class.
 
@@ -21,6 +21,9 @@ class VirtualBridges:
         # without it anyways....
         json_file = open(self.MODULE_JSON_FILE)
         self.metadata = json.load(json_file)
+        
+        # Cleanup on exit
+        atexit.register(self.reset)
         
     def __load_module(self, flavour):
         
@@ -182,7 +185,7 @@ class VirtualBridges:
 
     def __clear_entries(self):
         self.bridge_list.clear()
-        
+     
     def reset(self):
         """Delete all bridges and all associated information."""
         # Deep copy to avoid list modification while in use errors
@@ -191,7 +194,3 @@ class VirtualBridges:
             # Module unloading will try and stop the module first,
             # so everything should be OK
             self.delete_bridge(key)
-       
-    
-    
-        

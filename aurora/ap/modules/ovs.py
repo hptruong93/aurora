@@ -119,7 +119,7 @@ class OpenVSwitch:
         """Delete a port from the given bridge."""
         self.__exec_command(["del-port", bridge, port])
     
-    def modify_port(self, bridge, port, parameters=None):
+    def modify_port(self, bridge, port, command, parameters=None):
         """Not currently allowed."""
         # Not allowing any port modifications at this time
         # May change at a later date
