@@ -2,9 +2,12 @@
 # Configures and runs the capsulator program developed by Stanford (v 0.01b)
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
-import subprocess, copy, psutil
+import subprocess, copy, time
 class Capsulator:    
 
+    # Number of times to retry starting capsulator if it fails
+    retry_attempts = 2
+    
     def __init__(self):
         # Keep track of all created instances
         # Inside the dictionary is a list
@@ -28,12 +31,32 @@ class Capsulator:
             command = ["capsulator","-t", attach_to, "-f", forward_to, "-b", name + "#" + tunnel_tag]
        
         # Launch process
-        #process = subprocess.Popen(command)
-        process = psutil.Popen(command)
+        process = subprocess.Popen(command)
         
         # Bring interface up; this will throw an exception if it fails
+        # We want an exception if it fails, but it might fail if capsulator
+        # is not ready.  In that case, we want to retry before giving up
+        # and sending the exception along.
         interface_command = [ "ifconfig", name, "up" ]
-        subprocess.check_call(interface_command)
+        
+        attempts = 0
+        while attempts < self.retry_attempts:
+            try:
+                subprocess.check_call(interface_command)
+                # Successful, break out of loop
+                break
+            except subprocess.CalledProcessError, e:
+                attempts += 1
+                # If too many times, give up and raise exception
+                # Attempt to delete capsulator
+                if attempts == self.retry_attempts:
+                    process.terminate()
+                    process.wait()
+                    subprocess.call(["ip", "link", "del", name])
+                    raise e
+                
+                # Sleep for 1 second; should be enough
+                time.sleep(1)
         
         self.process_list[process.pid] = [ process , name ]
         
@@ -56,7 +79,8 @@ class Capsulator:
         
     def status(self, pid):
         """Returns whether or not the given instance is running."""
-        return self.process_list.get(pid)[0].is_running()
+        # None = still running.  Any return code = finished
+        return self.process_list.get(pid)[0].poll() == None
         
 
 
