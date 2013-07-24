@@ -68,8 +68,8 @@ class AuroraJsonGenerator():
                 entry[1]['forward_to'] = raw_input()
                 print('name:')
                 entry[1]['name'] = raw_input()
-                print('tag:')
-                entry[1]['tag'] = raw_input()
+                print('tunnel_tag:')
+                entry[1]['tunnel_tag'] = raw_input()
                 print('isVirtual:')
                 entry[1]['isVirtual'] = raw_input()
             
