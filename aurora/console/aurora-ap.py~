@@ -99,5 +99,5 @@ class AuroraAP():
         return result
         
 #Testing
-AuroraAP().ap_list("region=mcgill & number_radio=2 & version<1.1 & number_radio_free>0 & supported_protocol=a/b/g", True)
+AuroraAP().ap_list("region=mcgill & number_radio=2 & version<1.1 & number_radio_free>0", True)
     
