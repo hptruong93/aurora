@@ -97,7 +97,14 @@ class AuroraAP():
     def intersection(self, li1, li2): #for parsing and
         result = filter(lambda x: x in li1, li2)
         return result
-        
+    
+    def ap_show(self, name):
+        for entry in self.APlist:
+            if entry[0] == name:
+                print('\nName: '+entry[0])
+                for attr in entry[1]:
+                    print(attr+': '+entry[1][attr])
 #Testing
-AuroraAP().ap_list("region=mcgill & number_radio=2 & version<1.1 & number_radio_free>0 & supported_protocol=a/b/g", True)
+#AuroraAP().ap_list("region=mcgill & number_radio=2 & version<1.1 & number_radio_free>0 & supported_protocol=a/b/g", True)
+#AuroraAP().ap_show("OpenFlowKevin")
     
