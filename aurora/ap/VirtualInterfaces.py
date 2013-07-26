@@ -1,6 +1,6 @@
 # Virtual interface class: sets up, kills or configures virtual interfaces.
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
-import json, sys, exception, pprint, copy, atexit
+import json, sys, exception, copy, atexit
 class VirtualInterfaces:
     """Virtual Interface class.
 
@@ -24,6 +24,8 @@ class VirtualInterfaces:
         
     def __load_module(self, flavour):
         
+        # Cast to string - some issues with unicode?
+        flavour = str(flavour)
         # Try returning an existing module
         try:
             return self.__get_module(flavour)
@@ -81,21 +83,22 @@ class VirtualInterfaces:
         
         # Record it
         self.__add_entry(flavour, pid, args)
+        
     
-    def modify(self, pid, args):
+    def modify(self, name, args):
         """Change the parameters of a given interface."""
         # Get existing entry and flavour
+        pid = self.__get_pid(name)
         entry = self.interface_list[pid]
         flavour = entry["flavour"]
         
         # Delete it, restart with new args
         self.delete(pid)
-        self.create(flavour,args)
+        return self.create(flavour,args)
          
-    def delete(self, pid):
+    def delete(self, name):
         """Delete a given interface."""
-        if pid not in self.interface_list:
-            raise exception.PIDNotFound(pid)
+        pid = self.__get_pid(name)
         
         entry = self.interface_list[pid]
         flavour = entry["flavour"]
@@ -113,20 +116,21 @@ class VirtualInterfaces:
         if not flavour_exists:
             self.__unload_module(flavour)
         
-    def show(self, pid):
-        """Show information about a specific PID."""
-        pprint.pprint(self.interface_list[pid])
+    def show(self, name):
+        """Show information about a specific interface."""
+        pid = self.__get_pid(name)
+        return str(self.interface_list[pid])
     
     def list(self):
         """List information about all PIDs."""
-        pprint.pprint(self.interface_list)
+        return str(self.interface_list)
         
     def reset(self):
         """Wipes all configuration data and deletes any running interfaces."""
         for key in self.module_list:
             try:
                 # This will wipe any instances, even if they are not in interface_list
-                key.kill_all()
+                self.module_list[key].kill_all()
             except Exception:
                 # Ignore any errors
                 pass
@@ -155,6 +159,12 @@ class VirtualInterfaces:
         # Deepcopying to prevent list modification during iteration
         for pid in copy.deepcopy(self.interface_list):
             self.check_interface(pid)
+    
+    def __get_pid(self, name):
+        for pid in self.interface_list:
+            if self.interface_list[pid]["arguments"]["name"] == name:
+                return pid
+        raise exception.PIDNotFound()
     
     def __add_entry(self, flavour, pid, arguments):
         # Do not want to overwrite if already existing

@@ -25,7 +25,7 @@ class Capsulator:
                   border_interface (i.e. a tap).  In this case, 
                   border_interface should not be a real 
                   interface, as it will be created automatically."""
-        if is_virtual:
+        if (is_virtual == True or is_virtual == None) :
             command = ["capsulator","-t", attach_to, "-f", forward_to, "-vb", name + "#" + tunnel_tag]
         else:
             command = ["capsulator","-t", attach_to, "-f", forward_to, "-b", name + "#" + tunnel_tag]
@@ -53,7 +53,7 @@ class Capsulator:
                     process.terminate()
                     process.wait()
                     subprocess.call(["ip", "link", "del", name])
-                    raise e
+                    raise
                 
                 # Sleep for 1 second; should be enough
                 time.sleep(1)
@@ -81,7 +81,6 @@ class Capsulator:
         """Returns whether or not the given instance is running."""
         # None = still running.  Any return code = finished
         return self.process_list.get(pid)[0].poll() == None
-        
 
 
     def kill_all(self):

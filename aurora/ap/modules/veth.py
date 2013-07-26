@@ -62,4 +62,3 @@ class Veth:
         for key in copy.deepcopy(self.process_list):
             self.stop(key)
             
-            # change caps to psutil, see if that throws exception

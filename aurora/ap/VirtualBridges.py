@@ -2,7 +2,7 @@
 # Currently covers linux-bridge and OVS
 
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
-import json, sys, exception, pprint, copy, atexit
+import json, sys, exception, copy, atexit
 class VirtualBridges:
     """Virtual Bridge class.
 
@@ -27,6 +27,8 @@ class VirtualBridges:
         
     def __load_module(self, flavour):
         
+        # Cast to string - some issues with unicode?
+        flavour = str(flavour)
         # Try returning an existing module
         try:
             return self.__get_module(flavour)
@@ -85,24 +87,22 @@ class VirtualBridges:
     
     def delete_bridge(self, name):
         """Delete a bridge 'name'."""
-        # Raise exception if the bridge does not exist
-        if name not in self.bridge_list:
-            raise exception.BridgeNotFound()
-        
-        flavour = self.__get_flavour(name)
-        module = self.__get_module_used(name)
-        # Delete bridge and then remove entry
-        module.delete_bridge(name)
-        self.__del_entry(name)
-        
-        # If module no longer used, unload it
-        flavour_exists = False
-        for i in self.bridge_list:
-            if self.bridge_list[i]["flavour"] == flavour:
-                flavour_exists = True
-        
-        if not flavour_exists:
-            self.__unload_module(flavour)
+        # Only execute if bridge exists. Else, do nothing
+        if name in self.bridge_list:
+            flavour = self.__get_flavour(name)
+            module = self.__get_module_used(name)
+            # Delete bridge and then remove entry
+            module.delete_bridge(name)
+            self.__del_entry(name)
+            
+            # If module no longer used, unload it
+            flavour_exists = False
+            for i in self.bridge_list:
+                if self.bridge_list[i]["flavour"] == flavour:
+                    flavour_exists = True
+            
+            if not flavour_exists:
+                self.__unload_module(flavour)
       
     def modify_bridge(self, bridge, command, parameters=None):
         """Execute a command on the bridge that modifies it.
@@ -144,16 +144,19 @@ class VirtualBridges:
         self.__del_entry_port(bridge,port)
     
     def summary(self):
-        """Print a basic summary of bridges and ports."""
-        pprint.pprint(self.bridge_list)
+        """Returns a basic summary of bridges and ports."""
+        return str(self.bridge_list)
     
-    def show(self):
-        """Retrieve and print detailed information from the modules.
+    def list(self):
+        """Retrieves and returns detailed information from the modules.
         Usually, this information will be direct from the managing program."""
-        # Go through each module, and print info
+        # Go through each module, and get info
+        info = ""
         for flavour in self.module_list:
-            print("Flavour: " + flavour)
-            print(self.module_list[flavour].show())
+            info += ("Flavour: " + flavour + "\n")
+            info += self.module_list[flavour].show()
+        
+        return info
     
     def __add_entry(self, flavour, bridge):
         # Do not want to overwrite if already existing

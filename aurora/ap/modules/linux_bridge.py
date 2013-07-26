@@ -63,29 +63,34 @@ class Brctl:
 
     def modify_bridge(self, bridge, command, parameters=None):
         """Modifies a given bridge with the specified command and parameters.
-        Parameters should be a dictionary.
-        Ex. { arg1 : one, arg2: two, arg3: three }
+        Some commands do not require any parameters, or it may be
+        optional. These are marked with a *.  Generally, not specifying a command
+        deletes the setting or resets it to default.
+        Some commands require a dictionary of parameters in the format
+        { arg1 : one, arg2: two, arg3: three }.
+        These are marked with {dict}.
+        Normally, parameters is simply a string.
         
-        Allowed commands        Allowed arguments (required marked with *)
-        ageing                  age*
-        forward_delay           delay*
-        hello_time              time*
-        max_age                 age*
-        bridge_priority         priority*
-        stp                     setting* (on/off)"""
+        Commands                Parameters
+        ageing                  age
+        forward_delay           delay
+        hello_time              time
+        max_age                 age
+        bridge_priority         priority
+        stp                     setting (string "on" or "off")"""
         
         if command == "ageing":
-            args = [ "setageing", bridge, parameters["age"] ]
+            args = [ "setageing", bridge, parameters ]
         elif command == "forward_delay":
-            args = [ "setfd", bridge, parameters["delay"] ]
+            args = [ "setfd", bridge, parameters ]
         elif command == "hello_time":
-            args = [ "sethello", bridge, parameters["time"] ]
+            args = [ "sethello", bridge, parameters ]
         elif command == "max_age":
-            args = [ "setmaxage", bridge, parameters["age"] ]
+            args = [ "setmaxage", bridge, parameters ]
         elif command == "bridge_priority":
-            args = [ "setbridgeprio", bridge, parameters["priority"] ]
+            args = [ "setbridgeprio", bridge, parameters ]
         elif command == "stp":
-            args = [ "stp", bridge, parameters["setting"] ]
+            args = [ "stp", bridge, parameters ]
         else:
             raise exception.CommandNotFound()
         

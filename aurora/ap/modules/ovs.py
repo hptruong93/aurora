@@ -88,24 +88,31 @@ class OpenVSwitch:
     
     def modify_bridge(self, bridge, command, parameters=None):
         """Modifies a given bridge with the specified command and parameters.
-        Parameters should be a dictionary.
-        Ex. { arg1 : one, arg2: two, arg3: three }
+        Some commands do not require any parameters, or it may be
+        optional. These are marked with a *.  Generally, not specifying a command
+        deletes the setting or resets it to default.
+        Some commands require a dictionary of parameters in the format
+        { arg1 : one, arg2: two, arg3: three }.
+        These are marked with {dict}.
+        Normally, parameters is simply a string.
         
-        Allowed commands        Allowed arguments (required marked with *)
-        set_controller          controller*
-        del_controller                     
-        set_fail_mode           mode*
-        del_fail_mode"""
+        Commands        Parameters
+        controller      controller*
+        fail_mode       mode*"""
+        
         
         # Find command, and format as appropriate
-        if command == "set_controller":
-            args = [ "set-controller", bridge, parameters["controller"] ]
-        elif command == "del_controller":
-            args = [ "del-controller", bridge ]
-        elif command == "set_fail_mode":
-            args = [ "set-fail-mode", bridge, parameters["mode"] ]
-        elif command == "del_fail_mode":
-            args = [ "del-fail-mode", bridge ]
+        if command == "controller":
+            # Check if controller = 0.0.0.0, 0, None or 0 -> no controller
+            if (parameters == None or  parameters == "0.0.0.0" or parameters == 0 or parameters == "0" ):
+                args = [ "del-controller", bridge ]
+            else:
+                args = [ "set-controller", bridge, parameters ]
+        elif command == "fail_mode":
+            if (parameters == None):
+                args = [ "del-fail-mode", bridge ]
+            else:
+                args = [ "set-fail-mode", bridge, parameters ]
         else:
             raise exception.CommandNotFound()
             
