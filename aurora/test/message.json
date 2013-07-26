@@ -1,0 +1,37 @@
+{
+    "APConfig": [
+        [
+            "openwrt", 
+            {
+                "placeholder": "gg"
+            }
+        ]
+    ], 
+    "VirtBridges": [
+        [
+            "ovs", 
+            {
+                "placeholder": "att1"
+            }
+        ]
+    ], 
+    "VirtInterfaces": [
+        [
+            "veth", 
+            {
+                "attach_to": "att1", 
+                "name": "att2"
+            }
+        ], 
+        [
+            "capsulator", 
+            {
+                "attach_to": "a", 
+                "forward_to": "b", 
+                "isVirtual": "e", 
+                "name": "c", 
+                "tunnel_tag": "d"
+            }
+        ]
+    ]
+}
