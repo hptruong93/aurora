@@ -35,4 +35,10 @@ class CommandNotFound(AuroraException):
     
 class BridgeNotFound(AuroraException):
     message = "The bridge does not exist."
+    
+class SliceNotFound(AuroraException):
+    message = "The slice does not exist."
+    
+class InstanceNotFound(AuroraException):
+    message = "The instance does not exist."
 

@@ -164,7 +164,7 @@ class VirtualInterfaces:
         for pid in self.interface_list:
             if self.interface_list[pid]["arguments"]["name"] == name:
                 return pid
-        raise exception.PIDNotFound()
+        raise exception.InstanceNotFound(name)
     
     def __add_entry(self, flavour, pid, arguments):
         # Do not want to overwrite if already existing

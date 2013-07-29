@@ -114,7 +114,7 @@ class OpenVSwitch:
             else:
                 args = [ "set-fail-mode", bridge, parameters ]
         else:
-            raise exception.CommandNotFound()
+            raise exception.CommandNotFound(command)
             
         self.__exec_command(args)
     
@@ -130,7 +130,7 @@ class OpenVSwitch:
         """Not currently allowed."""
         # Not allowing any port modifications at this time
         # May change at a later date
-        raise exception.CommandNotFound()
+        raise exception.CommandNotFound("No port modifications to OVS allowed.")
     
     def show(self):
         """Returns the output of the show command as a byte string."""

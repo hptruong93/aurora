@@ -92,7 +92,7 @@ class Brctl:
         elif command == "stp":
             args = [ "stp", bridge, parameters ]
         else:
-            raise exception.CommandNotFound()
+            raise exception.CommandNotFound(command)
         
         self.__exec_command(args)
         
@@ -113,7 +113,7 @@ class Brctl:
         if command == "priority":
             args = [ "setportprio", bridge, port, parameters["priority"] ]
         else:
-            raise exception.CommandNotFound()
+            raise exception.CommandNotFound(command)
         
         self.__exec_command(args)
         
