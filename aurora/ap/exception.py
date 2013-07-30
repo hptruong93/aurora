@@ -41,4 +41,10 @@ class SliceNotFound(AuroraException):
     
 class InstanceNotFound(AuroraException):
     message = "The instance does not exist."
+    
+class NameAlreadyInUse(AuroraException):
+    message = "The name is already in the database."
+    
+class EntryNotFound(AuroraException):
+    message = "The entry does not exist in the database."
 
