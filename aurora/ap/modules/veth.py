@@ -1,20 +1,19 @@
-# Veth class
-# Configures and runs the veth program by Nestor Pena
-# Only known website at time of writing is 
-# http://www.geocities.ws/nestorjpg/veth/index.html
-
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 import subprocess
 import psutil
 import copy
 class Veth:    
-
+    """The veth class configures and runs the veth program,
+    written by Nestor Pena.  The original website no longer exists;
+    the only website still running appears to be
+    http://www.geocities.ws/nestorjpg/veth/index.html"""
     def __init__(self):
         # Keep track of all created instances
         self.process_list = {}
 
     def start(self, attach_to, name, mac=0):
-        """Starts an instance of vethd.  Returns PID.
+        """Starts an instance of vethd. An exception will be thrown
+        if the program fails to start.
         
         name = Name you want in the VIRTUAL device, for example: veth0
         attach_to = Name of the REAL device, for example: eth0, eth1
@@ -40,22 +39,22 @@ class Veth:
             if i.cmdline == command:
                 process = i
         
-        pid = process.pid
-        self.process_list[pid] = process
-        
-        return pid
+        self.process_list[name] = process
         
 
-    def stop(self, pid):
-        """Stops the process with given PID, assuming it is a vethd process."""
-        process = self.process_list.pop(pid)
+    def stop(self, name):
+        """Stops the process with given name, assuming it is a vethd process."""
+        process = self.process_list[name]
         process.terminate()
         # Need .wait(), otherwise process hangs around as defunct.
         process.wait()
+        
+        # Delete entry now that the process has truly been deleted
+        del self.process_list[name]
 
-    def status(self, pid):
+    def status(self,name ):
         """Returns whether or not the given instance is running."""
-        return self.process_list.get(pid).is_running()
+        return self.process_list.get(name).is_running()
     
     def kill_all(self):
         """Kills all known vethd processes."""

@@ -9,8 +9,7 @@
 # and format the command line.  The current parsing is done as simple if statements,
 # but more complicated cases (i.e. optional parameters) can easily be added.
 
-import subprocess
-import exception
+import subprocess, exception
 
 class Brctl:
     """Linux bridge module
@@ -29,8 +28,8 @@ class Brctl:
         command.extend(args)
         subprocess.check_call(command)
     
-    def __init__(self):
-        pass
+    def __init__(self, database):
+        self.database = database
     
     def start(self):
     # Nothing to start
@@ -45,6 +44,7 @@ class Brctl:
         self.__exec_command(["addbr",name])
         # Bring bridge up
         subprocess.check_call(["ifconfig", name, "up"])
+        self.database.add_entry("VirtBridges", "linux_bridge", { "name" : name, "interfaces" : [], "bridge_settings" : {}, "port_settings" : {} })
     
     def delete_bridge(self,name):
         """Delete a bridge with the given name."""
@@ -52,14 +52,21 @@ class Brctl:
         # Ignoring any errors for ifconfig
         subprocess.call(["ifconfig", name, "down"])
         self.__exec_command(["delbr",name])
+        self.database.delete_entry("VirtBridges", name)
         
     def add_port(self, bridge, interface):
         """Add a port to the given bridge."""
         self.__exec_command(["addif", bridge, interface])
+        entry = self.database.get_entry("VirtBridges", bridge)
+        entry[1]["interfaces"].append(interface)
+        entry[1]["port_settings"][interface] = {}
     
     def delete_port(self, bridge, interface):
         """Delete a port from the given bridge."""
         self.__exec_command(["delif", bridge, interface])
+        entry = self.database.get_entry("VirtBridges", bridge)
+        entry[1]["interfaces"].remove(interface)
+        del entry[1]["port_settings"][interface]
 
     def modify_bridge(self, bridge, command, parameters=None):
         """Modifies a given bridge with the specified command and parameters.
@@ -95,15 +102,22 @@ class Brctl:
             raise exception.CommandNotFound(command)
         
         self.__exec_command(args)
-        
+        # Update database
+        data_update = [ command, parameters ]
+        entry = self.database.get_entry("VirtBridges", bridge)
+        entry[1]["bridge_settings"][data_update[0]] = data_update[1]
         
     def modify_port(self, bridge, port, command, parameters=None):
-        """Modifies a given port with the specified command and parameters.
-        Parameters should be a dictionary.
-        Ex. { arg1 : one, arg2: two, arg3: three }
+        """Modifies a given bridge port with the specified command and parameters.
+        Some commands do not require any parameters, or it may be
+        optional. These are marked with a *.
+        Some commands require a dictionary of parameters in the format
+        { arg1 : one, arg2: two, arg3: three }.
+        These are marked with {dict}.
+        Normally, parameters is simply a string.
         
-        Allowed commands        Allowed arguments (required marked with *)
-        priority                priority*"""
+        Commands                Parameters
+        priority                priority"""
         
         # Find command, and format as appropriate
         # busybox bridge command (1.19.4) seems to have an error in the help file
@@ -116,6 +130,10 @@ class Brctl:
             raise exception.CommandNotFound(command)
         
         self.__exec_command(args)
+        # Update database
+        data_update = [ command, parameters ]
+        entry = self.database.get_entry("VirtBridges", bridge)
+        entry[1]["port_settings"][port][data_update[0]] = data_update[1]
         
     def show(self):
         """Returns the output of the show command as a byte string."""

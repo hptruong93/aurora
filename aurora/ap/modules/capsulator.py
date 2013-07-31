@@ -1,21 +1,24 @@
-# Capsulator class
-# Configures and runs the capsulator program developed by Stanford (v 0.01b)
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
 import subprocess, copy, time
 class Capsulator:    
-
+    """The Capsulator class provides an interface to interact with the
+    capsulator program developed by Stanford (v. 0.01b) and modified
+    by the BCRL at McGill University to implement IP-based incoming 
+    tunnel data filtering."""
     # Number of times to retry starting capsulator if it fails
     retry_attempts = 2
     
     def __init__(self):
         # Keep track of all created instances
         # Inside the dictionary is a list
-        # Format: [ process instance, interface name ]
+        # Format: [ capsulator interface name, process instance ]
         self.process_list = {}
 
     def start(self, attach_to, forward_to, name, tunnel_tag, is_virtual=True):
-        """Starts an instance of capsulator.  Returns PID.
+        """Starts an instance of capsulator.  Please note that incorrect configuration
+        can cause the program to fail to start, and an exception may NOT be 
+        generated.  The status can be checked with the status command.
         
         attach_to = names the interface which is the tunnel endpoint
         forward_to = the IP the tunnel should forward frames to
@@ -56,18 +59,18 @@ class Capsulator:
                     raise
                 
                 # Sleep for 1 second; should be enough
+                # Unfortunately, there is no known better way
                 time.sleep(1)
         
-        self.process_list[process.pid] = [ process , name ]
+        self.process_list[name] = process
         
         return process.pid
         
 
-    def stop(self, pid):
-        """Stops an instance of capsulator with this PID."""
-        # Get process, name, remove entry by popping
-        process = self.process_list[pid][0]
-        name = self.process_list.pop(pid)[1]
+    def stop(self, name):
+        """Stops an instance of capsulator with this name."""
+        # Get process, kill
+        process = self.process_list[name]
         process.terminate()
         # Need .wait(), otherwise process hangs around as defunct.
         process.wait()
@@ -76,11 +79,14 @@ class Capsulator:
         # Will not raise exception if it fails; this is OK
         subprocess.call(["ip", "link", "del", name])
         
+        # Remove entry
+        del self.process_list[name]
         
-    def status(self, pid):
+        
+    def status(self, name):
         """Returns whether or not the given instance is running."""
         # None = still running.  Any return code = finished
-        return self.process_list.get(pid)[0].poll() == None
+        return self.process_list[name].poll() == None
 
 
     def kill_all(self):

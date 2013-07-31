@@ -28,6 +28,16 @@
                 "bridge_settings":{"controller":"192.168.0.13"},
                 "port_settings":{}
             }
+        ],
+        [
+            "linux_bridge",
+            {
+                "name":"linux-1",
+                "interfaces":
+                    ["veth1","tap9"],
+                "bridge_settings":{"stp":"on"},
+                "port_settings":{}
+            }
         ]
     ]
 }

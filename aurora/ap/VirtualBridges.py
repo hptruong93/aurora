@@ -2,7 +2,7 @@
 # Currently covers linux-bridge and OVS
 
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
-import json, sys, exception, copy, atexit
+import json, sys, exception, copy
 class VirtualBridges:
     """Virtual Bridge class.
 
@@ -13,17 +13,14 @@ class VirtualBridges:
     MODULE_JSON_FILE = 'modules.json'
     MODULES_FOLDER = 'modules'
 
-    def __init__(self):
-        # Create list of all virtual bridges and modules
-        self.bridge_list = {}
+    def __init__(self, database):
+        # Create list of modules
         self.module_list = {}
         # Load JSON.  Will raise an error if not found, but the code is useless
         # without it anyways....
         json_file = open(self.MODULE_JSON_FILE)
-        self.metadata = json.load(json_file)
-        
-        # Cleanup on exit
-        atexit.register(self.reset)
+        self.metadata = json.load(json_file)["VirtualBridges"]
+        self.database = database
         
     def __load_module(self, flavour):
         
@@ -38,7 +35,7 @@ class VirtualBridges:
                     [flavour]).__dict__[flavour]
             module_class_name = self.metadata.get(flavour).get('class')
             module_class = getattr(module_file, module_class_name)
-            module_instance = module_class()
+            module_instance = module_class(self.database)
             # Add to module list
             self.module_list[flavour] = module_instance
             # Give an instance
@@ -53,9 +50,6 @@ class VirtualBridges:
     
     def __unload_module(self,flavour):
         try:
-            # Stop module before deleting
-            # If module won't stop, an exception will be raised
-            self.module_list[flavour].stop()
             del self.module_list[flavour]
         # If module not loaded, ignore
         except KeyError:
@@ -68,7 +62,7 @@ class VirtualBridges:
         return self.module_list[self.__get_flavour(bridge)]
         
     def __get_flavour(self, bridge):
-        return self.bridge_list[bridge]["flavour"]
+        return self.__get_entry(bridge)[0]
     
     def create_bridge(self, flavour, name):
         """Create a bridge of type flavour and with the given name."""
@@ -81,28 +75,13 @@ class VirtualBridges:
         # Module should now be running and we can execute commands
         # The assumption is that we try and create a bridge before modifying one
         program.create_bridge(name)
-        
-        # Record the bridge creation
-        self.__add_entry(flavour, name)
     
     def delete_bridge(self, name):
         """Delete a bridge 'name'."""
-        # Only execute if bridge exists. Else, do nothing
-        if name in self.bridge_list:
-            flavour = self.__get_flavour(name)
-            module = self.__get_module_used(name)
-            # Delete bridge and then remove entry
-            module.delete_bridge(name)
-            self.__del_entry(name)
-            
-            # If module no longer used, unload it
-            flavour_exists = False
-            for i in self.bridge_list:
-                if self.bridge_list[i]["flavour"] == flavour:
-                    flavour_exists = True
-            
-            if not flavour_exists:
-                self.__unload_module(flavour)
+        
+        module = self.__get_module_used(name)
+        module.delete_bridge(name)
+
       
     def modify_bridge(self, bridge, command, parameters=None):
         """Execute a command on the bridge that modifies it.
@@ -131,21 +110,13 @@ class VirtualBridges:
         # Usually the base program will send a non-zero return code
         # which will in turn raise an exception (i.e. port does not exist)
         module.add_port(bridge, port)
-        # Record port addition
-        self.__add_entry_port(bridge, port)
     
     def delete_port_from_bridge(self, bridge, port):
         """Delete a port from the specified bridge."""
-        # Find module associated with bridge
+        # Find module associated with bridge, delete
         module = self.__get_module_used(bridge)
-        
-        # Same as add port
         module.delete_port(bridge, port)
-        self.__del_entry_port(bridge,port)
     
-    def summary(self):
-        """Returns a basic summary of bridges and ports."""
-        return str(self.bridge_list)
     
     def list(self):
         """Retrieves and returns detailed information from the modules.
@@ -157,43 +128,8 @@ class VirtualBridges:
             info += self.module_list[flavour].show()
         
         return info
-    
-    def __add_entry(self, flavour, bridge):
-        # Do not want to overwrite if already existing
-        # Name has to be unique
-        if bridge not in self.bridge_list:
-            self.bridge_list[bridge] = {"flavour" : flavour, "ports" : [] }
-    
-    def __add_entry_port(self, bridge, port):
-        # This will simply add a port to the list.
-        # It will not check if it already exists, as it is assumed
-        # the module in question will complain before any addition
-        # to this list is made.  If the module does allow duplicate port,
-        # there will not be any issues
-        self.bridge_list[bridge]["ports"].append(port)
-        
-    def __del_entry_port(self, bridge, port):
-        try:
-            self.bridge_list[bridge]["ports"].remove(port)
-        # Ignore if port does not exist
-        except ValueError:
-            pass
-    
-    def __del_entry(self, bridge):
-        try:
-            del self.bridge_list[bridge]
-        # If entry does not exist, ignore
-        except KeyError:
-            pass
 
-    def __clear_entries(self):
-        self.bridge_list.clear()
-     
-    def reset(self):
-        """Delete all bridges and all associated information."""
-        # Deep copy to avoid list modification while in use errors
-        for key in copy.deepcopy(self.bridge_list):
-            # Delete bridge should also unload the module when it is time
-            # Module unloading will try and stop the module first,
-            # so everything should be OK
-            self.delete_bridge(key)
+        
+    def __get_entry(self, name):
+        return self.database.get_entry("VirtBridges", name)
+

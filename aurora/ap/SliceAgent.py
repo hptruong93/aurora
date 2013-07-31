@@ -1,37 +1,30 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
-import VirtualBridges, VirtualInterfaces, exception, json, copy
+import VirtualBridges, VirtualInterfaces, exception, json, copy, pprint, Database
 class SliceAgent:
     """The Slice Agent is the high level interface to the creation,
     modification and deletion of slices."""
-    
-    # Note: at lower levels, we throw exceptions around or 
-    # simply ignore some errors (i.e. deleting a bridge
-    # that does not exist).  At this level, we still ignore
-    # some errors, like deleting a non-existent bridge
-    # in some cases, but we start printing error messages
-    # rather than raising exceptions and halting execution.
-    # At so
     
     # Network class will receive packet -> decode ->
     # send command and config to this class
     
     def __init__(self):
-        self.slice_database = {}
+        self.database = Database.Database()
         # Init sub classes
-        self.v_bridges = VirtualBridges.VirtualBridges()
-        self.v_interfaces = VirtualInterfaces.VirtualInterfaces()
+        self.v_bridges = VirtualBridges.VirtualBridges(self.database)
+        self.v_interfaces = VirtualInterfaces.VirtualInterfaces(self.database)
     
     # TODO: remove this when done testing
     def load_json(self):
-        JFILE = open('ap.json', 'r')
+        JFILE = open('ap.json')
         return json.load(JFILE)
     
     
-    # TODO: delete all raises and print nice messages
-    def create_slice(self, slice, config):
+    # TODO: add JSON config checks
+    def create_slice(self, slice, user, config):
         
-        # Create datbase entry (avoid reference issues)
-        self.slice_database[slice] = copy.deepcopy(config)
+        # Create datbase entry
+        self.database.create_slice(slice, user)
+        self.database.set_active_slice(slice)
         
         # Parse config
         # Create all virtual interfaces
@@ -39,84 +32,102 @@ class SliceAgent:
             try:
                 self.v_interfaces.create(interfaces[0], interfaces[1])
             except:
-                # Delete entry if creation fails
-                self.slice_database[slice]['VirtInterfaces'].remove(interfaces)
-                print("Virtual Interface creation failed: " + interfaces[1]["name"])
+                # Abort, delete
+                self.delete_slice(slice)
+                print("Aborting.\nVirtual Interface creation failed: " + interfaces[1]["name"])
                 raise
                 
         # Create all virtual bridges
         for bridges in config['VirtBridges']:
             bridge_name = bridges[1]['name']
-            
             try:
                 self.v_bridges.create_bridge(bridges[0], bridge_name)
             except:
-                # Delete entry if creation fails
-                self.slice_database[slice]['VirtBridges'].remove(bridges)
-                print("Bridge creation failed: " + bridge_name)
+                # Abort, delete
+                self.delete_slice(slice)
+                print("Aborting.\nBridge creation failed: " + bridge_name)
                 raise
             else:    
                 # Bridge created, now apply the settings
-                bridge_data_entry = self.slice_database[slice]['VirtBridges'][config['VirtBridges'].index(bridges)]
                 # Add ports
                 for port in bridges[1]['interfaces']:
                     try:
                         self.v_bridges.add_port_to_bridge(bridge_name, port)
                     except:
-                        bridge_data_entry[1]['interfaces'].remove(port)
-                        print("Error adding port " + port + " to bridge " + bridge_name)
+                        # Abort, delete.
+                        self.delete_slice(slice)
+                        print("Aborting.\nError adding port " + port + " to bridge " + bridge_name)
                         raise
                 
-                setting_list = bridges[1]['bridge_settings']
                 # Bridge settings
+                setting_list = bridges[1]['bridge_settings']
                 for setting in setting_list:
                     try:
                         self.v_bridges.modify_bridge(bridge_name, setting, setting_list[setting])
                     except:
-                        del bridge_data_entry[1]['bridge_settings'][setting]
-                        print("Error applying setting " + setting + " to bridge " + bridge_name)
+                        # Abort, delete. Settings don't matter when deleting
+                        self.delete_slice(slice)
+                        print("Aborting.\nError applying setting " + setting + " to bridge " + bridge_name)
                         raise
                     
                 # Port settings
                 for port in bridges[1]['port_settings']:
-                    for setting in port:
+                    for setting in bridges[1]['port_settings'][port]:
                         try:
                             self.v_bridges.modify_port(bridge_name, port, setting, port[setting])
                         except:
-                            del bridge_data_entry[1]['port_settings'][port][setting]
-                            print("Error applying setting " + setting + " to port " + port + " on bridge " + bridge_name)
+                            # Abort, delete
+                            self.delete_slice(slice)
+                            print("Aborting.\nError applying setting " + setting + " to port " + port + " on bridge " + bridge_name)
                             raise
                     
-            
+        self.database.reset_active_slice()        
         
-    # TODO: delete raises, make nice error printing
+    # TODO: add JSON config checks
+    # This will delete a slice, and ignore any errors while doing so
+    # in case the slice has become corrupted.  We don't want to
+    # prevent the user from deleting if something went wrong
     def delete_slice(self, slice):
         
-        # Make sure key exists
-        if slice in self.slice_database :       
+        try:
+            slice_data = self.database.get_slice_data(slice)
+            self.database.set_active_slice(slice)
+        except KeyError:
+            # If slice does not exist, ignore
+            pass
+        else:   
             # Delete all bridges
-            for bridge in self.slice_database[slice]['VirtBridges']:
+            for bridge in slice_data['VirtBridges']:
                 try:
                     self.v_bridges.delete_bridge(bridge[1]['name'])
                 except:
                     print("Error: Unable to delete bridge " + bridge[1]['name'])
                     raise
             # Delete all virtual interfaces
-            for interface in self.slice_database[slice]['VirtInterfaces']:
+            for interface in slice_data['VirtInterfaces']:
                 try:
                     self.v_interfaces.delete(interface[1]['name'])
                 except:
                     print("Error: Unable to delete virtual interface " + interface[1]['name'])
                     raise
                 
-            # Delete entry
-            del self.slice_database[slice]
-            
-        # Do nothing if key does not exist - likely already deleted
+        # Delete database entry
+        self.database.delete_slice(slice)
+        self.database.reset_active_slice()
             
     
+    # modify_slice slice_name SECTION COMMAND ARGS
     def modify_slice(self, slice, config):
         pass
+        # Need to check section, command and then data
+        #if slice not in self.slice_database
+        #    raise exception.SliceNotFound(slice)
+        #    
+        #slice_info = self.load_mod_slice_info()
+        
+        
+    def load_mod_slice_info(self):
+        return json.load(open('slice_info.json'))
     
     def execute(self, slice, command, config=None):
         # determine if create, delete or modify
@@ -127,17 +138,18 @@ class SliceAgent:
         elif command == "modify_slice":
             modify_slice(slice, config)
         else:
-            raise exception.CommandNotFound()
+            raise exception.CommandNotFound(command)
+    
+    
+    def check_config(self, format, config):
+        pass
     
     def list_all(self):
-        pass
+        pprint.pprint(self.slice_database)
     
     def list_slice(self, slice):
-        pass
+        pprint.pprint(self.slice_database[slice])
         
     def reset(self):
-        self.v_bridges.reset()
-        self.v_interfaces.reset()
-    
-    
+        pass
     

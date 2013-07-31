@@ -44,7 +44,7 @@ class Database:
         self.active_slice = slice
         
     def get_active_slice(self):
-        """Returns the current active slice settng."""
+        """Returns the current active slice setting."""
         return self.active_slice
     def reset_active_slice(self):
         """Set the active slice back to the default slice."""
@@ -64,7 +64,7 @@ class Database:
         """Delete a slice and all associated information."""
         del self.database[slice]
         # Reset active slice to default if in use
-        if self.active_slice == slice
+        if self.active_slice == slice:
             self.reset_active_slice()
         # Find any instances in user list
         for user in self.user_id_data:
@@ -76,8 +76,11 @@ class Database:
                 pass
         # TODO: Add cleanup function to delete empty users (is this necessary even?)
         
-    def get_slice_by_userid(self, userid):
-        return pprint.pformat(self.user_id_data[userid])
+    def get_associated_slice(self, userid):
+        return self.user_id_data[userid]
+    
+    def get_slice_data(self, slice):
+        return self.database[slice]
     
     def add_entry(self, section, flavour, info):
         """Add an entry to the database.
@@ -96,8 +99,12 @@ class Database:
     
     def delete_entry(self, section, name):
         """Remove an entry from the database."""
-        entry = self.get_entry(section, name)
-        self.database[self.active_slice][section].remove(entry)
+        try:
+            entry = self.get_entry(section, name)
+            self.database[self.active_slice][section].remove(entry)
+        except:
+            # Ignore any errors deleting
+            pass
     
     def replace_entry(self, section, name, flavour, info):
         """A shortcut to deleting and adding an entry."""

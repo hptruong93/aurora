@@ -1,25 +1,27 @@
 # Virtual interface class: sets up, kills or configures virtual interfaces.
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
-import json, sys, exception, copy, atexit
+import json, sys, exception, atexit
 class VirtualInterfaces:
     """Virtual Interface class.
 
     All commands relating to virtual interfaces directly should be directed to this class.
-    It will handle any implementation or program specfic parameters necessary."""
+    It will load appropriate modules to process any requests."""
     
     MODULE_JSON_FILE = 'modules.json'
     MODULES_FOLDER = 'modules'
 
-    def __init__(self):
-        # Create list of all interfaces and modules
-        self.interface_list = {}
+    def __init__(self, database):
+        # Create list of modules
         self.module_list = {}
         # Load JSON.  Will raise an error if not found, but the code is useless
         # without it anyways....
         json_file = open(self.MODULE_JSON_FILE)
-        self.metadata = json.load(json_file)
+        self.metadata = json.load(json_file)["VirtualInterfaces"]
         
-        # Cleanup on exit
+        # Load database
+        self.database = database
+        
+        # Remove virtual interfaces on exit
         atexit.register(self.reset)
         
     def __load_module(self, flavour):
@@ -79,105 +81,65 @@ class VirtualInterfaces:
         
         # Everything loaded; now create the interface
         # (Python unpacks arguments with **)
-        pid = running_flavour.start(**args)
+        running_flavour.start(**args)
         
         # Record it
-        self.__add_entry(flavour, pid, args)
+        self.__add_entry(flavour, args)
         
     
     def modify(self, name, args):
         """Change the parameters of a given interface."""
         # Get existing entry and flavour
-        pid = self.__get_pid(name)
-        entry = self.interface_list[pid]
-        flavour = entry["flavour"]
+        entry = self.__get_entry(name)
+        flavour = entry[0]
         
         # Delete it, restart with new args
-        self.delete(pid)
-        return self.create(flavour,args)
+        self.delete(name)
+        self.create(flavour, args)
          
     def delete(self, name):
         """Delete a given interface."""
-        pid = self.__get_pid(name)
         
-        entry = self.interface_list[pid]
-        flavour = entry["flavour"]
+        entry = self.__get_entry(name)
+        flavour = entry[0]
         # Module should already be loaded
         manager = self.__get_module(flavour)
-        manager.stop(pid)
-        self.__del_entry(pid)
+        manager.stop(name)
+        self.__del_entry(name)
         
-        # if no more instances of the module are active, remove module
-        flavour_exists = False
-        for i in self.interface_list:
-            if self.interface_list[i]["flavour"] == flavour:
-                flavour_exists = True
-        
-        if not flavour_exists:
-            self.__unload_module(flavour)
-        
-    def show(self, name):
-        """Show information about a specific interface."""
-        pid = self.__get_pid(name)
-        return str(self.interface_list[pid])
+    def get_status(self, name):
+        """Returns whether or not a given instance is running."""
+        # Get flavour -> get the associated module -> get status
+        return self.module_list[self.__get_entry(name)[0]].status(name)
     
-    def list(self):
-        """List information about all PIDs."""
-        return str(self.interface_list)
+    def check_interface(self, name):
+        """Checks to see if an instance has died, and removes it if so."""
+        status = self.get_status(name)
+        # False : not running
+        if status == False :
+            try:
+                self.delete(name)
+            except Exception:
+                # Delete the entry alone in case delete failed
+                self.__del_entry(name)
+    
+    def __add_entry(self, flavour, arguments):
+        self.database.add_entry("VirtInterfaces", flavour, arguments)
+    
+    def __get_entry(self, name):
+        return self.database.get_entry("VirtInterfaces", name)
+    
+    def __del_entry(self, name):
+        self.database.delete_entry("VirtInterfaces", name)
         
     def reset(self):
-        """Wipes all configuration data and deletes any running interfaces."""
+        """Deletes any running virtual interfaces."""
         for key in self.module_list:
             try:
-                # This will wipe any instances, even if they are not in interface_list
+                # This will wipe any instances, even if they are not in the database
                 self.module_list[key].kill_all()
             except Exception:
                 # Ignore any errors
                 pass
-        
-        self.__clear_entries()
         self.__unload_all_modules()
-        
-    def get_status(self, pid):
-        """Returns wehther or not a given instance is running."""
-        # Get flavour -> get the associated module -> get status
-        return self.module_list[self.interface_list[pid]["flavour"]].status(pid)
-    
-    def check_interface(self,pid):
-        """Checks to see if an instance has died, and removes it if so."""
-        status = self.get_status(pid)
-        # False : not running
-        if status == False :
-            try:
-                self.delete(pid)
-            except Exception:
-                # Delete the entry in case delete failed
-                self.__del_entry(pid)
-    
-    def update_status_all(self):
-        """Checks all instances, and removes any that have died."""
-        # Deepcopying to prevent list modification during iteration
-        for pid in copy.deepcopy(self.interface_list):
-            self.check_interface(pid)
-    
-    def __get_pid(self, name):
-        for pid in self.interface_list:
-            if self.interface_list[pid]["arguments"]["name"] == name:
-                return pid
-        raise exception.InstanceNotFound(name)
-    
-    def __add_entry(self, flavour, pid, arguments):
-        # Do not want to overwrite if already existing
-        if pid not in self.interface_list:
-            self.interface_list[pid] = {"flavour" : flavour, "arguments" : arguments}
-    
-    def __del_entry(self, pid):
-        try:
-            del self.interface_list[pid]
-        # If entry does not exist, ignore
-        except KeyError:
-            pass
-
-    def __clear_entries(self):
-        self.interface_list.clear()
         
