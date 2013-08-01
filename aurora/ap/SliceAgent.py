@@ -118,15 +118,36 @@ class SliceAgent:
         self.database.reset_active_slice()
             
     
-    # modify_slice slice_name SECTION COMMAND ARGS
     def modify_slice(self, slice, config):
-        pass
-        # Need to check section, command and then data
-        #if slice not in self.slice_database
-        #    raise exception.SliceNotFound(slice)
-        #    
-        #slice_info = self.load_mod_slice_info()
+        """The modify slice command will execute modify
+        functions on various modules.  It will only execute commands
+        that are not destructive or represent a significant
+        topology change.  These include, but are not limited to,
+        creating/deleting virtual interfaces, virtual bridges, or
+        adding/deleting ports from bridges.
         
+        At this time, this restricts the commands to port and 
+        bridge modifications from the VirtualBridge module,
+        with no support for port addition or deletion."""
+        
+        # Check to make sure VirtBridges is the only entry
+        if not (len(config) == 1 and "VirtBridges" in config):
+            raise exception.InvalidConfig()
+        
+        # Can do more than one bridge at once
+        for entry in config["VirtBridges"]:
+            data = config["VirtBridges"][1]
+            name = data["name"]
+            # Bridge settings
+            for setting in data["bridge_settings"]:
+                self.v_bridges.modify_bridge(name, setting, data["bridge_settings"][settiing])
+            # Port settings
+            for port in data["port_settings"]:
+                for port_setting in data["port_settings"][port]:  
+                    self.v_bridges.modify_port(name, port, port_setting, data["port_settings"][port][port_setting])
+    
+    def remote_API(self):
+        pass
         
     def load_mod_slice_info(self):
         return json.load(open('slice_info.json'))
