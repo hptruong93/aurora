@@ -94,7 +94,6 @@ class SliceAgent:
         try:
             slice_data = self.database.get_slice_data(slice)
             self.database.set_active_slice(slice)
-            print("Slice data: " + str(slice_data))
         except KeyError:
             # If slice does not exist, ignore
             pass
