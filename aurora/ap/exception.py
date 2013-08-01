@@ -47,4 +47,7 @@ class NameAlreadyInUse(AuroraException):
     
 class EntryNotFound(AuroraException):
     message = "The entry does not exist in the database."
+    
+class InvalidConfig(AuroraException):
+    message = "The configuration file is not valid."""
 

@@ -118,15 +118,57 @@ class SliceAgent:
         self.database.reset_active_slice()
             
     
-    # modify_slice slice_name SECTION COMMAND ARGS
     def modify_slice(self, slice, config):
-        pass
-        # Need to check section, command and then data
-        #if slice not in self.slice_database
-        #    raise exception.SliceNotFound(slice)
-        #    
-        #slice_info = self.load_mod_slice_info()
+        """The modify slice command will execute modify
+        functions on various modules.  It will only execute commands
+        that are not destructive or represent a significant
+        topology change.  These include, but are not limited to,
+        creating/deleting virtual interfaces, virtual bridges, or
+        adding/deleting ports from bridges.
         
+        At this time, this restricts the commands to port and 
+        bridge modifications from the VirtualBridge module,
+        with no support for port addition or deletion."""
+        
+        # Check to make sure VirtBridges is the only entry
+        if not (len(config) == 1 and "VirtBridges" in config):
+            raise exception.InvalidConfig()
+        
+        self.database.set_active_slice(slice)
+        
+        # Can do more than one bridge at once
+        for entry in config["VirtBridges"]:
+            data = config["VirtBridges"][1]
+            name = data["name"]
+            # Bridge settings
+            for setting in data["bridge_settings"]:
+                self.v_bridges.modify_bridge(name, setting, data["bridge_settings"][settiing])
+            # Port settings
+            for port in data["port_settings"]:
+                for port_setting in data["port_settings"][port]:  
+                    self.v_bridges.modify_port(name, port, port_setting, data["port_settings"][port][port_setting])
+    
+        self.database.reset_active_slice()
+        
+    def remote_API(self, slice, info):
+        """The remote API command accepts a specially formatted JSON
+        file containing a number of fields:
+        1. module : either VirtBridges or VirtInterfaces
+        2. command : the command to execute
+        3. args : a dictionary containing named arguments
+        appropriate to the command.
+        For example, to execute the command get_status(tap1) in VirtualInterfaces,
+        you would format info like so:
+        { "module" : "VirtInterfaces", "command" : "get_status", "args" : { "name" : "tap1"} }"""
+        
+        if info["module"] == "VirtInterfaces":
+            command = getattr(v_interfaces, info["command"])
+            command(**info["args"])
+        elif info["module"] == "VirtBridges":
+            command = getattr(v_bridges, info["command"])
+            command(**info["args"])
+        else:
+            raise exception.InvalidConfig("Module " + info["module"] " does not exist.")
         
     def load_mod_slice_info(self):
         return json.load(open('slice_info.json'))
@@ -134,11 +176,13 @@ class SliceAgent:
     def execute(self, slice, command, config=None):
         # determine if create, delete or modify
         if command == "create_slice":
-            create_slice(slice, config)
+            self.create_slice(slice, config)
         elif command == "delete_slice":
-            delete_slice(slice)
+            self.delete_slice(slice)
         elif command == "modify_slice":
-            modify_slice(slice, config)
+            self.modify_slice(slice, config)
+        elif command == "remote_API":
+            self.remote_API(slice, config)
         else:
             raise exception.CommandNotFound(command)
     
