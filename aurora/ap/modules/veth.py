@@ -44,6 +44,7 @@ class Veth:
 
     def stop(self, name):
         """Stops the process with given name, assuming it is a vethd process."""
+        
         process = self.process_list[name]
         process.terminate()
         # Need .wait(), otherwise process hangs around as defunct.

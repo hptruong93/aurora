@@ -128,8 +128,20 @@ class VirtualBridges:
             info += self.module_list[flavour].show()
         
         return info
-
         
     def __get_entry(self, name):
         return self.database.get_entry("VirtBridges", name)
+        
+    def reset(self):
+        """Stops any running bridges.  Note that this may not delete
+        bridges, especially for kernel built-in bridges like
+        the standard linux-bridge module, where the stop function
+        does nothing."""
+        for key in self.module_list:
+            try:
+                self.module_list[key].stop()
+            except Exception:
+                # Ignore any errors
+                pass
+        self.__unload_all_modules()
 

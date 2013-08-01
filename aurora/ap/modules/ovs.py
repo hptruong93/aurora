@@ -9,7 +9,7 @@
 # and format the command line.  The current parsing is done as simple if statements,
 # but more complicated cases (i.e. optional parameters) can easily be added.
 
-import tempfile, subprocess, psutil, atexit
+import tempfile, subprocess, psutil
 import exception
 class OpenVSwitch:
     """OpenVSwitch module.  Controls the OpenVSwitch daemon, allowing
@@ -24,9 +24,6 @@ class OpenVSwitch:
     def __init__(self, database):
         self.database = database
         self.start()
-        
-        # Kill OVS when python closes
-        atexit.register(self.stop)
     
     def __exec_command(self, args):
         # Want to throw exception if we give an invalid command

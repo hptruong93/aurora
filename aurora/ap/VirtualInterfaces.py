@@ -1,6 +1,6 @@
 # Virtual interface class: sets up, kills or configures virtual interfaces.
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
-import json, sys, exception, atexit
+import json, sys, exception
 class VirtualInterfaces:
     """Virtual Interface class.
 
@@ -20,9 +20,6 @@ class VirtualInterfaces:
         
         # Load database
         self.database = database
-        
-        # Remove virtual interfaces on exit
-        atexit.register(self.reset)
         
     def __load_module(self, flavour):
         

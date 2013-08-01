@@ -1,5 +1,5 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
-import VirtualBridges, VirtualInterfaces, exception, json, copy, pprint, Database
+import VirtualBridges, VirtualInterfaces, exception, json, pprint, Database, atexit
 class SliceAgent:
     """The Slice Agent is the high level interface to the creation,
     modification and deletion of slices."""
@@ -12,6 +12,8 @@ class SliceAgent:
         # Init sub classes
         self.v_bridges = VirtualBridges.VirtualBridges(self.database)
         self.v_interfaces = VirtualInterfaces.VirtualInterfaces(self.database)
+        
+        atexit.register(self.__reset)
     
     # TODO: remove this when done testing
     def load_json(self):
@@ -92,6 +94,7 @@ class SliceAgent:
         try:
             slice_data = self.database.get_slice_data(slice)
             self.database.set_active_slice(slice)
+            print("Slice data: " + str(slice_data))
         except KeyError:
             # If slice does not exist, ignore
             pass
@@ -150,6 +153,14 @@ class SliceAgent:
     def list_slice(self, slice):
         pprint.pprint(self.slice_database[slice])
         
-    def reset(self):
-        pass
+    def __reset(self):
+        # Clear out all slices
+        for slice in self.database.get_slice_list():
+            self.delete_slice(slice)
+            
+        # Execute any specific reset functions
+        # Usually, these need to be executed AFTER we 
+        # finish using the class to delete stuff
+        self.v_bridges.reset()
+        self.v_interfaces.reset()
     

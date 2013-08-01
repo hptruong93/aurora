@@ -1,6 +1,6 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
-import json, sys, exception, pprint
+import json, sys, exception, pprint, copy
 class Database:
     """Generic database for all class data.
     Format:
@@ -46,6 +46,7 @@ class Database:
     def get_active_slice(self):
         """Returns the current active slice setting."""
         return self.active_slice
+    
     def reset_active_slice(self):
         """Set the active slice back to the default slice."""
         self.active_slice = self.DEFAULT_ACTIVE_SLICE
@@ -77,10 +78,28 @@ class Database:
         # TODO: Add cleanup function to delete empty users (is this necessary even?)
         
     def get_associated_slice(self, userid):
-        return self.user_id_data[userid]
+        """Returns a list of slices associated to the userid."""
+        # Using deepcopy; same reason as below
+        return copy.deepcopy(self.user_id_data[userid])
     
     def get_slice_data(self, slice):
-        return self.database[slice]
+        """Returns a (deep) copy of the contents of the slice."""
+        # Need deep copy because users may iterate over the list
+        # while modifying the core database
+        # Other functions should not need this, 
+        # as they do not return data that is likely to be iterated
+        # over and modified.  The closest that fits the bill 
+        # is get_entry, but it needs to be accessible to 
+        # allow for nested data modification.
+        return copy.deepcopy(self.database[slice])
+    
+    def get_slice_list(self):
+        """Return a list of slices."""
+        return self.database.keys()
+        
+    def get_user_list(self):
+        """Return a list of users."""
+        return self.user_id_data.keys()
     
     def add_entry(self, section, flavour, info):
         """Add an entry to the database.
@@ -135,6 +154,7 @@ class Database:
         
         
     def list_slice_contents(self, slice):
+        """Returns a formatted string showing the slice contents."""
         return pprint.pformat(self.database[slice])
         
     # TODO: Remove in production
