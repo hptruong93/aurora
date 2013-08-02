@@ -50,10 +50,10 @@ class SliceJsonGenerator():
                 self.JFILE.flush()
                 self.JFILE.close()
             else:
-                #try:
-                self.options[int(choice)]()
-                #except (KeyError, ValueError, IndexError):
-                    #print('Please enter a valid option!')
+                try:
+                    self.options[int(choice)]()
+                except (KeyError, ValueError, IndexError):
+                    print('Please enter a valid option!')
                     
             
     def SliceConfig(self):
