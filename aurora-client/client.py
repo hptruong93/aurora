@@ -29,9 +29,7 @@ class Client():
         else:
             getattr(self, function)(args, extra)    
     
-    def ap_list(self, args, printScreen=True):
-        arg_filter = args['filter'][0]
-        arg_i = args['i']
+    def ap_filter(self, args):
         #GET JSON FILE FROM MANAGER
         #FOR TESTING
         try:
@@ -43,45 +41,33 @@ class Client():
             sys.exit(-1)
         #FOR TESTING END
         
-        if len(arg_filter) == 0: #No filter or tags
-            if printScreen:
-                for entry in APlist:
-                    print('\nName: '+entry[0])
-                    if arg_i == True: #Print extra data
-                        for attr in entry[1]:
-                            print(attr+': '+entry[1][attr])
+        if len(args) == 0: #No filter or tags
             return APlist
-        elif len(arg_filter.split()) == 1: #Simple filter
-            if '=' in arg_filter:
-                if arg_filter.split('=')[0] == "location":
-                    toPrint = filter(lambda x: (arg_filter.split('=')[1] in x[1][arg_filter.split['='][0]]), APlist)
-                elif arg_filter.split('=')[0] == "name":
-                    toPrint = filter(lambda x: (x[0] == arg_filter.split('=')[1]), APlist)
+        elif len(args.split()) == 1: #Simple filter
+            if '=' in args:
+                if args.split('=')[0] == "location":
+                    toPrint = filter(lambda x: (args.split('=')[1] in x[1][args.split['='][0]]), APlist)
+                elif args.split('=')[0] == "name":
+                    toPrint = filter(lambda x: (x[0] == args.split('=')[1]), APlist)
                 else:
-                    toPrint = filter(lambda x: (x[1][arg_filter.split('=')[0]] == arg_filter.split('=')[1]), APlist)
-            elif '!' in arg_filter:
-                if arg_filter.split('!')[0] == "location":
-                    toPrint = filter(lambda x: (arg_filter.split('!')[1] not in x[1][arg_filter.split['!'][0]]), APlist)
-                elif arg_filter.split('!')[0] == "name":
-                    toPrint = filter(lambda x: (x[0] != arg_filter.split('!')[1]), APlist)
+                    toPrint = filter(lambda x: (x[1][args.split('=')[0]] == args.split('=')[1]), APlist)
+            elif '!' in args:
+                if args.split('!')[0] == "location":
+                    toPrint = filter(lambda x: (args.split('!')[1] not in x[1][args.split['!'][0]]), APlist)
+                elif args.split('!')[0] == "name":
+                    toPrint = filter(lambda x: (x[0] != args.split('!')[1]), APlist)
                 else:
-                    toPrint = filter(lambda x: (x[1][arg_filter.split('!')[0]] != arg_filter.split('!')[1]), APlist)
-            elif '<' in arg_filter:
-                toPrint = filter(lambda x: (float(x[1][arg_filter.split('<')[0]]) < float(arg_filter.split('<')[1])), APlist)
-            elif '>' in arg_filter:
-                toPrint = filter(lambda x: (float(x[1][arg_filter.split('>')[0]]) > float(arg_filter.split('>')[1])), APlist)
+                    toPrint = filter(lambda x: (x[1][args.split('!')[0]] != args.split('!')[1]), APlist)
+            elif '<' in args:
+                toPrint = filter(lambda x: (float(x[1][args.split('<')[0]]) < float(args.split('<')[1])), APlist)
+            elif '>' in args:
+                toPrint = filter(lambda x: (float(x[1][args.split('>')[0]]) > float(args.split('>')[1])), APlist)
             else:
                 print('Invalid command!')
-                return
-            if printScreen:
-                for entry in toPrint:
-                    print('\nName: '+entry[0])
-                    if arg_i == True: #Print extra data
-                        for attr in entry[1]:
-                            print(attr+': '+entry[1][attr])
+                return []
             return toPrint
         else: #parse the string (Format Example: "location=mcgill & firmware!2 & location=toronto")
-            op = arg_filter.split()
+            op = args.split()
             atom = op.pop(0)
             if '=' in atom:
                 if atom.split('=')[0] == "location":
@@ -104,7 +90,7 @@ class Client():
             while len(op) > 0:
                 if (len(op) % 2) != 0 or len(op[1]) == 1: #Incorrect amount of arguments
                     print('Insufficient number of arguments!')
-                    return
+                    return []
                 else:
                     atom = op.pop(1)
                     if '=' in atom:
@@ -126,23 +112,31 @@ class Client():
                         workinglist = self.intersection(workinglist, templist)
                     else:
                         print('Unexpected character!')
-                        return
-            if printScreen:
-                for entry in workinglist:
-                    print('\nName: '+entry[0])
-                    if arg_i == True: #Print extra data
-                        for attr in entry[1]:
-                            print(attr+': '+entry[1][attr])
+                        return []
             return workinglist
-    
+            
+    def ap_list(self, args):
+        arg_filter = args['filter'][0]
+        arg_i = args['i']
+        toPrint = self.ap_filter(arg_filter)
+        for entry in toPrint:
+            print('\nName: '+entry[0])
+            if arg_i == True: #Print extra data
+                for attr in entry[1]:
+                    print(attr+': '+entry[1][attr])
+
     def intersection(self, li1, li2): #for parsing and
         result = filter(lambda x: x in li1, li2)
         return result
     
     def ap_show(self, args):
         arg_name = args['ap-show'][0]
-        self.ap_list({'filter':'name='+arg_name, 'i':True})
-    
+        toPrint = self.ap_filter('name='+arg_name)
+        for entry in toPrint:
+            print('\nName: '+entry[0])
+            for attr in entry[1]:
+                print(attr+': '+entry[1][attr])
+
     def ap_slice_clone(self, args):
         arg_ap = args['ap']
         arg_slice = args['ap-slice-clone'][0]
@@ -161,7 +155,7 @@ class Client():
         else:
             arg_ap = None
         if 'filter' in args :
-            arg_filter = args['filter']
+            arg_filter = args['filter'][0]
         else:
             arg_filter = None
         if 'file' in args:
@@ -188,7 +182,7 @@ class Client():
         if arg_ap:
             data['list'] = arg_ap
         else: #We need to apply the filter
-            result = self.ap_list({'filter':arg_filter, 'i':False}, printScreen=False)
+            result = self.ap_filter(arg_filter)
             data['list'] = []
             for entry in result:
                 data['list'].append(entry[0])
@@ -398,9 +392,10 @@ class Client():
         
 #For Testing
 #Client().parseargs('ap-list', {'filter':['region=mcgill & number_radio<3 & version<1.1 & number_radio_free!2 & supported_protocol=a/b/g'], 'i':True})
+#Client().parseargs('ap-show', {'ap-show':['openflow3']})
 #Client().parseargs('ap-slice-list', {'filter':'physical_ap=openflowkevin & ap_slice_id=2 & project_id=2', 'i':True})
 #Client().parseargs('wnet-show', {'wnet-show':['wnet-2']},'savi')
 #Client().parseargs('wnet-remove-ap', {'wnet-remove-ap':['openflow'], 'slice':[1,2,3,4,5,6,7]})
 #Client().parseargs('ap-show', {'ap-show':['openflowkevin']})
-#Client().parseargs('ap-slice-create', {'filter':['region=mcgill & number_radio<2 & version<1.1 & number_radio_free!2 & supported_protocol=a/b/g'], 'file':['json/temp.json'], 'tag':['first']})
+Client().parseargs('ap-slice-create', {'filter':['region=mcgill & number_radio<2 & version<1.1 & number_radio_free!2 & supported_protocol=a/b/g'], 'file':['json/temp.json'], 'tag':['first']})
 #Client().parseargs('wnet-create', {'wnet-create':['newnet'], 'slice':['slice1', 'slice2'], 'qos_priority':[u'1'], 'aggregate_rate':['2'], 'shareable':False}, 'savi')
