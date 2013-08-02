@@ -157,8 +157,13 @@ class Database:
         """Returns a formatted string showing the slice contents."""
         return pprint.pformat(self.database[slice])
         
-    # TODO: Remove in production
-    def get_database(self):
-        """For debugging."""
+    def list_users(self):
+        return pprint.pformat(self.get_user_list())
+        
+    def list_users_full(self):
+        return pprint.pformat(self.user_id_data)
+        
+    def list_all(self):
         return pprint.pformat(self.database)
+        
         
