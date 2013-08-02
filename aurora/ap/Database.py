@@ -50,16 +50,50 @@ class Database:
     def reset_active_slice(self):
         """Set the active slice back to the default slice."""
         self.active_slice = self.DEFAULT_ACTIVE_SLICE
+        
+    def add_slice_to_user(self, user, slice):
+        """Add the given slice to the user, and create
+        the user if he does not exist.  Slices already
+        owned by the user are ignored."""
+        # Create user if necessary
+        if user not in self.user_id_data:
+            self.create_user(user)
+        # Do not append if already listed
+        if slice not in self.user_id_data[user]:
+            self.user_id_data[user].append(slice)
+        
+    def delete_slice_from_user(self, user, slice):
+        """Delete the slice from the user.  Will
+        silently ignore any errors such as the user not existing
+        or the user not owning the slice."""
+        # Ignore any errors when removing, as user/slice
+        # may no longer exist
+        try:
+            self.user_id_data[user].remove(slice)
+        except:
+            pass
+    
+    def create_user(self, user):
+        """Create the given user, but do nothing
+        if he already exists."""
+        # Don't want to overwrite existing user
+        if user not in self.user_id_data:
+            self.user_id_data[user] = []
+    
+    def delete_user(self, user):
+        """Delete the given user, and ignore any
+        errors such as the user not existing."""
+        # Ignore any errors deleting
+        try:
+            del self.user_id_data[user]
+        except:
+            pass
     
     def create_slice(self, slice, userid):
         """Create a new slice with a blank template."""
         # This is probably faster than using a template but having to do a deep copy
         self.database[slice] = { "VirtInterfaces": [], "VirtBridges": [] }
-        # Create user ID entry if it does not exist
-        if userid not in self.user_id_data:
-            self.user_id_data[userid] = [slice]
-        else:
-            self.user_id_data[userid].append(slice)
+        self.add_slice_to_user(userid, slice)
     
     def delete_slice(self, slice):
         """Delete a slice and all associated information."""
@@ -69,13 +103,8 @@ class Database:
             self.reset_active_slice()
         # Find any instances in user list
         for user in self.user_id_data:
-            # Trying to delete this slice from any user that does not have it
-            # will produce an error, which we ignore.
-            try:
-                self.user_id_data[user].remove(slice)
-            except ValueError:
-                pass
-        # TODO: Add cleanup function to delete empty users (is this necessary even?)
+            # Delete the slice
+            self.delete_slice_from_user(user, slice)
         
     def get_associated_slice(self, userid):
         """Returns a list of slices associated to the userid."""

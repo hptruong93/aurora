@@ -1,5 +1,7 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
-import VirtualBridges, VirtualInterfaces, exception, json, pprint, Database, atexit
+import VirtualBridges, VirtualInterfaces
+import exception, json, pprint, Database, atexit
+import Check
 class SliceAgent:
     """The Slice Agent is the high level interface to the creation,
     modification and deletion of slices."""
@@ -12,6 +14,7 @@ class SliceAgent:
         # Init sub classes
         self.v_bridges = VirtualBridges.VirtualBridges(self.database)
         self.v_interfaces = VirtualInterfaces.VirtualInterfaces(self.database)
+        self.check = Check.Check()
         
         atexit.register(self.__reset)
     
@@ -21,7 +24,6 @@ class SliceAgent:
         return json.load(JFILE)
     
     
-    # TODO: add JSON config checks
     def create_slice(self, slice, user, config):
         
         # Create datbase entry
@@ -48,7 +50,6 @@ class SliceAgent:
                 # Abort, delete
                 self.delete_slice(slice)
                 print("Aborting.\nBridge creation failed: " + bridge_name)
-                raise
             else:    
                 # Bridge created, now apply the settings
                 # Add ports
@@ -59,7 +60,6 @@ class SliceAgent:
                         # Abort, delete.
                         self.delete_slice(slice)
                         print("Aborting.\nError adding port " + port + " to bridge " + bridge_name)
-                        raise
                 
                 # Bridge settings
                 setting_list = bridges[1]['bridge_settings']
@@ -70,7 +70,6 @@ class SliceAgent:
                         # Abort, delete. Settings don't matter when deleting
                         self.delete_slice(slice)
                         print("Aborting.\nError applying setting " + setting + " to bridge " + bridge_name)
-                        raise
                     
                 # Port settings
                 for port in bridges[1]['port_settings']:
@@ -81,15 +80,13 @@ class SliceAgent:
                             # Abort, delete
                             self.delete_slice(slice)
                             print("Aborting.\nError applying setting " + setting + " to port " + port + " on bridge " + bridge_name)
-                            raise
                     
         self.database.reset_active_slice()        
         
-    # TODO: add JSON config checks
-    # This will delete a slice, and ignore any errors while doing so
-    # in case the slice has become corrupted.  We don't want to
-    # prevent the user from deleting if something went wrong
+
     def delete_slice(self, slice):
+        """Delete a given slice, and ignore any errors that occur in
+        the process in case a slice is corrupted."""
         
         try:
             slice_data = self.database.get_slice_data(slice)
@@ -104,14 +101,12 @@ class SliceAgent:
                     self.v_bridges.delete_bridge(bridge[1]['name'])
                 except:
                     print("Error: Unable to delete bridge " + bridge[1]['name'])
-                    raise
             # Delete all virtual interfaces
             for interface in slice_data['VirtInterfaces']:
                 try:
                     self.v_interfaces.delete(interface[1]['name'])
                 except:
                     print("Error: Unable to delete virtual interface " + interface[1]['name'])
-                    raise
                 
         # Delete database entry
         self.database.delete_slice(slice)
@@ -130,19 +125,14 @@ class SliceAgent:
         bridge modifications from the VirtualBridge module,
         with no support for port addition or deletion."""
         
-        # Check to make sure VirtBridges is the only entry
-        if not (len(config) == 1 and "VirtBridges" in config):
-            raise exception.InvalidConfig()
-        
         self.database.set_active_slice(slice)
         
         # Can do more than one bridge at once
-        for entry in config["VirtBridges"]:
-            data = config["VirtBridges"][1]
+        for data in config["VirtBridges"]:
             name = data["name"]
             # Bridge settings
             for setting in data["bridge_settings"]:
-                self.v_bridges.modify_bridge(name, setting, data["bridge_settings"][settiing])
+                self.v_bridges.modify_bridge(name, setting, data["bridge_settings"][setting])
             # Port settings
             for port in data["port_settings"]:
                 for port_setting in data["port_settings"][port]:  
@@ -161,34 +151,37 @@ class SliceAgent:
         you would format info like so:
         { "module" : "VirtInterfaces", "command" : "get_status", "args" : { "name" : "tap1"} }"""
         
+        
+        self.database.set_active_slice(slice)
         if info["module"] == "VirtInterfaces":
-            command = getattr(v_interfaces, info["command"])
+            command = getattr(self.v_interfaces, info["command"])
             command(**info["args"])
         elif info["module"] == "VirtBridges":
-            command = getattr(v_bridges, info["command"])
+            command = getattr(self.v_bridges, info["command"])
             command(**info["args"])
-        else:
-            raise exception.InvalidConfig("Module " + info["module"] " does not exist.")
+        
+        self.database.reset_active_slice()
         
     def load_mod_slice_info(self):
         return json.load(open('slice_info.json'))
     
-    def execute(self, slice, command, config=None):
+    def execute(self, slice, command, config=None, user="default_user"):
         # determine if create, delete or modify
+        # Run config check beforehand
         if command == "create_slice":
-            self.create_slice(slice, config)
+            self.check.create_slice_check(config)
+            self.create_slice(slice, user, config)
         elif command == "delete_slice":
             self.delete_slice(slice)
         elif command == "modify_slice":
+            self.check.modify_slice_check(config)
             self.modify_slice(slice, config)
         elif command == "remote_API":
+            self.check.remote_API_check(config)
             self.remote_API(slice, config)
         else:
             raise exception.CommandNotFound(command)
     
-    
-    def check_config(self, format, config):
-        pass
     
     def list_users(self):
         print(self.database.list_users())

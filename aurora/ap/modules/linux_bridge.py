@@ -125,7 +125,7 @@ class Brctl:
         # which produces a segmentation fault.  The command that does not return 
         # an error is setportprio BRIDGE PORT PRIO
         if command == "priority":
-            args = [ "setportprio", bridge, port, parameters["priority"] ]
+            args = [ "setportprio", bridge, port, parameters ]
         else:
             raise exception.CommandNotFound(command)
         
