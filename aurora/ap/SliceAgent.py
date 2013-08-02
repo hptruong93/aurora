@@ -190,11 +190,17 @@ class SliceAgent:
     def check_config(self, format, config):
         pass
     
+    def list_users(self):
+        print(self.database.list_users())
+    
+    def list_users_full(self):
+        print(self.database.list_users_full())
+    
     def list_all(self):
-        pprint.pprint(self.slice_database)
+        print(self.database.list_all())
     
     def list_slice(self, slice):
-        pprint.pprint(self.slice_database[slice])
+        print(self.database.list_slice_contents(slice))
         
     def __reset(self):
         # Clear out all slices
