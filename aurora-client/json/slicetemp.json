@@ -1,0 +1,70 @@
+{
+    "RadioInterfaces": [], 
+    "VirtualBridges": [
+        {
+            "attributes": {
+                "interfaces": [
+                    "p2"
+                ], 
+                "isVirtual": {
+                    "port1": {
+                        "p1": "p2"
+                    }
+                }, 
+                "name": "p1", 
+                "tunnel_tag": {
+                    "p3": "p4"
+                }
+            }, 
+            "flavor": "ovs"
+        }, 
+        {
+            "attributes": {
+                "interfaces": [
+                    "p11"
+                ], 
+                "isVirtual": {
+                    "port1": {
+                        "p16": "p17"
+                    }, 
+                    "port2": {
+                        "p18": "p19"
+                    }
+                }, 
+                "name": "p10", 
+                "tunnel_tag": {
+                    "p12": "p13", 
+                    "p14": "p15"
+                }
+            }, 
+            "flavor": "linux_bridge"
+        }
+    ], 
+    "VirtualInterfaces": [
+        {
+            "attributes": {
+                "attach_to": "p1", 
+                "name": "p2"
+            }, 
+            "flavor": "veth"
+        }, 
+        {
+            "attributes": {
+                "attach_to": "p1", 
+                "forward_to": "p2", 
+                "isVirtual": "p5", 
+                "name": "p3", 
+                "tunnel_tag": "p4"
+            }, 
+            "flavor": "capsulator"
+        }
+    ], 
+    "ap_slice_id": 1, 
+    "ap_slice_tags": "first second", 
+    "firmware": "openwrt", 
+    "physical_ap": "openflowkevin", 
+    "project_id": 1, 
+    "slice_qos_aggregate_rate": "2", 
+    "slice_qos_priority": "1", 
+    "tenant_id": 1
+}

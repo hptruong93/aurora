@@ -1,0 +1,20 @@
+{
+  "VirtualInterfaces":
+  {
+      "veth": {
+        "class": "Veth"
+      },
+      "capsulator": {
+        "class": "Capsulator"
+      }
+  },
+  "VirtualBridges" :
+  {
+      "linux_bridge": {
+        "class": "Brctl"
+      },
+      "ovs": {
+        "class": "OpenVSwitch"
+      }
+  }
+}
