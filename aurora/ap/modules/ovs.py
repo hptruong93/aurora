@@ -129,7 +129,7 @@ class OpenVSwitch:
                 
         elif command == "dpid":
             # Ignore if none specified
-            if parameters = None:
+            if parameters == None:
                 args = [ "set", "Bridge", bridge, "other_config:datapath-id=0" ]
             else:
                 args = [ "set", "Bridge", bridge, "other_config:datapath-id=" + parameters ]
