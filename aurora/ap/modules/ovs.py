@@ -126,6 +126,13 @@ class OpenVSwitch:
                 parameters = "0.0.0.0"
             else:
                 args = [ "ifconfig", bridge, parameters ]
+                
+        elif command == "dpid":
+            # Ignore if none specified
+            if parameters = None:
+                args = [ "set", "Bridge", bridge, "other_config:datapath-id=0" ]
+            else:
+                args = [ "set", "Bridge", bridge, "other_config:datapath-id=" + parameters ]
         else:
             raise exception.CommandNotFound(command)
             
