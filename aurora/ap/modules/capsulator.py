@@ -33,6 +33,10 @@ class Capsulator:
         else:
             command = ["capsulator","-t", attach_to, "-f", forward_to, "-b", name + "#" + tunnel_tag]
        
+        # Make sure capsulator with that name is not already running
+        if name in self.process_list:
+            raise exception.NameAlreadyInUse("Capsulator already running with " + name)
+       
         # Launch process
         process = subprocess.Popen(command)
         
@@ -61,6 +65,7 @@ class Capsulator:
                 # Sleep for 1 second; should be enough
                 # Unfortunately, there is no known better way
                 time.sleep(1)
+        
         
         self.process_list[name] = process
         

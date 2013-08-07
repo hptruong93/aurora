@@ -86,6 +86,7 @@ class Brctl:
         bridge_priority         priority
         stp                     setting (string "on" or "off")"""
         
+        brctl_command = True
         if command == "ageing":
             args = [ "setageing", bridge, parameters ]
         elif command == "forward_delay":
@@ -98,10 +99,22 @@ class Brctl:
             args = [ "setbridgeprio", bridge, parameters ]
         elif command == "stp":
             args = [ "stp", bridge, parameters ]
+        elif command == "ip":
+            brctl_command = False
+            if (parameters == None or parameters == "0.0.0.0" or parameters == "0"):
+                args = [ "ifconfig", bridge, "0.0.0.0" ]
+                parameters = "0.0.0.0"
+            else:
+                args = [ "ifconfig", bridge, parameters ]
         else:
             raise exception.CommandNotFound(command)
         
-        self.__exec_command(args)
+        
+        if brctl_command:
+            self.__exec_command(args)
+        else:
+            subprocess.check_call(args)
+        
         # Update database
         data_update = [ command, parameters ]
         entry = self.database.get_entry("VirtBridges", bridge)

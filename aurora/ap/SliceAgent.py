@@ -26,6 +26,10 @@ class SliceAgent:
     
     def create_slice(self, slice, user, config):
         
+        # Make sure slice does not already exist
+        if slice in self.database.get_slice_list():
+            raise exception.SliceCreationFailed("Slice " + slice  + " already exists!")
+        
         # Create datbase entry
         self.database.create_slice(slice, user)
         self.database.set_active_slice(slice)
@@ -39,7 +43,7 @@ class SliceAgent:
                 # Abort, delete
                 self.delete_slice(slice)
                 print("Aborting.\nVirtual Interface creation failed: " + interfaces[1]["name"])
-                raise
+                raise exception.SliceCreationFailed("Unable to create Virtual Interfaces")
                 
         # Create all virtual bridges
         for bridges in config['VirtBridges']:
@@ -50,6 +54,7 @@ class SliceAgent:
                 # Abort, delete
                 self.delete_slice(slice)
                 print("Aborting.\nBridge creation failed: " + bridge_name)
+                raise exception.SliceCreationFailed("Unable to create Virtual Bridges")
             else:    
                 # Bridge created, now apply the settings
                 # Add ports
@@ -60,6 +65,7 @@ class SliceAgent:
                         # Abort, delete.
                         self.delete_slice(slice)
                         print("Aborting.\nError adding port " + port + " to bridge " + bridge_name)
+                        raise exception.SliceCreationFailed("Unable to add ports to Virtual Bridges")
                 
                 # Bridge settings
                 setting_list = bridges[1]['bridge_settings']
@@ -70,6 +76,7 @@ class SliceAgent:
                         # Abort, delete. Settings don't matter when deleting
                         self.delete_slice(slice)
                         print("Aborting.\nError applying setting " + setting + " to bridge " + bridge_name)
+                        raise exception.SliceCreationFailed("Unable to apply bridge settings")
                     
                 # Port settings
                 for port in bridges[1]['port_settings']:
@@ -80,6 +87,7 @@ class SliceAgent:
                             # Abort, delete
                             self.delete_slice(slice)
                             print("Aborting.\nError applying setting " + setting + " to port " + port + " on bridge " + bridge_name)
+                            raise exception.SliceCreationFailed("Unable to apply port settings")
                     
         self.database.reset_active_slice()        
         
@@ -108,8 +116,11 @@ class SliceAgent:
                 except:
                     print("Error: Unable to delete virtual interface " + interface[1]['name'])
                 
-        # Delete database entry
-        self.database.delete_slice(slice)
+        # Delete database entry; catch errors
+        try:
+            self.database.delete_slice(slice)
+        except:
+            pass
         self.database.reset_active_slice()
             
     
@@ -117,8 +128,9 @@ class SliceAgent:
         """The modify slice command will execute modify
         functions on various modules.  It will only execute commands
         that are not destructive or represent a significant
-        topology change.  These include, but are not limited to,
-        creating/deleting virtual interfaces, virtual bridges, or
+        topology change.  Commands not allowed
+        include, but are not limited to, creating/deleting 
+        virtual interfaces, virtual bridges, or
         adding/deleting ports from bridges.
         
         At this time, this restricts the commands to port and 
@@ -127,16 +139,15 @@ class SliceAgent:
         
         self.database.set_active_slice(slice)
         
-        # Can do more than one bridge at once
-        for data in config["VirtBridges"]:
-            name = data["name"]
-            # Bridge settings
-            for setting in data["bridge_settings"]:
-                self.v_bridges.modify_bridge(name, setting, data["bridge_settings"][setting])
-            # Port settings
-            for port in data["port_settings"]:
-                for port_setting in data["port_settings"][port]:  
-                    self.v_bridges.modify_port(name, port, port_setting, data["port_settings"][port][port_setting])
+        data = config["VirtBridges"]
+        name = data["name"]
+        # Bridge settings
+        for setting in data["bridge_settings"]:
+            self.v_bridges.modify_bridge(name, setting, data["bridge_settings"][setting])
+        # Port settings
+        for port in data["port_settings"]:
+            for port_setting in data["port_settings"][port]:  
+                self.v_bridges.modify_port(name, port, port_setting, data["port_settings"][port][port_setting])
     
         self.database.reset_active_slice()
         

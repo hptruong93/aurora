@@ -103,28 +103,39 @@ class OpenVSwitch:
         controller      controller*
         fail_mode       mode*"""
         
+        # By default, ovs command
+        ovs_command = True
         
         # Find command, and format as appropriate
         if command == "controller":
             # Check if controller = 0.0.0.0, 0, None or 0 -> no controller
             if (parameters == None or  parameters == "0.0.0.0" or parameters == 0 or parameters == "0" ):
                 args = [ "del-controller", bridge ]
-                data_update = [ command, "0.0.0.0" ]
+                parameters = "0.0.0.0"
             else:
                 args = [ "set-controller", bridge, parameters ]
-                data_update = [ command, parameters ]
         elif command == "fail_mode":
             if (parameters == None):
                 args = [ "del-fail-mode", bridge ]
-                data_update = [ command, parameters ]
             else:
                 args = [ "set-fail-mode", bridge, parameters ]
-                data_update = [ command, parameters ]
+        elif command == "ip":
+            ovs_command = False
+            if (parameters == None or parameters == "0.0.0.0" or parameters == "0"):
+                args = [ "ifconfig", bridge, "0.0.0.0" ]
+                parameters = "0.0.0.0"
+            else:
+                args = [ "ifconfig", bridge, parameters ]
         else:
             raise exception.CommandNotFound(command)
             
-        self.__exec_command(args)
+        if ovs_command:
+            self.__exec_command(args)
+        else:
+            subprocess.check_call(args)
+        
         # Update database
+        data_update = [ command, parameters ]
         entry = self.database.get_entry("VirtBridges", bridge)
         entry[1]["bridge_settings"][data_update[0]] = data_update[1]
     
