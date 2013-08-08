@@ -19,8 +19,8 @@ class SliceAgent:
         atexit.register(self.__reset)
     
     # TODO: remove this when done testing
-    def load_json(self):
-        JFILE = open('ap.json')
+    def load_json(self,filename):
+        JFILE = open(filename)
         return json.load(JFILE)
     
     
