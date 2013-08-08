@@ -4,13 +4,17 @@
 import sys
 import pika
 import json
+import SliceAgent
 
 class Receive():
     def __init__(self):
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        self.channel = self.connection.channel()
-        self.channel.queue_declare(queue='task_queue', durable=True)
+        self.agent = SliceAgent.SliceAgent()
+        self.connection = pika.SelectConnection(pika.ConnectionParameters(host='10.5.8.18'))
+        self.channel = self.connection.channel(None)
+        self.channel.queue_declare(self.receive,queue='task_queue', durable=True)
         
+    def declare_queue(channel)    
+    
     def receive(self):
         print ' [*] Waiting for messages. To exit press CTRL+C'
         self.channel.basic_qos(prefetch_count=1)
@@ -19,11 +23,15 @@ class Receive():
     
     def callback(self, ch, method, properties, body):
         print " [x] Received %r" % (body,)
-        message = json.loads(body) #THIS IS THE RECEIVED JSON FILE LOADED INTO MEMORY
+        message = json.loads(body) #Received JSON
         
-        if message['command'] == 'delete_slice':
-            
-        print " [x] Done"
+        try:
+            self.agent.execute(**message)
+        except:
+            # In the future, we will return an error message
+            pass
+        print " [x] Command executed"
         ch.basic_ack(delivery_tag = method.delivery_tag)
         
-JSONReceive().receive()
+Receive()
+raw_input("Press a key to terminate...")

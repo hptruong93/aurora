@@ -7,7 +7,7 @@ import json
 
 class JSONSend():
     def __init__(self):
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='10.5.8.18'))
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue='task_queue', durable=True)
         try:
