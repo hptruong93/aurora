@@ -1,0 +1,40 @@
+{
+    "slice":"slice_test",
+    "command":"create_slice",
+    "user":"testuser",
+    "config":
+    {
+        "VirtInterfaces": [
+            [
+                "capsulator",
+                {
+                    "attach_to":"eth0",
+                    "forward_to":"10.5.8.1",
+                    "name":"test-tap0",
+                    "tunnel_tag":"99",
+                    "is_virtual":true
+                }
+            ],
+            [
+                "veth",
+                {
+                    "attach_to":"wlan0",
+                    "name":"vwlan0"
+                }
+            ]
+        ],
+        "VirtBridges": [
+            [
+                "ovs",
+                {
+                    "name":"ovs-test",
+                    "interfaces": 
+                        ["test-tap0","vwlan0"],
+                    "bridge_settings":{"controller":"tcp:10.5.8.1","dpid":"0000000000099999"},
+                    "port_settings":{}
+                }
+            ]
+        ]
+    }
+}
+
