@@ -38,12 +38,14 @@ class Receive():
         
         try:
             self.agent.execute(**message)
-        except:
-            # In the future, we will return an error message
-            pass
-        print " [x] Command executed"
-        self.channel.basic_ack(delivery_tag = method.delivery_tag)
-
+            
+        except Exception as e:
+            self.channel.basic_publish(exchange='', routing_key=header.reply_to, properties=pika.BasicProperties(correlation_id = header.correlation_id), body="Error: " + str(e))
+            self.channel.basic_ack(delivery_tag = method.delivery_tag)
+        else:
+            self.channel.basic_publish(exchange='', routing_key=header.reply_to, properties=pika.BasicProperties(correlation_id = header.correlation_id), body="OK")
+            self.channel.basic_ack(delivery_tag = method.delivery_tag)
+            print " [x] Command executed"
         
 if __name__ == '__main__':
     # AP Number
