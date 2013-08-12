@@ -9,7 +9,8 @@ class Receive():
         self.queue = queue
         
         # Connect to RabbitMQ
-        self.parameters = pika.ConnectionParameters(host='10.5.8.18')
+        credentials = pika.PlainCredentials('access_point', 'let_me_in')
+        self.parameters = pika.ConnectionParameters(host='10.5.8.18', credentials=credentials)
         self.connection = pika.SelectConnection(self.parameters, self.on_connected)
         
     # Step #2
@@ -40,7 +41,7 @@ class Receive():
             self.agent.execute(**message)
             
         except Exception as e:
-            self.channel.basic_publish(exchange='', routing_key=header.reply_to, properties=pika.BasicProperties(correlation_id = header.correlation_id), body="Error: " + str(e))
+            self.channel.basic_publish(exchange='', routing_key=header.reply_to, properties=pika.BasicProperties(correlation_id = header.correlation_id), body="Error: " + str(type(e)) + " " + str(e) )
             self.channel.basic_ack(delivery_tag = method.delivery_tag)
         else:
             self.channel.basic_publish(exchange='', routing_key=header.reply_to, properties=pika.BasicProperties(correlation_id = header.correlation_id), body="OK")
@@ -49,6 +50,8 @@ class Receive():
         
 if __name__ == '__main__':
     # AP Number
+    if len(sys.argv) != 2:
+        raise Exception("Only the AP identifier argument is accepted.")
     number = sys.argv[1]
     if number == "1":
         queue = "ap1"
@@ -59,8 +62,9 @@ if __name__ == '__main__':
     elif number == 'test':
         queue = 'test'
     else:
-        raise Exception("Invalid AP Number argument")
+        raise Exception("AP identifier specified is not valid.")
     
+    # Start listening for replies.  This also establishes the connection and queue
     receiver = Receive(queue)
     listener = threading.Thread(target=receiver.connection.ioloop.start)
     listener.start()

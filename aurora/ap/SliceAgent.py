@@ -42,8 +42,7 @@ class SliceAgent:
             except:
                 # Abort, delete
                 self.delete_slice(slice)
-                print("Aborting.\nVirtual Interface creation failed: " + interfaces[1]["name"])
-                raise exception.SliceCreationFailed("Unable to create Virtual Interfaces")
+                raise exception.SliceCreationFailed("Aborting.\nVirtual Interface creation failed: " + interfaces[1]["name"])
                 
         # Create all virtual bridges
         for bridges in config['VirtBridges']:
@@ -53,8 +52,7 @@ class SliceAgent:
             except:
                 # Abort, delete
                 self.delete_slice(slice)
-                print("Aborting.\nBridge creation failed: " + bridge_name)
-                raise exception.SliceCreationFailed("Unable to create Virtual Bridges")
+                raise exception.SliceCreationFailed("Aborting.\nBridge creation failed: " + bridge_name)
             else:    
                 # Bridge created, now apply the settings
                 # Add ports
@@ -64,8 +62,7 @@ class SliceAgent:
                     except:
                         # Abort, delete.
                         self.delete_slice(slice)
-                        print("Aborting.\nError adding port " + port + " to bridge " + bridge_name)
-                        raise exception.SliceCreationFailed("Unable to add ports to Virtual Bridges")
+                        raise exception.SliceCreationFailed("Aborting.\nError adding port " + port + " to bridge " + bridge_name)
                 
                 # Bridge settings
                 setting_list = bridges[1]['bridge_settings']
@@ -75,8 +72,7 @@ class SliceAgent:
                     except:
                         # Abort, delete. Settings don't matter when deleting
                         self.delete_slice(slice)
-                        print("Aborting.\nError applying setting " + setting + " to bridge " + bridge_name)
-                        raise exception.SliceCreationFailed("Unable to apply bridge settings")
+                        raise exception.SliceCreationFailed("Aborting.\nError applying setting " + setting + " to bridge " + bridge_name)
                     
                 # Port settings
                 for port in bridges[1]['port_settings']:
@@ -86,8 +82,7 @@ class SliceAgent:
                         except:
                             # Abort, delete
                             self.delete_slice(slice)
-                            print("Aborting.\nError applying setting " + setting + " to port " + port + " on bridge " + bridge_name)
-                            raise exception.SliceCreationFailed("Unable to apply port settings")
+                            raise exception.SliceCreationFailed("Aborting.\nError applying setting " + setting + " to port " + port + " on bridge " + bridge_name)
                     
         self.database.reset_active_slice()        
         
