@@ -1,4 +1,3 @@
-# Test Class for JSON message passing (SEND)
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
 import sys, uuid
@@ -57,10 +56,11 @@ class Send(object):
             duration = datetime.datetime.now() - start_time
             print("Response received in " + str(duration.microseconds) + " us")
             # Display message to user
-            if self.response.startswith('OK'):
-                print("Request completed successfully.")
+            response_decoded = json.loads(self.response)
+            if response_decoded['successful']:
+                print("Command successful; returned\n" + str(response_decoded['message']))
             else:
-                print(self.response)
+                print("Error: " + str(response_decoded['message']))
             
 
 

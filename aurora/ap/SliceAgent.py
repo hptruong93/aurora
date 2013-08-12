@@ -18,11 +18,6 @@ class SliceAgent:
         
         atexit.register(self.__reset)
     
-    # TODO: remove this when done testing
-    def load_json(self,filename):
-        JFILE = open(filename)
-        return json.load(JFILE)
-    
     
     def create_slice(self, slice, user, config):
         
@@ -149,10 +144,10 @@ class SliceAgent:
     def remote_API(self, slice, info):
         """The remote API command accepts a specially formatted JSON
         file containing a number of fields:
-        1. module : either VirtBridges or VirtInterfaces
+        1. module : either VirtBridges, VirtInterfaces or Database
         2. command : the command to execute
         3. args : a dictionary containing named arguments
-        appropriate to the command.
+        appropriate to the command (may be optional)
         For example, to execute the command get_status(tap1) in VirtualInterfaces,
         you would format info like so:
         { "module" : "VirtInterfaces", "command" : "get_status", "args" : { "name" : "tap1"} }"""
@@ -161,15 +156,18 @@ class SliceAgent:
         self.database.set_active_slice(slice)
         if info["module"] == "VirtInterfaces":
             command = getattr(self.v_interfaces, info["command"])
-            command(**info["args"])
         elif info["module"] == "VirtBridges":
             command = getattr(self.v_bridges, info["command"])
-            command(**info["args"])
+        elif info["module"] == "Database":
+            command = getattr(self.database, info["command"])
+        
+        # This won't cause any 'undefined variable' issues
+        # since the JSON is verified to satisfy one of 
+        # the three above if statements earlier
+        return command(**info["args"])
         
         self.database.reset_active_slice()
         
-    def load_mod_slice_info(self):
-        return json.load(open('slice_info.json'))
     
     def execute(self, slice, command, config=None, user="default_user"):
         # determine if create, delete or modify
@@ -184,7 +182,8 @@ class SliceAgent:
             self.modify_slice(slice, config)
         elif command == "remote_API":
             self.check.remote_API_check(config)
-            self.remote_API(slice, config)
+            # Only the remote API can return data
+            return self.remote_API(slice, config)
         else:
             raise exception.CommandNotFound(command)
     

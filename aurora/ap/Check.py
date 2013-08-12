@@ -45,7 +45,7 @@ class Check:
         # If no argument specified, create blank one
         if not "args" in config:
             config["args"] = {}
-        # Check module field - must be bridge or interface
-        if not (config["module"] == "VirtInterfaces" or config["module"] == "VirtBridges"):
-            raise exception.InvalidConfig("Module field must be either VirtInterfaces or VirtBridges.")
+        # Check module field - must be bridge or interface or database
+        if not (config["module"] == "VirtInterfaces" or config["module"] == "VirtBridges" or config["module"] == "Database" ):
+            raise exception.InvalidConfig("Module field must be either VirtInterfaces, VirtBridges or Database")
 

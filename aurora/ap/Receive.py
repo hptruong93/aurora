@@ -34,18 +34,40 @@ class Receive():
     # Step #5
     def handle_delivery(self, channel, method, header, body):
         """Called when we receive a message from RabbitMQ"""
+        
         print " [x] Received %r" % (body,)
         message = json.loads(body) #Received JSON
         
+        # Prepare JSON data to return
+        data_for_sender = { 'successful' : False, 'message' : None }
+        # Execute the command specified
         try:
-            self.agent.execute(**message)
-            
+            return_data = self.agent.execute(**message)
+        
+        # If there is an error, let the sender know    
         except Exception as e:
-            self.channel.basic_publish(exchange='', routing_key=header.reply_to, properties=pika.BasicProperties(correlation_id = header.correlation_id), body="Error: " + str(type(e)) + " " + str(e) )
+            
+            # Finalize message and convert to JSON
+            data_for_sender['message'] = str(type(e)) + " " + str(e)
+            data_for_sender = json.dumps(data_for_sender)
+            # Send response and acknowledge the original message
+            self.channel.basic_publish(exchange='', routing_key=header.reply_to, properties=pika.BasicProperties(correlation_id = header.correlation_id, content_type="application/json"), body=data_for_sender )
             self.channel.basic_ack(delivery_tag = method.delivery_tag)
+            
+            print " [x] Error; command failed"
+        
+        # No error, we (may) return data
         else:
-            self.channel.basic_publish(exchange='', routing_key=header.reply_to, properties=pika.BasicProperties(correlation_id = header.correlation_id), body="OK")
+            
+            # Finalize message and convert to JSON
+            data_for_sender['successful'] = True
+            data_for_sender['message'] = return_data
+            data_for_sender = json.dumps(data_for_sender)
+            
+            # Send response and acknowledge the original message
+            self.channel.basic_publish(exchange='', routing_key=header.reply_to, properties=pika.BasicProperties(correlation_id = header.correlation_id, content_type="application/json"), body=data_for_sender )
             self.channel.basic_ack(delivery_tag = method.delivery_tag)
+            
             print " [x] Command executed"
         
 if __name__ == '__main__':
