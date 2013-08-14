@@ -1,6 +1,6 @@
 {
   "default_slice": {
-    "VirtInterfaces": [],
-    "VirtBridges": []
+    "VirtualInterfaces": [],
+    "VirtualBridges": []
   }
 }

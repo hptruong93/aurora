@@ -31,19 +31,19 @@ class SliceAgent:
         
         # Parse config
         # Create all virtual interfaces
-        for interfaces in config['VirtInterfaces']:
+        for interfaces in config['VirtualInterfaces']:
             try:
-                self.v_interfaces.create(interfaces[0], interfaces[1])
+                self.v_interfaces.create(interfaces["flavor"], interfaces["attributes"])
             except:
                 # Abort, delete
                 self.delete_slice(slice)
-                raise exception.SliceCreationFailed("Aborting.\nVirtual Interface creation failed: " + interfaces[1]["name"])
+                raise exception.SliceCreationFailed("Aborting.\nVirtual Interface creation failed: " + interfaces['attributes']['name'])
                 
         # Create all virtual bridges
-        for bridges in config['VirtBridges']:
-            bridge_name = bridges[1]['name']
+        for bridges in config['VirtualBridges']:
+            bridge_name = bridges['attributes']['name']
             try:
-                self.v_bridges.create_bridge(bridges[0], bridge_name)
+                self.v_bridges.create_bridge(bridges['flavor'], bridge_name)
             except:
                 # Abort, delete
                 self.delete_slice(slice)
@@ -51,7 +51,7 @@ class SliceAgent:
             else:    
                 # Bridge created, now apply the settings
                 # Add ports
-                for port in bridges[1]['interfaces']:
+                for port in bridges['attributes']['interfaces']:
                     try:
                         self.v_bridges.add_port_to_bridge(bridge_name, port)
                     except:
@@ -60,7 +60,7 @@ class SliceAgent:
                         raise exception.SliceCreationFailed("Aborting.\nError adding port " + port + " to bridge " + bridge_name)
                 
                 # Bridge settings
-                setting_list = bridges[1]['bridge_settings']
+                setting_list = bridges['attributes']['bridge_settings']
                 for setting in setting_list:
                     try:
                         self.v_bridges.modify_bridge(bridge_name, setting, setting_list[setting])
@@ -70,10 +70,10 @@ class SliceAgent:
                         raise exception.SliceCreationFailed("Aborting.\nError applying setting " + setting + " to bridge " + bridge_name)
                     
                 # Port settings
-                for port in bridges[1]['port_settings']:
-                    for setting in bridges[1]['port_settings'][port]:
+                for port in bridges['attributes']['port_settings']:
+                    for setting in bridges['attributes']['port_settings'][port]:
                         try:
-                            self.v_bridges.modify_port(bridge_name, port, setting, port[setting])
+                            self.v_bridges.modify_port(bridge_name, port, setting, bridges['attributes']['port_settings'][port][setting])
                         except:
                             # Abort, delete
                             self.delete_slice(slice)
@@ -94,17 +94,17 @@ class SliceAgent:
             pass
         else:   
             # Delete all bridges
-            for bridge in slice_data['VirtBridges']:
+            for bridge in slice_data['VirtualBridges']:
                 try:
-                    self.v_bridges.delete_bridge(bridge[1]['name'])
+                    self.v_bridges.delete_bridge(bridge['attributes']['name'])
                 except:
-                    print("Error: Unable to delete bridge " + bridge[1]['name'])
+                    print("Error: Unable to delete bridge " + bridge['attributes']['name'])
             # Delete all virtual interfaces
-            for interface in slice_data['VirtInterfaces']:
+            for interface in slice_data['VirtualInterfaces']:
                 try:
-                    self.v_interfaces.delete(interface[1]['name'])
+                    self.v_interfaces.delete(interface['attributes']['name'])
                 except:
-                    print("Error: Unable to delete virtual interface " + interface[1]['name'])
+                    print("Error: Unable to delete virtual interface " + interface['attributes']['name'])
                 
         # Delete database entry; catch errors
         try:
@@ -129,7 +129,7 @@ class SliceAgent:
         
         self.database.set_active_slice(slice)
         
-        data = config["VirtBridges"]
+        data = config["VirtualBridges"]
         name = data["name"]
         # Bridge settings
         for setting in data["bridge_settings"]:
@@ -144,19 +144,19 @@ class SliceAgent:
     def remote_API(self, slice, info):
         """The remote API command accepts a specially formatted JSON
         file containing a number of fields:
-        1. module : either VirtBridges, VirtInterfaces or Database
+        1. module : either VirtualBridges, VirtualInterfaces or Database
         2. command : the command to execute
         3. args : a dictionary containing named arguments
         appropriate to the command (may be optional)
         For example, to execute the command get_status(tap1) in VirtualInterfaces,
         you would format info like so:
-        { "module" : "VirtInterfaces", "command" : "get_status", "args" : { "name" : "tap1"} }"""
+        { "module" : "VirtualInterfaces", "command" : "get_status", "args" : { "name" : "tap1"} }"""
         
         
         self.database.set_active_slice(slice)
-        if info["module"] == "VirtInterfaces":
+        if info["module"] == "VirtualInterfaces":
             command = getattr(self.v_interfaces, info["command"])
-        elif info["module"] == "VirtBridges":
+        elif info["module"] == "VirtualBridges":
             command = getattr(self.v_bridges, info["command"])
         elif info["module"] == "Database":
             command = getattr(self.database, info["command"])

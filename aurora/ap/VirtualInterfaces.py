@@ -88,7 +88,7 @@ class VirtualInterfaces:
         """Change the parameters of a given interface."""
         # Get existing entry and flavour
         entry = self.__get_entry(name)
-        flavour = entry[0]
+        flavour = entry["flavor"]
         
         # Delete it, restart with new args
         self.delete(name)
@@ -98,7 +98,7 @@ class VirtualInterfaces:
         """Delete a given interface."""
         
         entry = self.__get_entry(name)
-        flavour = entry[0]
+        flavour = entry["flavor"]
         # Module should already be loaded
         manager = self.__get_module(flavour)
         manager.stop(name)
@@ -107,7 +107,7 @@ class VirtualInterfaces:
     def get_status(self, name):
         """Returns whether or not a given instance is running."""
         # Get flavour -> get the associated module -> get status
-        return self.module_list[self.__get_entry(name)[0]].status(name)
+        return self.module_list[self.__get_entry(name)["flavor"]].status(name)
     
     def check_interface(self, name):
         """Checks to see if an instance has died, and removes it if so."""
@@ -121,13 +121,13 @@ class VirtualInterfaces:
                 self.__del_entry(name)
     
     def __add_entry(self, flavour, arguments):
-        self.database.add_entry("VirtInterfaces", flavour, arguments)
+        self.database.add_entry("VirtualInterfaces", flavour, arguments)
     
     def __get_entry(self, name):
-        return self.database.get_entry("VirtInterfaces", name)
+        return self.database.get_entry("VirtualInterfaces", name)
     
     def __del_entry(self, name):
-        self.database.delete_entry("VirtInterfaces", name)
+        self.database.delete_entry("VirtualInterfaces", name)
         
     def reset(self):
         """Deletes any running virtual interfaces."""

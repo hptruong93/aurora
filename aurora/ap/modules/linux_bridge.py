@@ -44,7 +44,7 @@ class Brctl:
         self.__exec_command(["addbr",name])
         # Bring bridge up
         subprocess.check_call(["ifconfig", name, "up"])
-        self.database.add_entry("VirtBridges", "linux_bridge", { "name" : name, "interfaces" : [], "bridge_settings" : {}, "port_settings" : {} })
+        self.database.add_entry("VirtualBridges", "linux_bridge", { "name" : name, "interfaces" : [], "bridge_settings" : {}, "port_settings" : {} })
     
     def delete_bridge(self,name):
         """Delete a bridge with the given name."""
@@ -52,21 +52,21 @@ class Brctl:
         # Ignoring any errors for ifconfig
         subprocess.call(["ifconfig", name, "down"])
         self.__exec_command(["delbr",name])
-        self.database.delete_entry("VirtBridges", name)
+        self.database.delete_entry("VirtualBridges", name)
         
     def add_port(self, bridge, interface):
         """Add a port to the given bridge."""
         self.__exec_command(["addif", bridge, interface])
-        entry = self.database.get_entry("VirtBridges", bridge)
-        entry[1]["interfaces"].append(interface)
-        entry[1]["port_settings"][interface] = {}
+        entry = self.database.get_entry("VirtualBridges", bridge)
+        entry["attributes"]["interfaces"].append(interface)
+        entry["attributes"]["port_settings"][interface] = {}
     
     def delete_port(self, bridge, interface):
         """Delete a port from the given bridge."""
         self.__exec_command(["delif", bridge, interface])
-        entry = self.database.get_entry("VirtBridges", bridge)
-        entry[1]["interfaces"].remove(interface)
-        del entry[1]["port_settings"][interface]
+        entry = self.database.get_entry("VirtualBridges", bridge)
+        entry["attributes"]["interfaces"].remove(interface)
+        del entry["attributes"]["port_settings"][interface]
 
     def modify_bridge(self, bridge, command, parameters=None):
         """Modifies a given bridge with the specified command and parameters.
@@ -117,8 +117,8 @@ class Brctl:
         
         # Update database
         data_update = [ command, parameters ]
-        entry = self.database.get_entry("VirtBridges", bridge)
-        entry[1]["bridge_settings"][data_update[0]] = data_update[1]
+        entry = self.database.get_entry("VirtualBridges", bridge)
+        entry["attributes"]["bridge_settings"][data_update[0]] = data_update[1]
         
     def modify_port(self, bridge, port, command, parameters=None):
         """Modifies a given bridge port with the specified command and parameters.
@@ -145,8 +145,8 @@ class Brctl:
         self.__exec_command(args)
         # Update database
         data_update = [ command, parameters ]
-        entry = self.database.get_entry("VirtBridges", bridge)
-        entry[1]["port_settings"][port][data_update[0]] = data_update[1]
+        entry = self.database.get_entry("VirtualBridges", bridge)
+        entry["attributes"]["port_settings"][port][data_update[0]] = data_update[1]
         
     def show(self):
         """Returns the output of the show command as a byte string."""

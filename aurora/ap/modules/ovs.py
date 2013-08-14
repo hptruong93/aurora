@@ -82,12 +82,12 @@ class OpenVSwitch:
         # Bring bridge up
         subprocess.check_call(["ifconfig", bridge, "up"])
         
-        self.database.add_entry("VirtBridges", "ovs", { "name" : bridge, "interfaces" : [], "bridge_settings" : {}, "port_settings" : {} })
+        self.database.add_entry("VirtualBridges", "ovs", { "name" : bridge, "interfaces" : [], "bridge_settings" : {}, "port_settings" : {} })
     
     def delete_bridge(self, bridge):
         """Delete a bridge with the given name."""
         self.__exec_command(["del-br", bridge])
-        self.database.delete_entry("VirtBridges", bridge)
+        self.database.delete_entry("VirtualBridges", bridge)
     
     def modify_bridge(self, bridge, command, parameters=None):
         """Modifies a given bridge with the specified command and parameters.
@@ -143,20 +143,20 @@ class OpenVSwitch:
         
         # Update database
         data_update = [ command, parameters ]
-        entry = self.database.get_entry("VirtBridges", bridge)
-        entry[1]["bridge_settings"][data_update[0]] = data_update[1]
+        entry = self.database.get_entry("VirtualBridges", bridge)
+        entry["attributes"]["bridge_settings"][data_update[0]] = data_update[1]
     
     def add_port(self, bridge, port):
         """Add a port to the given bridge."""
         self.__exec_command(["add-port", bridge, port])
-        entry = self.database.get_entry("VirtBridges", bridge)
-        entry[1]["interfaces"].append(port)
+        entry = self.database.get_entry("VirtualBridges", bridge)
+        entry["attributes"]["interfaces"].append(port)
     
     def delete_port(self, bridge, port):
         """Delete a port from the given bridge."""
         self.__exec_command(["del-port", bridge, port])
         entry = self.database.get_entry("VirtBridges", bridge)
-        entry[1]["interfaces"].remove(port)
+        entry["attributes"]["interfaces"].remove(port)
     
     def modify_port(self, bridge, port, command, parameters=None):
         """Not currently allowed."""

@@ -6,14 +6,14 @@ class Database:
     Format:
     {
 	"slice_name": {
-		"section_name": [
-			[
-				"flavour",
-				{
-					"data1": "bla1",
-					"data2": "bla2",
-					"name": "unique_name"
-			    }]]}
+        "section": [
+            {
+                "some_attribute": {
+                    "att1": "p1", 
+                    "name": "p2"
+                }, 
+                "other_attribute": "veth"
+            }, 
 	}
 	Every entry is expected to have a "name" field, unique on the device where 
 	this code is run.  For a number of entries, interface names
@@ -92,7 +92,7 @@ class Database:
     def create_slice(self, slice, userid):
         """Create a new slice with a blank template."""
         # This is probably faster than using a template but having to do a deep copy
-        self.database[slice] = { "VirtInterfaces": [], "VirtBridges": [] }
+        self.database[slice] = { "VirtualInterfaces": [], "VirtualBridges": [] }
         self.add_slice_to_user(userid, slice)
     
     def delete_slice(self, slice):
@@ -139,7 +139,7 @@ class Database:
             self.get_entry(section, info["name"])
         except exception.EntryNotFound:
             # OK, does not exist
-            self.database[self.active_slice][section].append([flavour, info])
+            self.database[self.active_slice][section].append({ "flavor" : flavour, "attributes" : info })
         else:
             # Error
             raise exception.NameAlreadyInUse(info["name"])
@@ -163,7 +163,7 @@ class Database:
         """Returns the entry identified by section and name
         if it exists.  Raises exception.EntryNotFound if it does not."""
         for entry in self.database[self.active_slice][section]:
-            if entry[1]["name"] == name:
+            if entry["attributes"]["name"] == name:
                 return entry
         raise exception.EntryNotFound(name)
     
@@ -177,7 +177,7 @@ class Database:
             # Faster than calling get_entry - it would redo dictionary
             # lookups unecessarily
             for entry in self.database[self.active_slice][section]:
-                if entry[1]["name"] == name:
+                if entry["attributes"]["name"] == name:
                     return entry
         raise exception.EntryNotFound(name)
         

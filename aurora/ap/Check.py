@@ -9,32 +9,32 @@ class Check:
     
     def create_slice_check(self, config):
         # Check that virtual interface and bridge sections exist
-        if not ("VirtInterfaces" in config and "VirtBridges" in config):
-            raise exception.InvalidConfig("Missing VirtInterfaces or VirtBridges")
+        if not ("VirtualInterfaces" in config and "VirtualBridges" in config):
+            raise exception.InvalidConfig("Missing VirtualInterfaces or VirtualBridges")
         
         # Now go through interface section
-        # Make sure each entry has 2 entries - flavour and info
-        for interface in config["VirtInterfaces"]:
-            if len(interface) != 2:
-                raise exception.InvalidConfig("Bad entry in VirtInterfaces - " + str(interface) + " length not 2")
+        # Make sure each entry has attributes and flavour entry
+        for interface in config["VirtualInterfaces"]:
+            if not("attributes" in interface and "flavor" in interface):
+                raise exception.InvalidConfig("Bad entry in VirtualInterfaces - " + str(interface) + " - missing flavor or attributes field.")
             # Not checking for specifics, only the presence of a name field
-            if "name" not in interface[1]:
+            if "name" not in interface["attributes"]:
                 raise exception.InvalidConfig("No name field in " + str(interface) + " detected.")
         
         # Bridge check
-        for bridge in config["VirtBridges"]:
-            if len(bridge) != 2:
-                raise exception.InvalidConfig("Bad entry in VirtBridges - " + str(bridge) + " length not 2")
+        for bridge in config["VirtualBridges"]:
+            if not("attributes" in bridge and "flavor" in bridge): 
+                raise exception.InvalidConfig("Bad entry in VirtualBridges - " + str(bridge) + " - missing flavor or attributes field.")
             # Check for main fields, since they are required among all bridges
-            if not ("name" in bridge[1] and "interfaces" in bridge[1] and "bridge_settings" in bridge[1] and "port_settings" in bridge[1]):
+            if not ("name" in bridge["attributes"] and "interfaces" in bridge["attributes"] and "bridge_settings" in bridge["attributes"] and "port_settings" in bridge["attributes"]):
                 raise exception.InvalidConfig(str(bridge) + " is missing key field.")
         
     def modify_slice_check(self, config):
-        # Check to make sure VirtBridges is the only entry
-        if not (len(config) == 1 and "VirtBridges" in config):
-            raise exception.InvalidConfig("VirtBridges must be the first and only entry.")
+        # Check to make sure VirtualBridges is the only entry
+        if not (len(config) == 1 and "VirtualBridges" in config):
+            raise exception.InvalidConfig("VirtualBridges must be the first and only entry.")
         # Make sure name, bridge_settings and port_settings exist
-        bridge = config["VirtBridges"]
+        bridge = config["VirtualBridges"]
         if not ("name" in bridge and "bridge_settings" in bridge and "port_settings" in bridge):
             raise exception.InvalidConfig(str(bridge) + " is missing key field.")
         
@@ -46,6 +46,6 @@ class Check:
         if not "args" in config:
             config["args"] = {}
         # Check module field - must be bridge or interface or database
-        if not (config["module"] == "VirtInterfaces" or config["module"] == "VirtBridges" or config["module"] == "Database" ):
-            raise exception.InvalidConfig("Module field must be either VirtInterfaces, VirtBridges or Database")
+        if not (config["module"] == "VirtualInterfaces" or config["module"] == "VirtualBridges" or config["module"] == "Database" ):
+            raise exception.InvalidConfig("Module field must be either VirtualInterfaces, VirtualBridges or Database")
 

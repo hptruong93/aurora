@@ -62,7 +62,7 @@ class VirtualBridges:
         return self.module_list[self.__get_flavour(bridge)]
         
     def __get_flavour(self, bridge):
-        return self.__get_entry(bridge)[0]
+        return self.__get_entry(bridge)["flavor"]
     
     def create_bridge(self, flavour, name):
         """Create a bridge of type flavour and with the given name."""
@@ -130,7 +130,7 @@ class VirtualBridges:
         return info
         
     def __get_entry(self, name):
-        return self.database.get_entry("VirtBridges", name)
+        return self.database.get_entry("VirtualBridges", name)
         
     def reset(self):
         """Stops any running bridges.  Note that this may not delete
