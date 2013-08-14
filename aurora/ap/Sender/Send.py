@@ -1,16 +1,14 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
-import sys, uuid
-import pika
-import json
-import datetime
+import sys, uuid, pika, json
+import threading
 
 class Send(object):
           
     def __init__(self):
         """Establishes the connection to RabbitMQ and sets up the queues"""
         credentials = pika.PlainCredentials('outside_world', 'wireless_access')
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='132.206.206.137',credentials=credentials))
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='132.206.206.137', credentials=credentials))
         self.channel = self.connection.channel()
         
         response = self.channel.queue_declare(exclusive=True)
@@ -18,26 +16,46 @@ class Send(object):
         
         self.channel.basic_consume(self.process_response, queue=self.callback_queue)
         
+        # Create dictionary for correlation ID
+        self.corr_id = {}
+        
+        # Start listening for callbacks
+        listener = threading.Thread(target=self.channel.start_consuming)
+        listener.start()
+        
         
     def process_response(self, channel, method, props, body):
         """Processes any responses it sees, checking to see if the
-        correlation ID matches."""
-        if self.corr_id == props.correlation_id:
-            self.response = body
-        # For now we acknowledge all messages, even those we discard
-        # In the future where we might send one message to many APs
-        # at once, we will have to process differently
+        correlation ID matches one sent.  If it does, the response
+        is displayed along with the request originally sent."""
+        if props.correlation_id in self.corr_id:
+            response_decoded = json.loads(body)
+            
+            ap = self.corr_id[props.correlation_id][0]
+            sent_data = self.corr_id[props.correlation_id][1]
+            print("Response received for command " + sent_data + " to AP " + ap)
+            
+            # Display appropriate message
+            if response_decoded['successful']:
+                print("Command successful; returned\n" + str(response_decoded['message']))
+            else:
+                print("Error: " + str(response_decoded['message']))
+            
+            # Delete correlation entry
+            del self.corr_id[props.correlation_id]
+       
+        # We acknowledge all messages, even if the correlation ID does not exist
+        # Since the queue is unique to us, the response is likely a resend
+        # This can happen if the AP dies right after it sends the response but before it sends
+        # an acknowledgement to RabbitMQ saying that it processed the original message
+        # This is very unlikely, but possible      
         channel.basic_ack(delivery_tag = method.delivery_tag)
-    
-    def process_reject(self, channel, method, props, body):
-        print("[x] Server rejected message; aborting. Rejected Message: \n" + str(body))
     
     
     def send(self, data, ap):
-        
-        self.response = None
-        self.corr_id = str(uuid.uuid4())
-
+        """Send data to the specified access point."""
+    
+        # Load JSON
         try:
              JFILE = open(data, 'r')
              temp = json.load(JFILE)
@@ -45,23 +63,23 @@ class Send(object):
             print('Error loading json file, not sending')
         else:
             
+            # Convert JSON to string 
             message = json.dumps(temp)
-            start_time = datetime.datetime.now()
-            self.channel.basic_publish(exchange='', routing_key=ap, body=message, properties=pika.BasicProperties(reply_to = self.callback_queue, correlation_id = self.corr_id, content_type="application/json"))
-            print " [x] Sent %r" % (message,)
-        
-            # Wait for a response
-            while self.response is None:
-               self.connection.process_data_events()
-            duration = datetime.datetime.now() - start_time
-            print("Response received in " + str(duration.microseconds) + " us")
-            # Display message to user
-            response_decoded = json.loads(self.response)
-            if response_decoded['successful']:
-                print("Command successful; returned\n" + str(response_decoded['message']))
-            else:
-                print("Error: " + str(response_decoded['message']))
             
+            # Generate random ID, add to dictionary
+            correlation_id = str(uuid.uuid4())
+            self.corr_id[correlation_id] = [ ap, message ]
+            
+            # Send JSON
+            # We attach a reply_to and correlation ID to tell the AP to send a message to the queue we create (randomly generated name) at init
+            # with the correlation id specified.  This means that 
+            # a) we get the message, since it is on the right queue
+            # b) the message is not on the AP queue, thus not confusing any other APs - this queue is exclusive to this sender
+            # c) we can tie the message sent to the message received later since they have the same correlation ID
+            # See http://www.rabbitmq.com/tutorials/tutorial-six-python.html for more info
+            
+            self.channel.basic_publish(exchange='', routing_key=ap, body=message, properties=pika.BasicProperties(reply_to = self.callback_queue, correlation_id = correlation_id, content_type="application/json"))
+            print("Message in file " + data + " sent.")
 
 
 # Menu loop; thanks Kevin
@@ -84,6 +102,8 @@ if __name__ == '__main__':
         choice = raw_input()
         if choice == '0':
             exitLoop = True
+            # Stop listening for replies
+            sender.channel.stop_consuming()
         elif choice == '1':
             sender.send('ap-slice1.json','ap1')
             sender.send('ap-slice2.json','ap1')

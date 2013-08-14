@@ -182,17 +182,29 @@ class Database:
         raise exception.EntryNotFound(name)
         
         
-    def list_slice_contents(self, slice):
+    def list_slice_contents(self, slice, as_json=False):
         """Returns a formatted string showing the slice contents."""
-        return pprint.pformat(self.database[slice])
+        if as_json:
+            return json.dumps(self.database[slice])
+        else:
+            return pprint.pformat(self.database[slice])
         
-    def list_users(self):
-        return pprint.pformat(self.get_user_list())
+    def list_users(self, as_json=False):
+        if as_json:
+            return json.dumps(self.get_user_list())
+        else:
+            return pprint.pformat(self.get_user_list())
         
-    def list_users_full(self):
-        return pprint.pformat(self.user_id_data)
+    def list_users_full(self, as_json=False):
+        if as_json:
+            return json.dumps(self.user_id_data)
+        else:
+            return pprint.pformat(self.user_id_data)
         
-    def list_all(self):
-        return pprint.pformat(self.database)
+    def list_all(self, as_json=False):
+        if as_json:
+            return json.dumps(self.database)
+        else:
+            return pprint.pformat(self.database)
         
         

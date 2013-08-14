@@ -4,7 +4,11 @@
     "config":
     {
         "module": "Database",
-        "command":"list_all"
+        "command":"list_all",
+        "args":
+        {
+            "as_json":true
+        }
     }
 }
 

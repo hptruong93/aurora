@@ -5,10 +5,11 @@ import SliceAgent
 
 class Receive():
     def __init__(self, queue):
+        # Init AP code
         self.agent = SliceAgent.SliceAgent()
         self.queue = queue
         
-        # Connect to RabbitMQ
+        # Connect to RabbitMQ (Step #1)
         credentials = pika.PlainCredentials('access_point', 'let_me_in')
         self.parameters = pika.ConnectionParameters(host='10.5.8.18', credentials=credentials)
         self.connection = pika.SelectConnection(self.parameters, self.on_connected)
@@ -33,13 +34,16 @@ class Receive():
 
     # Step #5
     def handle_delivery(self, channel, method, header, body):
-        """Called when we receive a message from RabbitMQ"""
+        """Called when we receive a message from RabbitMQ.  Executes the command received
+        and returns data or an error message if needed."""
         
+        # Convert data to JSON
         print " [x] Received %r" % (body,)
-        message = json.loads(body) #Received JSON
+        message = json.loads(body)
         
         # Prepare JSON data to return
         data_for_sender = { 'successful' : False, 'message' : None }
+        
         # Execute the command specified
         try:
             return_data = self.agent.execute(**message)
@@ -50,6 +54,7 @@ class Receive():
             # Finalize message and convert to JSON
             data_for_sender['message'] = str(type(e)) + " " + str(e)
             data_for_sender = json.dumps(data_for_sender)
+            
             # Send response and acknowledge the original message
             self.channel.basic_publish(exchange='', routing_key=header.reply_to, properties=pika.BasicProperties(correlation_id = header.correlation_id, content_type="application/json"), body=data_for_sender )
             self.channel.basic_ack(delivery_tag = method.delivery_tag)
@@ -71,7 +76,9 @@ class Receive():
             print " [x] Command executed"
         
 if __name__ == '__main__':
-    # AP Number
+    # AP ID specified in command line
+    # i.e. python Receive.py 3 for access point #3
+    # TODO: Modularize by reading from JSON file
     if len(sys.argv) != 2:
         raise Exception("Only the AP identifier argument is accepted.")
     number = sys.argv[1]
@@ -86,17 +93,25 @@ if __name__ == '__main__':
     else:
         raise Exception("AP identifier specified is not valid.")
     
-    # Start listening for replies.  This also establishes the connection and queue
+    # Establish connection, start listening for commands
     receiver = Receive(queue)
     listener = threading.Thread(target=receiver.connection.ioloop.start)
     listener.start()
+    
+    # We stop the main thread here, waiting for the user to terminate
+    # We cannot use Ctrl-C since it is also recognized by programs such as OVS
+    # and all sorts of issues occur when OVS closes before python
+    # tries to use OVS to delete bridges
+    # We absolutely need a clean exit so that everything can be closed properly
     try:
         raw_input("Press Enter to terminate...\n")
     except:
-        # Anything weird happens, ignore and close program (i.e. Ctrl-D = EOF error)
+        # Anything weird happens, ignore (i.e. Ctrl-D = EOF error)
         pass
+    
     # Be nice and let the ioloop know it's time to go
     # Alternatively, you could specify listener as a daemon
     # which will be forcibly killed when python exits
+    # This is untested and may cause socket issues however
     receiver.connection.ioloop.poller.open = False
 
