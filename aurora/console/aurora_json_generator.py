@@ -86,20 +86,21 @@ class AuroraJsonGenerator():
             else:
                 print('Please choose a valid flavor!')
          
-        self.data['VirtInterfaces'].append(entry)
+        self.data['VirtualInterfaces'].append(entry)
         print('Virtual Interface Saved!')
     
     def listVI(self):
-        for index in range(0, len(self.data['VirtInterfaces'])):
+        if len(self.data[''])
+        for index in range(0, len(self.data['VirtualInterfaces'])):
             print('Index '+str(index)+':')
-            print self.data['VirtInterfaces'][index]
+            print self.data['VirtualInterfaces'][index]
     
     def delVI(self):
         self.listVI()
         print('Enter an index to delete: ')
         choice = raw_input()
         try:
-            del self.data['VirtInterfaces'][int(choice)]
+            del self.data['VirtualInterfaces'][int(choice)]
         except (KeyError, IndexError):
             print('Please choose a valid index!')
         else:
