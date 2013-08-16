@@ -29,14 +29,15 @@ class Database:
     INIT_DATABASE_FILE = "init_database.json"
     INIT_SLICE_USER_ID = "init_user-slice_database.json"
     DEFAULT_ACTIVE_SLICE = "default_slice"
-    
-    
+    DEFAULT_HW_DATABASE = "init_database_hardware.json"
     
     def __init__(self):
         # Create intial database from template
         self.database = json.load(open(self.INIT_DATABASE_FILE))
         self.user_id_data = json.load(open(self.INIT_SLICE_USER_ID))
         self.active_slice = self.DEFAULT_ACTIVE_SLICE
+        
+        self.hw_database = json.load(open(self.DEFAULT_HW_DATABASE))
     
     def set_active_slice(self, slice):
         """Set the active slice, used for commands such as
@@ -169,16 +170,21 @@ class Database:
     
     def get_entry_search(self, name):
         """Returns the entry identified by name if it exists.
-        Searches through the entire dictionary, rather than a single section.
+        Searches through the entire dictionary (keeping to one slice), 
+        rather than a single section.
+        
         If multiple entries with the same name exist, only one will be returned.
         Raises exception.EntryNotFound if the entry does not exist."""
         # TODO: Speed this up?
         for section in self.database[self.active_slice]:
             # Faster than calling get_entry - it would redo dictionary
             # lookups unecessarily
-            for entry in self.database[self.active_slice][section]:
-                if entry["attributes"]["name"] == name:
-                    return entry
+            try:
+                self.get_entry(section,name)
+            except exception.EntryNotFound:
+                # Ignore not finding in a specific section; only raise error
+                # when not in any section
+                pass
         raise exception.EntryNotFound(name)
         
         
@@ -206,5 +212,40 @@ class Database:
             return json.dumps(self.database)
         else:
             return pprint.pformat(self.database)
+            
+            
+            
+    def hw_get_firmware(self):
+        return self.hw_database["firmware"]
+    
+    def hw_set_firmware(self, firmware):
+        self.hw_database["firmware"] = firmware
+    
+    def hw_get_aurora_version(self):
+        return self.hw_database["aurora_version"]
+        
+    def hw_set_aurora_version(self, aurora):
+        self.hw_database["aurora_version"] = aurora
+        
+    def hw_get_memory_mb(self):
+        return self.hw_database["memory_mb"]
+        
+    def hw_set_memory_mb(self, memory):
+        self.hw_database["memory_mb"] = memory
+        
+    def hw_get_num_radio(self):
+        return self.hw_database["radio"]["number_radio"]
+        
+    def hw_set_num_radio(self, radios):
+        self.hw_database["radio"]["number_radio"] = radios
+        
+    def hw_get_num_radio_free(self):
+        return self.hw_database["radio"]["number_radio_free"]
+        
+    def hw_set_num_radio_free(self, radios):
+        self.hw_database["radio"]["number_radio_free"] = radios
+        
+    def hw_add_radio(self, radio_info):
+        self.hw_database
         
         
