@@ -4,36 +4,36 @@
     "user":"user1",
     "config":
     {
-        "VirtInterfaces": [
-            [
-                "capsulator",
-                {
+        "VirtualInterfaces": [
+            {
+                "flavor":"capsulator",
+                "attributes":{
                     "attach_to":"eth0",
                     "forward_to":"10.5.8.13",
                     "name":"s2-tap0",
                     "tunnel_tag":"6",
                     "is_virtual":true
                 }
-            ],
-            [
-                "veth",
-                {
+            },
+            {
+                "flavor":"veth",
+                "attributes":{
                     "attach_to":"wlan0-1",
                     "name":"vwlan0-1"
                 }
-            ]
+            }
         ],
-        "VirtBridges": [
-            [
-                "ovs",
-                {
+        "VirtualBridges": [
+            {
+                "flavor":"ovs",
+                "attributes":{
                     "name":"ovs-2",
                     "interfaces": 
                         ["s2-tap0","vwlan0-1"],
                     "bridge_settings":{"controller":"tcp:10.5.8.15","dpid":"0000000000000006"},
                     "port_settings":{}
                 }
-            ]
+            }
         ]
     }
 }
