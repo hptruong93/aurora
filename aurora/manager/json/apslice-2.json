@@ -1,0 +1,33 @@
+[
+    {
+        "ap_slice_id":2,
+        "tenant_id":2,
+        "project_id":2,
+        "ap_slice_tags":"second",
+        "physical_ap":"openflowkevin",
+        "firmware":"openwrt",
+        "slice_qos_priority":"low",
+        "slice_qos_aggregate_rate":1,
+        "RadioInterfaces":[],
+        "VirtualInterfaces":[
+            {
+                "flavor":"veth",
+                "attributes":{
+                    "name":"cap1",
+                    "attach_to":3
+                }
+            }
+        ],
+        "VirtualBridges":[
+            {
+                "flavor":"linux_bridge",
+                "attributes":{
+                    "name":"ovs1",
+                    "interfaces":[],
+                    "bridge_settings":{},
+                    "port_settings":{}
+                }
+            }
+        ]
+    }
+]

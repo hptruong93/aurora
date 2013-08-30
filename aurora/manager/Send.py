@@ -28,6 +28,7 @@ class Send(object):
         """Processes any responses it sees, checking to see if the
         correlation ID matches one sent.  If it does, the response
         is displayed along with the request originally sent."""
+        successful = False #ADDED BY KH (REMOVE IF BUGS APPEAR)
         if props.correlation_id in self.corr_id:
             response_decoded = json.loads(body)
             
@@ -38,6 +39,7 @@ class Send(object):
             # Display appropriate message
             if response_decoded['successful']:
                 print("Command successful; returned\n" + str(response_decoded['message']))
+                successful = True #ADDED BY KH (REMOVE IF BUGS APPEAR)
             else:
                 print("Error: " + str(response_decoded['message']))
             
@@ -50,7 +52,8 @@ class Send(object):
         # an acknowledgement to RabbitMQ saying that it processed the original message
         # This is very unlikely, but possible      
         channel.basic_ack(delivery_tag = method.delivery_tag)
-    
+        sender.channel.stop_consuming() #ADDED BY KH (REMOVE IF BUGS APPEAR)
+        return successful #ADDED BY KH (REMOVE IF BUGS APPEAR)
     
     def send(self, data, ap):
         """Send data to the specified access point."""

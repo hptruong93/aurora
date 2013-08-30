@@ -1,8 +1,7 @@
-# Aurora-client
+# Aurora Manager Functions
 # SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
 """
-Temporary Client Implementing functions of ap-client (assume we already have JSON files for querying)
 JSON File Format for Sending:
 {
     "action": ... , #The action i.e. delete, clone, add
@@ -13,25 +12,20 @@ JSON File Format for Sending:
 """
 import json
 import sys
-from utils import print_list, print_dict
+from slice_plugin import *
 
-class Client():
+class Manager():
     
     def __init__(self):
         pass
         
-    def parseargs(self, function, args, extra=None):
+    def parseargs(self, function, args, tenant_id, user_id, project_id):
         # args is a generic dictionary passed to all functions (each function is responsible for parsing
         # their own arguments
         function = function.replace('-', '_') #For functions in python
-        if not extra:
-            getattr(self, function)(args)
-        else:
-            getattr(self, function)(args, extra)    
+        getattr(self, function)(args, tenant_id, user_id, project_id)    
     
     def ap_filter(self, args):
-        #GET JSON FILE FROM MANAGER
-        #FOR TESTING
         try:
             JFILE = open('json/aplist.json', 'r')
             APlist = json.load(JFILE)
@@ -39,7 +33,6 @@ class Client():
         except IOError:
             print('Error opening file!')
             sys.exit(-1)
-        #FOR TESTING END
         
         if len(args) == 0: #No filter or tags
             return APlist
@@ -115,8 +108,11 @@ class Client():
                         return []
             return workinglist
             
-    def ap_list(self, args):
-        arg_filter = args['filter'][0]
+    def ap_list(self, args, tenant_id, user_id, project_id):
+        if args['filter']:
+            arg_filter = args['filter'][0]
+        else:
+            arg_filter = []
         arg_i = args['i']
         toPrint = self.ap_filter(arg_filter)
         for entry in toPrint:
@@ -129,7 +125,7 @@ class Client():
         result = filter(lambda x: x in li1, li2)
         return result
     
-    def ap_show(self, args):
+    def ap_show(self, args, tenant_id, user_id, project_id):
         arg_name = args['ap-show'][0]
         toPrint = self.ap_filter('name='+arg_name)
         for entry in toPrint:
@@ -137,7 +133,7 @@ class Client():
             for attr in entry[1]:
                 print(attr+': '+entry[1][attr])
 
-    def ap_slice_clone(self, args):
+    def ap_slice_clone(self, args, tenant_id, user_id, project_id):
         arg_ap = args['ap']
         arg_slice = args['ap-slice-clone'][0]
         data = {}
@@ -149,7 +145,7 @@ class Client():
         #Send
         print toSend
     
-    def ap_slice_create(self, args):
+    def ap_slice_create(self, args, tenant_id, user_id, project_id):
         if 'ap' in args:
             arg_ap = args['ap']
         else:
@@ -163,35 +159,38 @@ class Client():
         else:
             arg_file = None
         arg_tag = args['tag']
-        data = {}
+        json_list = [] #If a file is provided for multiple APs, we need to split the file for each AP, saved here
         
         #Load optional json file if applicable
         if arg_file:
             try:
                 JFILE = open(arg_file, 'r')
                 jsonfile = json.load(JFILE)
-                data['file'] = jsonfile
                 JFILE.close()
             except IOError:
                 print('Error opening file!')
                 sys.exit(-1)
         
-        data['action'] = 'ap-slice-create'
-        data['name'] = arg_tag
-        
         if arg_ap:
-            data['list'] = arg_ap
+            aplist = arg_ap
         else: #We need to apply the filter
             result = self.ap_filter(arg_filter)
-            data['list'] = []
+            aplist = []
             for entry in result:
-                data['list'].append(entry[0])
+                aplist.append(entry[0])
+                
+        #Initialize json_list structure
+        for i in range(len(aplist)):
+            json_list.append({'VirtualInterfaces':[], 'VirtualBridges':[], 'RadioInterfaces':[]})
+            
+        #Send to plugin for parsing
+        json_list = SlicePlugin(tenant_id, user_id, arg_tag).parseCreateSlice(jsonfile, len(aplist), json_list)
         
-        toSend = json.dumps(data, sort_keys=True, indent=4)
         #Send
-        print toSend
+        for json_entry in json_list:
+            print json.dumps(json_entry, sort_keys=True, indent=4)
     
-    def ap_slice_delete(self, args):
+    def ap_slice_delete(self, args, tenant_id, user_id, project_id):
         arg_name = args['ap-slice-delete']
         data = {}
         data['action'] = 'ap-slice-delete'
@@ -202,13 +201,13 @@ class Client():
         #Send
         print toSend
     
-    def ap_slice_list(self, args):
+    def ap_slice_list(self, args, tenant_id, user_id, project_id):
         arg_filter = args['filter'][0]
         arg_i = args['i']
         #GET JSON FILE FROM MANAGER
         #FOR TESTING
         try:
-            JFILE = open('json/apslice.json', 'r')
+            JFILE = open('json/apslice-'+str(tenant_id)+'.json', 'r')
             APslice = json.load(JFILE)
             JFILE.close()
         except IOError:
@@ -281,11 +280,11 @@ class Client():
                 print "\n", #print new line
             
                 
-    def ap_slice_show(self, args):
+    def ap_slice_show(self, args, tenant_id, user_id, project_id):
         arg_id = args['ap-slice-show'][0]
         self.ap_slice_list({'filter':'ap_slice_id='+str(arg_id), 'i':True})
     
-    def wnet_add_ap(self, args):
+    def wnet_add_ap(self, args, tenant_id, user_id, project_id):
         arg_name = args['wnet-add-ap'][0]
         arg_slice = args['slice']
         data = {}
@@ -297,7 +296,7 @@ class Client():
         #Send
         print toSend
     
-    def wnet_create(self, args, tenant): #TODO
+    def wnet_create(self, args, tenant_id, user_id, project_id):
         arg_name = args['wnet-create'][0]
         arg_slice = args['slice']
         arg_qos = args['qos_priority'][0]
@@ -310,12 +309,12 @@ class Client():
         data['action'] = 'wnet-create'
         data['name'] = arg_name
         data['list'] = arg_slice
-        data['json'] = {'tenant':tenant, 'aggregate_rate': arg_aggrate, 'qos_priority':arg_qos, 'is_shareable':arg_share}
+        data['json'] = {'tenant':tenant_id, 'aggregate_rate': arg_aggrate, 'qos_priority':arg_qos, 'is_shareable':arg_share}
         toSend = json.dumps(data, sort_keys=True, indent=4)
         #Send
         print toSend
     
-    def wnet_delete(self, args):
+    def wnet_delete(self, args, tenant_id, user_id, project_id):
         arg_name = args['wnet-delete'][0]
         arg_f = args['f']
         data = {}
@@ -330,7 +329,7 @@ class Client():
         #Send
         print toSend
     
-    def wnet_join(self, args):
+    def wnet_join(self, args, tenant_id, user_id, project_id):
         arg_netname = args['wnet-join'][0]
         arg_wnetname = args['wnet_name'][0]
         data = {}
@@ -342,7 +341,7 @@ class Client():
         #Send
         print toSend
     
-    def wnet_list(self, args, tenant, name):
+    def wnet_list(self, args, tenant_id, user_id, project_id):
         #GET JSON FILE FROM MANAGER
         #FOR TESTING
         try:
@@ -354,13 +353,12 @@ class Client():
             sys.exit(-1)
         #FOR TESTING END
         for entry in wnet:
-            if entry['tenant'] == tenant:
+            if entry['tenant_id'] == tenant_id or tenant_id == 0: #TODO: REPLACE admin (tenant_id == 0)
                 for attr in entry:
                     print attr+": "+str(entry[attr])
-            print "\n", #print new line 
-        
+            print "\n", #print new line
     
-    def wnet_remove_ap(self, args):
+    def wnet_remove_ap(self, args, tenant_id, user_id, project_id):
         arg_name = args['wnet-remove-ap'][0]
         arg_slice = args['slice']
         data = {}
@@ -372,7 +370,7 @@ class Client():
         #Send
         print toSend
     
-    def wnet_show(self, args, tenant):
+    def wnet_show(self, args, tenant_id, user_id, project_id):
         arg_name = args['wnet-show'][0]
         #GET JSON FILE FROM MANAGER
         #FOR TESTING
@@ -385,17 +383,12 @@ class Client():
             sys.exit(-1)
         #FOR TESTING END
         for entry in wnet:
-            if entry['tenant'] == tenant and entry['name'] == arg_name:
+            if entry['tenant_id'] == tenant_id and entry['name'] == arg_name:
                 for attr in entry:
                     print attr+": "+str(entry[attr])
             print "\n", #print new line
         
 #For Testing
-#Client().parseargs('ap-list', {'filter':['region=mcgill & number_radio<3 & version<1.1 & number_radio_free!2 & supported_protocol=a/b/g'], 'i':True})
-#Client().parseargs('ap-show', {'ap-show':['openflow3']})
-#Client().parseargs('ap-slice-list', {'filter':'physical_ap=openflowkevin & ap_slice_id=2 & project_id=2', 'i':True})
-#Client().parseargs('wnet-show', {'wnet-show':['wnet-2']},'savi')
-#Client().parseargs('wnet-remove-ap', {'wnet-remove-ap':['openflow'], 'slice':[1,2,3,4,5,6,7]})
-#Client().parseargs('ap-show', {'ap-show':['openflowkevin']})
-Client().parseargs('ap-slice-create', {'filter':['region=mcgill & number_radio<2 & version<1.1 & number_radio_free!2 & supported_protocol=a/b/g'], 'file':['json/temp.json'], 'tag':['first']})
-#Client().parseargs('wnet-create', {'wnet-create':['newnet'], 'slice':['slice1', 'slice2'], 'qos_priority':[u'1'], 'aggregate_rate':['2'], 'shareable':False}, 'savi')
+#Manager().parseargs('ap-slice-create', {'filter':['region=mcgill & number_radio<2 & version<1.1 & number_radio_free!2 & supported_protocol=a/b/g'], 'file':['json/slicetemp.json'], 'tag':['first']},1,1,1)
+Manager().parseargs('ap-slice-create', {'ap':['of1', 'of2', 'of3', 'of4'],'file':['json/slicetemp.json'], 'tag':['first']},1,1,1)
+#Manager().parseargs('ap-slice-create', {'ap':['of1'],'file':['json/slicetemp.json'], 'tag':['first']},1,1,1)

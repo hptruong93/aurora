@@ -1,0 +1,20 @@
+[
+    {
+        "wnet_id":1,
+        "name":"wnet-1",
+        "ap-slices":[1,2],
+        "tenant_id":"bcrl",
+        "qos_priority":1,
+        "aggregate_rate":null,
+        "is_shareable":true
+    },
+    {
+        "wnet_id":2,
+        "name":"wnet-2",
+        "ap-slices":[2],
+        "tenant_id":"savi",
+        "qos_priority":1,
+        "aggregate_rate":null,
+        "is_shareable":false
+    }
+]

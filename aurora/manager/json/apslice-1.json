@@ -1,0 +1,36 @@
+[
+    {
+        "ap_slice_id":1,
+        "tenant_id":1,
+        "project_id":1,
+        "ap_slice_tags":"first",
+        "physical_ap":"openflow",
+        "firmware":"debian",
+        "slice_qos_priority":"high",
+        "slice_qos_aggregate_rate":2,
+        "RadioInterfaces":[],
+        "VirtualInterfaces":[
+            {
+                "flavor":"capsulator",
+                "attributes":{
+                    "name":"cap1",
+                    "tunnel_tag":2,
+                    "attach_to":3,
+                    "forward_to":4,
+                    "is_virtual":true
+                }
+            }
+        ],
+        "VirtualBridges":[
+            {
+                "flavor":"ovs",
+                "attributes":{
+                    "name":"ovs1",
+                    "interfaces":["s1-tap0","vwlan0"],
+                    "bridge_settings":{"controller":"tcp:10.5.8.16","dpid":"0000000000000003"},
+                    "port_settings":{}
+                }
+            }
+        ]
+    }
+]

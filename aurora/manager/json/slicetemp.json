@@ -1,0 +1,52 @@
+{
+    "RadioInterfaces": [], 
+    "VirtualBridges": [
+        {
+            "attributes": {
+                "bridge_settings": {
+                    "controller": [
+                    ], 
+                    "dpid": []
+                }, 
+                "interfaces": [
+                    "hah1", 
+                    "hah2"
+                ], 
+                "name": "ovs1", 
+                "port_settings": {}
+            }, 
+            "flavor": "ovs"
+        }, 
+        {
+            "attributes": {
+                "bridge_settings": {}, 
+                "interfaces": [
+                    "cool", 
+                    "1cool2"
+                ], 
+                "name": "cool", 
+                "port_settings": {}
+            }, 
+            "flavor": "linux_bridge"
+        }
+    ], 
+    "VirtualInterfaces": [
+        {
+            "attributes": {
+                "attach_to": "bam", 
+                "forward_to": "eth1", 
+                "isVirtual": "True", 
+                "name": "bam1",
+                "tunnel_tag":[]
+            }, 
+            "flavor": "capsulator"
+        }, 
+        {
+            "attributes": {
+                "attach_to": "bam2", 
+                "name": "hah"
+            }, 
+            "flavor": "veth"
+        }
+    ]
+}
