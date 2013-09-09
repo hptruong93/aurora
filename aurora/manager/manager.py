@@ -13,17 +13,19 @@ JSON File Format for Sending:
 import json
 import sys
 from slice_plugin import *
+from sql_check import *
 
 class Manager():
     
     def __init__(self):
-        pass
+        #Sync JSON and SQL databases
+        SQLCheck().syncAll()
         
     def parseargs(self, function, args, tenant_id, user_id, project_id):
         # args is a generic dictionary passed to all functions (each function is responsible for parsing
         # their own arguments
         function = function.replace('-', '_') #For functions in python
-        getattr(self, function)(args, tenant_id, user_id, project_id)    
+        getattr(self, function)(args, tenant_id, user_id, project_id)
     
     def ap_filter(self, args):
         try:
@@ -286,15 +288,9 @@ class Manager():
     
     def wnet_add_ap(self, args, tenant_id, user_id, project_id):
         arg_name = args['wnet-add-ap'][0]
-        arg_slice = args['slice']
-        data = {}
-        data['action'] = 'wnet-add-ap'
-        data['name'] = arg_name
-        data['list'] = arg_slice
-        data['json'] = None
-        toSend = json.dumps(data, sort_keys=True, indent=4)
+        arg_slice = args['slice'][0]
+        
         #Send
-        print toSend
     
     def wnet_create(self, args, tenant_id, user_id, project_id):
         arg_name = args['wnet-create'][0]
@@ -329,7 +325,7 @@ class Manager():
         #Send
         print toSend
     
-    def wnet_join(self, args, tenant_id, user_id, project_id):
+    def wnet_join(self, args, tenant_id, user_id, project_id): #TODO AFTER SAVI INTEGRATION
         arg_netname = args['wnet-join'][0]
         arg_wnetname = args['wnet_name'][0]
         data = {}
@@ -390,5 +386,5 @@ class Manager():
         
 #For Testing
 #Manager().parseargs('ap-slice-create', {'filter':['region=mcgill & number_radio<2 & version<1.1 & number_radio_free!2 & supported_protocol=a/b/g'], 'file':['json/slicetemp.json'], 'tag':['first']},1,1,1)
-Manager().parseargs('ap-slice-create', {'ap':['of1', 'of2', 'of3', 'of4'],'file':['json/slicetemp.json'], 'tag':['first']},1,1,1)
+#Manager().parseargs('ap-slice-create', {'ap':['of1', 'of2', 'of3', 'of4'],'file':['json/slicetemp.json'], 'tag':['first']},1,1,1)
 #Manager().parseargs('ap-slice-create', {'ap':['of1'],'file':['json/slicetemp.json'], 'tag':['first']},1,1,1)

@@ -24,6 +24,8 @@ class SQLCheck():
         filenames = filter(lambda x: 'apslice-' in x, filenames)
         #Get rid of all temp files
         filenames = filter(lambda x: '~' != x[len(x)-1], filenames)
+        #Sort alphabetically
+        filenames = sorted(filenames)
        
         #Load each file into apslice_list
         for entry in filenames:
@@ -118,5 +120,3 @@ class SQLCheck():
                     cur.execute("INSERT INTO wnet VALUES (%s, %s, %s)", pstatement)
             except mdb.Error, e:
                 print "Error %d: %s" % (e.args[0], e.args[1])
-        
-SQLCheck().syncAll()

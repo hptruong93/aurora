@@ -1,36 +1,66 @@
 [
     {
-        "ap_slice_id":1,
-        "tenant_id":1,
-        "project_id":1,
-        "ap_slice_tags":"first",
-        "physical_ap":"openflow",
-        "firmware":"debian",
-        "slice_qos_priority":"high",
-        "slice_qos_aggregate_rate":2,
-        "RadioInterfaces":[],
-        "VirtualInterfaces":[
+        "RadioInterfaces": [], 
+        "VirtualBridges": [
             {
-                "flavor":"capsulator",
-                "attributes":{
-                    "name":"cap1",
-                    "tunnel_tag":2,
-                    "attach_to":3,
-                    "forward_to":4,
-                    "is_virtual":true
-                }
+                "attributes": {
+                    "bridge_settings": {}, 
+                    "interfaces": [], 
+                    "name": "ovs1", 
+                    "port_settings": {}
+                }, 
+                "flavor": "linux_bridge"
             }
-        ],
-        "VirtualBridges":[
+        ], 
+        "VirtualInterfaces": [
             {
-                "flavor":"ovs",
-                "attributes":{
-                    "name":"ovs1",
-                    "interfaces":["s1-tap0","vwlan0"],
-                    "bridge_settings":{"controller":"tcp:10.5.8.16","dpid":"0000000000000003"},
-                    "port_settings":{}
-                }
+                "attributes": {
+                    "attach_to": 3, 
+                    "name": "cap1"
+                }, 
+                "flavor": "veth"
             }
-        ]
+        ], 
+        "ap_slice_id": 1, 
+        "ap_slice_tags": "first", 
+        "firmware": "openwrt", 
+        "physical_ap": "openflow", 
+        "project_id": 1, 
+        "slice_qos_aggregate_rate": 1, 
+        "slice_qos_priority": "low", 
+        "tenant_id": 1, 
+        "wnet_id": 1
+    }, 
+    {
+        "RadioInterfaces": [], 
+        "VirtualBridges": [
+            {
+                "attributes": {
+                    "bridge_settings": {}, 
+                    "interfaces": [], 
+                    "name": "ovs1", 
+                    "port_settings": {}
+                }, 
+                "flavor": "linux_bridge"
+            }
+        ], 
+        "VirtualInterfaces": [
+            {
+                "attributes": {
+                    "attach_to": 3, 
+                    "name": "cap1"
+                }, 
+                "flavor": "veth"
+            }
+        ], 
+        "ap_slice_id": 3, 
+        "ap_slice_tags": "third", 
+        "firmware": "openwrt", 
+        "physical_ap": "openflow3", 
+        "project_id": 1, 
+        "slice_qos_aggregate_rate": 1, 
+        "slice_qos_priority": "low", 
+        "tenant_id": 1, 
+        "wnet_id": 1
     }
 ]

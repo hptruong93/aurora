@@ -3,6 +3,7 @@
         "ap_slice_id":2,
         "tenant_id":2,
         "project_id":2,
+        "wnet_id":2,
         "ap_slice_tags":"second",
         "physical_ap":"openflowkevin",
         "firmware":"openwrt",

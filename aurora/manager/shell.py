@@ -80,13 +80,12 @@ class AuroraConsole():
             function = argv[1] #Used for attrs function call
             parser = AuroraArgumentParser()
             params = vars(parser.base_parser().parse_args(argv[1:]))
-            if function == 'wnet-create' or function == 'wnet-list' or function == 'wnet-show':
-                #Put tenant information
-                tenant = 'admin'
-                Manager().parseargs(function, params, tenant)
-            else:
-                Manager().parseargs(function, params)
-        
+            #Put tenant_id, user_id, project_id
+            tenant_id = 'admin'
+            user_id = 1
+            project_id = 1
+            Manager().parseargs(function, params, tenant_id, user_id, project_id)
+            
 #Entry Point (for testing?)
 if __name__ == '__main__':
     AuroraConsole().main(sys.argv)
