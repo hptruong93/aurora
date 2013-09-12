@@ -101,7 +101,9 @@ class OpenVSwitch:
         
         Commands        Parameters
         controller      controller*
-        fail_mode       mode*"""
+        fail_mode       mode*
+        ip              IP address*
+        dpid            DPID value*"""
         
         # By default, ovs command
         ovs_command = True

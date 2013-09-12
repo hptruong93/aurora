@@ -3,7 +3,7 @@
 import json, sys, exception, pprint, copy
 class Database:
     """Generic database for all class data.
-    Format:
+    Format for slice data:
     {
 	"slice_name": {
         "section": [
@@ -24,7 +24,34 @@ class Database:
 	have a slice, section, flavour and unique name, and thus cannot search for
 	specific fields.  The user, however, can modify data without replacing
 	entire entries by using get_entry, which provides a reference that can be
-	modified."""
+	modified.
+	
+	For the 'hardware' data, the format is different. Ex.:
+	
+	  {
+      "firmware":"openwrt",
+      "firmware_version":"r37630",
+      "aurora_version":"0.1",
+      "memory_mb":"256",
+      "wifi_radio":
+        {
+            "number_radio":"1",
+            "number_radio_free":"1",
+            "radio_list":
+                [
+                    {
+                        "name": "radio0",
+                        "bss_list":[...]
+                        }]}}
+     
+     The details of what goes in the  radio list
+     is mostly left to whatever class uses it, but
+     the minimum requirement is that each entry be a 
+     dictionary with a name field that will be used to refer
+     to the object.
+
+	
+	"""
     
     INIT_DATABASE_FILE = "init_database.json"
     INIT_SLICE_USER_ID = "init_user-slice_database.json"
@@ -215,37 +242,70 @@ class Database:
             
             
             
-    def hw_get_firmware(self):
+    def hw_get_firmware_name(self):
+        """Returns the name of the firmware."""
         return self.hw_database["firmware"]
     
-    def hw_set_firmware(self, firmware):
+    def hw_set_firmware_name(self, firmware):
+        """Sets the name of the firmware."""
         self.hw_database["firmware"] = firmware
     
     def hw_get_aurora_version(self):
+        """Returns the aurora version."""
         return self.hw_database["aurora_version"]
         
     def hw_set_aurora_version(self, aurora):
+        """Sets the aurora version.  Accepts a string."""
         self.hw_database["aurora_version"] = aurora
         
     def hw_get_memory_mb(self):
+        """Returns the total RAM of the device."""
         return self.hw_database["memory_mb"]
         
     def hw_set_memory_mb(self, memory):
+        """Sets the amount of the total RAM on the device."""
         self.hw_database["memory_mb"] = memory
         
     def hw_get_num_radio(self):
-        return self.hw_database["radio"]["number_radio"]
+        """Returns the total number of physical radios."""
+        return self.hw_database["wifi_radio"]["number_radio"]
         
     def hw_set_num_radio(self, radios):
-        self.hw_database["radio"]["number_radio"] = radios
+        """Sets the total number of physical radios."""
+        self.hw_database["wifi_radio"]["number_radio"] = radios
         
     def hw_get_num_radio_free(self):
-        return self.hw_database["radio"]["number_radio_free"]
+        """Returns the number of free radios."""
+        return self.hw_database["wifi_radio"]["number_radio_free"]
         
     def hw_set_num_radio_free(self, radios):
-        self.hw_database["radio"]["number_radio_free"] = radios
+        """Sets the number of free radios."""
+        self.hw_database["wifi_radio"]["number_radio_free"] = radios
+    
+    def hw_add_radio_entry(self, radio_info):
+        """Add a radio entry with information given as a dictionary,
+        which requires at least a name field with a string value."""
+        self.hw_database["wifi_radio"]["radio_list"].append(radio_info)
         
-    def hw_add_radio(self, radio_info):
-        self.hw_database
+    def hw_del_radio_entry(self, radio):
+        """Deletes a radio entry identified by name."""
+        try:
+            self.hw_database["wifi_radio"]["radio_list"].remove(self.hw_get_radio_entry(radio))
+        except:
+            # Ignore any errors deleting
+            pass
         
+    def hw_get_radio_entry(self, radio):
+        """Returns the entry identified by radio name
+        if it exists.  Raises exception.EntryNotFound if it does not."""
+        for entry in self.hw_database["wifi_radio"]["radio_list"]:
+            if entry["name"] == radio:
+                return entry
+        raise exception.EntryNotFound(radio)
+        
+    def hw_list_all(self, as_json=False):
+        if as_json:
+            return json.dumps(self.hw_database)
+        else:
+            return pprint.pformat(self.hw_database)
         

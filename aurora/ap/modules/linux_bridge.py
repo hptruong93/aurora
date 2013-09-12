@@ -84,7 +84,8 @@ class Brctl:
         hello_time              time
         max_age                 age
         bridge_priority         priority
-        stp                     setting (string "on" or "off")"""
+        stp                     setting (string "on" or "off")
+        ip                      IP Address*"""
         
         brctl_command = True
         if command == "ageing":

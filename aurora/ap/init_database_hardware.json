@@ -1,0 +1,13 @@
+{
+  "firmware":"OpenWRT",
+  "firmware_version":"r37630",
+  "aurora_version":"0.1",
+  "memory_mb":"256",
+  "wifi_radio":
+    {
+        "number_radio":"1",
+        "number_radio_free":"1",
+        "active_radios":[]  
+    },
+}
+

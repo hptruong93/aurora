@@ -53,4 +53,7 @@ class InvalidConfig(AuroraException):
     
 class SliceCreationFailed(AuroraException):
     message = "Unable to create slice."
+    
+class ReachedBSSLimitOnRadio(AuroraException):
+    message = "No more BSS are permitted on this radio."
 
