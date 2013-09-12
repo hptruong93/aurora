@@ -10,3 +10,6 @@ Version 1.0.1 tested
 
 pika: http://pika.readthedocs.org
 0.9.13 tested
+
+python paste: http://bitbucket.org/ianb/paste
+1.7.5.1 tested
