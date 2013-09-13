@@ -21,8 +21,10 @@ class VirtualRadio:
     WIRELESS_FILE_PATH = "/etc/config/wireless"
 
     def __init__(self, database):
+        self.change_pending = {}
         self.database = database
         self.setup()
+        
         
     def setup(self):
         # Prepare radio - UCI configuration file setup
@@ -66,10 +68,10 @@ class VirtualRadio:
             
             # Delete default BSS; there will be as many as the # of 
             # radios, so we can do it here
-            self.__uci_delete_bss_complete(count)
+            self.__uci_delete_bss_index(count)
             
             
-    def setup_radio(self, radio, disabled=0, channel=None, hwmode=None, txpower=None ):
+    def setup_radio(self, radio, disabled=0, channel=None, hwmode=None, txpower=None, country=None):
         """Sets up a radio with the given parameters.  If parameters
         are unspecified, existing parameters are left unchanged.
         By default, it will enable the radio interface."""
@@ -83,11 +85,13 @@ class VirtualRadio:
         if disabled:
             if not current_disabled:
                 self.database.hw_set_num_radio_free(self.database.hw_get_num_radio_free()+1)
+                self.change_pending[radio] = True
                 
         # Opposite situation
         else:
             if current_disabled:
                 self.database.hw_set_num_radio_free(self.database.hw_get_num_radio_free()-1)
+                self.change_pending[radio] = True
         
         # Write to database and UCI
         radio_entry["disabled"] = disabled
@@ -96,36 +100,61 @@ class VirtualRadio:
         if channel != None:
             self.__radio_set_command(radio_num, "channel", channel)
             radio_entry["channel"] = channel
+            self.change_pending[radio] = True
             
-        if (hwmode != None):
+        if hwmode != None:
             self.__radio_set_command(radio_num, "hwmode", hwmode)
             radio_entry["hwmode"] = hwmode
+            self.change_pending[radio] = True
             
-        if (txpower != None):
+        if txpower != None:
             self.__radio_set_command(radio_num, "txpower", txpower)
             radio_entry["txpower"] = txpower
+            self.change_pending[radio] = True
+        
+        if country != None:
+            self.__radio_set_command(radio_num, "country", country)
+            radio_entry["country"] = country
+            self.change_pending[radio] = True
     
     
     def apply_changes(self):
+        """Resets the wireless radio(s) and applies any changes that require
+        a radio restart, such as a channel change or a modification of the main BSS.
+        If there are no changes pending that require a restart, the function
+        will return immediately without error.  If changes are applied,
+        information from programs like hostapd is returned as a string."""
         
+        # If there are no changes pending, this will do nothing
+        # All other code ensures change_pending is set when a commit
+        # is needed, so this should be fine
+        subprocess.call(["uci","commit"])
+        
+        for radio in self.change_pending:
+            subprocess.check_output(["wifi", "down", str(self.change_pending[radio])])
+            info = subprocess.check_output(["wifi","up",str(self.change_pending[radio])])
     
     def __radio_set_command(self, radio_num, command, value):
         # We str() value, radio and command in case they are not strings (i.e. int)
         subprocess.check_call(["uci","set","wireless.radio" + str(radio_num) + "." + str(command) + "=" +str(value)])
         
     def __radio_get_command(self, radio_num, command):
-        return subprocess.check_output(["uci","get","wireless.radio" + str(radio_num) + "." + str(command)])
+        # rstrip is used to remove newlines from UCI
+        return subprocess.check_output(["uci","get","wireless.radio" + str(radio_num) + "." + str(command)]).rstrip()
         
-    def __bss_set_command(self, bss_num, command, value):
-        subprocess.check_call(["uci","set","wireless.@wifi-iface[" + str(bss_num) + "]." + str(command) + "=" +str(value)])
+    def __generic_set_command(self, section, command, value):
+        subprocess.check_call(["uci","set", "wireless." + str(section) + "." + str(command) + "=" +str(value)])
         
-    def __bss_get_command(self, bss_num, command):
-        return subprocess.check_output(["uci","get","wireless.@wifi-iface[" + str(bss_num) + "]." + str(command)])
+    def __create_new_section(self, section_type, name):
+        subprocess.check_call(["uci","set", "wireless." + str(name) + "=" +str(section_type)])
+        
+    def __generic_get_command(self, section, command):
+        return subprocess.check_output(["uci","get","wireless." + str(section) + "." + str(command)]).rstrip()
     
-    def __uci_delete_bss(self, bss_num, section):
-        subprocess.call(["uci","delete","wireless.@wifi-iface[" + str(bss_num) + "]." + str(section)])
+    def __uci_delete_section_name(self, section):
+        subprocess.call(["uci","delete","wireless." + str(section)])
         
-    def __uci_delete_bss_complete(self, bss_num):
+    def __uci_delete_bss_index(self, bss_num):
         subprocess.call(["uci","delete","wireless.@wifi-iface[" + str(bss_num) + "]"])
     
     def __uci_delete_radio(self, radio_num, section):
@@ -134,11 +163,7 @@ class VirtualRadio:
     def __uci_add_wireless_section(self, section):
         subprocess.call(["uci","add","wireless",str(section)])
     
-    def remove_radio(self, config):
-        # Removes a radio interface and all associated bss
-        pass
-    
-    def add_bss(self, radio, ssid, encryption_type=None, key=None, auth_server=None, auth_port=1812, auth_secret=None, auth_cache=0, acct_server=None, acct_port=1813, acct_secret=None,nasid=None,dae_client=None,dae_port=3799,dae_secret=None):
+    def add_bss(self, radio, ssid, encryption_type=None, key=None, auth_server=None, auth_port=None, auth_secret=None, acct_server=None, acct_port=None, acct_secret=None,nasid=None):
         """Creates a new BSS attached to the specified radio.  By default,
         there is no encryption.  Use the encryption_type and key values to set up.
         Passphrases must follow encryptions requirements (i.e. WPA/WEP require
@@ -146,7 +171,8 @@ class VirtualRadio:
         
         Possible encryption types include wep, psk (WPA-PSK) and psk2 (WPA-PSK2).
         These require the key field to be a passphrase which must conform 
-        to WEP/WPA requirements (i.e. wpa has a minimum length).  
+        to WEP/WPA requirements (i.e. wpa has a minimum length).
+        64 character WPA keys are treated as hex.  
         
         The encryption_type may also be set to wpa or wpa2, which will
         enable the use of WPA-Enterprise using TKIP or CCMP as ciphers,
@@ -169,18 +195,108 @@ class VirtualRadio:
         
         # Insert into UCI
         if main_bss:
+            
             # We create BSS, naming them for our reference
-            self.__uci_add_wireless_section("wifi-iface")
+            # Name: BSS + radio num, i.e. BSS3 for radio3
+            section_name = "BSS" + radio_num
+            self.__create_new_section("wifi-iface", section_name)
+            # Mark BSS as being main
+            radio_entry["main"] = True
+            
+            try:
+                if ssid == None or ssid == '':
+                    raise exception.InvalidSSID()
+                
+                if encryption_type == None:
+                    # Variable that determines how encryption is set
+                    # 0 for none, 1 for personal, 2 for enterprise
+                    encryption_category = 0
+                
+                else:
+                    # Must be encryption, run validity checks
+                    if encryption_type == "psk2" or encryption_type == "psk":
+                        encryption_category = 1
+                        if key == None:
+                            raise exception.InvalidKey("Key must be specified.")
+                        if len(key) < 8:
+                            raise exception.InvalidKey("Key must be at least 8 characters long")
+                        if len(key) > 64:
+                            raise exception.InvalidKey("Key cannot be more that 64 characters long.")
+                        
+                    elif encryption_type == "wep":
+                        encryption_category = 1
+                        if key == None:
+                            raise exception.InvalidKey("Key must be specified.")
+                        try:
+                            int(key, 16)
+                        # If key is not Hex
+                        except ValueError:
+                            # Length must be either 5 or 13
+                            if len(key) != 5 and len(key) != 13:
+                                raise exception.InvalidKey("Key must be 5 or 13 characters.")
+                        # Key is hex
+                        else:
+                            if len(key) != 10 and len(key) != 26:
+                                raise exception.InvalidKey("Key must be 10 or 26 digits.")
+                    elif encryption_type == "wpa" or encryption_type == "wpa2":
+                        encryption_category = 2
+                        # What enterprise allows varies wildly depending on the setup; we can't check here
+                        # The user will have to check himself
+            except:
+                # Clean up
+                self.__uci_delete_section_name(section_name)
+                # Pass along exception back to user (eventually)
+                raise
+            else:
+                self.change_pending[radio] = True
+                # Checks passed, set encryption
+                if encryption_category == 0:
+                    self.__generic_set_command(section_name, "encryption", "none")
+                    radio_entry["encryption"] = "none"
+                elif encryption_category == 1:
+                    self.__generic_set_command(section_name, "encryption", encryption_type)
+                    self.__generic_set_command(section_name, "key", key)
+                    radio_entry["encryption"] = encryption_type
+                    radio_entry["key"] = key
+                elif encryption_category == 2:
+                    self.__generic_set_command(section_name, "encryption", encryption_type)
+                    radio_entry["encryption"] = encryption_type
+                    
+                    if auth_server != None:
+                        self.__generic_set_command(section_name, "auth_server", auth_server)
+                        radio_entry["auth_server"] = auth_server
+                    if auth_port != None:
+                        self.__generic_set_command(section_name, "auth_port", auth_port)
+                        radio_entry["auth_port"] = auth_port
+                    if auth_secret != None:
+                        self.__generic_set_command(section_name, "auth_secret", auth_secret)
+                        radio_entry["auth_secret"] = auth_secret
+                    if acct_server != None:
+                        self.__generic_set_command(section_name, "acct_server", acct_server)
+                        radio_entry["acct_server"] = acct_server
+                    if acct_port != None:
+                        self.__generic_set_command(section_name, "acct_port", acct_port)
+                        radio_entry["acct_port"] = acct_port
+                    if acct_secret != None:
+                        self.__generic_set_command(section_name, "acct_secret", acct_secret)
+                        radio_entry["acct_secret"] = acct_secret
+                    if nasid != None:
+                        self.__generic_set_command(section_name, "nasid", nasid)
+                        radio_entry["nasid"] = nasid
+                    
+                # All encryption taken care of; moving on to basic settings
+                self.__generic_set_command(section_name, "device", radio)
+                self.__generic_set_command(section_name, "mode", "ap")
+                radio_entry["mode"] = "ap"
+                self.__generic_set_command(section_name, "ssid", ssid)
+                radio_entry["ssid"] = ssid
             
         
         # Use Heming's modified hostapd
         else:
-            
+            # Generate simple hostapd bss config file and uci CLI to load
+            pass
         
     def remove_bss(self, bss):
         # Removes a bss from a radio
         pass
-        
-    
-data = Database.Database()
-test = VirtualRadio(data)

@@ -56,4 +56,10 @@ class SliceCreationFailed(AuroraException):
     
 class ReachedBSSLimitOnRadio(AuroraException):
     message = "No more BSS are permitted on this radio."
+    
+class InvalidKey(AuroraException):
+    message = "Key specified is not valid for the encryption type."
+    
+class InvalidSSID(AuroraException):
+    message = "SSID not valid; must not be None or an empty string."
 

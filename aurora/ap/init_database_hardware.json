@@ -7,7 +7,6 @@
     {
         "number_radio":"1",
         "number_radio_free":"1",
-        "active_radios":[]  
-    },
+        "radio_list":[]  
+    }
 }
-
