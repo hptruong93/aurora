@@ -1,7 +1,6 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 import subprocess, os, exception
-# TODO: Remove when done testing
-import Database
+import psutil
 
 ####
 # Implementation note: there are two 'databases', so to speak.
@@ -119,20 +118,37 @@ class VirtualRadio:
     
     
     def apply_changes(self):
-        """Resets the wireless radio(s) and applies any changes that require
-        a radio restart, such as a channel change or a modification of the main BSS.
-        If there are no changes pending that require a restart, the function
-        will return immediately without error.  If changes are applied,
-        information from programs like hostapd is returned as a string."""
+        """Resets and applies changes on any radios that require it, such as a 
+        channel change or a modification of the main BSS.
+        An exception will be raised with debugging information 
+        if the changes are not appliedand a hostapd instance has failed. 
+        Otherwise, basic information from hostapd is returned.
         
-        # If there are no changes pending, this will do nothing
+        If there are no changes to apply, the above hostapd check with
+        the possible raised exception will still run."""
+        
+        # If there are no changes pending, commit will do nothing
         # All other code ensures change_pending is set when a commit
         # is needed, so this should be fine
         subprocess.call(["uci","commit"])
         
+        # If no radios require changes, this will be empty
         for radio in self.change_pending:
-            subprocess.check_output(["wifi", "down", str(self.change_pending[radio])])
-            info = subprocess.check_output(["wifi","up",str(self.change_pending[radio])])
+            subprocess.call(["wifi", "down", str(radio)])
+            subprocess.call(["wifi","up",str(radio)])
+            
+        self.change_pending.clear()
+        
+        # Make sure hostapd still running
+        # # of hostapd instance = # of radios
+        num_hostapd = 0
+        for process in psutil.process_iter():
+            if process.name == "hostapd":
+                num_hostapd = num_hostapd + 1
+        
+        num_radios_in_use = self.database.hw_get_num_radio() - self.database.hw_get_num_radio_free()
+        if num_hostapd != num_radios_in_use:
+            raise exception.hostapdError("There should be " + str(num_radios_in_use) + " hostapd instances running; there are only " + str(num_hostapd) + " instead.")
     
     def __radio_set_command(self, radio_num, command, value):
         # We str() value, radio and command in case they are not strings (i.e. int)
@@ -181,10 +197,16 @@ class VirtualRadio:
         you will need at least an auth_server and auth_secret.
         """
         
-        # Get associated radio and check for existing BSS
+        # Get associated radio and number of bss's
         radio_entry = self.database.hw_get_radio_entry(radio)
         radio_num = radio_entry["name"].lstrip("radio")
+        bss_list = radio_entry["bss_list"]
         total_bss = len(radio_entry["bss_list"])
+        
+        # Check for exising BSS with same name
+        for bss in bss_list:
+            if bss["ssid"] == ssid:
+                raise exception.InvalidSSID("SSID " + ssid + " is already in use.")
         
         if total_bss >= 4:
             raise exception.ReachedBSSLimitOnRadio("The BSS limit of 4 has been reached on " + radio)
@@ -192,6 +214,9 @@ class VirtualRadio:
         main_bss = False
         if total_bss == 0:
             main_bss = True
+        
+        # Create (future) database entry
+        bss_entry ={}
         
         # Insert into UCI
         if main_bss:
@@ -201,7 +226,7 @@ class VirtualRadio:
             section_name = "BSS" + radio_num
             self.__create_new_section("wifi-iface", section_name)
             # Mark BSS as being main
-            radio_entry["main"] = True
+            bss_entry["main"] = True
             
             try:
                 if ssid == None or ssid == '':
@@ -252,44 +277,46 @@ class VirtualRadio:
                 # Checks passed, set encryption
                 if encryption_category == 0:
                     self.__generic_set_command(section_name, "encryption", "none")
-                    radio_entry["encryption"] = "none"
+                    bss_entry["encryption"] = "none"
                 elif encryption_category == 1:
                     self.__generic_set_command(section_name, "encryption", encryption_type)
                     self.__generic_set_command(section_name, "key", key)
-                    radio_entry["encryption"] = encryption_type
-                    radio_entry["key"] = key
+                    bss_entry["encryption"] = encryption_type
+                    bss_entry["key"] = key
                 elif encryption_category == 2:
                     self.__generic_set_command(section_name, "encryption", encryption_type)
-                    radio_entry["encryption"] = encryption_type
+                    bss_entry["encryption"] = encryption_type
                     
                     if auth_server != None:
                         self.__generic_set_command(section_name, "auth_server", auth_server)
-                        radio_entry["auth_server"] = auth_server
+                        bss_entry["auth_server"] = auth_server
                     if auth_port != None:
                         self.__generic_set_command(section_name, "auth_port", auth_port)
-                        radio_entry["auth_port"] = auth_port
+                        bss_entry["auth_port"] = auth_port
                     if auth_secret != None:
                         self.__generic_set_command(section_name, "auth_secret", auth_secret)
-                        radio_entry["auth_secret"] = auth_secret
+                        bss_entry["auth_secret"] = auth_secret
                     if acct_server != None:
                         self.__generic_set_command(section_name, "acct_server", acct_server)
-                        radio_entry["acct_server"] = acct_server
+                        bss_entry["acct_server"] = acct_server
                     if acct_port != None:
                         self.__generic_set_command(section_name, "acct_port", acct_port)
-                        radio_entry["acct_port"] = acct_port
+                        bss_entry["acct_port"] = acct_port
                     if acct_secret != None:
                         self.__generic_set_command(section_name, "acct_secret", acct_secret)
-                        radio_entry["acct_secret"] = acct_secret
+                        bss_entry["acct_secret"] = acct_secret
                     if nasid != None:
                         self.__generic_set_command(section_name, "nasid", nasid)
-                        radio_entry["nasid"] = nasid
+                        bss_entry["nasid"] = nasid
                     
                 # All encryption taken care of; moving on to basic settings
                 self.__generic_set_command(section_name, "device", radio)
                 self.__generic_set_command(section_name, "mode", "ap")
-                radio_entry["mode"] = "ap"
+                bss_entry["mode"] = "ap"
                 self.__generic_set_command(section_name, "ssid", ssid)
-                radio_entry["ssid"] = ssid
+                bss_entry["ssid"] = ssid
+                
+                bss_list.append(bss_entry)
             
         
         # Use Heming's modified hostapd
