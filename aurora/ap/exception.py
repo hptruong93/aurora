@@ -65,4 +65,7 @@ class InvalidSSID(AuroraException):
     
 class hostapdError(AuroraException):
     message = "An error occured with hostapd.  Check settings."
+    
+class disabledError(AuroraException):
+    message = "The radio must be active to execute this function."
 
