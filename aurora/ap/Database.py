@@ -287,13 +287,6 @@ class Database:
         which requires at least a name field with a string value."""
         self.hw_database["wifi_radio"]["radio_list"].append(radio_info)
         
-    def hw_get_bss_limit(self):
-        """Returns the limit on the number of BSS per radio."""
-        return self.hw_database["wifi_radio"]["bss_limit"]
-    
-    def hw_set_bss_limit(self, limit):
-        """Sets the limit on the number of BSS per radio."""
-        self.hw_database["wifi_radio"]["bss_limit"] = limit
     
     def hw_del_radio_entry(self, radio):
         """Deletes a radio entry identified by name."""

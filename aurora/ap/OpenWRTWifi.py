@@ -11,10 +11,10 @@ import psutil, copy
 # This is not something I wish to have - it's bad enough the radio
 # is specific to OpenWRT.
 
-class VirtualWifi:
+class OpenWRTWifi:
     """Responsible for configuring the WiFi radio interfaces of a device.
     This version is OpenWRT specific.  For other distributions or OSes,
-    replace this class with one that implements the same functions
+    create a class that implements the same functions
     as appropriate for that distro or OS."""
 
     WIRELESS_FILE_PATH = "/etc/config/wireless"
@@ -64,14 +64,17 @@ class VirtualWifi:
             # Disabled should be stored as a number, not a string
             radio_data["disabled"] = int(self.__radio_get_command(count, "disabled"))
             radio_data["macaddr"] = self.__radio_get_command(count, "macaddr")
+            # This is the OpenWRT (or hostapd?) limit
+            # TODO: Read this from some sort of default config file
+            radio_data["bss_limit"] = 4;
             self.database.hw_add_radio_entry(radio_data)
             
-            # Delete default BSS; there will be as many as the # of 
-            # radios, so we can do it here
+        # Delete default BSS; there will be as many as the # of radios
+        for count in reversed(range(0,num_radios)):
             self.__uci_delete_bss_index(count)
             
             
-    def setup_radio(self, radio, disabled=0, channel=None, hwmode=None, txpower=None, country=None):
+    def setup_radio(self, radio, disabled=0, channel=None, hwmode=None, txpower=None, country=None, bss_limit=None):
         """Sets up a radio with the given parameters.  If parameters
         are unspecified, existing parameters are left unchanged.
         By default, it will enable the radio interface."""
@@ -116,6 +119,9 @@ class VirtualWifi:
             self.__radio_set_command(radio_num, "country", country)
             radio_entry["country"] = country
             self.change_pending[radio] = True
+        
+        if bss_limit != None:
+            radio_entry["bss_limit"] = bss_limit
     
     
     def apply_changes(self):
@@ -138,12 +144,17 @@ class VirtualWifi:
             subprocess.call(["wifi", "down", str(radio)])
             subprocess.call(["wifi","up",str(radio)])
             radio_entry = self.database.hw_get_radio_entry(radio)
-            # Bring up any stored BSS
-            for bss in radio_entry["bss_list"]:
-                # add_bss does not accept a main value; we delete it
-                temp_bss = copy.deepcopy(bss)
-                del temp_bss["main"]
-                self.add_bss(radio, new_entry=False, **temp_bss)
+            # If a radio is disabled, do not try adding bss
+            if radio_entry["disabled"] == 0:
+                # Bring up any stored BSS
+                for bss in radio_entry["bss_list"]:
+                    
+                    if (bss["main"] == False):
+                        temp_bss = copy.deepcopy(bss)
+                        # add_bss does not accept a main value; we delete it                    
+                        del temp_bss["main"]
+                        print temp_bss
+                        self.add_bss(radio=radio, new_entry=False, **temp_bss)
         
         self.change_pending.clear()
         
@@ -189,16 +200,13 @@ class VirtualWifi:
     def __uci_add_wireless_section(self, section):
         subprocess.call(["uci","add","wireless",str(section)])
     
-    def add_bss(self, radio, ssid, mode=None, encryption_type=None, key=None, auth_server=None, auth_port=None, auth_secret=None, acct_server=None, acct_port=None, acct_secret=None,nasid=None, new_entry=True, macaddr=None):
+    def add_bss(self, radio, ssid, mode=None, encryption_type=None, key=None, auth_server=None, auth_port=None, auth_secret=None, acct_server=None, acct_port=None, acct_secret=None,nasid=None, new_entry=True, macaddr=None, if_name=None):
         """Creates a new BSS attached to the specified radio.  By default,
         there is no encryption.  Use the encryption_type and key values to set up.
         Passphrases must follow encryptions requirements (i.e. WPA/WEP require
         specific passphrase lengths)
         
         Possible encryption types include wep, psk (WPA-PSK) and psk2 (WPA-PSK2).
-        These require the key field to be a passphrase which must conform 
-        to WEP/WPA requirements (i.e. wpa has a minimum length).
-        64 character WPA keys are treated as hex.  
         
         The encryption_type may also be set to wpa or wpa2, which will
         enable the use of WPA-Enterprise using TKIP or CCMP as ciphers,
@@ -211,7 +219,7 @@ class VirtualWifi:
         new_entry should be false only when non-main SSIDs are desired
         without a corresponding entry in the database.  It will raise an
         exception if hostapd cannot be accessed in this case.  The macaddr
-        parameter is also required with new_entry.
+        parameter and if_name is also required with new_entry.
         """
         
         # Get associated radio and number of bss's
@@ -226,9 +234,8 @@ class VirtualWifi:
                 if bss["ssid"] == ssid:
                     raise exception.InvalidSSID("SSID " + ssid + " is already in use.")
         
-            # TODO: Make BSS limit per radio, specified from manager
-            if total_bss >= self.database.hw_get_bss_limit():
-                raise exception.ReachedBSSLimitOnRadio("The BSS limit of " + str(self.database.hw_get_bss_limit()) + " has been reached on " + radio)
+            if total_bss >= radio_entry["bss_limit"]:
+                raise exception.ReachedBSSLimitOnRadio("The BSS limit of " + str(radio_entry["bss_limit"]) + " has been reached on " + radio)
         
         # If we have new_entry=False,
         # it is safe to assume we are not dealing with a main BSS; no verification necessary here
@@ -240,172 +247,214 @@ class VirtualWifi:
         bss_entry ={}
         
         # Run some encryption sanity checks
-        try:
-            if ssid == None or ssid == '':
-                raise exception.InvalidSSID()
+        
+        if ssid == None or ssid == '':
+            raise exception.InvalidSSID()
                 
-            if encryption_type == None:
-                # Variable that determines how encryption is set
-                # 0 for none, 1 for personal, 2 for enterprise
-                encryption_category = 0
+        if encryption_type == None or encryption_type == "none":
+            # Variable that determines how encryption is set
+            # 0 for none, 1 for personal, 2 for enterprise
+            encryption_category = 0
                 
-            else:
-                # Must be encryption, run validity checks
-                if encryption_type == "psk2" or encryption_type == "psk":
-                    encryption_category = 1
-                    if key == None:
-                        raise exception.InvalidKey("Key must be specified.")
-                    if len(key) < 8:
-                        raise exception.InvalidKey("Key must be at least 8 characters long")
-                    if len(key) > 64:
-                        raise exception.InvalidKey("Key cannot be more that 64 characters long.")
+        elif encryption_type == "psk2" or encryption_type == "psk":
+            encryption_category = 1
+            if key == None:
+                raise exception.InvalidKey("Key must be specified.")
+            if len(key) < 8:
+                raise exception.InvalidKey("Key must be at least 8 characters long")
+            if len(key) > 64:
+                raise exception.InvalidKey("Key cannot be more that 64 characters long.")
                         
-                elif encryption_type == "wep-shared" or encryption_type == "wep-open":
-                    encryption_category = 1
-                    if key == None:
-                        raise exception.InvalidKey("Key must be specified.")
-                    try:
-                        int(key, 16)
-                    # If key is not Hex
-                    except ValueError:
-                        # Length must be either 5 or 13
-                        if len(key) != 5 and len(key) != 13:
-                            raise exception.InvalidKey("Key must be 5 or 13 characters.")
-                    # Key is hex
-                    else:
-                        if len(key) != 10 and len(key) != 26:
-                            raise exception.InvalidKey("Key must be 10 or 26 digits.")
-                elif encryption_type == "wpa" or encryption_type == "wpa2":
-                    encryption_category = 2
-                    # What enterprise allows varies wildly depending on the setup; we can't check here
-                    # The user will have to check himself
-        except:
-            pass
-        else:
-            # Insert into UCI
-            if main_bss:
-                # We create BSS, naming them for our reference
-                # Name: BSS + radio num, i.e. BSS3 for radio3
-                section_name = "BSS" + radio_num
-                self.__create_new_section("wifi-iface", section_name)
-                # Mark BSS as being main
-                bss_entry["main"] = True
+        elif encryption_type == "wep-shared" or encryption_type == "wep-open":
+            encryption_category = 1
+            if key == None:
+                raise exception.InvalidKey("Key must be specified.")
+            try:
+                int(key, 16)
+            # If key is not Hex
+            except ValueError:
+                # Length must be either 5 or 13
+                if len(key) != 5 and len(key) != 13:
+                    raise exception.InvalidKey("Key must be 5 or 13 characters.")
+            # Key is hex
+            else:
+                if len(key) != 10 and len(key) != 26:
+                    raise exception.InvalidKey("Key must be 10 or 26 digits.")
+        elif encryption_type == "wpa" or encryption_type == "wpa2":
+            encryption_category = 2
+            # What enterprise allows varies wildly depending on the setup; we can't check here
+            # The user will have to check himself
+
+        # All encryption sanity checks complete; moving on to setup
+        
+        # For UCI
+        if main_bss:
+            # We create BSS, naming them for our reference
+            # Name: BSS + radio num, i.e. BSS3 for radio3
+            section_name = "BSS" + radio_num
+            self.__create_new_section("wifi-iface", section_name)
+            # Mark BSS as being main
+            bss_entry["main"] = True
             
-                self.change_pending[radio] = True
-                # Checks passed, set encryption
-                if encryption_category == 0:
-                    self.__generic_set_command(section_name, "encryption", "none")
-                    bss_entry["encryption"] = "none"
-                elif encryption_category == 1:
-                    self.__generic_set_command(section_name, "encryption", encryption_type)
-                    self.__generic_set_command(section_name, "key", key)
-                    bss_entry["encryption"] = encryption_type
-                    bss_entry["key"] = key
-                elif encryption_category == 2:
-                    self.__generic_set_command(section_name, "encryption", encryption_type)
-                    bss_entry["encryption"] = encryption_type
+            self.change_pending[radio] = True
+            # Set encryption
+            if encryption_category == 0:
+                self.__generic_set_command(section_name, "encryption", "none")
+                bss_entry["encryption_type"] = "none"
+            elif encryption_category == 1:
+                self.__generic_set_command(section_name, "encryption", encryption_type)
+                self.__generic_set_command(section_name, "key", key)
+                bss_entry["encryption_type"] = encryption_type
+                bss_entry["key"] = key
+            elif encryption_category == 2:
+                self.__generic_set_command(section_name, "encryption", encryption_type)
+                bss_entry["encryption_type"] = encryption_type
                     
-                    if auth_server != None:
-                        self.__generic_set_command(section_name, "auth_server", auth_server)
-                        bss_entry["auth_server"] = auth_server
-                    if auth_port != None:
-                        self.__generic_set_command(section_name, "auth_port", auth_port)
-                        bss_entry["auth_port"] = auth_port
-                    if auth_secret != None:
-                        self.__generic_set_command(section_name, "auth_secret", auth_secret)
-                        bss_entry["auth_secret"] = auth_secret
-                    if acct_server != None:
-                        self.__generic_set_command(section_name, "acct_server", acct_server)
-                        bss_entry["acct_server"] = acct_server
-                    if acct_port != None:
-                        self.__generic_set_command(section_name, "acct_port", acct_port)
-                        bss_entry["acct_port"] = acct_port
-                    if acct_secret != None:
-                        self.__generic_set_command(section_name, "acct_secret", acct_secret)
-                        bss_entry["acct_secret"] = acct_secret
-                    if nasid != None:
-                        self.__generic_set_command(section_name, "nasid", nasid)
-                        bss_entry["nasid"] = nasid
+                if auth_server != None:
+                    self.__generic_set_command(section_name, "auth_server", auth_server)
+                    bss_entry["auth_server"] = auth_server
+                if auth_port != None:
+                    self.__generic_set_command(section_name, "auth_port", auth_port)
+                    bss_entry["auth_port"] = auth_port
+                if auth_secret != None:
+                    self.__generic_set_command(section_name, "auth_secret", auth_secret)
+                    bss_entry["auth_secret"] = auth_secret
+                if acct_server != None:
+                    self.__generic_set_command(section_name, "acct_server", acct_server)
+                    bss_entry["acct_server"] = acct_server
+                if acct_port != None:
+                    self.__generic_set_command(section_name, "acct_port", acct_port)
+                    bss_entry["acct_port"] = acct_port
+                if acct_secret != None:
+                    self.__generic_set_command(section_name, "acct_secret", acct_secret)
+                    bss_entry["acct_secret"] = acct_secret
+                if nasid != None:
+                    self.__generic_set_command(section_name, "nasid", nasid)
+                    bss_entry["nasid"] = nasid
                     
-                # All encryption taken care of; moving on to basic settings
-                self.__generic_set_command(section_name, "device", radio)
-                self.__generic_set_command(section_name, "mode", "ap")
-                # TODO: Allow different modes?
-                bss_entry["mode"] = "ap"
-                self.__generic_set_command(section_name, "ssid", ssid)
-                bss_entry["ssid"] = ssid
-                bss_entry["macaddr"] = radio_entry["macaddr"]
+            # All encryption taken care of; moving on to basic settings
+            self.__generic_set_command(section_name, "device", radio)
+            self.__generic_set_command(section_name, "mode", "ap")
+            # TODO: Allow different modes?
+            bss_entry["mode"] = "ap"
+            self.__generic_set_command(section_name, "ssid", ssid)
+            bss_entry["ssid"] = ssid
+            bss_entry["macaddr"] = radio_entry["macaddr"]
                 
-                bss_list.append(bss_entry)
+            bss_list.append(bss_entry)
             
         
-            # Use Heming's modified hostapd
+        # Use Heming's modified hostapd
+        else:
+                
+            # Generate simple hostapd bss config file and use CLI to load
+            # TODO: allow for custom naming
+            if new_entry:
+                if_name = "wlan" + str(radio_num) + "-" + str(total_bss)
+            bss_entry["if_name"] = if_name    
+            config_file = "bss=" + if_name + "\n"
+            config_file += "ctrl_interface=/var/run/hostapd-phy" + str(radio_num) + "\n"
+            config_file += "disassoc_low_ack=1\n"
+            config_file += "ssid=" + ssid + "\n"
+            config_file += "wmm_enabled=1\n"
+            config_file += "ignore_broadcast_ssid=0\n"
+            config_file += "preamble=1\n"
+            config_file += "auth_algs=1\n"
+            bss_entry["encryption_type"] = "none"
+                
+            # Basic params set, now encryption
+            # We do nothing if category=0
+            # cat 1 = psk/wep
+            if encryption_category == 1:
+                if encryption_type == "psk":
+                    config_file += "wpa=1\n"
+                    config_file += "wpa_passphrase=" + key + "\n"
+                    config_file += "wpa_pairwise=TKIP\n"
+                elif encryption_type == "psk2":
+                    config_file += "wpa=2\n"
+                    config_file += "wpa_passphrase=" + key + "\n"
+                    # hostapd should use wpa_pairwise, but it doesn't for some reason
+                    config_file += "rsn_pairwise=CCMP\n"
+                elif encryption_type == "wep":
+                    config_file += "wep_default_key=0\n"
+                    config_file += 'wep_key0="' + key + '"\n' 
+                    config_file += "wpa=0"
+                    
+                bss_entry["encryption_type"] = encryption_type
+                bss_entry["key"] = key
+          
+            elif encryption_category == 2:
+               
+                # For all enterprise
+                config_file += "disable_pmksa_caching=1\n"
+                config_file += "okc=0\n"
+                config_file += "eapol_key_index_workaround=1\n"
+                config_file += "ieee8021x=1\n"
+                config_file += "wpa_key_mgmt=WPA-EAP\n"
+                config_file += "wpa=2\n"
+                config_file += "wpa_pairwise=CCMP\n"
+                    
+                # We only set variables if specified.
+                # The requirements for enterprise are not checked, as they can
+                # vary a lot and are quite complex.
+                if auth_server != None:
+                    config_file += "auth_server_addr=" + auth_server + "\n"
+                    bss_entry["auth_server"] = auth_server
+                if auth_port != None:
+                    config_file += "auth_server_port=" + auth_port + "\n"
+                    bss_entry["auth_port"] = auth_port
+                if auth_secret != None:
+                    config_file += "auth_server_shared_secret=" + auth_secret + "\n"
+                    bss_entry["auth_secret"] = auth_secret
+                if acct_server != None:
+                    config_file += "acct_server_addr=" + acct_server + "\n"
+                    bss_entry["acct_server"] = acct_server
+                if acct_port != None:
+                    config_file += "acct_server_port=" + acct_port + "\n"
+                    bss_entry["acct_port"] = acct_port
+                if acct_secret != None:
+                    config_file += "acct_server_shared_secret=" + acct_secret + "\n"
+                    bss_entry["acct_secret"] = acct_secret
+                if nasid != None:
+                    config_file += "nas_identifier=" + nasid + "\n"
+                    bss_entry["nasid"] = nasid
+                    
+                bss_entry["encryption_type"] = encryption_type
+                
+            # Encryption complete; finish up other parameters
+            # and apply
+            if new_entry:
+                mac = radio_entry["macaddr"]
+                base_macaddr = str(total_bss * 2)
+                    
+                if len(base_macaddr) < 2:
+                    base_macaddr = '0' + base_macaddr
+                    
+                final_mac = base_macaddr + mac[2:]
             else:
+                final_mac = macaddr
                 
-                # Generate simple hostapd bss config file and use CLI to load
-                # TODO: allow for custom naming
-                config_file = "bss=wlan" + str(radio_num) + "-" + str(total_bss) + "\n"
-                config_file += "ctrl_interface=/var/run/hostapd-phy" + str(radio_num) + "\n"
-                config_file += "disassoc_low_ack=1\n"
-                config_file += "ssid=" + ssid + "\n"
-                config_file += "wmm_enabled=1\n"
-                config_file += "ignore_broadcast_ssid=0\n"
-                config_file += "preamble=1\n"
+            config_file += "bssid=" + final_mac
+            temp_file = tempfile.NamedTemporaryFile()
+            print config_file
+            temp_file.write(config_file)
+            temp_file.flush()
                 
-                # Checks passed, set encryption
-                # We do nothing if category=0
-                # cat 1 = psk
-                if encryption_category == 1:
-                    if encryption_type == "psk":
-                        config_file += "wpa=1\n"
-                        config_file += "wpa_passphrase=" + key + "\n"
-                    elif encryption_type == "psk2":
-                        config_file += "wpa=2\n"
-                        config_file += "wpa_passphrase=" + key + "\n"
-                    elif encryption_type == "wep":
-                        config_file += "wep_default_key=0\n"
-                        config_file += 'wep_key0="' + key + '"\n' 
-                        config_file += "wpa=0"
-                    
-                    bss_entry["encryption"] = encryption_type
-                    bss_entry["key"] = key
-                elif encryption_category == 2:
-                    
-                    bss_entry["encryption"] = encryption_type
-                # TODO: Handle encryption
-                
-                if new_entry:
-                    mac = radio_entry["macaddr"]
-                    base_macaddr = str(total_bss * 2)
-                    
-                    if len(base_macaddr) < 2:
-                        base_macaddr = '0' + base_macaddr
-                    
-                    final_mac = base_macaddr + mac[2:]
-                else:
-                    final_mac = macaddr
-                
-                config_file += "bssid=" + final_mac
-                temp_file = tempfile.NamedTemporaryFile()
-                temp_file.write(config_file)
-                temp_file.flush()
-                
-                # Now that it's written, we tell hostapd to read it
-                # If we are applying an existing entry, we will complain if hostapd is down
-                # If we are creating a new one, we say nothing, since we may want to only
-                # create a bss when the radio comes up
-                command = ["hostapd_cli","-p","/var/run/hostapd-phy" + str(radio_num), "add_bss", temp_file.name]
-                if new_entry:
-                    subprocess.call(command)
-                    # Write to database
-                    bss_entry["mode"] = "ap"
-                    bss_entry["ssid"] = ssid
-                    bss_entry["encryption"] = "none"
-                    bss_entry["main"] = False
-                    bss_entry["macaddr"] = final_mac
-                    bss_list.append(bss_entry)
-                else:
+            # Now that it's written, we tell hostapd to read it
+
+            command = ["hostapd_cli","-p","/var/run/hostapd-phy" + str(radio_num), "add_bss", temp_file.name]
+            if new_entry:
+                if radio_entry["disabled"] == 0:
                     subprocess.check_call(command)
+                # Write to database
+                bss_entry["mode"] = "ap"
+                bss_entry["ssid"] = ssid
+                bss_entry["main"] = False
+                bss_entry["macaddr"] = final_mac
+                bss_list.append(bss_entry)
+            else:
+                subprocess.check_call(command)
+                # Already exists in database,no need to write
 
         
     def remove_bss(self, radio, ssid):
