@@ -26,7 +26,8 @@ class OpenWRTWifi:
         
         
     def setup(self):
-        # Prepare radio - UCI configuration file setup
+        """This method removes any existing wireless configuration, subsequently
+        detecting and adding any radios available to Aurora for use."""
         # First, remove wireless configuration file; ignore errors
         try:
             os.remove(self.WIRELESS_FILE_PATH)
@@ -127,12 +128,12 @@ class OpenWRTWifi:
     def apply_changes(self):
         """Resets and applies changes on any radios that require it, such as a 
         channel change or a modification of the main BSS.
-        An exception will be raised with debugging information 
-        if the changes are not applied and a hostapd instance has failed. 
-        Otherwise, basic information from hostapd is returned.
+        An exception will be raised if a hostapd failure occurs and the changes
+        are not applied.
         
-        If there are no changes to apply, the above hostapd check with
-        the possible raised exception will still run."""
+        If there are no changes to apply, the above hostapd check will still run,
+        raising an error if a hostapd instance that is supposed to run
+        is not doing so."""
         
         # If there are no changes pending, commit will do nothing
         # All other code ensures change_pending is set when a commit
@@ -153,7 +154,6 @@ class OpenWRTWifi:
                         temp_bss = copy.deepcopy(bss)
                         # add_bss does not accept a main value; we delete it                    
                         del temp_bss["main"]
-                        print temp_bss
                         self.add_bss(radio=radio, new_entry=False, **temp_bss)
         
         self.change_pending.clear()
@@ -206,7 +206,8 @@ class OpenWRTWifi:
         Passphrases must follow encryptions requirements (i.e. WPA/WEP require
         specific passphrase lengths)
         
-        Possible encryption types include wep, psk (WPA-PSK) and psk2 (WPA-PSK2).
+        Possible encryption types include wep-open, wep-shared, psk (WPA-PSK) 
+        and psk2 (WPA-PSK2).
         
         The encryption_type may also be set to wpa or wpa2, which will
         enable the use of WPA-Enterprise using TKIP or CCMP as ciphers,
@@ -217,9 +218,13 @@ class OpenWRTWifi:
         Mode is forced to access point for now.
         
         new_entry should be false only when non-main SSIDs are desired
-        without a corresponding entry in the database.  It will raise an
-        exception if hostapd cannot be accessed in this case.  The macaddr
+        without a corresponding entry in the database. The macaddr
         parameter and if_name is also required with new_entry.
+        
+        Exceptions will be raised for a number of common encryption
+        configuration errors, but not all - in particular WPA at the
+        enterprise level.  Exceptions will also (likely) be raised
+        if a bss cannot be added to an active radio.
         """
         
         # Get associated radio and number of bss's
@@ -269,21 +274,15 @@ class OpenWRTWifi:
             encryption_category = 1
             if key == None:
                 raise exception.InvalidKey("Key must be specified.")
-            try:
-                int(key, 16)
-            # If key is not Hex
-            except ValueError:
-                # Length must be either 5 or 13
-                if len(key) != 5 and len(key) != 13:
-                    raise exception.InvalidKey("Key must be 5 or 13 characters.")
-            # Key is hex
-            else:
-                if len(key) != 10 and len(key) != 26:
-                    raise exception.InvalidKey("Key must be 10 or 26 digits.")
+            elif len(key) != 5 and len(key) != 13 and len(key) != 10 and len(key) != 26:
+                    raise exception.InvalidKey("Key must be either 5/13 characters or 10/26 digits if hex.")
+        
         elif encryption_type == "wpa" or encryption_type == "wpa2":
             encryption_category = 2
             # What enterprise allows varies wildly depending on the setup; we can't check here
             # The user will have to check himself
+        else:
+            raise exception.InvalidEncryption("Encryption type of " + encryption_type + " is not valid.")
 
         # All encryption sanity checks complete; moving on to setup
         
@@ -359,7 +358,6 @@ class OpenWRTWifi:
             config_file += "wmm_enabled=1\n"
             config_file += "ignore_broadcast_ssid=0\n"
             config_file += "preamble=1\n"
-            config_file += "auth_algs=1\n"
             bss_entry["encryption_type"] = "none"
                 
             # Basic params set, now encryption
@@ -375,10 +373,15 @@ class OpenWRTWifi:
                     config_file += "wpa_passphrase=" + key + "\n"
                     # hostapd should use wpa_pairwise, but it doesn't for some reason
                     config_file += "rsn_pairwise=CCMP\n"
-                elif encryption_type == "wep":
+                elif "wep" in encryption_type:
                     config_file += "wep_default_key=0\n"
-                    config_file += 'wep_key0="' + key + '"\n' 
-                    config_file += "wpa=0"
+                    config_file += 'wep_key0="' + key + '"\n'
+                    config_file += "wpa=0\n"
+                    if encryption_type == "wep-open":
+                        config_file += "auth_algs=1\n"
+                    elif encryption_type == "wep-shared":
+                        config_file += "auth_algs=2\n"
+
                     
                 bss_entry["encryption_type"] = encryption_type
                 bss_entry["key"] = key
@@ -436,7 +439,6 @@ class OpenWRTWifi:
                 
             config_file += "bssid=" + final_mac
             temp_file = tempfile.NamedTemporaryFile()
-            print config_file
             temp_file.write(config_file)
             temp_file.flush()
                 
@@ -458,6 +460,15 @@ class OpenWRTWifi:
 
         
     def remove_bss(self, radio, ssid):
+        """The bss associated to the radio is removed on the fly.  
+        If the radio is currently disabled, it is removed from the database and 
+        will not be reinitialized when the radio is enabled again.
+        
+        If a main BSS is removed, all BSS on that radio will be removed
+        and the radio will be disabled.
+        
+        An exception will be raised if a non-existent SSID is given."""
+        
         
         # Get relevant data
         radio_entry = self.database.hw_get_radio_entry(radio)

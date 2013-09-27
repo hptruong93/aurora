@@ -2,6 +2,7 @@
 import VirtualBridges, VirtualInterfaces
 import exception, json, pprint, Database, atexit
 import Check
+import OpenWRTWifi
 class SliceAgent:
     """The Slice Agent is the high level interface to the creation,
     modification and deletion of slices."""
@@ -14,6 +15,7 @@ class SliceAgent:
         # Init sub classes
         self.v_bridges = VirtualBridges.VirtualBridges(self.database)
         self.v_interfaces = VirtualInterfaces.VirtualInterfaces(self.database)
+        self.wifi = OpenWRTWifi.OpenWRTWifi(self.database)
         self.check = Check.Check()
         
         atexit.register(self.__reset)
@@ -150,7 +152,9 @@ class SliceAgent:
         appropriate to the command (may be optional)
         For example, to execute the command get_status(tap1) in VirtualInterfaces,
         you would format info like so:
-        { "module" : "VirtualInterfaces", "command" : "get_status", "args" : { "name" : "tap1"} }"""
+        { "module" : "VirtualInterfaces", "command" : "get_status", "args" : { "name" : "tap1"} }
+        
+        ***Temporarily: OpenWRTWifi module can now be used. ***"""
         
         
         self.database.set_active_slice(slice)
@@ -160,6 +164,8 @@ class SliceAgent:
             command = getattr(self.v_bridges, info["command"])
         elif info["module"] == "Database":
             command = getattr(self.database, info["command"])
+        elif info["module"] == "OpenWRTWifi":
+            command = getattr(self.wifi, info["command"])
         
         # This won't cause any 'undefined variable' issues
         # since the JSON is verified to satisfy one of 

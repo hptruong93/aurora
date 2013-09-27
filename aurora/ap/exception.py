@@ -63,6 +63,9 @@ class InvalidKey(AuroraException):
 class InvalidSSID(AuroraException):
     message = "SSID not valid; must not be None or an empty string."
     
+class InvalidEncryption(AuroraException):
+    message = "Encryption type not valid."
+    
 class hostapdError(AuroraException):
     message = "An error occured with hostapd.  Check settings."
     
