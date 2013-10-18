@@ -2,6 +2,13 @@
 
 import sys, pika, json, threading
 import SliceAgent
+import requests, fcntl, socket, struct
+
+# From http://stackoverflow.com/a/4789267
+def getHwAddr(ifname):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
+    return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
 
 class Receive():
     def __init__(self, queue):
@@ -76,22 +83,14 @@ class Receive():
             print " [x] Command executed"
         
 if __name__ == '__main__':
-    # AP ID specified in command line
-    # i.e. python Receive.py 3 for access point #3
-    # TODO: Modularize by reading from JSON file
-    if len(sys.argv) != 2:
-        raise Exception("Only the AP identifier argument is accepted.")
-    number = sys.argv[1]
-    if number == "1":
-        queue = "ap1"
-    elif number == "2":
-        queue = "ap2"
-    elif number == "3":
-        queue = "ap3"
-    elif number == 'test':
-        queue = 'test'
-    else:
+    # Get mac address
+    mac = getHwAddr("eth0")
+    # Put in HTTP request to get config
+    request = requests.get('http://10.5.8.18:5555/initial_ap_config_request/' + mac)
+    queue = request.json()["queue"]
+    if queue == null:
         raise Exception("AP identifier specified is not valid.")
+    
     
     # Establish connection, start listening for commands
     receiver = Receive(queue)
