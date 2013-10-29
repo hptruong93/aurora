@@ -1,14 +1,22 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
-import sys, pika, json, threading
-import SliceAgent
-import requests, fcntl, socket, struct
+import sys, json, threading
+import install_dependencies
+try:
+    import pika
+except ImportError:
+    install_dependencies.install("pika")
+    import pika
 
-# From http://stackoverflow.com/a/4789267
-def getHwAddr(ifname):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
-    return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
+try:
+    import requests
+except ImportError:
+    install_dependencies.install("requests")
+    import requests
+
+import SliceAgent
+from ifconfig import ifconfig
+
 
 class Receive():
     def __init__(self, queue):
@@ -84,13 +92,15 @@ class Receive():
         
 if __name__ == '__main__':
     # Get mac address
-    mac = getHwAddr("eth0")
+    mac = ifconfig("eth0")["hwaddr"]
     # Put in HTTP request to get config
     request = requests.get('http://10.5.8.18:5555/initial_ap_config_request/' + mac)
     queue = request.json()["queue"]
     if queue == null:
         raise Exception("AP identifier specified is not valid.")
     
+    #TODO: Get more from config than just queue name
+    # i.e. setup commands, default slice...
     
     # Establish connection, start listening for commands
     receiver = Receive(queue)

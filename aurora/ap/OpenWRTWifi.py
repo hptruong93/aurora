@@ -218,7 +218,9 @@ class OpenWRTWifi:
         Mode is forced to access point for now.
         
         new_entry should be false only when non-main SSIDs are desired
-        without a corresponding entry in the database. The macaddr
+        without a corresponding entry in the database. This is used
+        specifically when restoring a configuration that already
+        exists in the database but has not been set on the radio. The macaddr
         parameter and if_name is also required with new_entry.
         
         Exceptions will be raised for a number of common encryption
