@@ -45,7 +45,7 @@ class Dispatcher():
         print("Message for %s dispatched" % unique_id)
         
         # Start a timeout countdown
-        time = Timer(self.TIMEOUT, timeout, args=[unique_id])
+        time = Timer(self.TIMEOUT, resourceMonitor.timeout, args=[unique_id])
         self.requests_sent.append( (unique_id,time) )
 
         time.start()
@@ -86,6 +86,7 @@ class Dispatcher():
             self.requests_sent.remove(request)
         else:
             #TODO: (if possible): Identify AP that sent bad messsage and reset it
+            pass
             
             
         # Even if the message is bogus, acknowledge receipt of it

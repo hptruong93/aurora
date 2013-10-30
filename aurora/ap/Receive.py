@@ -94,10 +94,12 @@ if __name__ == '__main__':
     # Get mac address
     mac = ifconfig("eth0")["hwaddr"]
     # Put in HTTP request to get config
-    request = requests.get('http://10.5.8.18:5555/initial_ap_config_request/' + mac)
+    request = requests.get('http://10.5.8.15:5555/initial_ap_config_request/' + mac)
     queue = request.json()["queue"]
-    if queue == null:
+    if queue == None:
         raise Exception("AP identifier specified is not valid.")
+    
+    print("Joining queue %s" % queue)
     
     #TODO: Get more from config than just queue name
     # i.e. setup commands, default slice...
