@@ -57,7 +57,7 @@ class Receive():
         message = json.loads(body)
         
         # Prepare JSON data to return
-        data_for_sender = { 'successful' : False, 'message' : None }
+        data_for_sender = { 'successful' : False, 'message' : None, 'ap' : self.queue }
         
         # Execute the command specified
         try:
