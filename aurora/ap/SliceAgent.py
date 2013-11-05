@@ -1,6 +1,6 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 import VirtualBridges, VirtualInterfaces
-import exception, json, pprint, Database, atexit
+import exception, json, pprint, Database, atexit, sys
 import OpenWRTWifi
 import subprocess
     
@@ -191,14 +191,20 @@ class SliceAgent:
             return self.remote_API(slice, config)
         elif command == "restart":
             self.restart()
+        #elif command == "restart_aurora"
+        #    self.restart_aurora()
         else:
             raise exception.CommandNotFound(command)
     
     
     def restart(self):
-        # Restart machine, assumes aurora starts at boot
-        subprocess.call(["reboot"])
+        # Restart machine (OS), but give time for aurora to send OK to manager
+        subprocess.Popen(["/bin/sh", "-c", '"sleep 5; reboot"'])
         
+    #def restart_aurora(self):
+        #Executes script that waits 10 secs and then runs aurora
+        #subprocess.Popen(["./start_in_10_sec.sh"])
+        #sys.exit(0)
     
     def list_users(self):
         print(self.database.list_users())
