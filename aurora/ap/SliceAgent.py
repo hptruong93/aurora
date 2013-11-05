@@ -2,6 +2,8 @@
 import VirtualBridges, VirtualInterfaces
 import exception, json, pprint, Database, atexit
 import OpenWRTWifi
+import subprocess
+    
 class SliceAgent:
     """The Slice Agent is the high level interface to the creation,
     modification and deletion of slices."""
@@ -15,6 +17,9 @@ class SliceAgent:
         self.v_bridges = VirtualBridges.VirtualBridges(self.database)
         self.v_interfaces = VirtualInterfaces.VirtualInterfaces(self.database)
         self.wifi = OpenWRTWifi.OpenWRTWifi(self.database)
+        
+        # Set to start on boot w/ Cron if not already so
+        
         
         atexit.register(self.__reset)
     
@@ -184,9 +189,16 @@ class SliceAgent:
         elif command == "remote_API":
             # Only the remote API can return data
             return self.remote_API(slice, config)
+        elif command == "restart":
+            self.restart()
         else:
             raise exception.CommandNotFound(command)
     
+    
+    def restart(self):
+        # Restart machine, assumes aurora starts at boot
+        subprocess.call(["reboot"])
+        
     
     def list_users(self):
         print(self.database.list_users())
