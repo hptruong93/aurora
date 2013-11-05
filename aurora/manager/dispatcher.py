@@ -1,5 +1,7 @@
 import sys, pika, json
-import threading, resource_monitor
+import threading
+from threading import Timer
+import resource_monitor
 
 class Dispatcher():
 
@@ -8,27 +10,40 @@ class Dispatcher():
     def __init__(self):
         """Establishes the connection to RabbitMQ and sets up the queues"""
         credentials = pika.PlainCredentials('outside_world', 'wireless_access')
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='132.206.206.137', credentials=credentials))
-        self.channel = self.connection.channel()
-        
-        response = self.channel.queue_declare(exclusive=True)
-        self.callback_queue = response.method.queue
-        
-        self.channel.basic_consume(self.process_response, queue=self.callback_queue)
+        self.connection = pika.SelectConnection(pika.ConnectionParameters(host='132.206.206.137', credentials=credentials), self.on_connected)
         
         # Create dictionary for requests sent out
         self.requests_sent = []
         
-        # Start listening for callbacks
-        listener = threading.Thread(target=self.channel.start_consuming)
+        self.resourceMonitor = resource_monitor.resourceMonitor(self)
+        
+        # Setup complete, now start listening and processing
+        # This jumpstarts the connection, which in turn uses the callbacks
+        self.connection.connect()
+        listener = threading.Thread(target=self.connection.ioloop.start)
         listener.start()
         
-        self.resourceMonitor = resource_monitor.resourceMonitor()
+    
+    def channel_open(self, new_channel):
+        self.channel = new_channel
+        response = self.channel.queue_declare(exclusive=True, callback=self.on_queue_declared)
         
+    
+    def on_queue_declared(self, frame):
+        self.callback_queue = frame.method.queue
+        self.channel.basic_consume(self.process_response, queue=self.callback_queue)
+        
+    
+    def on_connected(self, connection):
+        self.connection.channel(self.channel_open)
+    
     def dispatch(self, config, ap, unique_id):
         """Send data to the specified queue.
         Note that the caller is expected to set database
-        properties such as status."""
+        properties such as status.
+        
+        NOTE: unique_id *MUST* be more than 1 character
+        due to a Python bug."""
         # Convert JSON to string 
         message = json.dumps(config)
             
@@ -42,10 +57,10 @@ class Dispatcher():
             
         self.channel.basic_publish(exchange='', routing_key=ap, body=message, properties=pika.BasicProperties(reply_to = self.callback_queue, correlation_id = unique_id, content_type="application/json"))
         
-        print("Message for %s dispatched" % unique_id)
+        print("Message for %s dispatched" % ap)
         
         # Start a timeout countdown
-        time = Timer(self.TIMEOUT, resourceMonitor.timeout, args=[unique_id])
+        time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=[unique_id])
         self.requests_sent.append( (unique_id,time) )
 
         time.start()
@@ -64,50 +79,86 @@ class Dispatcher():
         
         # If we don't have a record, that means that we already
         # handled a timeout previously and something strange happened to the AP
-        # to cause it to wait so long. Problem is we don't know what AP....
+        # to cause it to wait so long. Reset it.
 
         # Check if we have a record of this ID
         have_request = False
+        entry = None
         for request in self.requests_sent:
             if request[0] == props.correlation_id:
                 have_request = True
+                entry = request
                 break
                 
         if have_request:
-            # ACK request
-            channel.basic_ack(delivery_tag = method.delivery_tag)
+
             # Decode response
             decoded_response = json.loads(body)
+            
+            print(' [x] DEBUG: Printing received message')
+            print(decoded_response['message'])
 
             # Set status, stop timer, delete record
-            resourceMonitor.set_status(props.correlation_id, decoded_response['successful'])
+            self.resourceMonitor.set_status(props.correlation_id, decoded_response['successful'])
             
-            request[1].cancel()
-            self.requests_sent.remove(request)
+            
+            # Note: This will throw an exception if the unique_id used
+            # in the original request is only 1 character long, as python
+            # decides to create a string rather than a tuple
+            # and access to the timer object is lost
+            # Workaround: try/catch
+            try:
+                entry[1].cancel()
+            except Exception:
+                pass
+            
+            self.requests_sent.remove(entry)
+        
         else:
-            #TODO: (if possible): Identify AP that sent bad messsage and reset it
-            pass
+
+            decoded_response = json.loads(body)
+            
+            self.resourceMonitor.reset_AP(decoded_response['ap'])
             
             
-        # Even if the message is bogus, acknowledge receipt of it
+        # Regardless of content of message, acknowledge receipt of it
         channel.basic_ack(delivery_tag = method.delivery_tag)
     
+    def stop(self):
+        self.channel.basic_cancel()
+        self.connection.ioloop.stop()
      
 
 
 # Menu loop; thanks Kevin
+# Obviously this code will not be in a final version
 if __name__ == '__main__':
     exitLoop = False
-    sender = Send()
+    sender = Dispatcher()
+
     while not exitLoop:
         print('Choose an option: ')
-        print('1. Create slices 1 and 2 on AP1')
+        print('0. Exit')
+        print('1. Dispatch')
         choice = raw_input()
         if choice == '0':
             exitLoop = True
             # Stop listening for replies
-            sender.channel.stop_consuming()
+            sender.stop()
+            
         elif choice == '1':
-            sender.send('ap-slice1.json','ap1')
+            print('Enter json filename')
+            try:
+                file = open(raw_input())
+            except IOError:
+                print('Bad file, returning to menu')
+            else:
+                config = json.load(file)
+                file.close()
+                print('Enter ap ID')
+                ap = raw_input()
+                print('Enter unique id')
+                unique_id = raw_input()
+                sender.dispatch( config, ap, unique_id)
 
             

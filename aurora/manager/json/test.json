@@ -20,7 +20,7 @@
                 "flavor":"veth",
                 "attributes":
                     {
-                        "attach_to":"wlan0",
+                        "attach_to":"tap0",
                         "name":"vwlan0"
                     }
             },
@@ -40,7 +40,7 @@
                     {
                         "name":"ovs-test",
                         "interfaces": 
-                            ["test-tap0","vwlan0"],
+                            ["v_eth0","vwlan0"],
                         "bridge_settings":{"controller":"tcp:10.5.8.1","dpid":"0000000000099999","ip":"192.168.6.1"},
                         "port_settings":{}
                     }
@@ -62,7 +62,7 @@
                     {
                         "name":"linux-2",
                         "interfaces":
-                            ["v_eth0","ifb0"],
+                            ["ifb0"],
                         "bridge_settings":{},
                         "port_settings":{"ifb0":{"priority":"1"}}
                     }
