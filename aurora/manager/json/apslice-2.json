@@ -2,14 +2,11 @@
     {
         "ap_slice_id":2,
         "tenant_id":2,
-        "project_id":2,
-        "wnet_id":2,
-        "ap_slice_tags":"second",
-        "physical_ap":"openflowkevin",
-        "firmware":"openwrt",
-        "slice_qos_priority":"low",
-        "slice_qos_aggregate_rate":1,
-        "RadioInterfaces":[],
+        "nw_downlink_rate": 1,
+        "nw_uplink_rate": 1,
+        "wl_downlink_rate": 1,
+        "wl_uplink_rate": 1,
+        "VirtualWIFI":[],
         "VirtualInterfaces":[
             {
                 "flavor":"veth",

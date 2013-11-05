@@ -47,8 +47,6 @@ class Dispatcher():
         # Convert JSON to string 
         message = json.dumps(config)
             
-        self.requests_sent.append(unique_id)
-            
         # Send JSON
         # We attach a reply_to and correlation ID to tell the AP to send a message to the queue we create (randomly generated name) at init
         # with the correlation id specified.  This means that 
@@ -61,6 +59,7 @@ class Dispatcher():
         
         # Start a timeout countdown
         time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=[unique_id])
+        
         self.requests_sent.append( (unique_id,time) )
 
         time.start()
@@ -101,23 +100,13 @@ class Dispatcher():
             # Set status, stop timer, delete record
             self.resourceMonitor.set_status(props.correlation_id, decoded_response['successful'])
             
-            
-            # Note: This will throw an exception if the unique_id used
-            # in the original request is only 1 character long, as python
-            # decides to create a string rather than a tuple
-            # and access to the timer object is lost
-            # Workaround: try/catch
-            try:
-                entry[1].cancel()
-            except Exception:
-                pass
+            entry[1].cancel()
             
             self.requests_sent.remove(entry)
         
         else:
 
             decoded_response = json.loads(body)
-            
             self.resourceMonitor.reset_AP(decoded_response['ap'])
             
             

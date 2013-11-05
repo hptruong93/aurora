@@ -1,6 +1,6 @@
 [
     {
-        "RadioInterfaces": [], 
+        "VirtualWIFI": [], 
         "VirtualBridges": [
             {
                 "attributes": {
@@ -22,17 +22,14 @@
             }
         ], 
         "ap_slice_id": 1, 
-        "ap_slice_tags": "first", 
-        "firmware": "openwrt", 
-        "physical_ap": "openflow", 
-        "project_id": 1, 
-        "slice_qos_aggregate_rate": 1, 
-        "slice_qos_priority": "low", 
-        "tenant_id": 1, 
-        "wnet_id": 1
+        "nw_downlink_rate": 1,
+        "nw_uplink_rate": 1,
+        "wl_downlink_rate": 1,
+        "wl_uplink_rate": 1,
+        "tenant_id": 1
     }, 
     {
-        "RadioInterfaces": [], 
+        "VirtualWIFI": [], 
         "VirtualBridges": [
             {
                 "attributes": {
@@ -54,13 +51,10 @@
             }
         ], 
         "ap_slice_id": 3, 
-        "ap_slice_tags": "third", 
-        "firmware": "openwrt", 
-        "physical_ap": "openflow3", 
-        "project_id": 1, 
-        "slice_qos_aggregate_rate": 1, 
-        "slice_qos_priority": "low", 
-        "tenant_id": 1, 
-        "wnet_id": 1
+        "nw_downlink_rate": 1, 
+        "nw_uplink_rate": 1,
+        "wl_downlink_rate": 1,
+        "wl_uplink_rate": 1,
+        "tenant_id": 1
     }
 ]

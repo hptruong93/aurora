@@ -5,7 +5,7 @@
 Collection of methods for adding, updating, deleting, and querying the database
 """
 
-import sys
+import sys, json
 import MySQLdb as mdb
 
 class AuroraDB():
