@@ -1,7 +1,6 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 import VirtualBridges, VirtualInterfaces
 import exception, json, pprint, Database, atexit
-import Check
 import OpenWRTWifi
 class SliceAgent:
     """The Slice Agent is the high level interface to the creation,
@@ -16,7 +15,6 @@ class SliceAgent:
         self.v_bridges = VirtualBridges.VirtualBridges(self.database)
         self.v_interfaces = VirtualInterfaces.VirtualInterfaces(self.database)
         self.wifi = OpenWRTWifi.OpenWRTWifi(self.database)
-        self.check = Check.Check()
         
         atexit.register(self.__reset)
     
@@ -177,17 +175,13 @@ class SliceAgent:
     
     def execute(self, slice, command, config=None, user="default_user"):
         # determine if create, delete or modify
-        # Run config check beforehand
         if command == "create_slice":
-            self.check.create_slice_check(config)
             self.create_slice(slice, user, config)
         elif command == "delete_slice":
             self.delete_slice(slice)
         elif command == "modify_slice":
-            self.check.modify_slice_check(config)
             self.modify_slice(slice, config)
         elif command == "remote_API":
-            self.check.remote_API_check(config)
             # Only the remote API can return data
             return self.remote_API(slice, config)
         else:
