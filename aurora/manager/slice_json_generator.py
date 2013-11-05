@@ -12,7 +12,7 @@ class SliceJsonGenerator():
         self.data = {}
         self.data['VirtualInterfaces'] = []
         self.data['VirtualBridges'] = []
-        self.data['RadioInterfaces'] = [] #For future use?
+        self.data['VirtualWIFI'] = [] #For future use?
         #Initialize function dictionary
         self.options = {1:self.addVI, 2:self.listVI, 3:self.delVI, 4:self.addVB, 5:self.listVB, 6:self.delVB, 7:self.printConfig}
         self.generate(filename)
