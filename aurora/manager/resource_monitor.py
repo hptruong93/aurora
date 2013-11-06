@@ -38,7 +38,7 @@ class resourceMonitor():
         # has died and at least this command failed
         # If there are several commands waiting, this will execute several times
         # but all slices should already be marked
-        # as deleted, down or failed, so the above loop does nothing
+        # as deleted, down or failed, so there will not be any issue
         
     
     
@@ -47,9 +47,6 @@ class resourceMonitor():
         database based on the previous status, i.e. pending -> active if
         create slice, deleting -> deleted if deleting a slice, etc."""
 
-        # Exit if this is a restart message
-        #if unique_id == 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF':
-        #    return
         # Code:
         # Identify slice by unique_id
         # if ap_up:
