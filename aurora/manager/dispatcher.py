@@ -112,6 +112,7 @@ class Dispatcher():
         else:
 
             decoded_response = json.loads(body)
+            # Reset the access point
             self.resourceMonitor.reset_AP(decoded_response['ap'])
             
             

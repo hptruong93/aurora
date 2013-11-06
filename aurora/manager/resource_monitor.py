@@ -45,7 +45,10 @@ class resourceMonitor():
     def set_status(self, unique_id, success, ap_up=True):
         """Sets the status of the associated request in the
         database based on the previous status, i.e. pending -> active if
-        create slice, deleting -> deleted if deleting a slice, etc."""
+        create slice, deleting -> deleted if deleting a slice, etc.
+        If the ap_up variable is false, the access point
+        is considered to be offline and in an unknown state,
+        so *all* slices are marked as such (down, failed, etc.)."""
 
         # Code:
         # Identify slice by unique_id
@@ -126,5 +129,16 @@ class resourceMonitor():
 
         
     def reset_AP(self, ap):
+        """Reset the access point.  If there are serious issues, however,
+        a restart may be required."""
+        
+        # The unique ID is fixed to be all F's for resets/restarts.
+        self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'reset' } , ap, 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF')
+        
+    def restart_AP(self, ap):
+        """Restart the access point, telling the OS to reboot."""
+        
+        # The unique ID is fixed to be all F's for resets/restarts.
         self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'restart' } , ap, 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF')
+        
         
