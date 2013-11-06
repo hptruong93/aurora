@@ -2,6 +2,7 @@ import sys, pika, json
 import threading
 from threading import Timer
 import resource_monitor
+import logging
 
 class Dispatcher():
 
@@ -9,6 +10,10 @@ class Dispatcher():
     
     def __init__(self):
         """Establishes the connection to RabbitMQ and sets up the queues"""
+        
+        # Run Pika logger so that error messages get printed
+        logging.basicConfig()
+        
         credentials = pika.PlainCredentials('outside_world', 'wireless_access')
         self.connection = pika.SelectConnection(pika.ConnectionParameters(host='132.206.206.137', credentials=credentials), self.on_connected)
         

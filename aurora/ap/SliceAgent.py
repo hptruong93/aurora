@@ -9,7 +9,7 @@ class SliceAgent:
     modification and deletion of slices."""
     
     # Network class will receive packet -> decode ->
-    # send command and config to this class
+    # send command and config to the execute() method in this file
     
     def __init__(self):
         self.database = Database.Database()
@@ -18,13 +18,13 @@ class SliceAgent:
         self.v_interfaces = VirtualInterfaces.VirtualInterfaces(self.database)
         self.wifi = OpenWRTWifi.OpenWRTWifi(self.database)
         
-        # Set to start on boot w/ Cron if not already so
-        
-        
+        # Clean up on exit
         atexit.register(self.__reset)
     
     
     def create_slice(self, slice, user, config):
+        """Create a slice with the given confiuration.
+        Will raise exceptions if errors are encountered."""
         
         # Make sure slice does not already exist
         if slice in self.database.get_slice_list():
@@ -179,6 +179,10 @@ class SliceAgent:
         
     
     def execute(self, slice, command, config=None, user="default_user"):
+        """The main entry point for any command coming from a remote
+        server.  The command is analyzed and forwaded to the relevant
+        class/method as appropriate."""
+        
         # determine if create, delete or modify
         if command == "create_slice":
             self.create_slice(slice, user, config)
@@ -187,10 +191,12 @@ class SliceAgent:
         elif command == "modify_slice":
             self.modify_slice(slice, config)
         elif command == "remote_API":
-            # Only the remote API can return data
+            # The remote API can return data
             return self.remote_API(slice, config)
         elif command == "restart":
             return self.restart()
+        elif command == "reset":
+            return self.__reset()
         #elif command == "restart_aurora"
         #    self.restart_aurora()
         else:
@@ -207,6 +213,7 @@ class SliceAgent:
         #subprocess.Popen(["./start_in_10_sec.sh"])
         #sys.exit(0)
     
+    # Print functions for testing locally if necessary
     def list_users(self):
         print(self.database.list_users())
     
@@ -229,4 +236,5 @@ class SliceAgent:
         # finish using the class to delete stuff
         self.v_bridges.reset()
         self.v_interfaces.reset()
+        return "RESETTING"
     

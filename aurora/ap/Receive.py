@@ -16,10 +16,18 @@ except ImportError:
 
 import SliceAgent
 from ifconfig import ifconfig
-
+import logging
 
 class Receive():
+    """This class connects to RabbitMQ and receives messages containing
+    commands, which it executes.  During normal use,
+    only this file need be executed on the machine - it will import
+    the rest of Aurora and pass the commands along."""
     def __init__(self, queue):
+    
+        # Run Pika logger so that error messages get printed
+        logging.basicConfig()
+        
         # Init AP code
         self.agent = SliceAgent.SliceAgent()
         self.queue = queue
@@ -39,7 +47,7 @@ class Receive():
     def on_channel_open(self, new_channel):
         """Called when our channel has opened"""
         self.channel = new_channel
-        self.channel.queue_declare(queue=self.queue, durable=True, callback=self.on_queue_declared)
+        self.channel.queue_declare(queue=self.queue, durable=True, callback=self.on_queue_declared, auto_delete=True)
 
     # Step #4
     def on_queue_declared(self, frame):
@@ -89,13 +97,17 @@ class Receive():
             self.channel.basic_ack(delivery_tag = method.delivery_tag)
             
             print " [x] Command executed"
-        
+ 
+# Executed when run from the command line.
+# *** NORMAL USAGE ***        
 if __name__ == '__main__':
+    
     # Get mac address
     mac = ifconfig("eth0")["hwaddr"]
     # Put in HTTP request to get config
     request = requests.get('http://10.5.8.15:5555/initial_ap_config_request/' + mac)
     queue = request.json()["queue"]
+    
     if queue == None:
         raise Exception("AP identifier specified is not valid.")
     
@@ -121,8 +133,6 @@ if __name__ == '__main__':
         pass
     
     # Be nice and let the ioloop know it's time to go
-    # Alternatively, you could specify listener as a daemon
-    # which will be forcibly killed when python exits
-    # This is untested and may cause socket issues however
-    receiver.connection.ioloop.poller.open = False
+    receiver.channel.basic_cancel()
+    receiver.connection.ioloop.stop()
 
