@@ -47,6 +47,9 @@ class resourceMonitor():
         database based on the previous status, i.e. pending -> active if
         create slice, deleting -> deleted if deleting a slice, etc."""
 
+        # Exit if this is a restart message
+        #if unique_id == 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF':
+        #    return
         # Code:
         # Identify slice by unique_id
         # if ap_up:
@@ -120,8 +123,8 @@ class resourceMonitor():
                         else:
                             print("Unknown Status, ignoring...")
             
-        except mdb.Error, e:
-                print "Error %d: %s" % (e.args[0], e.args[1])
+        except Exception, e:
+                print "Database Error: " + str(e)
         
 
         
