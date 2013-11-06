@@ -190,7 +190,7 @@ class SliceAgent:
             # Only the remote API can return data
             return self.remote_API(slice, config)
         elif command == "restart":
-            self.restart()
+            return self.restart()
         #elif command == "restart_aurora"
         #    self.restart_aurora()
         else:
@@ -199,7 +199,8 @@ class SliceAgent:
     
     def restart(self):
         # Restart machine (OS), but give time for aurora to send OK to manager
-        subprocess.Popen(["/bin/sh", "-c", '"sleep 5; reboot"'])
+        subprocess.Popen(['sleep 5; reboot'], shell=True)
+        return "RESTARTING"
         
     #def restart_aurora(self):
         #Executes script that waits 10 secs and then runs aurora
