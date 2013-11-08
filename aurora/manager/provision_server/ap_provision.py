@@ -12,7 +12,7 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
                 file_name = self.path[27:]
                 if ".." in file_name:
                     raise Exception("File names outside directory not permitted.")
-                config_file = json.dumps(json.load(open(file_name,'r')))
+                config_file = json.dumps(json.load(open(file_name + '.json','r')))
                 
             except:
                 # File does not exist/ not permitted/ not json

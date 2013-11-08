@@ -23,13 +23,13 @@ class Receive():
     commands, which it executes.  During normal use,
     only this file need be executed on the machine - it will import
     the rest of Aurora and pass the commands along."""
-    def __init__(self, queue):
+    def __init__(self, queue, config):
     
         # Run Pika logger so that error messages get printed
         logging.basicConfig()
         
-        # Init AP code
-        self.agent = SliceAgent.SliceAgent()
+        # Init AP code, pass along any initialization code
+        self.agent = SliceAgent.SliceAgent(config)
         self.queue = queue
         
         # Connect to RabbitMQ (Step #1)
@@ -106,7 +106,9 @@ if __name__ == '__main__':
     mac = ifconfig("eth0")["hwaddr"]
     # Put in HTTP request to get config
     request = requests.get('http://10.5.8.15:5555/initial_ap_config_request/' + mac)
-    queue = request.json()["queue"]
+    config_full = request.json()
+    queue = config_full['queue']
+    config = config_full['default_config']
     
     if queue == None:
         raise Exception("AP identifier specified is not valid.")
@@ -117,7 +119,7 @@ if __name__ == '__main__':
     # i.e. setup commands, default slice...
     
     # Establish connection, start listening for commands
-    receiver = Receive(queue)
+    receiver = Receive(queue, config)
     listener = threading.Thread(target=receiver.connection.ioloop.start)
     listener.start()
     

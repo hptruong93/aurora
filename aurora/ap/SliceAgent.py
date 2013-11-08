@@ -11,8 +11,13 @@ class SliceAgent:
     # Network class will receive packet -> decode ->
     # send command and config to the execute() method in this file
     
-    def __init__(self):
-        self.database = Database.Database()
+    def __init__(self, config):
+        # config is a dictionary containing
+        # base configuration information. It should be passed to classes
+        # that need the data; they can each take what they need
+        # and ignore what they don't.
+        
+        self.database = Database.Database(config)
         # Init sub classes
         self.v_bridges = VirtualBridges.VirtualBridges(self.database)
         self.v_interfaces = VirtualInterfaces.VirtualInterfaces(self.database)

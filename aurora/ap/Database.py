@@ -53,18 +53,13 @@ class Database:
 	
 	"""
     
-    INIT_DATABASE_FILE = "init_database.json"
-    INIT_SLICE_USER_ID = "init_user-slice_database.json"
-    DEFAULT_ACTIVE_SLICE = "default_slice"
-    DEFAULT_HW_DATABASE = "init_database_hardware.json"
-    
-    def __init__(self):
+    def __init__(self, config):
         # Create intial database from template
-        self.database = json.load(open(self.INIT_DATABASE_FILE))
-        self.user_id_data = json.load(open(self.INIT_SLICE_USER_ID))
-        self.active_slice = self.DEFAULT_ACTIVE_SLICE
+        self.database = config["init_database"]
+        self.user_id_data = config["init_user_id_database"]
+        self.active_slice = config["default_active_slice"]
         
-        self.hw_database = json.load(open(self.DEFAULT_HW_DATABASE))
+        self.hw_database = config["init_hardware_database"]
     
     def set_active_slice(self, slice):
         """Set the active slice, used for commands such as
@@ -281,6 +276,18 @@ class Database:
     def hw_set_num_radio_free(self, radios):
         """Sets the number of free radios."""
         self.hw_database["wifi_radio"]["number_radio_free"] = radios
+        
+    def hw_get_max_bss_per_radio(self):
+        """Returns the maximum number of bss allowed per radio
+        on this device.  Often constrained by limitations arising
+        from the underlying software or hardware."""
+        return self.hw_database["wifi_radio"]["max_bss_per_radio"]
+        
+    def hw_set_max_bss_per_radio(self, bss):
+        """Sets the maximum number of bss allowed per radio
+        on this device.  Often constrained by limitations arising
+        from the underlying software or hardware."""
+        self.hw_database["wifi_radio"]["max_bss_per_radio"] = bss
     
     def hw_add_radio_entry(self, radio_info):
         """Add a radio entry with information given as a dictionary,

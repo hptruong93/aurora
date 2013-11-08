@@ -65,9 +65,8 @@ class OpenWRTWifi:
             # Disabled should be stored as a number, not a string
             radio_data["disabled"] = int(self.__radio_get_command(count, "disabled"))
             radio_data["macaddr"] = self.__radio_get_command(count, "macaddr")
-            # This is the OpenWRT (or hostapd?) limit
-            # TODO: Read this from some sort of default config file
-            radio_data["bss_limit"] = 4;
+            # This is the OpenWRT (or hostapd) limit
+            radio_data["bss_limit"] = self.database.hw_get_max_bss_per_radio();
             self.database.hw_add_radio_entry(radio_data)
             
         # Delete default BSS; there will be as many as the # of radios
