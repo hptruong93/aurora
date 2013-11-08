@@ -221,7 +221,13 @@ class OpenWRTWifi:
         without a corresponding entry in the database. This is used
         specifically when restoring a configuration that already
         exists in the database but has not been set on the radio. The macaddr
-        parameter and if_name is also required with new_entry.
+        parameter is required with new_entry. if_name should also be specified
+        in this case; otherwise, the actual configuration will not match the
+        database.
+        
+        In general, if_name can be specified when adding a bss, and, if possible,
+        it will be used.  If not specified (or the radio has no BSS, hence,
+        the new BSS will be a main one) a default one will be generated/used.
         
         Exceptions will be raised for a number of common encryption
         configuration errors, but not all - in particular WPA at the
@@ -341,6 +347,8 @@ class OpenWRTWifi:
             self.__generic_set_command(section_name, "ssid", ssid)
             bss_entry["ssid"] = ssid
             bss_entry["macaddr"] = radio_entry["macaddr"]
+            
+            # Note: interface name cannot be specified here, and will be ignored
                 
             bss_list.append(bss_entry)
             
@@ -349,8 +357,8 @@ class OpenWRTWifi:
         else:
                 
             # Generate simple hostapd bss config file and use CLI to load
-            # TODO: allow for custom naming
-            if new_entry:
+            # Interface name not specified -> assign, else, use given name
+            if if_name == None:
                 if_name = "wlan" + str(radio_num) + "-" + str(total_bss)
             bss_entry["if_name"] = if_name    
             config_file = "bss=" + if_name + "\n"
