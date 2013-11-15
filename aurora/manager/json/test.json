@@ -4,8 +4,6 @@
     "user":"testuser",
     "config":
     {
-        "RadioInterfaces" : [],
-        
         "VirtualInterfaces": [
             {
                 "flavor":"capsulator",

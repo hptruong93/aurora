@@ -17,7 +17,6 @@ class VirtualInterfaces:
         # without it anyways....
         json_file = open(self.MODULE_JSON_FILE)
         self.metadata = json.load(json_file)["VirtualInterfaces"]
-        json_file.close()
         
         # Load database
         self.database = database

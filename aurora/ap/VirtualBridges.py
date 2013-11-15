@@ -20,7 +20,6 @@ class VirtualBridges:
         # without it anyways....
         json_file = open(self.MODULE_JSON_FILE)
         self.metadata = json.load(json_file)["VirtualBridges"]
-        json_file.close()
         self.database = database
         
     def __load_module(self, flavour):

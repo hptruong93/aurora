@@ -16,11 +16,5 @@
       "ovs": {
         "class": "OpenVSwitch"
       }
-  },
-  "VirtualWifi" :
-  {
-      "OpenWRTWifi" : {
-        "class": "OpenWRTWifi"
-       }
   }
 }
