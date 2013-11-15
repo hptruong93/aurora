@@ -58,6 +58,7 @@ class Database:
         self.database = config["init_database"]
         self.user_id_data = config["init_user_id_database"]
         self.active_slice = config["default_active_slice"]
+        self.DEFAULT_ACTIVE_SLICE = config["default_active_slice"]
         
         self.hw_database = config["init_hardware_database"]
     
@@ -115,7 +116,7 @@ class Database:
     def create_slice(self, slice, userid):
         """Create a new slice with a blank template."""
         # This is probably faster than using a template but having to do a deep copy
-        self.database[slice] = { "VirtualInterfaces": [], "VirtualBridges": [] }
+        self.database[slice] = { "VirtualInterfaces": [], "VirtualBridges": [], "RadioInterfaces" : [] }
         self.add_slice_to_user(userid, slice)
     
     def delete_slice(self, slice):

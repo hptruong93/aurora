@@ -74,10 +74,12 @@ class OpenWRTWifi:
             self.__uci_delete_bss_index(count)
             
             
-    def setup_radio(self, radio, disabled=0, channel=None, hwmode=None, txpower=None, country=None, bss_limit=None):
+    def setup_radio(self, radio, disabled=0, channel=None, hwmode=None, txpower=None, country=None, bss_limit=None, bss_shared=False):
         """Sets up a radio with the given parameters.  If parameters
         are unspecified, existing parameters are left unchanged.
-        By default, it will enable the radio interface."""
+        By default, it will enable the radio interface.
+        
+        bss_shared is not currently implemented."""
         
         radio_entry = self.database.hw_get_radio_entry(radio)
         radio_num = radio.lstrip("radio")
@@ -216,7 +218,7 @@ class OpenWRTWifi:
         
         Mode is forced to access point for now.
         
-        new_entry should be false only when non-main SSIDs are desired
+        new_entry should be false only when132. non-main SSIDs are desired
         without a corresponding entry in the database. This is used
         specifically when restoring a configuration that already
         exists in the database but has not been set on the radio. The macaddr
