@@ -1,0 +1,107 @@
+{
+    "slice":"slice_test2",
+    "command":"create_slice",
+    "user":"testuser",
+    "config":
+    {
+        "RadioInterfaces" : [
+            {
+                "flavor" : "wifi_radio",
+                "attributes" : 
+                    {
+                        "name" : "radio0",
+                        "channel" : "1",
+                        "txpower" : "5",
+                        "disabled" : "0",
+                        "country" : "CA",
+                        "hwmode" : "abg"   
+                    }
+            },
+            {
+                "flavor" : "wifi_bss",
+                "attributes" : 
+                    {
+                        "name" : "ssid_1_hi",
+                        "radio" : "radio0",
+                        "if_name" : "wlan0"
+                        
+                    }
+            }
+        
+        ],
+        
+        "VirtualInterfaces": [
+            {
+                "flavor":"capsulator",
+                "attributes": 
+                    {
+                        "attach_to":"eth0",
+                        "forward_to":"10.5.8.1",
+                        "name":"test-tap0",
+                        "tunnel_tag":"99",
+                        "is_virtual":true
+                    }
+            },
+            {
+                "flavor":"veth",
+                "attributes":
+                    {
+                        "attach_to":"wlan0",
+                        "name":"vwlan0"
+                    }
+            },
+            {
+                "flavor":"veth",
+                "attributes":
+                {
+                    "attach_to":"wlan0-1",
+                    "name":"vwlan0-1"
+                }
+            },
+            {
+                "flavor":"veth",
+                "attributes":
+                {
+                    "attach_to":"eth0",
+                    "name":"v_eth0"
+                }
+            }
+        ],
+        "VirtualBridges": [
+            {
+                "flavor":"ovs",
+                "attributes":
+                    {
+                        "name":"ovs-test",
+                        "interfaces": 
+                            ["v_eth0","vwlan0"],
+                        "bridge_settings":{"controller":"tcp:10.5.8.1","dpid":"0000000000099999","ip":"192.168.6.1"},
+                        "port_settings":{}
+                    }
+            },
+            {
+                "flavor":"linux_bridge",
+                "attributes":
+                    {
+                        "name":"linux-1",
+                        "interfaces":
+                            ["tap0","ifb1"],
+                        "bridge_settings":{"stp":"on","ip":"192.168.7.1","hello_time":"5","ageing":"2"},
+                        "port_settings":{"ifb1":{"priority":"1"}}
+                    }
+            },
+            {
+                "flavor":"linux_bridge",
+                "attributes":   
+                    {
+                        "name":"linux-2",
+                        "interfaces":
+                            ["ifb0"],
+                        "bridge_settings":{},
+                        "port_settings":{"ifb0":{"priority":"1"}}
+                    }
+            }
+        ]
+    }
+}
+
