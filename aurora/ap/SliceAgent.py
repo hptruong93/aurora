@@ -1,7 +1,7 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 import VirtualBridges, VirtualInterfaces
 import exception, json, pprint, Database, atexit, sys
-import OpenWRTWifi
+import VirtualWifi
 import subprocess
     
 class SliceAgent:
@@ -21,7 +21,7 @@ class SliceAgent:
         # Init sub classes
         self.v_bridges = VirtualBridges.VirtualBridges(self.database)
         self.v_interfaces = VirtualInterfaces.VirtualInterfaces(self.database)
-        self.wifi = OpenWRTWifi.OpenWRTWifi(self.database)
+        self.wifi = VirtualWifi.VirtualWifi(self.database)
         
         # Clean up on exit
         atexit.register(self.__reset)
@@ -40,6 +40,14 @@ class SliceAgent:
         self.database.set_active_slice(slice)
         
         # Parse config
+        
+        # Create wifi slices
+        try:
+            self.wifi.create_slice(config["RadioInterfaces"])
+        except:
+            self.delete_slice(slice)
+            raise exception.SliceCreationFailed("Aborting. Unable to create WiFi slice for " + str(slice) )
+        
         # Create all virtual interfaces
         for interfaces in config['VirtualInterfaces']:
             try:
@@ -89,6 +97,7 @@ class SliceAgent:
                             self.delete_slice(slice)
                             raise exception.SliceCreationFailed("Aborting.\nError applying setting " + setting + " to port " + port + " on bridge " + bridge_name)
                     
+        
         self.database.reset_active_slice()        
         
 
@@ -115,6 +124,13 @@ class SliceAgent:
                     self.v_interfaces.delete(interface['attributes']['name'])
                 except:
                     print("Error: Unable to delete virtual interface " + interface['attributes']['name'])
+            
+            # Delete wifi
+            try:
+                self.wifi.delete_slice(slice_data["RadioInterfaces"])
+            except:
+                print("Error: Unable to delete wifi for slice " + slice)
+            
                 
         # Delete database entry; catch errors
         try:
@@ -160,9 +176,7 @@ class SliceAgent:
         appropriate to the command (may be optional)
         For example, to execute the command get_status(tap1) in VirtualInterfaces,
         you would format info like so:
-        { "module" : "VirtualInterfaces", "command" : "get_status", "args" : { "name" : "tap1"} }
-        
-        ***Temporarily: OpenWRTWifi module can now be used. ***"""
+        { "module" : "VirtualInterfaces", "command" : "get_status", "args" : { "name" : "tap1"} }"""
         
         
         self.database.set_active_slice(slice)
@@ -172,16 +186,12 @@ class SliceAgent:
             command = getattr(self.v_bridges, info["command"])
         elif info["module"] == "Database":
             command = getattr(self.database, info["command"])
-        elif info["module"] == "OpenWRTWifi":
-            command = getattr(self.wifi, info["command"])
-        
+
+        self.database.reset_active_slice()
         # This won't cause any 'undefined variable' issues
         # since the JSON is verified to satisfy one of 
         # the three above if statements earlier
         return command(**info["args"])
-        
-        self.database.reset_active_slice()
-        
     
     def execute(self, slice, command, config=None, user="default_user"):
         """The main entry point for any command coming from a remote
@@ -242,4 +252,3 @@ class SliceAgent:
         self.v_bridges.reset()
         self.v_interfaces.reset()
         return "RESETTING"
-    

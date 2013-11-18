@@ -15,7 +15,7 @@ class Dispatcher():
         logging.basicConfig()
         
         credentials = pika.PlainCredentials('outside_world', 'wireless_access')
-        self.connection = pika.SelectConnection(pika.ConnectionParameters(host='132.206.206.137', credentials=credentials), self.on_connected)
+        self.connection = pika.SelectConnection(pika.ConnectionParameters(host='192.168.0.12', credentials=credentials), self.on_connected)
         
         # Create dictionary for requests sent out
         self.requests_sent = []

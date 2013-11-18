@@ -1,6 +1,6 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
-import sys, json, threading
+import sys, json, threading, traceback
 import install_dependencies
 try:
     import pika
@@ -34,7 +34,7 @@ class Receive():
         
         # Connect to RabbitMQ (Step #1)
         credentials = pika.PlainCredentials('access_point', 'let_me_in')
-        self.parameters = pika.ConnectionParameters(host='10.5.8.18', credentials=credentials)
+        self.parameters = pika.ConnectionParameters(host='192.168.0.12', credentials=credentials)
         self.connection = pika.SelectConnection(self.parameters, self.on_connected)
         
     # Step #2
@@ -75,7 +75,7 @@ class Receive():
         except Exception as e:
             
             # Finalize message and convert to JSON
-            data_for_sender['message'] = str(type(e)) + " " + str(e)
+            data_for_sender['message'] = traceback.format_exc()
             data_for_sender = json.dumps(data_for_sender)
             
             # Send response and acknowledge the original message
@@ -105,7 +105,7 @@ if __name__ == '__main__':
     # Get mac address
     mac = ifconfig("eth0")["hwaddr"]
     # Put in HTTP request to get config
-    request = requests.get('http://10.5.8.15:5555/initial_ap_config_request/' + mac)
+    request = requests.get('http://192.168.0.12:5555/initial_ap_config_request/' + mac)
     config_full = request.json()
     queue = config_full['queue']
     config = config_full['default_config']

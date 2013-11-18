@@ -1,0 +1,81 @@
+{
+    "slice":"slice_test2",
+    "command":"create_slice",
+    "user":"testuser",
+    "config":
+    {
+        "RadioInterfaces" : [
+            {
+                "flavor" : "wifi_radio",
+                "attributes" : 
+                    {
+                        "name" : "radio0",
+                        "channel" : "1",
+                        "txpower" : "5",
+                        "disabled" : "0",
+                        "country" : "CA",
+                        "hwmode" : "abg"   
+                    }
+            },
+            {
+                "flavor" : "wifi_bss",
+                "attributes" : 
+                    {
+                        "name" : "ssid_1_hi",
+                        "radio" : "radio0",
+                        "if_name" : "wlan0"
+                        
+                    }
+            },
+            {
+                "flavor" : "wifi_bss",
+                "attributes" : 
+                    {
+                        "name" : "ssid_2_hi",
+                        "radio" : "radio0",
+                        "if_name" : "wlan0-bob"
+                        
+                    }
+            },
+            {
+                "flavor" : "wifi_bss",
+                "attributes" : 
+                    {
+                        "name" : "ssid_3_hi",
+                        "radio" : "radio0",
+                        "if_name" : "wlan0-charlie"
+                        
+                    }
+            }
+        
+        ],
+        
+        "VirtualInterfaces": [
+            {
+                "flavor":"capsulator",
+                "attributes": 
+                    {
+                        "attach_to":"eth0",
+                        "forward_to":"10.5.8.1",
+                        "name":"test-tap0",
+                        "tunnel_tag":"99",
+                        "is_virtual":true
+                    }
+            }
+        ],
+        "VirtualBridges": [
+            {
+                "flavor":"linux_bridge",
+                "attributes":   
+                    {
+                        "name":"linux-2",
+                        "interfaces":
+                            ["ifb0"],
+                        "bridge_settings":{},
+                        "port_settings":{"ifb0":{"priority":"1"}}
+                    }
+            }
+        ]
+    }
+}
+

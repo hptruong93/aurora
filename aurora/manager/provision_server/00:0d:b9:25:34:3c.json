@@ -1,0 +1,35 @@
+{
+    "queue": "ap1",
+    "default_config" : 
+    {
+        "init_hardware_database" : 
+        {
+            "firmware":"OpenWRT",
+            "firmware_version":"r38462",
+            "aurora_version":"0.1",
+            "memory_mb":"256",
+            "wifi_radio":
+            {
+                "number_radio":"0",
+                "number_radio_free":"0",
+                "max_bss_per_radio" : "4",
+                "radio_list":[]  
+            }
+        },
+        "init_database" : 
+        {
+            "default_slice": 
+            {
+            "VirtualInterfaces": [],
+            "VirtualBridges": [],
+            "RadioInterfaces" : []
+            }
+        },
+        "default_active_slice" : "default_slice",
+        "init_user_id_database" :
+        {
+            "default_user" : ["default_slice"]
+        }
+    }
+        
+}
