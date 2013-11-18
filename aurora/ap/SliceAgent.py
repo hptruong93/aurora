@@ -46,10 +46,7 @@ class SliceAgent:
             self.wifi.create_slice(config["RadioInterfaces"])
         except:
             self.delete_slice(slice)
-            # When finalized, use nice exception
-            #raise exception.SliceCreationFailed("Aborting. WiFi create_slice failed.")
-            # For now, debug
-            raise
+            raise exception.SliceCreationFailed("Aborting. Unable to create WiFi slice for " + str(slice) )
         
         # Create all virtual interfaces
         for interfaces in config['VirtualInterfaces']:
@@ -129,7 +126,10 @@ class SliceAgent:
                     print("Error: Unable to delete virtual interface " + interface['attributes']['name'])
             
             # Delete wifi
-            self.wifi.delete_slice(slice_data["RadioInterfaces"])
+            try:
+                self.wifi.delete_slice(slice_data["RadioInterfaces"])
+            except:
+                print("Error: Unable to delete wifi for slice " + slice)
             
                 
         # Delete database entry; catch errors
@@ -186,14 +186,12 @@ class SliceAgent:
             command = getattr(self.v_bridges, info["command"])
         elif info["module"] == "Database":
             command = getattr(self.database, info["command"])
-        
+
+        self.database.reset_active_slice()
         # This won't cause any 'undefined variable' issues
         # since the JSON is verified to satisfy one of 
         # the three above if statements earlier
         return command(**info["args"])
-        
-        self.database.reset_active_slice()
-        
     
     def execute(self, slice, command, config=None, user="default_user"):
         """The main entry point for any command coming from a remote
@@ -254,4 +252,3 @@ class SliceAgent:
         self.v_bridges.reset()
         self.v_interfaces.reset()
         return "RESETTING"
-    

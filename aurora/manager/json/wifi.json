@@ -26,6 +26,26 @@
                         "if_name" : "wlan0"
                         
                     }
+            },
+            {
+                "flavor" : "wifi_bss",
+                "attributes" : 
+                    {
+                        "name" : "ssid_2_hi",
+                        "radio" : "radio0",
+                        "if_name" : "wlan0-bob"
+                        
+                    }
+            },
+            {
+                "flavor" : "wifi_bss",
+                "attributes" : 
+                    {
+                        "name" : "ssid_3_hi",
+                        "radio" : "radio0",
+                        "if_name" : "wlan0-charlie"
+                        
+                    }
             }
         
         ],
@@ -41,55 +61,9 @@
                         "tunnel_tag":"99",
                         "is_virtual":true
                     }
-            },
-            {
-                "flavor":"veth",
-                "attributes":
-                    {
-                        "attach_to":"wlan0",
-                        "name":"vwlan0"
-                    }
-            },
-            {
-                "flavor":"veth",
-                "attributes":
-                {
-                    "attach_to":"wlan0-1",
-                    "name":"vwlan0-1"
-                }
-            },
-            {
-                "flavor":"veth",
-                "attributes":
-                {
-                    "attach_to":"eth0",
-                    "name":"v_eth0"
-                }
             }
         ],
         "VirtualBridges": [
-            {
-                "flavor":"ovs",
-                "attributes":
-                    {
-                        "name":"ovs-test",
-                        "interfaces": 
-                            ["v_eth0","vwlan0"],
-                        "bridge_settings":{"controller":"tcp:10.5.8.1","dpid":"0000000000099999","ip":"192.168.6.1"},
-                        "port_settings":{}
-                    }
-            },
-            {
-                "flavor":"linux_bridge",
-                "attributes":
-                    {
-                        "name":"linux-1",
-                        "interfaces":
-                            ["tap0","ifb1"],
-                        "bridge_settings":{"stp":"on","ip":"192.168.7.1","hello_time":"5","ageing":"2"},
-                        "port_settings":{"ifb1":{"priority":"1"}}
-                    }
-            },
             {
                 "flavor":"linux_bridge",
                 "attributes":   

@@ -1,6 +1,5 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
-import subprocess, os, tempfile
-from .. import exception
+import subprocess, os, tempfile, exception
 import psutil, copy
 
 ####
@@ -28,14 +27,15 @@ class OpenWRTWifi:
     def setup(self):
         """This method removes any existing wireless configuration, subsequently
         detecting and adding any radios available to Aurora for use."""
+
+        # Bring down any existing wifi
+        subprocess.call(["wifi", "down"])
+
         # First, remove wireless configuration file; ignore errors
         try:
             os.remove(self.WIRELESS_FILE_PATH)
         except Exception:
             pass
-
-        # Bring down any existing wifi
-        subprocess.call(["wifi", "down"])
 
         # Regenerate it.  We rely on wifi detect, especially
         # since it can detect the MAC address & number of radios
@@ -79,6 +79,8 @@ class OpenWRTWifi:
         are unspecified, existing parameters are left unchanged.
         By default, it will enable the radio interface."""
 
+
+        disabled = int(disabled)
         radio_entry = self.database.hw_get_radio_entry(name)
         radio_num = name.lstrip("radio")
         current_disabled = radio_entry["disabled"]
@@ -142,7 +144,7 @@ class OpenWRTWifi:
         # If no radios require changes, this will not execute
         for radio in self.change_pending:
             subprocess.call(["wifi", "down", str(radio)])
-            subprocess.call(["wifi","up",str(radio)])
+            subprocess.call(["wifi", "up", str(radio)])
             radio_entry = self.database.hw_get_radio_entry(radio)
             # If a radio is disabled, do not try adding bss
             if radio_entry["disabled"] == 0:
@@ -165,6 +167,7 @@ class OpenWRTWifi:
         for process in psutil.process_iter():
             if process.name == "hostapd":
                 num_hostapd = num_hostapd + 1
+
 
         num_radios_in_use = self.database.hw_get_num_radio() - self.database.hw_get_num_radio_free()
         if num_hostapd != num_radios_in_use:
@@ -455,8 +458,7 @@ class OpenWRTWifi:
 
             command = ["hostapd_cli", "-p", "/var/run/hostapd-phy" + str(radio_num), "add_bss", temp_file.name]
             if new_entry:
-                if radio_entry["disabled"] == 0:
-                    subprocess.check_call(command)
+                subprocess.call(command)
                 # Write to database
                 bss_entry["mode"] = "ap"
                 bss_entry["name"] = name
@@ -497,9 +499,6 @@ class OpenWRTWifi:
             self.__uci_delete_section_name("BSS" + radio)
             # Remove database entries of all BSS for the radio
             del bss_list[0:len(bss_list)]
-            # Set radio as disabled since there are no more BSS
-            self.setup_radio(radio, disabled=1)
-            self.apply_changes()
 
         else:
             # It is possible that the radio may be marked as disabled

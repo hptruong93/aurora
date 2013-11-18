@@ -83,12 +83,11 @@ class VirtualWifi:
             
                 elif interface["flavor"] == "wifi_bss":
                     self.wifi.remove_bss(interface["attributes"]["radio"],interface["attributes"]["name"])
+
+                self.database.delete_entry("RadioInterfaces", interface["attributes"]["name"])
             except:
                 pass
-            
-            # We tried and possibly succeeded in deleting,now remove entry
-            print("INTERFACE " + str(interface))
-            self.database.delete_entry("RadioInterfaces", interface["attributes"]["name"])
+
                 
         self.wifi.apply_changes()
     
