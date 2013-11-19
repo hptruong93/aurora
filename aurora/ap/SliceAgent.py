@@ -46,7 +46,7 @@ class SliceAgent:
             self.wifi.create_slice(config["RadioInterfaces"])
         except:
             self.delete_slice(slice)
-            raise exception.SliceCreationFailed("Aborting. Unable to create WiFi slice for " + str(slice) )
+            raise exception.SliceCreationFailed("Aborting. Unable to create WiFi slice for " + str(slice))
         
         # Create all virtual interfaces
         for interfaces in config['VirtualInterfaces']:
@@ -212,8 +212,6 @@ class SliceAgent:
             return self.restart()
         elif command == "reset":
             return self.__reset()
-        #elif command == "restart_aurora"
-        #    self.restart_aurora()
         else:
             raise exception.CommandNotFound(command)
     
@@ -222,24 +220,6 @@ class SliceAgent:
         # Restart machine (OS), but give time for aurora to send OK to manager
         subprocess.Popen(['sleep 5; reboot'], shell=True)
         return "RESTARTING"
-        
-    #def restart_aurora(self):
-        #Executes script that waits 10 secs and then runs aurora
-        #subprocess.Popen(["./start_in_10_sec.sh"])
-        #sys.exit(0)
-    
-    # Print functions for testing locally if necessary
-    def list_users(self):
-        print(self.database.list_users())
-    
-    def list_users_full(self):
-        print(self.database.list_users_full())
-    
-    def list_all(self):
-        print(self.database.list_all())
-    
-    def list_slice(self, slice):
-        print(self.database.list_slice_contents(slice))
         
     def __reset(self):
         # Clear out all slices

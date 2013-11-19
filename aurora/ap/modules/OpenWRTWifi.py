@@ -28,6 +28,8 @@ class OpenWRTWifi:
         """This method removes any existing wireless configuration, subsequently
         detecting and adding any radios available to Aurora for use."""
 
+        print("Finding and setting up radios")
+
         # Bring down any existing wifi
         subprocess.call(["wifi", "down"])
 
@@ -72,6 +74,8 @@ class OpenWRTWifi:
         # Delete default BSS; there will be as many as the # of radios
         for count in reversed(range(0,num_radios)):
             self.__uci_delete_bss_index(count)
+
+        print("Radio setup complete.  They can now be used by Aurora.")
 
 
     def setup_radio(self, name, disabled=0, channel=None, hwmode=None, txpower=None, country=None, bss_limit=None):
