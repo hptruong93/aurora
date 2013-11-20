@@ -502,7 +502,7 @@ class OpenWRTWifi:
             # We set the format of the name in add_bss, now we simply delete the section
             self.__uci_delete_section_name("BSS" + radio)
             # Remove database entries of all BSS for the radio
-            del bss_list[0:len(bss_list)]
+            bss_list.remove(bss_entry)
 
         else:
             # It is possible that the radio may be marked as disabled

@@ -59,13 +59,15 @@ class Receive():
         # but it is likely that any preserved messages will take longer than the timeout on the manager
         # to be delivered and processed (i.e. OS reboot, RabbitMQ restart, etc.) and will put the AP
         # into some state unknown to the manager.  Thus, we discard them if anything ever goes wrong
-        self.channel.queue_declare(queue=self.queue, no_ack=True, durable=False, callback=self.on_queue_declared,
+
+        # Note: no_ack set in on_queue_declared
+        self.channel.queue_declare(queue=self.queue, durable=False, callback=self.on_queue_declared,
                                    auto_delete=True)
 
     # Step #4
     def on_queue_declared(self, frame):
         """Called when RabbitMQ has told us our Queue has been declared, frame is the response from RabbitMQ"""
-        self.channel.basic_consume(self.handle_delivery, queue=self.queue)
+        self.channel.basic_consume(self.handle_delivery, queue=self.queue, no_ack=True,)
 
     # Step #5
     def handle_delivery(self, channel, method, header, body):
@@ -89,13 +91,7 @@ class Receive():
             data_for_sender['message'] = traceback.format_exc()
             data_for_sender = json.dumps(data_for_sender)
 
-            # Send response and acknowledge the original message
-            self.channel.basic_publish(exchange='', routing_key=header.reply_to,
-                                       properties=pika.BasicProperties(correlation_id=header.correlation_id,
-                                                                       content_type="application/json"),
-                                       body=data_for_sender)
-
-            print(" [x] Error; command %s failed", body["command"])
+            print(" [x] Error; command " + message["command"] + " failed")
 
         # No error, we (may) return data
         else:
@@ -105,14 +101,14 @@ class Receive():
             data_for_sender['message'] = return_data
             data_for_sender = json.dumps(data_for_sender)
 
-            # Send response and acknowledge the original message
-            self.channel.basic_publish(exchange='', routing_key=header.reply_to,
-                                       properties=pika.BasicProperties(correlation_id=header.correlation_id,
-                                                                       content_type="application/json"),
-                                       body=data_for_sender)
-            self.channel.basic_ack(delivery_tag=method.delivery_tag)
-
             print(" [x] Command executed")
+
+
+        # Send response
+        self.channel.basic_publish(exchange='', routing_key=header.reply_to,
+                                    properties=pika.BasicProperties(correlation_id=header.correlation_id,
+                                                                    content_type="application/json"),
+                                    body=data_for_sender)
 
 # Executed when run from the command line.
 # *** NORMAL USAGE ***        

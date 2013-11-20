@@ -129,7 +129,11 @@ class SliceAgent:
             try:
                 self.wifi.delete_slice(slice_data["RadioInterfaces"])
             except:
-                print("Error: Unable to delete wifi for slice " + slice)
+                # With WiFi, sometimes hostapd can take a while to be brought down
+                # and the WiFi code thinks something screwy happened since
+                # hostapd is still running when it should have been killed.
+                # Everything is OK, though, since it gets killed a few msecs later.
+                print("Error: Exception encountered deleting wifi for " + slice + ". Likely not a cause for concern.")
             
                 
         # Delete database entry; catch errors

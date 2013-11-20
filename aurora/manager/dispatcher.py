@@ -31,7 +31,7 @@ class Dispatcher():
     
     def channel_open(self, new_channel):
         self.channel = new_channel
-        response = self.channel.queue_declare(exclusive=True, callback=self.on_queue_declared)
+        response = self.channel.queue_declare(exclusive=True, durable=True, callback=self.on_queue_declared)
         
     
     def on_queue_declared(self, frame):
@@ -145,11 +145,12 @@ if __name__ == '__main__':
             print('Enter json filename')
             try:
                 file = open(raw_input())
+                config = json.load(file)
+                file.close()
             except IOError:
                 print('Bad file, returning to menu')
             else:
-                config = json.load(file)
-                file.close()
+
                 print('Enter ap ID')
                 ap = raw_input()
                 print('Enter unique id')

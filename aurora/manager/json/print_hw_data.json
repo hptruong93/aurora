@@ -1,0 +1,14 @@
+{
+    "slice":"slice_test",
+    "command":"remote_API",
+    "config":
+    {
+        "module": "Database",
+        "command":"hw_list_all",
+        "args":
+        {
+            "as_json":true
+        }
+    }
+}
+

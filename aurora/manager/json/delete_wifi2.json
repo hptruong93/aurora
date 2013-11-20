@@ -1,0 +1,6 @@
+{
+    "slice":"WIFI_FINALLY",
+    "command":"delete_slice",
+    "user":"bob wifi"
+}
+
