@@ -15,14 +15,14 @@ users to control these access points through simple to complex commands,
 depending on their needs.
 
 
-Dependencies for each component are listed below.
-
+Dependencies
+===
 Client: 
-
+=======
 None for now
 
 Manager:
-====
+
 python paste: http://bitbucket.org/ianb/paste
 1.7.5.1 tested
 
@@ -30,7 +30,7 @@ requests: www.python-requests.org
 Version 2.0.1 tested
 
 Access Point:
-====
+=======
 psutil : http://code.google.com/p/psutil/
 Version 1.0.1 tested
 
@@ -43,7 +43,7 @@ Version 2.0.1 tested
 The last two dependecies above will install automatically, assuming at least 
 easy_install (distribute) exists on the access point.
 
-==========
+=======
 Known bugs:
 
 Wireless configuration can be tricky on the Access Points, due to the
