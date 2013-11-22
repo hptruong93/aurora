@@ -47,36 +47,78 @@ class Manager():
                         newList[i][1]['free_disk'] = tempList[i][6]
                         newList[i][1]['supported_protocol'] = tempList[i][7]
                         newList[i][1]['number_radio_free'] = tempList[i][8]
+                        #Get a list of tags
+                        cur.execute("SELECT name FROM location_tags WHERE ap_name=\'"+str(tempList[i][0])+"\'")
+                        tagList = cur.fetchall()
+                        tagString = ""
+                        for tag in tagList:
+                            tagString += str(tag[0])+" "
+                        newList[i][1]['tags'] = tagString
                     return newList
             except mdb.Error, e:
                 print "Error %d: %s" % (e.args[0], e.args[1])
         else: #Multiple arguments (name=openflow & firmware=openwrt & region=mcgill & number_radio>1)
+            tag_compare = False #For tags, we need 2 queries and a quick result compare at the end
+            tag_result = []
             args_list = args.split('&')
             for (index, entry) in enumerate(args_list):
                 args_list[index] = entry.strip()
-                if '=' in args_list[index]:
-                    if (args.split('=')[0] == "name") or (args.split('=')[0] == "firmware") or (args.split('=')[0] == "region") or (args.split('=')[0] == "supported_protocol"):
+                 #Filter for tags (NOT Query is not yet implemented (future work?), support for only 1 tag (USE 'OR' STATEMENT IN FUTURE FOR MULTIPLE))
+                if 'tag' in args_list[index]:
+                    tag_compare = True
+                    try:
+                        with self.con:
+                            cur = self.con.cursor()
+                            if '=' in args_list[index]:
+                                cur.execute("SELECT ap_name FROM location_tags WHERE name=\'"+args_list[index].split('=')[1]+"\'")
+                            else:
+                                print("Unexpected character in tag query. Please check syntax and try again!")
+                                sys.exit(0)
+                            tempresult = cur.fetchall()
+                            for result in tempresult:
+                                tag_result.append(result[0])
+                                
+                    except mdb.Error, e:
+                        print "Error %d: %s" % (e.args[0], e.args[1])
+                        
+                elif '=' in args_list[index]:
+                    if (args_list[index].split('=')[0] == "name") or (args_list[index].split('=')[0] == "firmware") or (args_list[index].split('=')[0] == "region") or (args_list[index].split('=')[0] == "supported_protocol"):
                         args_list[index] = args_list[index].split('=')[0]+'=\''+args_list[index].split('=')[1]+'\''
                 elif '!' in args_list[index]:
-                    if (args.split('!')[0] == "name") or (args.split('!')[0] == "firmware") or (args.split('!')[0] == "region") or (args.split('!')[0] == "supported_protocol"):
+                    if (args_list[index].split('!')[0] == "name") or (args_list[index].split('!')[0] == "firmware") or (args_list[index].split('!')[0] == "region") or (args_list[index].split('!')[0] == "supported_protocol"):
                         args_list[index] = args_list[index].split('!')[0]+'<>\''+args_list[index].split('!')[1]+'\''
                     else:
                         args_list[index] = args_list[index].split('!')[0]+'<>'+args_list[index].split('!')[1]
                 
             #Combine to 1 string
             expression = args_list[0]
+            if 'tag' in expression:
+                expression = ""
             for (index, entry) in enumerate(args_list):
-                if index != 0:
-                    expression = expression+' AND '+ entry  
+                if index != 0 and 'tag' not in entry:
+                    if len(expression != 0):
+                        expression = expression+' AND '+ entry
+                    else:
+                        expression = entry
             
             #execute query
             try:
                 with self.con:
                     cur = self.con.cursor()
-                    cur.execute("SELECT * FROM ap WHERE "+expression)
+                    if len(expression) != 0:
+                        cur.execute("SELECT * FROM ap WHERE "+expression)
+                    else:
+                        cur.execute("SELECT * FROM ap")
             except mdb.Error, e:
                 print "Error %d: %s" % (e.args[0], e.args[1])
-            tempList =  cur.fetchall()
+            tempList =  list(cur.fetchall())
+            #Compare result with tag_list if necessary
+            if tag_compare:
+                comparedList = []
+                for (index,ap_entry) in enumerate(tempList):
+                    if ap_entry[0] in tag_result:
+                        comparedList.append(ap_entry)
+                tempList = comparedList
             #Prune thorugh list
             newList = []
             for i in range(len(tempList)):
@@ -91,6 +133,13 @@ class Manager():
                 newList[i][1]['free_disk'] = tempList[i][6]
                 newList[i][1]['supported_protocol'] = tempList[i][7]
                 newList[i][1]['number_radio_free'] = tempList[i][8]
+                #Get a list of tags
+                cur.execute("SELECT name FROM location_tags WHERE ap_name=\'"+str(tempList[i][0])+"\'")
+                tagList = cur.fetchall()
+                tagString = ""
+                for tag in tagList:
+                    tagString += str(tag[0])+" "
+                newList[i][1]['tags'] = tagString
             return newList
             
     def ap_list(self, args, tenant_id, user_id, project_id):
@@ -193,6 +242,7 @@ class Manager():
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)
+        newList = [] #Result list
         if len(arg_filter) == 0: #No filter or tags
             try:
                 with self.con:
@@ -200,7 +250,6 @@ class Manager():
                     cur.execute("SELECT * FROM ap_slice")
                     tempList =  cur.fetchall()
                     #Prune thorugh list
-                    newList = []
                     for i in range(len(tempList)):
                         newList.append({})
                         newList[i]['ap_slice_id'] = tempList[i][0]
@@ -209,32 +258,73 @@ class Manager():
                         newList[i]['project_id'] = tempList[i][3]
                         newList[i]['wnet_id'] = tempList[i][4]
                         newList[i]['status'] = tempList[i][5]
+                        #Get a list of tags
+                        cur.execute("SELECT name FROM tenant_tags WHERE ap_slice_id=\'"+str(tempList[i][0])+"\'")
+                        tagList = cur.fetchall()
+                        tagString = ""
+                        for tag in tagList:
+                            tagString += str(tag[0])+" "
+                        newList[i]['tags'] = tagString
             
             except mdb.Error, e:
                 print "Error %d: %s" % (e.args[0], e.args[1])
         else: #Multiple arguments
+            tag_compare = False #For tags, we need 2 queries and a quick result compare at the end
+            tag_result = []
             args_list = arg_filter.split('&')
             for (index, entry) in enumerate(args_list):
                 args_list[index] = entry.strip()
-                if '=' in args_list[index]:
+                #Filter for tags (NOT Query is not yet implemented (future work?), support for only 1 tag (USE 'OR' STATEMENT IN FUTURE FOR MULTIPLE))
+                if 'tag' in args_list[index]:
+                    tag_compare = True
+                    try:
+                        with self.con:
+                            cur = self.con.cursor()
+                            if '=' in args_list[index]:
+                                cur.execute("SELECT ap_slice_id FROM tenant_tags WHERE name=\'"+args_list[index].split('=')[1]+"\'")
+                            else:
+                                print("Unexpected character in tag query. Please check syntax and try again!")
+                                sys.exit(0)
+                            tempresult = cur.fetchall()
+                            for result in tempresult:
+                                tag_result.append(result[0])
+                                
+                    except mdb.Error, e:
+                        print "Error %d: %s" % (e.args[0], e.args[1])
+                
+                elif '=' in args_list[index]:
                     args_list[index] = args_list[index].split('=')[0]+'=\''+args_list[index].split('=')[1]+'\''
                 elif '!' in args_list[index]:
                     args_list[index] = args_list[index].split('!')[0]+'<>\''+args_list[index].split('!')[1]+'\''
                 
             #Combine to 1 string
             expression = args_list[0]
+            if 'tag' in expression:
+                expression = ""
             for (index, entry) in enumerate(args_list):
-                if index != 0:
-                    expression = expression+' AND '+ entry 
+                if index != 0 and 'tag' not in entry:
+                    if len(expression) != 0:
+                        expression = expression+' AND '+ entry 
+                    else:
+                        expression = entry
             
             #Execute Query
             try:
                 with self.con:
                     cur = self.con.cursor()
-                    cur.execute("SELECT * FROM ap_slice WHERE "+expression)
-                    tempList = cur.fetchall()
+                    if len(expression) != 0:
+                        cur.execute("SELECT * FROM ap_slice WHERE "+expression)
+                    else:
+                        cur.execute("SELECT * FROM ap_slice")
+                    tempList = list(cur.fetchall())
+                    #Compare result with tag_list if necessary
+                    if tag_compare:
+                        comparedList = []
+                        for (index,slice_entry) in enumerate(tempList):
+                            if slice_entry[0] in tag_result:
+                                comparedList.append(slice_entry)
+                        tempList = comparedList
                     #Prune thorugh list
-                    newList = []
                     for i in range(len(tempList)):
                         newList.append({})
                         newList[i]['ap_slice_id'] = tempList[i][0]
@@ -243,6 +333,13 @@ class Manager():
                         newList[i]['project_id'] = tempList[i][3]
                         newList[i]['wnet_id'] = tempList[i][4]
                         newList[i]['status'] = tempList[i][5]
+                        #Get a list of tags
+                        cur.execute("SELECT name FROM tenant_tags WHERE ap_slice_id=\'"+str(tempList[i][0])+"\'")
+                        tagList = cur.fetchall()
+                        tagString = ""
+                        for tag in tagList:
+                            tagString += str(tag[0])+" "
+                        newList[i]['tags'] = tagString
             
             except mdb.Error, e:
                 print "Error %d: %s" % (e.args[0], e.args[1])
@@ -363,6 +460,6 @@ class Manager():
 #Manager().parseargs('ap-slice-create', {'filter':['region=mcgill & number_radio<2 & version<1.1 & number_radio_free!2 & supported_protocol=a/b/g'], 'file':['json/slicetemp.json'], 'tag':['first']},1,1,1)
 #Manager().parseargs('ap-slice-create', {'ap':['of1', 'of2', 'of3', 'of4'],'file':['json/slicetemp.json'], 'tag':['first']},1,1,1)
 #Manager().parseargs('ap-slice-create', {'ap':['of1'],'file':['json/slicetemp.json'], 'tag':['first']},1,1,1)
-#Manager().parseargs('ap-list', {'filter':['name=openflow'], 'i':True},1,1,1)
-#Manager().parseargs('ap-slice-list', {'filter':[''], 'i':False}, 1,1,1)
-Manager().parseargs('wnet_show', {'wnet-show':['wnet-1']}, 0,1,1)
+#Manager().parseargs('ap-list', {'filter':['name=openflow & tag=mc838'], 'i':True},1,1,1)
+Manager().parseargs('ap-slice-list', {'filter':['tag=first & physical_ap=openflow'], 'i':True}, 1,1,1)
+#Manager().parseargs('wnet_show', {'wnet-show':['wnet-1']}, 0,1,1)
