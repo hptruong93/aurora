@@ -1,5 +1,8 @@
 import MySQLdb as mdb
 import atexit
+import sys
+
+
 class resourceMonitor():
 
     def __init__(self, dispatcher):
@@ -49,6 +52,9 @@ class resourceMonitor():
         If the ap_up variable is false, the access point
         is considered to be offline and in an unknown state,
         so *all* slices are marked as such (down, failed, etc.)."""
+
+        # DEBUG
+        print("Updating ap status for ID " + str(unique_id) + ".\nRequest successful: " + str(success) + "\nAccess Point up: " + str(ap_up))
 
         # Code:
         # Identify slice by unique_id

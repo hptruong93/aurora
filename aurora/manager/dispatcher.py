@@ -8,14 +8,14 @@ class Dispatcher():
 
     TIMEOUT = 30
     
-    def __init__(self):
+    def __init__(self, host, username, password):
         """Establishes the connection to RabbitMQ and sets up the queues"""
         
         # Run Pika logger so that error messages get printed
         logging.basicConfig()
-        
-        credentials = pika.PlainCredentials('outside_world', 'wireless_access')
-        self.connection = pika.SelectConnection(pika.ConnectionParameters(host='192.168.0.12', credentials=credentials), self.on_connected)
+
+        credentials = pika.PlainCredentials(username, password)
+        self.connection = pika.SelectConnection(pika.ConnectionParameters(host=host, credentials=credentials), self.on_connected)
         
         # Create dictionary for requests sent out
         self.requests_sent = []
@@ -129,6 +129,12 @@ class Dispatcher():
 # Obviously this code will not be in a final version
 if __name__ == '__main__':
     exitLoop = False
+
+    ######
+    # Connection Variables
+    host = '192.168.0.12'
+    username = 'outside_world'
+    password = 'wireless_access'
     sender = Dispatcher()
 
     while not exitLoop:
