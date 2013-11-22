@@ -46,30 +46,7 @@
                         "if_name" : "wlan1-BSS3"
                         
                     }
-            },
-            {
-                "flavor" : "wifi_bss",
-                "attributes" : 
-                    {
-                        "name" : "radio2_onlyBSS",
-                        "radio" : "radio2",
-                        "if_name" : "wlan2-thebss"
-                        
-                    }
-            },
-            {
-                "flavor" : "wifi_radio",
-                "attributes" : 
-                    {
-                        "name" : "radio2",
-                        "channel" : "5",
-                        "txpower" : "10",
-                        "disabled" : "0",
-                        "country" : "US",
-                        "hwmode" : "abg"   
-                    }
             }
-        
         ],
         
         "VirtualInterfaces": [],
