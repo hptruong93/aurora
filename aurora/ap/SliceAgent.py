@@ -46,7 +46,9 @@ class SliceAgent:
             self.wifi.create_slice(config["RadioInterfaces"])
         except:
             self.delete_slice(slice)
-            raise exception.SliceCreationFailed("Aborting. Unable to create WiFi slice for " + str(slice))
+            # DEBUG
+            raise
+            #raise exception.SliceCreationFailed("Aborting. Unable to create WiFi slice for " + str(slice))
         
         # Create all virtual interfaces
         for interfaces in config['VirtualInterfaces']:

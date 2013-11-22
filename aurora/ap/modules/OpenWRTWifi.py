@@ -247,7 +247,7 @@ class OpenWRTWifi:
         bss_list = radio_entry["bss_list"]
         total_bss = len(radio_entry["bss_list"])
 
-        # Check for exising BSS with same name but only if we are creating a new entry
+        # Check for existing BSS with same name but only if we are creating a new entry
         if new_entry:
             for bss in bss_list:
                 if bss["name"] == name:
@@ -473,6 +473,10 @@ class OpenWRTWifi:
                 subprocess.check_call(command)
                 # Already exists in database,no need to write
 
+            debug_file = open('/root/debug.txt', 'ab')
+            debug_file.write(config_file + '\n')
+            debug_file.close()
+
     def remove_bss(self, radio, name):
         """The bss associated to the radio is removed on the fly.  
         If the radio is currently disabled, it is removed from the database and 
@@ -495,14 +499,18 @@ class OpenWRTWifi:
                 bss_entry = bss
 
         if bss_entry is None:
-            raise exception.InvalidSSID("SSID " + name + " on radio " + radio + " does not exist.")
+            # Nothing to do, likely already deleted
+            return
 
         # If we have a "main" BSS, we must use UCI
         elif bss_entry["main"]:
             # We set the format of the name in add_bss, now we simply delete the section
             self.__uci_delete_section_name("BSS" + radio)
             # Remove database entries of all BSS for the radio
-            bss_list.remove(bss_entry)
+            # Otherwise, we get problems if other users depend on use and we delete and try to recreate a slice
+            del bss_list[0:len(bss_list)]
+            # TODO: Sync this up with the slice data.  As it stands, someone with an SSID on a radio owned
+            # by someone else will still have their slice marked "active" when it was in fact deleted by the radio owner
 
         else:
             # It is possible that the radio may be marked as disabled
