@@ -47,8 +47,8 @@ class SliceAgent:
         except:
             self.delete_slice(slice)
             # DEBUG
-            raise
-            #raise exception.SliceCreationFailed("Aborting. Unable to create WiFi slice for " + str(slice))
+            #raise
+            raise exception.SliceCreationFailed("Aborting. Unable to create WiFi slice for " + str(slice))
         
         # Create all virtual interfaces
         for interfaces in config['VirtualInterfaces']:

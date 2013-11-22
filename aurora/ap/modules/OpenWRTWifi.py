@@ -473,10 +473,6 @@ class OpenWRTWifi:
                 subprocess.check_call(command)
                 # Already exists in database,no need to write
 
-            debug_file = open('/root/debug.txt', 'ab')
-            debug_file.write(config_file + '\n')
-            debug_file.close()
-
     def remove_bss(self, radio, name):
         """The bss associated to the radio is removed on the fly.  
         If the radio is currently disabled, it is removed from the database and 
