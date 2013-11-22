@@ -5,12 +5,12 @@ import sys
 
 class resourceMonitor():
 
-    def __init__(self, dispatcher):
+    def __init__(self, dispatcher, host, username, password):
         self.dispatcher = dispatcher
         
         #Connect to Aurora mySQL Database
         try:
-            self.con = mdb.connect('localhost', 'root', 'supersecret', 'aurora') #Change address
+            self.con = mdb.connect(host, username, password, 'aurora')
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)

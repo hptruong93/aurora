@@ -8,7 +8,7 @@ class Dispatcher():
 
     TIMEOUT = 30
     
-    def __init__(self, host, username, password):
+    def __init__(self, host, username, password, mysql_username, mysql_password):
         """Establishes the connection to RabbitMQ and sets up the queues"""
         
         # Run Pika logger so that error messages get printed
@@ -20,7 +20,7 @@ class Dispatcher():
         # Create dictionary for requests sent out
         self.requests_sent = []
         
-        self.resourceMonitor = resource_monitor.resourceMonitor(self)
+        self.resourceMonitor = resource_monitor.resourceMonitor(self, host, mysql_username, mysql_password)
         
         # Setup complete, now start listening and processing
         # This jumpstarts the connection, which in turn uses the callbacks
