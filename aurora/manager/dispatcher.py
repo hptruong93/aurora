@@ -147,7 +147,7 @@ if __name__ == '__main__':
                 file = open(raw_input())
                 config = json.load(file)
                 file.close()
-            except IOError:
+            except:
                 print('Bad file, returning to menu')
             else:
 
