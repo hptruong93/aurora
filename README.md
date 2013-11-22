@@ -18,7 +18,6 @@ depending on their needs.
 Dependencies
 ===
 
-=======
 Client: 
 
 None for now
@@ -46,9 +45,8 @@ Version 2.0.1 tested
 The last two dependecies above will install automatically, assuming at least 
 easy_install (distribute) exists on the access point.
 
-=======
 Known bugs:
-
+=======
 Wireless configuration can be tricky on the Access Points, due to the
 number of workarounds involved in adding or removing BSS on the fly.  Specifically,
 if a user lets others use a radio he owns, and then deletes the radio and BSS,
