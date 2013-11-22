@@ -14,23 +14,23 @@ controlled by users.  These clients run on a user's computer, and allow
 users to control these access points through simple to complex commands,
 depending on their needs.
 
-======
+
 Dependencies for each component are listed below.
-======
+
 Client: 
 
 None for now
-======
-Manager:
 
+Manager:
+====
 python paste: http://bitbucket.org/ianb/paste
 1.7.5.1 tested
 
 requests: www.python-requests.org
 Version 2.0.1 tested
-======
-Access Point:
 
+Access Point:
+====
 psutil : http://code.google.com/p/psutil/
 Version 1.0.1 tested
 
