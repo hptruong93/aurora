@@ -17,8 +17,10 @@ depending on their needs.
 
 Dependencies
 ===
-Client: 
+
 =======
+Client: 
+
 None for now
 
 Manager:
@@ -29,8 +31,9 @@ python paste: http://bitbucket.org/ianb/paste
 requests: www.python-requests.org
 Version 2.0.1 tested
 
-Access Point:
 =======
+Access Point:
+
 psutil : http://code.google.com/p/psutil/
 Version 1.0.1 tested
 
