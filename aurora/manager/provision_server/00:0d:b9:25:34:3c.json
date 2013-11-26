@@ -1,5 +1,7 @@
 {
     "queue": "ap1",
+    "rabbitmq_username" : "access_point",
+    "rabbitmq_password" : "let_me_in",
     "default_config" : 
     {
         "init_hardware_database" : 

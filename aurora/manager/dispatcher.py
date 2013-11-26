@@ -3,6 +3,7 @@ import threading
 from threading import Timer
 import resource_monitor
 import logging
+import provision_server.ap_provision as provision
 
 class Dispatcher():
 
@@ -65,8 +66,7 @@ class Dispatcher():
         # Start a timeout countdown
         time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=[unique_id])
         
-        self.requests_sent.append( (unique_id,time) )
-
+        self.requests_sent.append((unique_id, time))
         time.start()
 
 
@@ -135,7 +135,10 @@ if __name__ == '__main__':
     host = '192.168.0.12'
     username = 'outside_world'
     password = 'wireless_access'
-    sender = Dispatcher()
+    mysql_username = 'root'
+    mysql_password = 'supersecret'
+    sender = Dispatcher(host, username, password, mysql_username, mysql_password)
+    provision.run()
 
     while not exitLoop:
         print('Choose an option: ')
@@ -163,4 +166,4 @@ if __name__ == '__main__':
                 unique_id = raw_input()
                 sender.dispatch( config, ap, unique_id)
 
-            
+    provision.stop()

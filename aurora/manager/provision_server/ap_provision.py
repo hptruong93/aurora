@@ -1,5 +1,6 @@
 import BaseHTTPServer
 import json
+import threading
 
 class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
     server_version= "Aurora/0.2"
@@ -12,7 +13,7 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
                 file_name = self.path[27:]
                 if ".." in file_name:
                     raise Exception("File names outside directory not permitted.")
-                config_file = json.dumps(json.load(open(file_name + '.json','r')))
+                config_file = json.dumps(json.load(open('provision_server/' + file_name + '.json','r')))
                 
             except:
                 # File does not exist/ not permitted/ not json
@@ -36,14 +37,17 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         self.end_headers()
         self.wfile.write( body )
         
+# Outside of class - code to start/stop server
 
-if __name__ == "__main__":
-    handler_class=MyHandler
-    server_address = ('', 5555)
-    try:
-        srvr = BaseHTTPServer.HTTPServer(server_address, handler_class)
-        print("Starting webserver...")
-        srvr.serve_forever()
-    except KeyboardInterrupt:
-        srvr.server_close()
-   
+handler_class = MyHandler
+server_address = ('', 5555)
+server = BaseHTTPServer.HTTPServer(server_address, handler_class)
+
+def run():
+
+    server_thread = threading.Thread(target=server.serve_forever)
+    server_thread.start()
+
+def stop():
+    server.shutdown()
+

@@ -29,7 +29,7 @@ class Receive():
     #### Set the IP of the RabbitMQ host here
     RABBIT_MQ_HOST = '192.168.0.12'
 
-    def __init__(self, queue, config):
+    def __init__(self, queue, config, rabbitmq_username, rabbitmq_password):
         """Connects to RabbitMQ and initializes Aurora locally."""
 
         # Run Pika logger so that error messages get printed
@@ -40,7 +40,7 @@ class Receive():
         self.queue = queue
 
         # Connect to RabbitMQ (Step #1)
-        credentials = pika.PlainCredentials('access_point', 'let_me_in')
+        credentials = pika.PlainCredentials(rabbitmq_username, rabbitmq_password)
         self.parameters = pika.ConnectionParameters(host=self.RABBIT_MQ_HOST, credentials=credentials)
         self.connection = pika.SelectConnection(self.parameters, self.on_connected)
 
@@ -131,6 +131,8 @@ if __name__ == '__main__':
     config_full = request.json()
     queue = config_full['queue']
     config = config_full['default_config']
+    username = config_full['rabbitmq_username']
+    password = config_full['rabbitmq_password']
 
     if queue == None:
         raise Exception("AP identifier specified is not valid.")
@@ -141,7 +143,7 @@ if __name__ == '__main__':
     # i.e. setup commands, default slice...
 
     # Establish connection, start listening for commands
-    receiver = Receive(queue, config)
+    receiver = Receive(queue, config, username, password)
     listener = threading.Thread(target=receiver.connection.ioloop.start)
     listener.start()
 
