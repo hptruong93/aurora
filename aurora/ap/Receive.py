@@ -1,6 +1,6 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
-import sys, json, threading, traceback, os
+import sys, json, threading, traceback, os, signal
 import install_dependencies
 
 try:
@@ -14,12 +14,6 @@ try:
 except ImportError:
     install_dependencies.install("requests")
     import requests
-
-try:
-    import daemon
-except ImportError:
-    install_dependencies.install("python-daemon")
-    import daemon
 
 try:
     from ifconfig import ifconfig
@@ -121,60 +115,50 @@ class Receive():
                                                                     content_type="application/json"),
                                     body=data_for_sender)
 
+
 # Executed when run from the command line.
 # *** NORMAL USAGE ***        
 if __name__ == '__main__':
 
-    with daemon.DaemonContext():
+    ## Working directory for all files
+    os.chdir('/usr/aurora')
 
-        ## Working directory for all files
-        os.chdir('/usr/aurora')
+    ######
+    # Set the provision server IP/port here
+    prov_server = 'http://192.168.0.12:5555/initial_ap_config_request/'
+    #######
 
-        ######
-        # Set the provision server IP/port here
-        prov_server = 'http://192.168.0.12:5555/initial_ap_config_request/'
-        #######
+    # Get mac address
+    mac = ifconfig("eth0")["hwaddr"]
+    # Put in HTTP request to get config
+    try:
+        request = requests.get(prov_server + mac)
+    except requests.exceptions.ConnectionError:
+        print("Unable to connect to provision server @ " + prov_server)
+        exit()
 
-        # Get mac address
-        mac = ifconfig("eth0")["hwaddr"]
-        # Put in HTTP request to get config
-        try:
-            request = requests.get(prov_server + mac)
-        except requests.exceptions.ConnectionError:
-            print("Unable to connect to provision server @ " + prov_server)
-            exit()
+    config_full = request.json()
+    queue = config_full['queue']
+    config = config_full['default_config']
+    username = config_full['rabbitmq_username']
+    password = config_full['rabbitmq_password']
 
-        config_full = request.json()
-        queue = config_full['queue']
-        config = config_full['default_config']
-        username = config_full['rabbitmq_username']
-        password = config_full['rabbitmq_password']
+    if queue == None:
+        raise Exception("AP identifier specified is not valid.")
 
-        if queue == None:
-            raise Exception("AP identifier specified is not valid.")
+    print("Joining queue %s" % queue)
+    # Establish connection, start listening for commands
+    receiver = Receive(queue, config, username, password)
 
-        print("Joining queue %s" % queue)
+    listener = threading.Thread(target=receiver.connection.ioloop.start)
+    listener.start()
 
-
-        # Establish connection, start listening for commands
-        receiver = Receive(queue, config, username, password)
-        listener = threading.Thread(target=receiver.connection.ioloop.start)
-        listener.start()
-
-        # We stop the main thread here, waiting for the user to terminate
-        # We cannot use Ctrl-C since it is also recognized by programs such as OVS
-        # and all sorts of issues occur when OVS closes before python
-        # tries to use OVS to delete bridges
-        # We absolutely need a clean exit so that everything can be closed properly
-        try:
-            raw_input("Press Enter to terminate...\n")
-        except:
-            # Anything weird happens, ignore (i.e. Ctrl-D = EOF error)
-            pass
-
+    # Thanks to Matt J http://stackoverflow.com/a/1112350
+    def signal_handler(signal, frame):
         # Be nice and let the ioloop know it's time to go
         receiver.channel.basic_cancel()
         receiver.connection.ioloop.stop()
-
         print("Connections closed.  Cleaning up and exiting.")
 
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.pause()
