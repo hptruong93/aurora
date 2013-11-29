@@ -1,6 +1,6 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
-import sys, json, threading, traceback
+import sys, json, threading, traceback, os
 import install_dependencies
 
 try:
@@ -15,8 +15,19 @@ except ImportError:
     install_dependencies.install("requests")
     import requests
 
+try:
+    import daemon
+except ImportError:
+    install_dependencies.install("python-daemon")
+    import daemon
+
+try:
+    from ifconfig import ifconfig
+except ImportError:
+    install_dependencies.install("python-ifconfig")
+    from ifconfig import ifconfig
+
 import SliceAgent
-from ifconfig import ifconfig
 import logging
 
 
@@ -114,53 +125,56 @@ class Receive():
 # *** NORMAL USAGE ***        
 if __name__ == '__main__':
 
-    ######
-    # Set the provision server IP/port here
-    prov_server = 'http://192.168.0.12:5555/initial_ap_config_request/'
-    #######
+    with daemon.DaemonContext():
 
-    # Get mac address
-    mac = ifconfig("eth0")["hwaddr"]
-    # Put in HTTP request to get config
-    try:
-        request = requests.get(prov_server + mac)
-    except requests.exceptions.ConnectionError:
-        print("Unable to connect to provision server @ " + prov_server)
-        exit()
+        ## Working directory for all files
+        os.chdir('/usr/aurora')
 
-    config_full = request.json()
-    queue = config_full['queue']
-    config = config_full['default_config']
-    username = config_full['rabbitmq_username']
-    password = config_full['rabbitmq_password']
+        ######
+        # Set the provision server IP/port here
+        prov_server = 'http://192.168.0.12:5555/initial_ap_config_request/'
+        #######
 
-    if queue == None:
-        raise Exception("AP identifier specified is not valid.")
+        # Get mac address
+        mac = ifconfig("eth0")["hwaddr"]
+        # Put in HTTP request to get config
+        try:
+            request = requests.get(prov_server + mac)
+        except requests.exceptions.ConnectionError:
+            print("Unable to connect to provision server @ " + prov_server)
+            exit()
 
-    print("Joining queue %s" % queue)
+        config_full = request.json()
+        queue = config_full['queue']
+        config = config_full['default_config']
+        username = config_full['rabbitmq_username']
+        password = config_full['rabbitmq_password']
 
-    #TODO: Get more from config than just queue name
-    # i.e. setup commands, default slice...
+        if queue == None:
+            raise Exception("AP identifier specified is not valid.")
 
-    # Establish connection, start listening for commands
-    receiver = Receive(queue, config, username, password)
-    listener = threading.Thread(target=receiver.connection.ioloop.start)
-    listener.start()
+        print("Joining queue %s" % queue)
 
-    # We stop the main thread here, waiting for the user to terminate
-    # We cannot use Ctrl-C since it is also recognized by programs such as OVS
-    # and all sorts of issues occur when OVS closes before python
-    # tries to use OVS to delete bridges
-    # We absolutely need a clean exit so that everything can be closed properly
-    try:
-        raw_input("Press Enter to terminate...\n")
-    except:
-        # Anything weird happens, ignore (i.e. Ctrl-D = EOF error)
-        pass
 
-    # Be nice and let the ioloop know it's time to go
-    receiver.channel.basic_cancel()
-    receiver.connection.ioloop.stop()
+        # Establish connection, start listening for commands
+        receiver = Receive(queue, config, username, password)
+        listener = threading.Thread(target=receiver.connection.ioloop.start)
+        listener.start()
 
-    print("Connections closed.  Cleaning up and exiting.")
+        # We stop the main thread here, waiting for the user to terminate
+        # We cannot use Ctrl-C since it is also recognized by programs such as OVS
+        # and all sorts of issues occur when OVS closes before python
+        # tries to use OVS to delete bridges
+        # We absolutely need a clean exit so that everything can be closed properly
+        try:
+            raw_input("Press Enter to terminate...\n")
+        except:
+            # Anything weird happens, ignore (i.e. Ctrl-D = EOF error)
+            pass
+
+        # Be nice and let the ioloop know it's time to go
+        receiver.channel.basic_cancel()
+        receiver.connection.ioloop.stop()
+
+        print("Connections closed.  Cleaning up and exiting.")
 
