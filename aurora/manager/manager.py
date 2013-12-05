@@ -2,7 +2,7 @@
 # SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
 import json
-import sys
+import sys, uuid
 from slice_plugin import *
 from sql_check import *
 from aurora_db import *
@@ -461,30 +461,38 @@ class Manager():
         arg_id = args['ap-slice-show'][0]
         self.ap_slice_list({'filter':'ap_slice_id='+str(arg_id), 'i':True})
     
-    def wnet_add_wslice(self, args, tenant_id, user_id, project_id):
+    def wnet_add_wslice(self, args, tenant_id, user_id, project_id): #TODO:Slice filter integration
         arg_name = args['wnet-add-wslice'][0]
         arg_slice = args['slice'][0]
+        
         #Send to database
         self.auroraDB.wnet_add_slice(tenant_id, arg_slice, arg_name)
         
+        #Return Response
+        response = {"status":True, "message":""}
+        return response
     
     def wnet_create(self, args, tenant_id, user_id, project_id):
+        #Functionality is limited, placeholder for future expansions
         arg_name = args['wnet-create'][0]
-        arg_slice = args['slice']
-        arg_qos = args['qos_priority'][0]
-        arg_share = args['shareable']
-        if 'aggregate_rate' in args:
-            arg_aggrate = args['aggregate_rate'][0]
-        else:
-            arg_aggrate = None
+        
+        #Generate uuid
+        arg_uuid = str(uuid.uuid4())
         #Send to database
-        self.auroraDB.wnet_add(tenant_id, arg_name, arg_slice, arg_aggrate, arg_qos, arg_share)
+        self.auroraDB.wnet_add(arg_uuid, arg_name, tenant_id, project_id)
+        
+        #Send Response
+        response = {"status":True, "message":""}
+        return response
     
-    def wnet_delete(self, args, tenant_id, user_id, project_id):
+    def wnet_delete(self, args, tenant_id, user_id, project_id): 
         arg_name = args['wnet-delete'][0]
-        arg_f = args['f']
         #Send to database
-        self.auroraDB.wnet_remove(tenant_id, arg_name)
+        self.auroraDB.wnet_remove(arg_name)
+        
+        #Send Response
+        response = {"status":True, "message":""}
+        return response
     
     def wnet_join_subnet(self, args, tenant_id, user_id, project_id): #TODO AFTER SAVI INTEGRATION
         arg_netname = args['wnet-join-subnet'][0]
@@ -537,11 +545,15 @@ class Manager():
             
         return newList
     
-    def wnet_remove_wslice(self, args, tenant_id, user_id, project_id):
+    def wnet_remove_wslice(self, args, tenant_id, user_id, project_id): #TODO:Slice filter integration
         arg_name = args['wnet-remove-wslice'][0]
-        arg_slice = args['slice']
+        arg_slice = args['slice'][0]
         #Send to database
         self.auroraDB.wnet_remove_slice(tenant_id, arg_slice, arg_name)
+        
+        #Send Response
+        response = {"status":True, "message":""}
+        return response
     
     def wnet_list(self, args, tenant_id, user_id, project_id):
         toPrint = self.wnet_fetch(tenant_id)
@@ -579,3 +591,7 @@ class Manager():
 #Manager().parseargs('wnet_show', {'wnet-show':['wnet-1']}, 0,1,1)
 #Manager().parseargs('ap-slice-add-tag', {'filter':['ap_slice_id=1'], 'tag':'testadding'},1,1,1)
 #Manager().parseargs('ap-slice-remove-tag', {'filter':['ap_slice_id=1'], 'tag':'testadding'},1,1,1)
+#Manager().parseargs('wnet-create', {'wnet-create':['testadding']},1,1,1)
+#Manager().parseargs('wnet-delete', {'wnet-delete':['testadding']},1,1,1)
+Manager().parseargs('wnet-add-wslice', {'wnet-add-wslice':['wnet-1'], 'slice':['1']},1,1,1)
+#Manager().parseargs('wnet-remove-wslice', {'wnet-remove-wslice':['wnet-1'], 'slice':['1']},1,1,1)

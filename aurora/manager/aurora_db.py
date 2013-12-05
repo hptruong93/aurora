@@ -56,6 +56,7 @@ class AuroraDB():
             print('Connection already closed!')
     
     def wnet_add_slice(self, tenant_id, slice_id, name):
+        '''
         #Get the wnet_id
         wnet_id = -1
         for entry in self.wnet:
@@ -65,7 +66,8 @@ class AuroraDB():
         if wnet_id == -1:
             print('wnet_id not found!')
             return
-        
+            
+
         #Change the wnet JSON file
         for wnet in self.wnet:
             if int(wnet['wnet_id']) == wnet_id:
@@ -95,17 +97,23 @@ class AuroraDB():
         json.dump(self.apslice_list[tenant_id-1], JFILE, sort_keys=True, indent=4)
         JFILE.flush()
         JFILE.close()
-        
-        #Update to SQL database
+        '''
+       
         try:
             with self.con:
+                #First get wnet-id
                 cur = self.con.cursor()
-                cur.execute("UPDATE ap_slice SET wnet_id="+str(wnet_id)+" WHERE ap_slice_id="+str(slice_id))
+                cur.execute("SELECT wnet_id FROM wnet WHERE wnet_id=\'"+str(name)+"\' OR name=\'"+str(name)+"\'")
+                wnetID = cur.fetchone()[0]
+                #Update to SQL database
+                
+                cur.execute("UPDATE ap_slice SET wnet_id=\'"+str(wnetID)+"\' WHERE ap_slice_id=\'"+str(slice_id)+"\'")
         
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
            
     def wnet_remove_slice(self, tenant_id, slice_id, name):
+        '''
         #Get the wnet_id
         wnet_id = -1
         for entry in self.wnet:
@@ -152,76 +160,39 @@ class AuroraDB():
         
         #At this point, we know that both json file removals have succeeded (i.e. we don't need to check
         #the database for wnet_id, we can just set it to NULL)
+        '''
+        
         #Update to SQL database
         try:
             with self.con:
+                #First get wnet-id
                 cur = self.con.cursor()
-                cur.execute("UPDATE ap_slice SET wnet_id=NULL WHERE ap_slice_id="+str(slice_id))
+                cur.execute("SELECT wnet_id FROM wnet WHERE wnet_id=\'"+str(name)+"\' OR name=\'"+str(name)+"\'")
+                wnetID = cur.fetchone()[0]
+                #Update to SQL database
+                
+                cur.execute("UPDATE ap_slice SET wnet_id=NULL WHERE ap_slice_id=\'"+str(slice_id)+"\' AND wnet_id=\'"+str(wnetID)+"\'")
         
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             
-    def wnet_add(self, tenant_id, name, slices,agg_rate, qos, shareable):
-        #First we need to generate a new wnet_id
-        id_list = []
-        for entry in self.wnet:
-            id_list.append(entry['wnet_id'])
-        new_id = max(id_list) + 1
+    def wnet_add(self, wnet_id, name, tenant_id, project_id):
         
-        #Change the wnet JSON file
-        data = {}
-        data['name'] = name
-        data['wnet_id'] = new_id
-        data['ap-slices'] = slices
-        data['tenant_id'] = tenant_id
-        data['qos_priority'] = qos
-        data['is_shareable'] = shareable
-        data['aggregate_rate'] = agg_rate
-        self.wnet.append(data)
-        try:
-            JFILE = open('json/wnet.json', 'w')
-        except IOError:
-            print('Error opening file for writing!')
-            sys.exit(-1)
-        json.dump(self.wnet, JFILE, sort_keys=True, indent=4)
-        JFILE.flush()
-        JFILE.close()
-    
         #Update the SQL database
         try:
             with self.con:
                 cur = self.con.cursor()
-                cur.execute("INSERT INTO wnet VALUES (%s, %s, %s)", (str(new_id), name, str(tenant_id)))
+                cur.execute("INSERT INTO wnet VALUES (%s, %s, %s, %s)", (str(wnet_id), str(name), str(tenant_id), str(project_id)))
         
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
 
-    def wnet_remove(self, tenant_id, name):
-        found = False
-        #Change the wnet JSON file
-        for (index,entry) in enumerate(self.wnet):
-            if str(entry['name']) == name and int(entry['tenant_id']) == tenant_id:
-                found = True
-                self.wnet.pop(index)
-        
-        if not found:
-            print('Specified wnet not found!')
-            return
-        
-        try:
-            JFILE = open('json/wnet.json', 'w')
-        except IOError:
-            print('Error opening file for writing!')
-            sys.exit(-1)
-        json.dump(self.wnet, JFILE, sort_keys=True, indent=4)
-        JFILE.flush()
-        JFILE.close()
-        
+    def wnet_remove(self, identifier):
         #Update the SQL database, at this point we know the wnet exists under the specified tenant
         try:
             with self.con:
                 cur = self.con.cursor()
-                cur.execute("DELETE FROM wnet WHERE name='"+str(name)+"'")
+                cur.execute("DELETE FROM wnet WHERE name=\'"+str(identifier)+"\' OR wnet_id=\'"+str(identifier)+"\'")
         
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
