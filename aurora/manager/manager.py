@@ -18,7 +18,8 @@ class Manager():
         # args is a generic dictionary passed to all functions (each function is responsible for parsing
         # their own arguments
         function = function.replace('-', '_') #For functions in python
-        getattr(self, function)(args, tenant_id, user_id, project_id)
+        response = getattr(self, function)(args, tenant_id, user_id, project_id)
+        return response
     
     def ap_filter(self, args): #STILL NEED TO IMPLEMENT TAG SEARCHING (location_tags table), maybe another connection with intersection?
         try:
@@ -149,31 +150,123 @@ class Manager():
             arg_filter = []
         arg_i = args['i']
         toPrint = self.ap_filter(arg_filter)
+        message = ""
         for entry in toPrint:
-            print('\nName: '+str(entry[0]))
+            message += '\nName: '+str(entry[0])+'\n'
             if arg_i == True: #Print extra data
                 for attr in entry[1]:
-                    print(str(attr)+': '+str(entry[1][attr]))
+                    message += str(attr)+': '+str(entry[1][attr])+'\n'
+        #return response
+        response = {"status":True, "message":message}
+        return response
     
     def ap_show(self, args, tenant_id, user_id, project_id):
         arg_name = args['ap-show'][0]
         toPrint = self.ap_filter('name='+arg_name)
+        message = ""
         for entry in toPrint:
-            print('\nName: '+str(entry[0]))
+            message += '\nName: '+str(entry[0])+'\n'
             for attr in entry[1]:
-                print(str(attr)+': '+str(entry[1][attr]))
-
-    def ap_slice_clone(self, args, tenant_id, user_id, project_id):
-        arg_ap = args['ap']
-        arg_slice = args['ap-slice-clone'][0]
-        data = {}
-        data['action'] = 'ap-slice-clone'
-        data['name'] = arg_slice
-        data['list'] = arg_ap
-        data['json'] = None
-        toSend = json.dumps(data, sort_keys=True, indent=4)
-        #Send
-        print toSend
+                message += str(attr)+': '+str(entry[1][attr])+'\n'
+        #return response
+        response = {"status":True, "message":message}
+        return response
+                
+    def ap_slice_modify(self, args, tenant_id, user_id, project_id):
+        print "Not Yet Implemented"
+        #return response
+        response = {"status":False, "message":""}
+        return response
+    
+    def ap_slice_restart(self, args, tenant_id, user_id, project_id): #UNTESTED, RUN AT OWN RISK
+        slice_names = args['ap-slice-restart'] #Multiple Names
+        if args['filter']:
+            slice_names = []
+            args_filter = args['filter'][0]
+            slice_list = self.ap_slice_filter(args_filter)
+            #Get list of slice_ids
+            for entry in slice_list:
+                slice_names.append(slice_list['ap-slice-id'])
+        
+        for entry in slice_names:
+            #Get ap name
+            try:
+                with self.con:
+                    cur = self.con.cursor()
+                    cur.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(entry)+"\'")
+                    ap_name = cur.fetchone()[0]
+            except mdb.Error, e:
+                print "Error %d: %s" % (e.args[0], e.args[1])
+            
+            print("Deleting Slice " + str(entry) + "...")
+            self.ap_slice_delete({"ap-slice-delete":str(entry)})
+            
+            print("Recreating Slice " + str(entry) + "...")
+            self.ap_slice_create({"ap":str(ap_name)})
+            
+            #return response
+            response = {"status":True, "message":""}
+            return response
+    
+    def ap_slice_add_tag(self, args, tenant_id, user_id, project_id):
+        if not args['tag']:
+            print('Error: Please specify a tag with --tag')
+            sys.exit(1)
+        else:
+            tag = args['tag']
+        #Get list of slice_ids
+        if args['filter']:
+            slice_names = []
+            args_filter = args['filter'][0]
+            slice_list = self.ap_slice_filter(args_filter)
+            #Get list of slice_ids
+            for entry in slice_list:
+                slice_names.append(entry['ap_slice_id'])
+        else:
+            slice_names = args['ap-slice-add-tag']
+        
+        #Add tags
+        for entry in slice_names:
+            try:
+                with self.con:
+                    cur = self.con.cursor()
+                    cur.execute("INSERT INTO tenant_tags VALUES (\'"+str(tag)+"\', \'"+str(entry)+"\')")
+            except mdb.Error, e:
+                print "Error %d: %s" % (e.args[0], e.args[1])
+                
+        #return response
+        response = {"status":True, "message":""}
+        return response     
+        
+    def ap_slice_remove_tag(self, args, tenant_id, user_id, project_id):
+        if not args['tag']:
+            print('Error: Please specify a tag with --tag')
+            sys.exit(1)
+        else:
+            tag = args['tag']
+        #Get list of slice_ids
+        if args['filter']:
+            slice_names = []
+            args_filter = args['filter'][0]
+            slice_list = self.ap_slice_filter(args_filter)
+            #Get list of slice_ids
+            for entry in slice_list:
+                slice_names.append(entry['ap_slice_id'])
+        else:
+            slice_names = args['ap-slice-add-tag']
+        
+        #Remove tags
+        for entry in slice_names:
+            try:
+                with self.con:
+                    cur = self.con.cursor()
+                    cur.execute("DELETE FROM tenant_tags WHERE name=\'"+str(tag)+"\' AND ap_slice_id=\'"+str(entry)+"\'")
+            except mdb.Error, e:
+                print "Error %d: %s" % (e.args[0], e.args[1])
+                
+        #Return response
+        response = {"status":True, "message":""}
+        return response
     
     def ap_slice_create(self, args, tenant_id, user_id, project_id):
         if 'ap' in args:
@@ -215,7 +308,6 @@ class Manager():
             
         #Send to plugin for parsing
         json_list = SlicePlugin(tenant_id, user_id, arg_tag).parseCreateSlice(jsonfile, len(aplist), json_list)
-        
         #Send
         for json_entry in json_list:
             print json.dumps(json_entry, sort_keys=True, indent=4)
@@ -231,12 +323,7 @@ class Manager():
         #Send
         print toSend
     
-    def ap_slice_list(self, args, tenant_id, user_id, project_id):
-        if args['filter']:
-            arg_filter = args['filter'][0]
-        else:
-            arg_filter = []
-        arg_i = args['i']
+    def ap_slice_filter(self, arg_filter):
         try:
             self.con = mdb.connect('localhost', 'root', 'supersecret', 'aurora') #Change address
         except mdb.Error, e:
@@ -344,21 +431,38 @@ class Manager():
             except mdb.Error, e:
                 print "Error %d: %s" % (e.args[0], e.args[1])
         
+        return newList
+        
+    
+    def ap_slice_list(self, args, tenant_id, user_id, project_id):
+        if args['filter']:
+            arg_filter = args['filter'][0]
+        else:
+            arg_filter = []
+        arg_i = args['i']
+        
+        newList = self.ap_slice_filter(arg_filter)
+        
+        message = ""
         if arg_i == False:
             for entry in newList:
-                print('ap_slice_id: '+entry['ap_slice_id']+'\n')
+                message += 'ap_slice_id: '+entry['ap_slice_id']+'\n\n'
         else:
             for entry in newList:
                 for attr in entry:
-                    print(str(attr)+': '+str(entry[attr]))
-                print('\n')
+                    message += str(attr)+': '+str(entry[attr])+'\n'
+                message += '\n'
+        
+        #Return response
+        response = {"status":True, "message":message}
+        return response
                 
     def ap_slice_show(self, args, tenant_id, user_id, project_id):
         arg_id = args['ap-slice-show'][0]
         self.ap_slice_list({'filter':'ap_slice_id='+str(arg_id), 'i':True})
     
-    def wnet_add_ap(self, args, tenant_id, user_id, project_id):
-        arg_name = args['wnet-add-ap'][0]
+    def wnet_add_wslice(self, args, tenant_id, user_id, project_id):
+        arg_name = args['wnet-add-wslice'][0]
         arg_slice = args['slice'][0]
         #Send to database
         self.auroraDB.wnet_add_slice(tenant_id, arg_slice, arg_name)
@@ -382,8 +486,8 @@ class Manager():
         #Send to database
         self.auroraDB.wnet_remove(tenant_id, arg_name)
     
-    def wnet_join(self, args, tenant_id, user_id, project_id): #TODO AFTER SAVI INTEGRATION
-        arg_netname = args['wnet-join'][0]
+    def wnet_join_subnet(self, args, tenant_id, user_id, project_id): #TODO AFTER SAVI INTEGRATION
+        arg_netname = args['wnet-join-subnet'][0]
         arg_wnetname = args['wnet_name'][0]
         #Send to database
         print('NOT YET IMPLEMENTED')
@@ -433,33 +537,45 @@ class Manager():
             
         return newList
     
-    def wnet_remove_ap(self, args, tenant_id, user_id, project_id):
-        arg_name = args['wnet-remove-ap'][0]
+    def wnet_remove_wslice(self, args, tenant_id, user_id, project_id):
+        arg_name = args['wnet-remove-wslice'][0]
         arg_slice = args['slice']
         #Send to database
         self.auroraDB.wnet_remove_slice(tenant_id, arg_slice, arg_name)
     
     def wnet_list(self, args, tenant_id, user_id, project_id):
         toPrint = self.wnet_fetch(tenant_id)
+        message = ""
         for entry in toPrint:
             for attr in entry:
-                print(str(attr)+': '+str(entry[attr]))
-            print('\n')
+                message += str(attr)+': '+str(entry[attr])+'\n'
+            message += '\n'
+        
+        #Return response
+        response = {"status":True, "message":message}
+        return response
             
     
     def wnet_show(self, args, tenant_id, user_id, project_id):
         arg_name = args['wnet-show'][0]
         toPrint = self.wnet_fetch(tenant_id)
+        response = ""
         for entry in toPrint:
             if entry['name'] == arg_name:
                 for attr in entry:
-                    print(str(attr)+': '+str(entry[attr]))
-                print('\n')
+                    message += str(attr)+': '+str(entry[attr])+'\n'
+                message += '\n'
+        
+        #Return response
+        response = {"status":True, "message":message}
+        return response
         
 #For Testing
 #Manager().parseargs('ap-slice-create', {'filter':['region=mcgill & number_radio<2 & version<1.1 & number_radio_free!2 & supported_protocol=a/b/g'], 'file':['json/slicetemp.json'], 'tag':['first']},1,1,1)
 #Manager().parseargs('ap-slice-create', {'ap':['of1', 'of2', 'of3', 'of4'],'file':['json/slicetemp.json'], 'tag':['first']},1,1,1)
 #Manager().parseargs('ap-slice-create', {'ap':['of1'],'file':['json/slicetemp.json'], 'tag':['first']},1,1,1)
 #Manager().parseargs('ap-list', {'filter':['name=openflow & tag=mc838'], 'i':True},1,1,1)
-Manager().parseargs('ap-slice-list', {'filter':['tag=first & physical_ap=openflow'], 'i':True}, 1,1,1)
+#Manager().parseargs('ap-slice-list', {'filter':['tag=first & physical_ap=openflow'], 'i':True}, 1,1,1)
 #Manager().parseargs('wnet_show', {'wnet-show':['wnet-1']}, 0,1,1)
+#Manager().parseargs('ap-slice-add-tag', {'filter':['ap_slice_id=1'], 'tag':'testadding'},1,1,1)
+#Manager().parseargs('ap-slice-remove-tag', {'filter':['ap_slice_id=1'], 'tag':'testadding'},1,1,1)

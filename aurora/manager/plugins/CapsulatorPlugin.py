@@ -27,7 +27,7 @@ class CapsulatorPlugin():
             sys.exit(-1)
         
         #Get starting tunnel_tag numbers, for generation
-        ttlist = []
+        ttlist = [0]
         for entry in APlist:
             for interface in entry['VirtualInterfaces']:
                 if 'tunnel_tag' in interface['attributes']:

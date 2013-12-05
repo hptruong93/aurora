@@ -225,7 +225,15 @@ class AuroraDB():
         
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
-            
+    
+    def slice_add(self, tenant_id, physAP, project_id, wnet_id):
+        #Update SQL database and JSON file
+        pass
+    
+    def slice_delete(self, slice_id):
+        #Update SQL database and JSON file
+        pass
+         
     def wnet_join(self, tenant_id, name):
         pass #TODO AFTER SAVI INTEGRATION
         

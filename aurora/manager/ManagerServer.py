@@ -2,6 +2,8 @@
 
 import BaseHTTPServer
 import json
+from manager import *
+import requests
 
 class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
     server_version= "Aurora/0.2"
@@ -12,15 +14,19 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
     def do_POST(self):
         # Parse the form data posted
         data_string = self.rfile.read(int(self.headers['Content-Length']))
-
+        JSONfile = json.loads(data_string)
         # Begin the response
         self.send_response(200)
         self.end_headers()
+        #Send to manager.py
+        #Format of response: {"status":(true of false) ,"message":"string if necessary"}
+        print JSONfile['function']
+        print JSONfile['parameters']
+        response = Manager().parseargs(JSONfile['function'], JSONfile['parameters'], 1,1,1)
         
-        JSONfile = json.loads(data_string)
-        
-        print JSONfile
-        
+        #Send response back to client
+        r = requests.post("http://localhost:5552", data=json.dumps(response))
+        print("Response: "+str(r.status_code))
     
     # Sends a document
     def sendPage( self, type, body ):

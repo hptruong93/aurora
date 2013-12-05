@@ -37,7 +37,7 @@
                 "forward_to": "eth1", 
                 "isVirtual": "True", 
                 "name": "bam1",
-                "tunnel_tag":[]
+                "tunnel_tag":[2,3,4,5]
             }, 
             "flavor": "capsulator"
         }, 

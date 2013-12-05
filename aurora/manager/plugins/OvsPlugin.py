@@ -30,7 +30,7 @@ class OvsPlugin():
             sys.exit(-1)
         
         #Get starting DPID and tunnel_tag numbers, for generation
-        dpidlist = []
+        dpidlist = [0]
         for entry in APlist:
             for bridge in entry['VirtualBridges']:
                 if 'dpid' in bridge['attributes']['bridge_settings']:
