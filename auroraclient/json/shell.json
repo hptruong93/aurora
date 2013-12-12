@@ -50,30 +50,6 @@
                 ]
             ],
             [
-                "ap-slice-clone",
-                {
-                    "action":"store",
-                    "help":"Clone a slice",
-                    "nargs":1,
-                    "default":null,
-                    "choices":null,
-                    "metavar":"slice"
-                },
-                [
-                    [
-                        ["--ap", "--tag"],
-                        {
-                            "action":"store",
-                            "help":"List of access points or list of tags",
-                            "nargs":"*",
-                            "default":null,
-                            "choices":null,
-                            "metavar":"ap"
-                        }
-                    ]
-                ]
-            ],
-            [
                 "ap-slice-create",
                 {
                     "action":"store",
@@ -145,6 +121,146 @@
                 ]
             ],
             [
+                "ap-slice-modify",
+                {
+                    "action":"store",
+                    "help":"Modify a slice",
+                    "nargs":"*",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"slices/tags"
+                },
+                [
+                    [
+                        "--ap",
+                        {
+                            "action":"store",
+                            "help":"List of access points",
+                            "nargs":"*",
+                            "default":null,
+                            "choices":null,
+                            "metavar":"ap"
+                        }
+                    ],
+                    [
+                        "--filter",
+                        {
+                            "action":"store",
+                            "help":"Filter arguments",
+                            "nargs":1,
+                            "default":null,
+                            "choices":null,
+                            "metavar":"filter"
+                        }
+                    ],
+                    [
+                        "--file",
+                        {
+                            "action":"store",
+                            "help":"JSON config file",
+                            "nargs":1,
+                            "default":null,
+                            "choices":null,
+                            "metavar":"FILE"
+                        }
+                    ]
+                ]
+            ],
+            [
+                "ap-slice-restart",
+                {
+                    "action":"store",
+                    "help":"Restart a slice",
+                    "nargs":"*",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"slices/tags"
+                },
+                [
+                    [
+                        "--filter",
+                        {
+                            "action":"store",
+                            "help":"Filter arguments",
+                            "nargs":1,
+                            "default":null,
+                            "choices":null,
+                            "metavar":"filter"
+                        }
+                    ]
+                ]
+            ],
+            [
+                "ap-slice-add-tag",
+                {
+                    "action":"store",
+                    "help":"Add a tag to a slice",
+                    "nargs":"*",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"slices/tags"
+                },
+                [
+                    [
+                        "--filter",
+                        {
+                            "action":"store",
+                            "help":"Filter arguments",
+                            "nargs":1,
+                            "default":null,
+                            "choices":null,
+                            "metavar":"filter"
+                        }
+                    ],
+                    [
+                        "--tag",
+                        {
+                            "action":"store",
+                            "help":"List of tags",
+                            "nargs":"*",
+                            "default":null,
+                            "choices":null,
+                            "metavar":"tags"
+                        }   
+                    ]
+                ]
+            ],
+            [
+                "ap-slice-remove-tag",
+                {
+                    "action":"store",
+                    "help":"Remove a tag from a slice",
+                    "nargs":"*",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"slices/tags"
+                },
+                [
+                    [
+                        "--filter",
+                        {
+                            "action":"store",
+                            "help":"Filter arguments",
+                            "nargs":1,
+                            "default":null,
+                            "choices":null,
+                            "metavar":"filter"
+                        }
+                    ],
+                    [
+                        "--tag",
+                        {
+                            "action":"store",
+                            "help":"List of tags",
+                            "nargs":"*",
+                            "default":null,
+                            "choices":null,
+                            "metavar":"tags"
+                        }   
+                    ]
+                ]
+            ],
+            [
                 "ap-slice-list",
                 {
                     "action":"store",
@@ -191,10 +307,10 @@
                 ]
             ],
             [
-                "wnet-add-ap",
+                "wnet-add-wslice",
                 {
                     "action":"store",
-                    "help":"Add access points to a wnet",
+                    "help":"Add wslices to a wnet",
                     "nargs":1,
                     "default":null,
                     "choices":null,
@@ -237,33 +353,14 @@
                         }
                     ],
                     [
-                        "--qos_priority",
+                        "--file",
                         {
                             "action":"store",
-                            "help":"Priority for Quality of Service",
-                            "nargs":1,
-                            "default":["1"],
-                            "choices":null,
-                            "metavar":"priority"
-                        }
-                    ],
-                    [
-                        "--aggregate_rate",
-                        {
-                            "action":"store",
-                            "help":"Aggregate Rate",
+                            "help":"JSON config file",
                             "nargs":1,
                             "default":null,
                             "choices":null,
-                            "metavar":"rate"
-                        }
-                    ],
-                    [
-                        "--shareable",
-                        {
-                            "action":"store_true",
-                            "help":"wnet is shareable (true/false)",
-                            "default":false
+                            "metavar":"FILE"
                         }
                     ]
                 ]
@@ -279,21 +376,13 @@
                     "metavar":"name"
                 },
                 [
-                    [
-                        "-f",
-                        {
-                            "action":"store_true",
-                            "help":"Force delete",
-                            "default":false
-                        }
-                    ]
                 ]
             ],
             [
-                "wnet-join",
+                "wnet-join-subnet",
                 {
                     "action":"store",
-                    "help":"Join a wireless network",
+                    "help":"Join a wireless subnet",
                     "nargs":1,
                     "default":null,
                     "choices":null,
@@ -301,14 +390,14 @@
                 },
                 [
                     [
-                        "wnet_name",
+                        "subnet_name",
                         {
                             "action":"store",
-                            "help":"Name of wnet",
+                            "help":"Name of subnet",
                             "nargs":1,
                             "default":null,
                             "choices":null,
-                            "metavar":"wnet_name"
+                            "metavar":"subnet_name"
                         }
                     ]
                 ]
@@ -328,10 +417,10 @@
                 ]
             ],
             [
-                "wnet-remove-ap",
+                "wnet-remove-wslice",
                 {
                     "action":"store",
-                    "help":"remove access points from a wnet",
+                    "help":"remove wslices from a wnet",
                     "nargs":1,
                     "default":null,
                     "choices":null,

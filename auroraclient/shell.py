@@ -17,6 +17,7 @@ import argparse
 import json
 import sys, os
 from keystoneclient.v2_0 import client as ksclient
+from SendJSON import JSONSender
 
 class AuroraArgumentParser(argparse.ArgumentParser):
     
@@ -30,6 +31,7 @@ class AuroraArgumentParser(argparse.ArgumentParser):
         try:
             JFILE = open('json/shell.json', 'r')
             commands = json.load(JFILE)[0]
+            JFILE.close()
         except:
             print('Error loading json file!')
             sys.exit(-1)
@@ -79,8 +81,31 @@ class AuroraConsole():
             function = argv[1] #Used for attrs function call
             parser = AuroraArgumentParser()
             params = vars(parser.base_parser().parse_args(argv[1:]))
-            print params
-            print function
+            #For add-slice and modify, we need to load the JSON file
+            if function == "ap-slice-create" or function == "ap-slice-modify":
+                if not params['file']:
+                    print 'Please Specify a file argument!'
+                    return
+                else:
+                    try:
+                        JFILE = open('json/slicetemp.json', 'r')
+                        fileContent = json.load(JFILE)
+                        params['file'] = fileContent
+                        JFILE.close()
+                    except:
+                        print('Error loading json file!')
+                        sys.exit(-1)
+            #Authenticate
+            try:
+                authInfo = self.authenticate()
+            except:
+                print 'Invalid Credentials!'
+                sys.exit(-1)       
+            #We will send in the following format: {function:"",parameters:""}
+            toSend = {"function":function,"parameters":params}
+            if toSend: #--help commands will not start the server
+                JSONSender().sendJSON("http://localhost:5555", toSend)
+            
         
     def _get_ksclient(self, **kwargs):
         """Get an endpoint and auth token from Keystone.
