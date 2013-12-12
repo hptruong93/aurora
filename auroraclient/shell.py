@@ -104,7 +104,7 @@ class AuroraConsole():
             #We will send in the following format: {function:"",parameters:""}
             toSend = {"function":function,"parameters":params}
             if toSend: #--help commands will not start the server
-                JSONSender().sendJSON("http://localhost:5555", toSend)
+                JSONSender().sendJSON("http://localhost:5554", toSend)
             
         
     def _get_ksclient(self, **kwargs):
