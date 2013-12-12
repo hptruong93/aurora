@@ -218,7 +218,7 @@ class Manager():
             print('Error: Please specify a tag with --tag')
             sys.exit(1)
         else:
-            tag = args['tag']
+            tag = args['tag'][0]
         #Get list of slice_ids
         if args['filter']:
             slice_names = []
@@ -229,6 +229,12 @@ class Manager():
                 slice_names.append(entry['ap_slice_id'])
         else:
             slice_names = args['ap-slice-add-tag']
+        
+        try:
+            self.con = mdb.connect('localhost', 'root', 'supersecret', 'aurora') #Change address
+        except mdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            sys.exit(1)
         
         #Add tags
         for entry in slice_names:
@@ -248,7 +254,7 @@ class Manager():
             print('Error: Please specify a tag with --tag')
             sys.exit(1)
         else:
-            tag = args['tag']
+            tag = args['tag'][0]
         #Get list of slice_ids
         if args['filter']:
             slice_names = []
@@ -258,7 +264,13 @@ class Manager():
             for entry in slice_list:
                 slice_names.append(entry['ap_slice_id'])
         else:
-            slice_names = args['ap-slice-add-tag']
+            slice_names = args['ap-slice-remove-tag']
+        
+        try:
+            self.con = mdb.connect('localhost', 'root', 'supersecret', 'aurora') #Change address
+        except mdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            sys.exit(1)
         
         #Remove tags
         for entry in slice_names:
@@ -278,26 +290,17 @@ class Manager():
             arg_ap = args['ap']
         else:
             arg_ap = None
-        if 'filter' in args:
+        if args['filter']:
             arg_filter = args['filter'][0]
         else:
             arg_filter = None
         if 'file' in args:
-            arg_file = args['file'][0]
+            arg_file = args['file']
         else:
             arg_file = None
-        arg_tag = args['tag']
+        if args['tag']:
+            arg_tag = args['tag'][0]
         json_list = [] #If a file is provided for multiple APs, we need to split the file for each AP, saved here
-        
-        #Load optional json file if applicable
-        if arg_file:
-            try:
-                JFILE = open(arg_file, 'r')
-                jsonfile = json.load(JFILE)
-                JFILE.close()
-            except IOError:
-                print('Error opening file!')
-                sys.exit(-1)
         
         if arg_ap:
             aplist = arg_ap
@@ -309,26 +312,38 @@ class Manager():
                 
         #Initialize json_list structure (We do NOT yet have a plugin for VirtualWIFI/RadioInterfaces, just load and send for now)
         for i in range(len(aplist)):
-            json_list.append({'VirtualInterfaces':[], 'VirtualBridges':[], 'RadioInterfaces':jsonfile['VirtualWIFI']})
+            json_list.append({'VirtualInterfaces':[], 'VirtualBridges':[], 'RadioInterfaces':arg_file['VirtualWIFI']})
             
         #Send to plugin for parsing
-        json_list = SlicePlugin(tenant_id, user_id, arg_tag).parseCreateSlice(jsonfile, len(aplist), json_list)
+        json_list = SlicePlugin(tenant_id, user_id, arg_tag).parseCreateSlice(arg_file, len(aplist), json_list)
+        
+        message = ""
+        
+        #Print json_list (for debugging)
+        for entry in json_list:
+            print '\n'
+            print json.dumps(entry, indent=4, sort_keys=True)
+            print '\n'
         
         #Dispatch
         for (index,json_entry) in enumerate(json_list):
             #Generate unique slice_id and add entry to database
             slice_uuid = uuid.uuid4()
-            self.auroraDB.slice_add(self, slice_uuid, tenant_id, aplist[index], project_id, wnet_id)
-            
+            print slice_uuid
+            self.auroraDB.slice_add(slice_uuid, tenant_id, aplist[index], project_id)
+            message += "Slice "+str(index+1)+": "+str(slice_uuid)+'\n'
+            #Add tags if present
+            if args['tag']:
+                self.ap_slice_add_tag({'ap-slice-add-tag':[str(slice_uuid)], 'tag': [arg_tag], 'filter':""}, tenant_id, user_id, project_id)
             #Dispatch (use slice_uuid as a message identifier)
-            self.dispatch(json_entry, aplist[index], slice_uuid)
+            #self.dispatch(json_entry, aplist[index], slice_uuid)
+        #Return response (message returns a list of uuids for created slices)
         
-        #Return response
         response = {"status":True, "message":message}
         return response
     
     def ap_slice_delete(self, args, tenant_id, user_id, project_id):
-        arg_name = args['ap-slice-delete']
+        arg_name = args['ap-slice-delete'][0]
         
         config = {"slice":arg_name, "command":"delete_slice", "user":user_id}
         
@@ -345,17 +360,19 @@ class Manager():
                 cur.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(arg_name)+"\'")
                 ap_name = cur.fetchone()[0]
                 cur.execute("UPDATE ap_slice SET status=\'DELETING\' WHERE ap_slice_id=\'"+str(arg_name)+"\'")
-        except:
+                #Remove tags
+                cur.execute("DELETE FROM tenant_tags WHERE ap_slice_id=\'"+str(arg_name)+"\'")
+        except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
-            sys.exit(1)      
+            sys.exit(1)
         
         #Dispatch
         #Generate unique message id
         message_id = uuid.uuid4()
-        self.dispatch(config, ap_name, str(message_id))
+        #self.dispatch(config, ap_name, str(message_id))
         
         #Return response
-        response = {"status":True, "message":message}
+        response = {"status":True, "message":"Deleted "+str(arg_name)}
         return response
     
     def ap_slice_filter(self, arg_filter):

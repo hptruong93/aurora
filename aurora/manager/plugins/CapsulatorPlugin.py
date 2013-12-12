@@ -12,7 +12,7 @@ class CapsulatorPlugin():
             'forward_to':{'listable':False, 'default':None}, 
             'name':{'listable':False, 'default':None},
             'tunnel_tag':{'listable':True, 'default':self.default_tuntag()}, 
-            'isVirtual':{'listable':False, 'default':None}
+            'is_virtual':{'listable':False, 'default':None}
         }
         self.entryFormat = {'flavor':'capsulator', 'attributes':{}}
         
@@ -69,6 +69,8 @@ class CapsulatorPlugin():
                 
                 #Case 4, error in data
                 else:
+                    print numSlice
+                    print len(entry['attributes'][key])
                     print('Error in json file, please check that the tunnel_tags match the number of APs!')
                     sys.exit(-1) #Maybe implement an exception?
             

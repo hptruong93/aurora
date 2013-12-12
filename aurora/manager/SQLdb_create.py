@@ -49,21 +49,20 @@ class SQLdbCreate():
                 cur.execute(ap)
                 
                 #Create ap_slice table
-                ap_slice = "CREATE TABLE ap_slice (ap_slice_id VARCHAR(36) NOT NULL PRIMARY KEY, tenant_id VARCHAR(255),\
- ap_slice_tags VARCHAR(255), physical_ap VARCHAR(255), firmware VARCHAR(255), project_id VARCHAR(255), wnet_id VARCHAR(36), \
- status ENUM('PENDING','ACTIVE','FAILED','DOWN','DELETING','DELETED'))"
+                ap_slice = "CREATE TABLE ap_slice (ap_slice_id VARCHAR(40) NOT NULL PRIMARY KEY, tenant_id VARCHAR(255),\
+ physical_ap VARCHAR(255), project_id VARCHAR(255), wnet_id VARCHAR(40), status ENUM('PENDING','ACTIVE','FAILED','DOWN','DELETING','DELETED'))"
                 cur.execute(ap_slice)
                 
                 #Create wnet table
-                wnet = "CREATE TABLE wnet( wnet_id VARCHAR(36) NOT NULL PRIMARY KEY, name VARCHAR(255) UNIQUE, tenant_id VARCHAR(255), project_id VARCHAR(36))"
+                wnet = "CREATE TABLE wnet( wnet_id VARCHAR(40) NOT NULL PRIMARY KEY, name VARCHAR(255) UNIQUE, tenant_id VARCHAR(255), project_id VARCHAR(40))"
                 cur.execute(wnet)
                 
                 #Create location_tags table
-                location_tags = "CREATE TABLE location_tags (name VARCHAR(255), ap_slice_id VARCHAR(36), PRIMARY KEY(name, ap_slice_id))"
+                location_tags = "CREATE TABLE location_tags (name VARCHAR(255), ap_name VARCHAR(255), PRIMARY KEY(name, ap_slice_id))"
                 cur.execute(location_tags)
                 
                 #Create tenant_tags table
-                tenant_tags = "CREATE TABLE tenant_tags (name VARCHAR(255), ap_slice_id VARCHAR(36), PRIMARY KEY(name, ap_slice_id))"
+                tenant_tags = "CREATE TABLE tenant_tags (name VARCHAR(255), ap_slice_id VARCHAR(40), PRIMARY KEY(name, ap_slice_id))"
                 cur.execute(tenant_tags)
         
         except mdb.Error, e:

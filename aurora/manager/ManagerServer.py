@@ -19,7 +19,6 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         self.wfile.write(response)
     
     def do_POST(self):
-        print 'got'
         # Parse the form data posted
         data_string = self.rfile.read(int(self.headers['Content-Length']))
         JSONfile = json.loads(data_string)
@@ -28,8 +27,6 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         self.end_headers()
         #Send to manager.py
         #Format of response: {"status":(true of false) ,"message":"string if necessary"}
-        print JSONfile['function']
-        print JSONfile['parameters']
         response = Manager().parseargs(JSONfile['function'], JSONfile['parameters'], 1,1,1)
         
         #Save response to file
