@@ -7,12 +7,17 @@ from slice_plugin import *
 from sql_check import *
 from aurora_db import *
 import MySQLdb as mdb
+from dispatcher import *
 
 class Manager():
     
     def __init__(self):
         #Initialize AuroraDB Object
         self.auroraDB = AuroraDB()
+        self.dispatch = Dispatcher()
+        
+    def __del__(self):
+        self.dispatch.stop()
         
     def parseargs(self, function, args, tenant_id, user_id, project_id):
         # args is a generic dictionary passed to all functions (each function is responsible for parsing
@@ -302,26 +307,56 @@ class Manager():
             for entry in result:
                 aplist.append(entry[0])
                 
-        #Initialize json_list structure
+        #Initialize json_list structure (We do NOT yet have a plugin for VirtualWIFI/RadioInterfaces, just load and send for now)
         for i in range(len(aplist)):
-            json_list.append({'VirtualInterfaces':[], 'VirtualBridges':[], 'VirtualWIFI':[]})
+            json_list.append({'VirtualInterfaces':[], 'VirtualBridges':[], 'RadioInterfaces':jsonfile['VirtualWIFI']})
             
         #Send to plugin for parsing
         json_list = SlicePlugin(tenant_id, user_id, arg_tag).parseCreateSlice(jsonfile, len(aplist), json_list)
-        #Send
-        for json_entry in json_list:
-            print json.dumps(json_entry, sort_keys=True, indent=4)
+        
+        #Dispatch
+        for (index,json_entry) in enumerate(json_list):
+            #Generate unique slice_id and add entry to database
+            slice_uuid = uuid.uuid4()
+            self.auroraDB.slice_add(self, slice_uuid, tenant_id, aplist[index], project_id, wnet_id)
+            
+            #Dispatch (use slice_uuid as a message identifier)
+            self.dispatch(json_entry, aplist[index], slice_uuid)
+        
+        #Return response
+        response = {"status":True, "message":message}
+        return response
     
     def ap_slice_delete(self, args, tenant_id, user_id, project_id):
         arg_name = args['ap-slice-delete']
-        data = {}
-        data['action'] = 'ap-slice-delete'
-        data['name'] = arg_name
-        data['list'] = None
-        data['json'] = None
-        toSend = json.dumps(data, sort_keys=True, indent=4)
-        #Send
-        print toSend
+        
+        config = {"slice":arg_name, "command":"delete_slice", "user":user_id}
+        
+        #Figure out which AP has the slice/change status to DELETING
+        try:
+            self.con = mdb.connect('localhost', 'root', 'supersecret', 'aurora') #Change address
+        except mdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            sys.exit(1)
+        
+        try:
+            with self.con:
+                cur = self.con.cursor()
+                cur.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(arg_name)+"\'")
+                ap_name = cur.fetchone()[0]
+                cur.execute("UPDATE ap_slice SET status=\'DELETING\' WHERE ap_slice_id=\'"+str(arg_name)+"\'")
+        except:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            sys.exit(1)      
+        
+        #Dispatch
+        #Generate unique message id
+        message_id = uuid.uuid4()
+        self.dispatch(config, ap_name, str(message_id))
+        
+        #Return response
+        response = {"status":True, "message":message}
+        return response
     
     def ap_slice_filter(self, arg_filter):
         try:

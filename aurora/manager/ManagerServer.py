@@ -9,7 +9,13 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
     server_version= "Aurora/0.2"
     
     def do_GET(self):
-        self.send_response(400) #Not yet implemented
+        self.send_response(200)
+        self.send_header("Content-type", "application/json")
+        self.end_headers()
+        
+        #Open response file
+        
+        self.wfile.write('')
     
     def do_POST(self):
         # Parse the form data posted

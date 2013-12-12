@@ -197,9 +197,14 @@ class AuroraDB():
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
     
-    def slice_add(self, tenant_id, physAP, project_id, wnet_id):
-        #Update SQL database and JSON file
-        pass
+    def slice_add(self, slice_uuid, tenant_id, physAP, project_id, wnet_id):
+        try:
+            with self.con:
+                cur = self.con.cursor()
+                cur.execute("INSER INTO ap_slice VALUES (%s, %s, %s, %s, %s, %s)", (str(slice_uuid),str(tenant_id),str(physAP),str(project_id), str(wnet_id), "PENDING"))
+        
+        except mdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
     
     def slice_delete(self, slice_id):
         #Update SQL database and JSON file
