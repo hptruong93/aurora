@@ -21,7 +21,7 @@
                     "if_name" : "wlan0"
                     
                 }
-        }
+        },
         {
             "flavor" : "wifi_bss",
             "attributes" : 
@@ -64,7 +64,7 @@
                     "attach_to":"eth0",
                     "forward_to":"10.5.8.1",
                     "name":"test-tap0",
-                    "tunnel_tag":"99",
+                    "tunnel_tag":[11,12],
                     "is_virtual":true
                 }
         }

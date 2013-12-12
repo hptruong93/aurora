@@ -88,7 +88,7 @@ class AuroraConsole():
                     return
                 else:
                     try:
-                        JFILE = open('json/slicetemp.json', 'r')
+                        JFILE = open(params['file'][0], 'r')
                         fileContent = json.load(JFILE)
                         params['file'] = fileContent
                         JFILE.close()
