@@ -14,10 +14,10 @@ class Manager():
     def __init__(self):
         #Initialize AuroraDB Object
         self.auroraDB = AuroraDB()
-        self.dispatch = Dispatcher()
+        #self.dispatch = Dispatcher()
         
-    def __del__(self):
-        self.dispatch.stop()
+    #def __del__(self):
+        #self.dispatch.stop()
         
     def parseargs(self, function, args, tenant_id, user_id, project_id):
         # args is a generic dictionary passed to all functions (each function is responsible for parsing
@@ -628,5 +628,5 @@ class Manager():
 #Manager().parseargs('ap-slice-remove-tag', {'filter':['ap_slice_id=1'], 'tag':'testadding'},1,1,1)
 #Manager().parseargs('wnet-create', {'wnet-create':['testadding']},1,1,1)
 #Manager().parseargs('wnet-delete', {'wnet-delete':['testadding']},1,1,1)
-Manager().parseargs('wnet-add-wslice', {'wnet-add-wslice':['wnet-1'], 'slice':['1']},1,1,1)
+#Manager().parseargs('wnet-add-wslice', {'wnet-add-wslice':['wnet-1'], 'slice':['1']},1,1,1)
 #Manager().parseargs('wnet-remove-wslice', {'wnet-remove-wslice':['wnet-1'], 'slice':['1']},1,1,1)

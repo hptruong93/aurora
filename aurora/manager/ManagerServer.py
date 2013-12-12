@@ -3,7 +3,6 @@
 import BaseHTTPServer
 import json
 from manager import *
-import requests
 
 class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
     server_version= "Aurora/0.2"
@@ -14,10 +13,13 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         self.end_headers()
         
         #Open response file
+        RESPONSEFILE = open('json/response.json', 'r')
+        response = json.load(RESPONSEFILE)
         
-        self.wfile.write('')
+        self.wfile.write(response)
     
     def do_POST(self):
+        print 'got'
         # Parse the form data posted
         data_string = self.rfile.read(int(self.headers['Content-Length']))
         JSONfile = json.loads(data_string)
@@ -30,9 +32,10 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         print JSONfile['parameters']
         response = Manager().parseargs(JSONfile['function'], JSONfile['parameters'], 1,1,1)
         
-        #Send response back to client
-        r = requests.post("http://localhost:5552", data=json.dumps(response))
-        print("Response: "+str(r.status_code))
+        #Save response to file
+        RESPONSEFILE = open('json/response.json', 'w')
+        json.dump(response, RESPONSEFILE, sort_keys=True, indent=4)
+        RESPONSEFILE.close()
     
     # Sends a document
     def sendPage( self, type, body ):
@@ -45,7 +48,7 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
 
 if __name__ == "__main__":
     handler_class=MyHandler
-    server_address = ('', 5555)
+    server_address = ('', 5554)
     try:
         srvr = BaseHTTPServer.HTTPServer(server_address, handler_class)
         print("Starting webserver...")
