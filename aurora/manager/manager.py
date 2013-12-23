@@ -8,6 +8,7 @@ from sql_check import *
 from aurora_db import *
 import MySQLdb as mdb
 import dispatcher
+import provision_server.ap_provision as provision
 
 class Manager():
     
@@ -23,6 +24,7 @@ class Manager():
         mysql_password = 'supersecret'
         
         self.dispatch = dispatcher.Dispatcher(host, username, password, mysql_username, mysql_password)
+        provision.run()
         
     def __del__(self):
         self.dispatch.stop()
