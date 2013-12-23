@@ -7,7 +7,7 @@ from slice_plugin import *
 from sql_check import *
 from aurora_db import *
 import MySQLdb as mdb
-from dispatcher import *
+import dispatcher
 
 class Manager():
     
@@ -22,7 +22,7 @@ class Manager():
         mysql_username = 'root'
         mysql_password = 'supersecret'
         
-        self.dispatch = Dispatcher(host, username, password, mysql_username, mysql_password)
+        self.dispatch = dispatcher.Dispatcher(host, username, password, mysql_username, mysql_password)
         
     def __del__(self):
         self.dispatch.stop()
