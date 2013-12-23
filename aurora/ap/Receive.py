@@ -31,7 +31,7 @@ class Receive():
     only this file need be executed on the machine - it will import
     the rest of Aurora and pass the commands along."""
 
-    def __init__(self, queue, config, rabbitmq_username, rabbitmq_password):
+    def __init__(self, queue, config, rabbitmq_host, rabbitmq_username, rabbitmq_password):
         """Connects to RabbitMQ and initializes Aurora locally."""
 
         # Run Pika logger so that error messages get printed
@@ -43,7 +43,7 @@ class Receive():
 
         # Connect to RabbitMQ (Step #1)
         credentials = pika.PlainCredentials(rabbitmq_username, rabbitmq_password)
-        self.parameters = pika.ConnectionParameters(host=self.RABBIT_MQ_HOST, credentials=credentials)
+        self.parameters = pika.ConnectionParameters(host=rabbitmq_host, credentials=credentials)
         self.connection = pika.SelectConnection(self.parameters, self.on_connected)
 
     # Step #2
@@ -139,15 +139,14 @@ if __name__ == '__main__':
     config = config_full['default_config']
     username = config_full['rabbitmq_username']
     password = config_full['rabbitmq_password']
-    # TODO: change this to a passed argument (nicer)
-    self.RABBIT_MQ_HOST = config_full['rabbitmq_host']
+    rabbitmq_host = config_full['rabbitmq_host']
 
     if queue == None:
         raise Exception("AP identifier specified is not valid.")
 
     print("Joining queue %s" % queue)
     # Establish connection, start listening for commands
-    receiver = Receive(queue, config, username, password)
+    receiver = Receive(queue, config, rabbitmq_host, username, password)
 
     listener = threading.Thread(target=receiver.connection.ioloop.start)
     listener.start()
