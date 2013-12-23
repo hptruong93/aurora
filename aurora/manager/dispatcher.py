@@ -46,10 +46,7 @@ class Dispatcher():
     def dispatch(self, config, ap, unique_id):
         """Send data to the specified queue.
         Note that the caller is expected to set database
-        properties such as status.
-        
-        NOTE: unique_id *MUST* be more than 1 character
-        due to a Python bug."""
+        properties such as status."""
         # Convert JSON to string 
         message = json.dumps(config)
             

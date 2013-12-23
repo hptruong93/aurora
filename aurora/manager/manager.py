@@ -346,7 +346,7 @@ class Manager():
             if args['tag']:
                 self.ap_slice_add_tag({'ap-slice-add-tag':[str(slice_uuid)], 'tag': [arg_tag], 'filter':""}, tenant_id, user_id, project_id)
             #Dispatch (use slice_uuid as a message identifier)
-            self.dispatch(json_entry, aplist[index], slice_uuid)
+            self.dispatch.dispatch(json_entry, aplist[index], slice_uuid)
         #Return response (message returns a list of uuids for created slices)
         
         response = {"status":True, "message":message}
@@ -379,7 +379,7 @@ class Manager():
         #Dispatch
         #Generate unique message id
         message_id = uuid.uuid4()
-        self.dispatch(config, ap_name, str(message_id))
+        self.dispatch.dispatch(config, ap_name, str(message_id))
         
         #Return response
         response = {"status":True, "message":"Deleted "+str(arg_name)}
