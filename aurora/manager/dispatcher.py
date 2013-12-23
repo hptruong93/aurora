@@ -132,7 +132,7 @@ if __name__ == '__main__':
 
     ######
     # Connection Variables
-    host = '192.168.0.12'
+    host = 'localhost'
     username = 'outside_world'
     password = 'wireless_access'
     mysql_username = 'root'
