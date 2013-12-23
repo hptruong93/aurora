@@ -31,9 +31,6 @@ class Receive():
     only this file need be executed on the machine - it will import
     the rest of Aurora and pass the commands along."""
 
-    #### Set the IP of the RabbitMQ host here
-    RABBIT_MQ_HOST = '192.168.0.12'
-
     def __init__(self, queue, config, rabbitmq_username, rabbitmq_password):
         """Connects to RabbitMQ and initializes Aurora locally."""
 
@@ -125,7 +122,7 @@ if __name__ == '__main__':
 
     ######
     # Set the provision server IP/port here
-    prov_server = 'http://192.168.0.12:5555/initial_ap_config_request/'
+    prov_server = 'http://10.5.8.3:5555/initial_ap_config_request/'
     #######
 
     # Get mac address
@@ -142,6 +139,8 @@ if __name__ == '__main__':
     config = config_full['default_config']
     username = config_full['rabbitmq_username']
     password = config_full['rabbitmq_password']
+    # TODO: change this to a passed argument (nicer)
+    self.RABBIT_MQ_HOST = config_full['rabbitmq_host']
 
     if queue == None:
         raise Exception("AP identifier specified is not valid.")

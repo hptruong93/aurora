@@ -14,10 +14,18 @@ class Manager():
     def __init__(self):
         #Initialize AuroraDB Object
         self.auroraDB = AuroraDB()
-        #self.dispatch = Dispatcher()
         
-    #def __del__(self):
-        #self.dispatch.stop()
+        ### Dispatcher variables
+        host = '192.168.0.12'
+        username = 'outside_world'
+        password = 'wireless_access'
+        mysql_username = 'root'
+        mysql_password = 'supersecret'
+        
+        self.dispatch = Dispatcher(host, username, password, mysql_username, mysql_password)
+        
+    def __del__(self):
+        self.dispatch.stop()
         
     def parseargs(self, function, args, tenant_id, user_id, project_id):
         # args is a generic dictionary passed to all functions (each function is responsible for parsing
@@ -336,7 +344,7 @@ class Manager():
             if args['tag']:
                 self.ap_slice_add_tag({'ap-slice-add-tag':[str(slice_uuid)], 'tag': [arg_tag], 'filter':""}, tenant_id, user_id, project_id)
             #Dispatch (use slice_uuid as a message identifier)
-            #self.dispatch(json_entry, aplist[index], slice_uuid)
+            self.dispatch(json_entry, aplist[index], slice_uuid)
         #Return response (message returns a list of uuids for created slices)
         
         response = {"status":True, "message":message}
@@ -369,7 +377,7 @@ class Manager():
         #Dispatch
         #Generate unique message id
         message_id = uuid.uuid4()
-        #self.dispatch(config, ap_name, str(message_id))
+        self.dispatch(config, ap_name, str(message_id))
         
         #Return response
         response = {"status":True, "message":"Deleted "+str(arg_name)}
