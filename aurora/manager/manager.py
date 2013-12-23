@@ -16,7 +16,7 @@ class Manager():
         self.auroraDB = AuroraDB()
         
         ### Dispatcher variables
-        host = '192.168.0.12'
+        host = 'localhost'
         username = 'outside_world'
         password = 'wireless_access'
         mysql_username = 'root'
