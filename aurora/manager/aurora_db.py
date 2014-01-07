@@ -172,7 +172,7 @@ class AuroraDB():
                 #Update to SQL database
                 
                 cur.execute("UPDATE ap_slice SET wnet_id=NULL WHERE ap_slice_id=\'"+str(slice_id)+"\' AND wnet_id=\'"+str(wnetID)+"\'")
-        
+
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             
@@ -201,7 +201,7 @@ class AuroraDB():
         try:
             with self.con:
                 cur = self.con.cursor()
-                cur.execute("INSER INTO ap_slice VALUES (%s, %s, %s, %s, %s, %s)", (str(slice_uuid),str(tenant_id),str(physAP),str(project_id), str(wnet_id), "PENDING"))
+                cur.execute("INSERT INTO ap_slice VALUES (%s, %s, %s, %s, %s, %s)", (str(slice_uuid),str(tenant_id),str(physAP),str(project_id), str(wnet_id), "PENDING"))
         
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])

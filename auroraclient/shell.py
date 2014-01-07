@@ -1,3 +1,4 @@
+#!/usr/bin/python -tt
 # Aurora-client Shell
 # SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
@@ -16,7 +17,8 @@ Format:[
 import argparse
 import json
 import sys, os
-from keystoneclient.v2_0 import client as ksclient
+from pprint import pprint
+#from keystoneclient.v2_0 import client as ksclient #commented in order to compile locally
 from SendJSON import JSONSender
 
 class AuroraArgumentParser(argparse.ArgumentParser):
@@ -81,6 +83,7 @@ class AuroraConsole():
             function = argv[1] #Used for attrs function call
             parser = AuroraArgumentParser()
             params = vars(parser.base_parser().parse_args(argv[1:]))
+            print "function: " + function
             #For add-slice and modify, we need to load the JSON file
             if function == "ap-slice-create" or function == "ap-slice-modify":
                 if not params['file']:
@@ -96,15 +99,19 @@ class AuroraConsole():
                         print('Error loading json file!')
                         sys.exit(-1)
             #Authenticate
-            try:
-                authInfo = self.authenticate()
-            except:
-                print 'Invalid Credentials!'
-                sys.exit(-1)       
+        #    try:
+        #        authInfo = self.authenticate()
+        #    except:
+        #        print 'Invalid Credentials!'
+        #        sys.exit(-1)       
             #We will send in the following format: {function:"",parameters:""}
             toSend = {"function":function,"parameters":params}
+            ##FOR DEBUGGING PURPOSES
+            pprint(toSend)
+            ##END DEBUG
+            
             if toSend: #--help commands will not start the server
-                JSONSender().sendJSON("http://localhost:5555", toSend)
+                JSONSender().sendJSON("http://localhost:9999", toSend)
             
         
     def _get_ksclient(self, **kwargs):

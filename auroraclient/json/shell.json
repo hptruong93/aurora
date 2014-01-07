@@ -453,6 +453,83 @@
                 [
                     
                 ]
+            ],
+            [
+                "wnet-remove-all-wslices",
+                {
+                    "action":"store",
+                    "help":"Removes all slices from a specific wireless network",
+                    "nargs":"+",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"wnet_name"
+                },
+                [
+                    
+                ]
+            ],
+            [
+                "wnet-show-wslices",
+                {
+                    "action":"store",
+                    "help":"Lists all slices from a specific wireless network",
+                    "nargs":"+",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"wnet_name"
+                },
+                [
+                    
+                ]
+            ],
+            [
+                "wnet-add-tag",
+                {
+                    "action":"store",
+                    "help":"Adds one or more tags to slices in a specific wireless network",
+                    "nargs":"+",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"wnet_name"
+                },
+                [
+                    [
+                        "--tag",
+                        {
+                            "action":"store",
+                            "help":"List of tags",
+                            "nargs":"+",
+                            "default":null,
+                            "choices":null,
+                            "metavar":"tag"
+                        }
+                    ]
+                ]
+            ],
+            [
+                "wnet-remove-tag",
+                {
+                    "action":"store",
+                    "help":"Removes one or more tags from slices in a specific wireless network",
+                    "nargs":"+",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"wnet_name"
+                },
+                [
+                    [
+                        "--tag",
+                        {
+                            "action":"store",
+                            "help":"List of tags",
+                            "nargs":"+",
+                            "default":null,
+                            "choices":null,
+                            "required":"TRUE",
+                            "metavar":"tag"
+                        }
+                    ]
+                ]
             ]
         ]
     }

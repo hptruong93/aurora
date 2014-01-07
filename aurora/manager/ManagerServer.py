@@ -4,6 +4,8 @@ import BaseHTTPServer
 import json
 from manager import *
 import requests
+from pprint import pprint
+import time
 
 class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
     server_version= "Aurora/0.2"
@@ -45,10 +47,14 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
 
 if __name__ == "__main__":
     handler_class=MyHandler
-    server_address = ('', 5555)
+    server_address = ('', 9999)
     try:
         srvr = BaseHTTPServer.HTTPServer(server_address, handler_class)
         print("Starting webserver...")
         srvr.serve_forever()
-    except KeyboardInterrupt:
+#    except KeyboardInterrupt:
+    except:
+        print("Shutting down webserver...")
         srvr.server_close()
+#    finally:
+#        time.sleep(3)

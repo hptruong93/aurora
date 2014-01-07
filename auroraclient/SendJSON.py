@@ -9,16 +9,24 @@ class JSONSender():
     
     def sendJSON(self, url, payload):
         #Start clientserver
-        clientserver.run()
+        #MK added s in order to stop the same thread later on
+        s = clientserver.run()
         
-        r = requests.post(url, data=json.dumps(payload))
-        print("Response: "+str(r.status_code))
+        try:
+            r = requests.post(url, data=json.dumps(payload))
+            
+    #        print("Response: "+str(r.status_code))
+            
+            #Sleep for 2 seconds while waiting for response
+      #      time.sleep(2)
+            
+        except requests.exceptions.ConnectionError, e:
+            print "Error:", e
         
-        #Sleep for 2 seconds while waiting for response
-        time.sleep(2)
+        finally:
+            #Be nice and let server know we're done
+            clientserver.stop(s)
         
-        clientserver.stop()
-
 if __name__ == "__main__": #FOR TESTING
     sender = JSONSender()
     FILE = open("json/apslice.json", "r")

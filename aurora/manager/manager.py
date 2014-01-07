@@ -9,15 +9,19 @@ from aurora_db import *
 import MySQLdb as mdb
 from dispatcher import *
 
+from pprint import pprint
+
 class Manager():
     
     def __init__(self):
         #Initialize AuroraDB Object
         self.auroraDB = AuroraDB()
-        self.dispatch = Dispatcher()
-        
+ # Dispatcher needs 5 args: (host, username, password, mysql_username, mysql_password)
+ #       self.dispatch = Dispatcher()  
+ 
     def __del__(self):
-        self.dispatch.stop()
+  #      self.dispatch.stop()
+        pass
         
     def parseargs(self, function, args, tenant_id, user_id, project_id):
         # args is a generic dictionary passed to all functions (each function is responsible for parsing
@@ -233,9 +237,15 @@ class Manager():
         #Add tags
         for entry in slice_names:
             try:
-                with self.con:
-                    cur = self.con.cursor()
-                    cur.execute("INSERT INTO tenant_tags VALUES (\'"+str(tag)+"\', \'"+str(entry)+"\')")
+                with mdb.connect('localhost', 'root', 'supersecret', 'aurora') as db:
+                    to_execute = "INSERT INTO tenant_tags VALUES (\'"+str(tag[0])+"\', \'"+str(entry)+"\')"
+                    
+                    #TODO: Fix below syntax error
+                    to_execute = "REPLACE INTO tenant_tags VALUES (\'%s\', \'%s\')" \
+                                                 % (str(tag), str(slice_id))
+                                                 
+                    print to_execute
+                    db.execute("INSERT INTO tenant_tags VALUES (\'"+str(tag)+"\', \'"+str(entry)+"\')")
             except mdb.Error, e:
                 print "Error %d: %s" % (e.args[0], e.args[1])
                 
@@ -274,30 +284,36 @@ class Manager():
         return response
     
     def ap_slice_create(self, args, tenant_id, user_id, project_id):
+    
+        pprint(args)
+    
         if 'ap' in args:
             arg_ap = args['ap']
         else:
             arg_ap = None
         if 'filter' in args:
-            arg_filter = args['filter'][0]
+            print "HERE"
+            arg_filter = args['filter']
         else:
             arg_filter = None
         if 'file' in args:
-            arg_file = args['file'][0]
+            arg_file = args['file']
         else:
             arg_file = None
         arg_tag = args['tag']
         json_list = [] #If a file is provided for multiple APs, we need to split the file for each AP, saved here
         
         #Load optional json file if applicable
-        if arg_file:
-            try:
-                JFILE = open(arg_file, 'r')
-                jsonfile = json.load(JFILE)
-                JFILE.close()
-            except IOError:
-                print('Error opening file!')
-                sys.exit(-1)
+    #    if arg_file:
+    #        try:
+    #            JFILE = open(arg_file, 'r')
+    #            jsonfile = json.load(JFILE)
+    #            JFILE.close()
+    #        except IOError:
+    #            print('Error opening file!')
+    #            sys.exit(-1)
+        jsonfile = arg_file        
+        
         
         if arg_ap:
             aplist = arg_ap
@@ -321,10 +337,10 @@ class Manager():
             self.auroraDB.slice_add(self, slice_uuid, tenant_id, aplist[index], project_id, wnet_id)
             
             #Dispatch (use slice_uuid as a message identifier)
-            self.dispatch(json_entry, aplist[index], slice_uuid)
+    #        self.dispatch(json_entry, aplist[index], slice_uuid)
         
         #Return response
-        response = {"status":True, "message":message}
+        response = {"status":True, "message":""} #MIKE MODIFIED THIS from "message":message
         return response
     
     def ap_slice_delete(self, args, tenant_id, user_id, project_id):
@@ -352,10 +368,10 @@ class Manager():
         #Dispatch
         #Generate unique message id
         message_id = uuid.uuid4()
-        self.dispatch(config, ap_name, str(message_id))
+  #      self.dispatch(config, ap_name, str(message_id))
         
         #Return response
-        response = {"status":True, "message":message}
+        response = {"status":True, "message":""} #MIKE MODIFIED THIS from "message":message
         return response
     
     def ap_slice_filter(self, arg_filter):
@@ -371,6 +387,7 @@ class Manager():
                     cur = self.con.cursor()
                     cur.execute("SELECT * FROM ap_slice")
                     tempList =  cur.fetchall()
+                    pprint(tempList)
                     #Prune thorugh list
                     for i in range(len(tempList)):
                         newList.append({})
@@ -470,14 +487,19 @@ class Manager():
         
     
     def ap_slice_list(self, args, tenant_id, user_id, project_id):
+        print "args: ", args
         if args['filter']:
-            arg_filter = args['filter'][0]
+            arg_filter = args['filter'] #MK
+      #      arg_filter = args['filter'][0]
         else:
             arg_filter = []
         arg_i = args['i']
         
-        newList = self.ap_slice_filter(arg_filter)
         
+        print "arg_filter: ", arg_filter
+        
+        newList = self.ap_slice_filter(arg_filter)
+
         message = ""
         if arg_i == False:
             for entry in newList:
@@ -492,9 +514,9 @@ class Manager():
         response = {"status":True, "message":message}
         return response
                 
-    def ap_slice_show(self, args, tenant_id, user_id, project_id):
-        arg_id = args['ap-slice-show'][0]
-        self.ap_slice_list({'filter':'ap_slice_id='+str(arg_id), 'i':True})
+#    def ap_slice_show(self, args, tenant_id, user_id, project_id):
+#        arg_id = args['ap-slice-show'][0]
+#        self.ap_slice_list({'filter':'ap_slice_id='+str(arg_id), 'i':True})
     
     def wnet_add_wslice(self, args, tenant_id, user_id, project_id): #TODO:Slice filter integration
         arg_name = args['wnet-add-wslice'][0]
@@ -585,9 +607,9 @@ class Manager():
         arg_slice = args['slice'][0]
         #Send to database
         self.auroraDB.wnet_remove_slice(tenant_id, arg_slice, arg_name)
-        
+        message = 'Slice with ap_slice_id ' + arg_slice + ' removed from wnet ' + arg_name
         #Send Response
-        response = {"status":True, "message":""}
+        response = {"status":True, "message":message}
         return response
     
     def wnet_list(self, args, tenant_id, user_id, project_id):
@@ -606,7 +628,7 @@ class Manager():
     def wnet_show(self, args, tenant_id, user_id, project_id):
         arg_name = args['wnet-show'][0]
         toPrint = self.wnet_fetch(tenant_id)
-        response = ""
+        message = ""
         for entry in toPrint:
             if entry['name'] == arg_name:
                 for attr in entry:
@@ -616,6 +638,236 @@ class Manager():
         #Return response
         response = {"status":True, "message":message}
         return response
+        
+######        
+# Code below here was added by Mike Kobierski
+# Thursday, Dec 12, 2013
+# 
+# Add wnet functionality, 
+#   wnet-show-wslices <wnet-name> [<wnet-name>]
+#   wnet-remove-all-wslices <wnet-name> [<wnet-name>]
+#   wnet-add-tag-to-wslices <wnet-name> [<wnet-name>]
+        
+    def _wnet_show_wslices(self, wnet_name, tenant_id):
+        """Helper method for other wnet classes.
+        
+        Return: A dictionary containing:
+                {   "message":<NoneType if successful, something
+                                if wnet doesn't exist>
+                    "ap_slices":<NoneType if none, otherwise
+                                  a tuple of tuples with ap_slice
+                                  info related to specified wnet_name>
+                }
+
+        """
+        return_dictionary = {}
+        print "wnet_name: " + wnet_name
+             
+        try:
+           with mdb.connect('localhost', 'root', 'supersecret', 'aurora') as db:
+                to_execute = "SELECT wnet_id FROM wnet WHERE tenant_id=\'" + str(tenant_id) + \
+                             "\' AND name=\'"+str(wnet_name)+"\'"
+                print to_execute
+                db.execute(to_execute)
+                wnet_id = db.fetchone()
+                if not wnet_id:
+                    # Build return_dictionary
+                    return_dictionary["message"] = 'No wnet for tenant \'' + str(tenant_id) + \
+                                                    '\' with name \'' + str(wnet_name) + '\'.\n'
+                    return_dictionary["ap_slices"] = None
+                    
+                else:
+                    wnet_id = wnet_id[0]
+                    print "wnet_id: " + str(wnet_id)  
+                    
+                    to_execute = "SELECT * FROM ap_slice WHERE tenant_id=\'" + \
+                                  str(tenant_id) + "\' AND wnet_id=\'"+str(wnet_id)+"\'"
+                    print to_execute
+                    db.execute(to_execute)
+                    all_slices_tuple = db.fetchall()
+                    print "all_slices_tuple: "
+                    print all_slices_tuple
+                    
+                    # Build return_dictionary
+                    if all_slices_tuple:
+                        return_dictionary["message"] = None
+                        return_dictionary["ap_slices"] = all_slices_tuple
+                    else:
+                        return_dictionary["message"] = 'No ap_slices in wnet \'' + str(wnet_name) + \
+                                                        '\' for tenant_id \'' + str(tenant_id) + '\'.\n'
+                        return_dictionary["ap_slices"] = None
+       
+        except mdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            sys.exit(1)
+        
+        return return_dictionary
+        
+    def wnet_show_wslices(self, args, tenant_id, user_id, project_id):
+        message = ""
+        # args can contain multiple wnet names
+        for wnet_name in args['wnet-show-wslices']:
+            wslices_dict = self._wnet_show_wslices(wnet_name, tenant_id)
+            print "wslices_dict:1: "
+            print wslices_dict
+            
+            if wslices_dict["message"]:
+                # Either no wnet, or no ap_slices
+                print 'Appending dictionary message'
+                message += wslices_dict["message"]
+            
+            else:
+                message += 'wnet \'' + str(wnet_name) + '\' contains :\n'
+                for slice_tuple in wslices_dict["ap_slices"]:
+                    slice_id = slice_tuple[0]
+                    message += '\tslice with ap_slice_id \'' + slice_id + '\'\n'
+
+        response = {"status":True, "message":message}
+        return response 
+        
+    def wnet_remove_all_wslices(self, args, tenant_id, user_id, project_id):
+        """Method which changes wnet of all ap_slices associated with wnet_name to NULL  
+        """
+        message = ""
+        # args can contain multiple wnet names
+        for wnet_name in args['wnet-remove-all-wslices']:
+            wslices_dict = self._wnet_show_wslices(wnet_name, tenant_id)
+            print "wslices_dict:2: "
+            print wslices_dict
+            
+            if wslices_dict["message"]:
+                # Either no wnet, or no ap_slices
+                print 'Appending dictionary message'
+                message += wslices_dict["message"]
+            
+            else:
+                # Disassociate slice from wnet in database (assign its wnet Null)
+                for slice_tuple in wslices_dict["ap_slices"]:
+                    slice_id = slice_tuple[0]
+                    self.auroraDB.wnet_remove_slice(tenant_id, slice_id, wnet_name)
+                    message += 'Slice with ap_slice_id \'' + slice_id + \
+                               '\' removed from wnet \'' + wnet_name + '\'\n'
+            
+        response = {"status":True, "message":message}
+        return response  
+
+    def wnet_add_tag(self, args, tenant_id, user_id, project_id):
+        message = ""
+        if not args['tag']:
+            message += "No tags specified.\n"
+        else:
+        # Handle more than one wnet
+            for wnet_name in args['wnet-add-tag']:
+                wslices_dict = self._wnet_show_wslices(wnet_name, tenant_id)
+                print "wslices_dict:3: "
+                print wslices_dict
+                
+                if wslices_dict["message"]:
+                    # Either no wnet, or no ap_slices
+                    print 'Appending dictionary message'
+                    message += wslices_dict["message"]
+                
+                else:
+                    # Add tags to sql table tenant_tags
+                    message += 'Modifying slices in \'' + str(wnet_name) + '\':\n'
+                    try:
+                       with mdb.connect('localhost', 'root', 'supersecret', 'aurora') as db:
+                            for slice_tuple in wslices_dict["ap_slices"]:
+                                # For every slice in wnet
+                                slice_id = slice_tuple[0]
+                                message += '\tslice with ap_slice_id \'' + slice_id + '\'\n'
+                                
+                                # Add (multiple) tags in MySQL db
+                                for tag in args['tag']:
+                                    to_execute = "REPLACE INTO tenant_tags VALUES (\'%s\', \'%s\')" \
+                                                 % (str(tag), str(slice_id))
+                                    print to_execute
+                                    db.execute(to_execute)
+                                
+                            # Build rest of message (Not required if efficiency is key)
+                            message += 'All slices now include tenant_tag(s) \''
+                            message += '\' \''.join(args['tag'])
+                            message += '\'.\n'         
+                            
+                        
+                    except mdb.Error, e:
+                        print "Error %d: %s" % (e.args[0], e.args[1])
+                        sys.exit(1) 
+                    
+            
+            
+            
+        response = {"status":True, "message":message}
+        return response
+    
+    #Can move some of this functionality to auroraDB
+    def wnet_remove_tag(self, args, tenant_id, user_id, project_id):
+        message = ""
+        if not args['tag']:
+            message += "No tags specified.\n"
+        else:
+        # Handle more than one wnet
+            for wnet_name in args['wnet-remove-tag']:
+                wslices_dict = self._wnet_show_wslices(wnet_name, tenant_id)
+                print "wslices_dict:3: "
+                print wslices_dict
+                
+                if wslices_dict["message"]:
+                    # Either no wnet, or no ap_slices
+                    print 'Appending dictionary message'
+                    message += wslices_dict["message"]
+                
+                else:
+                    # Add tags to sql table tenant_tags
+                    message += 'Modifying slices in \'' + str(wnet_name) + '\':\n'
+                    try:
+                       with mdb.connect('localhost', 'root', 'supersecret', 'aurora') as db:
+                            for slice_tuple in wslices_dict["ap_slices"]:
+                                # For every slice in wnet
+                                slice_id = slice_tuple[0]
+                                
+                                
+                                # Add (multiple) tags in MySQL db
+                                for tag in args['tag']:
+                                    to_execute = "SELECT name FROM tenant_tags WHERE ap_slice_id = \'" + \
+                                                 str(slice_id) + "\'"
+                                    db.execute(to_execute)
+                                    names = db.fetchall()
+                                    print names
+                                    if names:
+                                        for name in names:
+                                            if name[0] == tag:
+                                                # This slice has a tag that matches, delete.
+                                                to_execute = "DELETE FROM tenant_tags WHERE " + \
+                                                             "name = \'%s\' AND ap_slice_id = \'%s\'" \
+                                                             % (str(tag), str(slice_id))
+                                                print to_execute
+                                                db.execute(to_execute)
+                                                message += '\tslice with ap_slice_id \'' + \
+                                                           slice_id + '\'\n'
+                                
+                            # Build rest of message (Not required if efficiency is key)
+                            message += 'All slices no longer include tenant_tag(s) \''
+                            message += '\' \''.join(args['tag'])
+                            message += '\'.\n'         
+                            
+                        
+                    except mdb.Error, e:
+                        print "Error %d: %s" % (e.args[0], e.args[1])
+                        sys.exit(1) 
+                    
+            
+            
+            
+        response = {"status":True, "message":message}
+        return response
+        
+    # Corrected call to ap_slice_list
+    def ap_slice_show(self, args, tenant_id, user_id, project_id):
+        arg_id = args['ap-slice-show'][0]
+        return self.ap_slice_list({'filter':'ap_slice_id='+str(arg_id), 'i':True},\
+                                  tenant_id, user_id, project_id)
+        
         
 #For Testing
 #Manager().parseargs('ap-slice-create', {'filter':['region=mcgill & number_radio<2 & version<1.1 & number_radio_free!2 & supported_protocol=a/b/g'], 'file':['json/slicetemp.json'], 'tag':['first']},1,1,1)
@@ -628,5 +880,5 @@ class Manager():
 #Manager().parseargs('ap-slice-remove-tag', {'filter':['ap_slice_id=1'], 'tag':'testadding'},1,1,1)
 #Manager().parseargs('wnet-create', {'wnet-create':['testadding']},1,1,1)
 #Manager().parseargs('wnet-delete', {'wnet-delete':['testadding']},1,1,1)
-Manager().parseargs('wnet-add-wslice', {'wnet-add-wslice':['wnet-1'], 'slice':['1']},1,1,1)
+#Manager().parseargs('wnet-add-wslice', {'wnet-add-wslice':['wnet-1'], 'slice':['1']},1,1,1)
 #Manager().parseargs('wnet-remove-wslice', {'wnet-remove-wslice':['wnet-1'], 'slice':['1']},1,1,1)

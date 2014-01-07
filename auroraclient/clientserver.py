@@ -20,7 +20,7 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         self.end_headers()
         
         if JSONfile['status']:
-            print 'Successful\n'
+            print 'Command handled\n'
             if JSONfile['message']:
                 print JSONfile['message']
         else:
@@ -42,12 +42,16 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
 handler_class = MyHandler
 server_address = ('', 5552)
 server = BaseHTTPServer.HTTPServer(server_address, handler_class)
-
+server_thread = threading
 def run():
 
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.start()
+    return server_thread
 
-def stop():
+def stop(server_thread):
+    server.shutdown()
+    server_thread.join()
     server.server_close()
+    
 
