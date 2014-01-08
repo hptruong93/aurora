@@ -139,7 +139,8 @@ if __name__ == "__main__":
                 print >> sys.stderr, "You need root permissions to do this!"
             print >> sys.stderr, e
             sys.exit(1)
-
+        print "\nTo run, first start auroramanager:\n\t$ auroramanager -n\nThen start aurora:\n\t$ aurora --help"
+        print "Omitting '-n' will launch in current terminal."
 
 if __name__ == "__main__":
     main()
