@@ -34,6 +34,18 @@ def main():
     try:
         print "Removing /usr/local/bin/aurora..."
         os.remove("/usr/local/bin/aurora")
+    except IOError as e:
+        if (e[0] == errno.EPERM):
+            print >> sys.stderr, "You need root permissions to do this!"
+            sys.exit(1)
+        else:
+            print >> sys.stderr, e
+            print "Continuing..."
+    except OSError as e:
+        if (e[0] == 2):
+            print "aurora does not already exist, contining..."
+    # Remove aurora, auroramanager
+    try:
         print "Removing /usr/local/bin/auroramanager..."
         os.remove("/usr/local/bin/auroramanager")
     except IOError as e:
@@ -45,7 +57,7 @@ def main():
             print "Continuing..."
     except OSError as e:
         if (e[0] == 2):
-            print "aurora or auroramanager does not already exist, contining..."
+            print "auroramanager does not already exist, contining..."
             
     
     # If not --uninstall
