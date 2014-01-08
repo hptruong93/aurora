@@ -8,6 +8,9 @@ eases launching aurora/manager/ManagerServer.py
 and auroraclient/shell.py.
 
 Run with root privileges.
+Examples:
+    $ sudo python aurorainstall.py
+    $ sudo python aurorainstall.py --uninstall
 """
 def main():
     import sys
