@@ -10,10 +10,13 @@ import MySQLdb as mdb
 import dispatcher
 import provision_server.ap_provision as provision
 
+import time
+
 class Manager():
     
     def __init__(self):
         #Initialize AuroraDB Object
+        print "Creating Manager..."
         self.auroraDB = AuroraDB()
         
         ### Dispatcher variables
@@ -24,13 +27,17 @@ class Manager():
         mysql_username = 'root'
         mysql_password = 'supersecret'
         mysql_db = 'aurora' 
-        
+  ##Commented for testing without AP   
         self.dispatch = dispatcher.Dispatcher(host, username, password, mysql_username, mysql_password)
         provision.run()
+        
+        print "Sleeping for 10"
+        time.sleep(10)
         
     def __del__(self):
     #   self.dispatch.stop()
         print("Deconstructing Manager")
+        provision.stop()
         
         
     def parseargs(self, function, args, tenant_id, user_id, project_id):

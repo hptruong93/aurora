@@ -12,6 +12,7 @@ class Dispatcher():
     def __init__(self, host, username, password, mysql_username, mysql_password):
         """Establishes the connection to RabbitMQ and sets up the queues"""
         
+        print "Constructing Dispatcher..."
         # Run Pika logger so that error messages get printed
         logging.basicConfig()
 
@@ -29,6 +30,9 @@ class Dispatcher():
         listener = threading.Thread(target=self.connection.ioloop.start)
         listener.start()
         
+    def __del__(self):
+        print "Deconstructing Dispatcher..."
+        self.stop()
     
     def channel_open(self, new_channel):
         self.channel = new_channel
