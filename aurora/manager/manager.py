@@ -22,12 +22,15 @@ class Manager():
         password = 'wireless_access'
         mysql_username = 'root'
         mysql_password = 'supersecret'
+        mysql_db = 'aurora'
         
         self.dispatch = dispatcher.Dispatcher(host, username, password, mysql_username, mysql_password)
         provision.run()
         
-    #def __del__(self):
+    def __del__(self):
     #   self.dispatch.stop()
+        print("Deconstructing Manager")
+        
         
     def parseargs(self, function, args, tenant_id, user_id, project_id):
         # args is a generic dictionary passed to all functions (each function is responsible for parsing

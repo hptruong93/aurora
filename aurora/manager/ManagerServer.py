@@ -50,6 +50,6 @@ if __name__ == "__main__":
         srvr = BaseHTTPServer.HTTPServer(server_address, handler_class)
         print("Starting webserver...")
         srvr.serve_forever()
-    except KeyboardInterrupt:
+    except:
         print("Shutting down webserver...")
         srvr.server_close()
