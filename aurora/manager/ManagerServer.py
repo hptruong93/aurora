@@ -51,4 +51,5 @@ if __name__ == "__main__":
         print("Starting webserver...")
         srvr.serve_forever()
     except KeyboardInterrupt:
+        print("Shutting down webserver...")
         srvr.server_close()
