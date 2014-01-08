@@ -9,6 +9,7 @@ class resourceMonitor():
         self.dispatcher = dispatcher
         
         #Connect to Aurora mySQL Database
+        print "Connecting to SQLdb in resourceMonitor..."
         try:
             self.con = mdb.connect(host, username, password, 'aurora')
         except mdb.Error, e:
@@ -18,6 +19,7 @@ class resourceMonitor():
         atexit.register(self.closeSQL)
     
     def closeSQL(self):
+        print "Closing SQL connection in resourceMonitor..."
         if self.con:
             self.con.close()
         else:

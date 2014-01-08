@@ -12,6 +12,7 @@ class Dispatcher():
     def __init__(self, host, username, password, mysql_username, mysql_password):
         """Establishes the connection to RabbitMQ and sets up the queues"""
         
+        print "Constructing Dispatcher..."
         # Run Pika logger so that error messages get printed
         logging.basicConfig()
 
@@ -29,6 +30,9 @@ class Dispatcher():
         listener = threading.Thread(target=self.connection.ioloop.start)
         listener.start()
         
+    def __del__(self):
+        print "Deconstructing Dispatcher..."
+        self.stop()
     
     def channel_open(self, new_channel):
         self.channel = new_channel
@@ -46,10 +50,7 @@ class Dispatcher():
     def dispatch(self, config, ap, unique_id):
         """Send data to the specified queue.
         Note that the caller is expected to set database
-        properties such as status.
-        
-        NOTE: unique_id *MUST* be more than 1 character
-        due to a Python bug."""
+        properties such as status."""
         # Convert JSON to string 
         message = json.dumps(config)
             
@@ -132,7 +133,7 @@ if __name__ == '__main__':
 
     ######
     # Connection Variables
-    host = '192.168.0.12'
+    host = 'localhost'
     username = 'outside_world'
     password = 'wireless_access'
     mysql_username = 'root'

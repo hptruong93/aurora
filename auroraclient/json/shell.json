@@ -455,7 +455,8 @@
                 ]
             ],
             [
-                "wnet-remove-all-wslices",
+
+                "wnet-remove-all",
                 {
                     "action":"store",
                     "help":"Removes all slices from a specific wireless network",

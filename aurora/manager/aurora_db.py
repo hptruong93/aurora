@@ -197,11 +197,11 @@ class AuroraDB():
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
     
-    def slice_add(self, slice_uuid, tenant_id, physAP, project_id, wnet_id):
+    def slice_add(self, slice_uuid, tenant_id, physAP, project_id):
         try:
             with self.con:
                 cur = self.con.cursor()
-                cur.execute("INSERT INTO ap_slice VALUES (%s, %s, %s, %s, %s, %s)", (str(slice_uuid),str(tenant_id),str(physAP),str(project_id), str(wnet_id), "PENDING"))
+                cur.execute("INSERT INTO ap_slice VALUES (%s, %s, %s, %s, %s, %s)", (str(slice_uuid),str(tenant_id),str(physAP),str(project_id), "NULL", "PENDING"))
         
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])

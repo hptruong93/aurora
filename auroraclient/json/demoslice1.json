@@ -16,29 +16,9 @@
             "flavor" : "wifi_bss",
             "attributes" : 
                 {
-                    "name" : "demo-slice-2a",
+                    "name" : "demo-slice-1",
                     "radio" : "radio0",
                     "if_name" : "wlan0"
-                    
-                }
-        }
-        {
-            "flavor" : "wifi_bss",
-            "attributes" : 
-                {
-                    "name" : "demo-slice-2b",
-                    "radio" : "radio0",
-                    "if_name" : "wlan0-bob"
-                    
-                }
-        },
-        {
-            "flavor" : "wifi_bss",
-            "attributes" : 
-                {
-                    "name" : "demo-slice-2c",
-                    "radio" : "radio0",
-                    "if_name" : "wlan0-charlie"
                     
                 }
         }
@@ -64,7 +44,7 @@
                     "attach_to":"eth0",
                     "forward_to":"10.5.8.1",
                     "name":"test-tap0",
-                    "tunnel_tag":"99",
+                    "tunnel_tag":[8,9,10],
                     "is_virtual":true
                 }
         }
