@@ -7,8 +7,8 @@ from manager import *
 class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
     server_version= "Aurora/0.2"
     
-    def __init__(self):
-        self.manager = Manager() #Start a manager instance
+#    def __init__(self):
+#        self.manager = Manager() #Start a manager instance
     
     def do_GET(self):
         self.send_response(200)
@@ -30,7 +30,8 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         self.end_headers()
         #Send to manager.py
         #Format of response: {"status":(true of false) ,"message":"string if necessary"}
-        response = self.manager.parseargs(JSONfile['function'], JSONfile['parameters'], 1,1,1)
+ #       response = self.manager.parseargs(JSONfile['function'], JSONfile['parameters'], 1,1,1)
+        response = Manager().parseargs(JSONfile['function'], JSONfile['parameters'], 1,1,1)
         
         #Save response to file
         RESPONSEFILE = open('json/response.json', 'w')

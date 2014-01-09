@@ -556,8 +556,11 @@ class Manager():
         arg_name = args['wnet-add-wslice'][0]
         arg_slice = args['slice'][0]
         
+        print "arg_name:", arg_name
+        print "arg_slice:", arg_slice
+        
         #Send to database
-        self.auroraDB.wnet_add_slice(tenant_id, arg_slice, arg_name)
+    #    self.auroraDB.wnet_add_slice(tenant_id, arg_slice, arg_name)
         
         #Return Response
         response = {"status":True, "message":""}

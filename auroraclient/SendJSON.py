@@ -19,10 +19,6 @@ class JSONSender():
             
         except requests.exceptions.ConnectionError, e:
             print "Error:", e
-        
-        finally:
-            #Be nice and let server know we're done
-            clientserver.stop(s)
 
         r = requests.get(url)
         dictresponse = ast.literal_eval(r.text)
