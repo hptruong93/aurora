@@ -16,7 +16,8 @@ from pprint import pprint
 class Manager():
     
     def __init__(self):
-        print "Creating Manager..."
+        
+        print("Constructing Manager")
 
         ### Dispatcher variables
         host = 'localhost'
