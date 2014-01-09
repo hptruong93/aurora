@@ -77,7 +77,7 @@ if __name__ == "__main__":
     import sys
     import os
     args = sys.argv[1:]
-    auroraDirectory = '/home/ubuntu/Lab838/Aurora/aurora'
+    auroraDirectory = \''''+auroraDirectory+'''\'
     
     if len(args) > 0:
         if args[0] == '-n':
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     import sys
     import os
     args = sys.argv[1:]
-    auroraDirectory = '/home/ubuntu/Lab838/Aurora/aurora/'
+    auroraDirectory = \''''+auroraDirectory+'''\'
     
     if len(args) > 0:
         if args[0] == '-n':
