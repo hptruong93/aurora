@@ -34,8 +34,8 @@ class Manager():
         self.dispatch = dispatcher.Dispatcher(host, username, password, mysql_username, mysql_password)
         provision.run()
         
-        print "Sleeping for 10"
-        time.sleep(10)
+ #       print "Sleeping for 10"
+ #       time.sleep(10)
         
     def __del__(self):
     #   self.dispatch.stop()

@@ -29,14 +29,14 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         #Send to manager.py
         #Format of response: {"status":(true of false) ,"message":"string if necessary"}
  #       response = self.manager.parseargs(JSONfile['function'], JSONfile['parameters'], 1,1,1)
-        response = Manager().parseargs(JSONfile['function'], JSONfile['parameters'], 1,1,1)
+        response = MyHandler.manager.parseargs(JSONfile['function'], JSONfile['parameters'], 1,1,1)
         
         #Save response to file
         RESPONSEFILE = open('json/response.json', 'w')
         json.dump(response, RESPONSEFILE, sort_keys=True, indent=4)
         RESPONSEFILE.close()
     
-    # Sends a document
+    # Sends a document, unused
     def sendPage( self, type, body ):
         self.send_response( 200 )
         self.send_header( "Content-type", type )
