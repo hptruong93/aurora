@@ -28,7 +28,7 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         self.end_headers()
         #Send to manager.py
         #Format of response: {"status":(true of false) ,"message":"string if necessary"}
- #       response = self.manager.parseargs(JSONfile['function'], JSONfile['parameters'], 1,1,1)
+
         response = MyHandler.manager.parseargs(JSONfile['function'], JSONfile['parameters'], 1,1,1)
         
         #Save response to file
