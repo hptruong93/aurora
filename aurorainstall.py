@@ -30,7 +30,7 @@ def main():
     auroraDirectory = os.getcwd()
     print "cwd: ", auroraDirectory
     
-    # Remove aurora, auroramanager
+    # Remove aurora
     try:
         print "Removing /usr/local/bin/aurora..."
         os.remove("/usr/local/bin/aurora")
@@ -44,7 +44,7 @@ def main():
     except OSError as e:
         if (e[0] == 2):
             print "aurora does not already exist, contining..."
-    # Remove aurora, auroramanager
+    # Remove auroramanager
     try:
         print "Removing /usr/local/bin/auroramanager..."
         os.remove("/usr/local/bin/auroramanager")
