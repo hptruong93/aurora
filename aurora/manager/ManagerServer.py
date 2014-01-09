@@ -8,7 +8,8 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
     server_version= "Aurora/0.2"
     
     def __init__(self):
-        BaseHTTPRequestHandler().__init__(self)
+        #BaseHTTPRequestHandler().__init__(self)
+        super(MyHandler, self).__init__()
         self.manager = Manager() #Start a manager instance
     
     def do_GET(self):
