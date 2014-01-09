@@ -345,7 +345,7 @@ class Manager():
         #Dispatch
         for (index,json_entry) in enumerate(json_list):
             #Generate unique slice_id and add entry to database
-            slice_uuid = uuid.uuid4()
+            slice_uuid = str(uuid.uuid4())
             print slice_uuid
             self.auroraDB.slice_add(slice_uuid, tenant_id, aplist[index], project_id)
             message += "Slice "+str(index+1)+": "+str(slice_uuid)+'\n'
