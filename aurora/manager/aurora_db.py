@@ -59,7 +59,7 @@ class AuroraDB():
         else:
             print('Connection already closed!')
     
-    def wnet_add_slice(self, tenant_id, slice_id, name):
+    def wnet_add_wslice(self, tenant_id, slice_id, name):
         '''
         #Get the wnet_id
         wnet_id = -1
@@ -118,7 +118,7 @@ class AuroraDB():
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
            
-    def wnet_remove_slice(self, tenant_id, slice_id, name):
+    def wnet_remove_wslice(self, tenant_id, slice_id, name):
         '''
         #Get the wnet_id
         wnet_id = -1

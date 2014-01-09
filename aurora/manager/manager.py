@@ -360,7 +360,7 @@ class Manager():
         #Dispatch
         for (index,json_entry) in enumerate(json_list):
             #Generate unique slice_id and add entry to database
-            slice_uuid = uuid.uuid4()
+            slice_uuid = str(uuid.uuid4())
             print slice_uuid
             self.auroraDB.slice_add(slice_uuid, tenant_id, aplist[index], project_id)
             message += "Slice "+str(index+1)+": "+str(slice_uuid)+'\n'
@@ -560,7 +560,7 @@ class Manager():
         print "arg_slice:", arg_slice
         
         #Send to database
-    #    self.auroraDB.wnet_add_slice(tenant_id, arg_slice, arg_name)
+        self.auroraDB.wnet_add_wslice(tenant_id, arg_slice, arg_name)
         
         #Return Response
         response = {"status":True, "message":""}
@@ -643,7 +643,7 @@ class Manager():
         arg_name = args['wnet-remove-wslice'][0]
         arg_slice = args['slice'][0]
         #Send to database
-        self.auroraDB.wnet_remove_slice(tenant_id, arg_slice, arg_name)
+        self.auroraDB.wnet_remove_wslice(tenant_id, arg_slice, arg_name)
         message = 'Slice with ap_slice_id ' + arg_slice + ' removed from wnet ' + arg_name
         #Send Response
         response = {"status":True, "message":message}

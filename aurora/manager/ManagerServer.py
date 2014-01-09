@@ -6,9 +6,7 @@ from manager import *
 
 class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
     server_version= "Aurora/0.2"
-    
-#    def __init__(self):
-#        self.manager = Manager() #Start a manager instance
+    manager = Manager() #Start a manager instance
     
     def do_GET(self):
         self.send_response(200)
