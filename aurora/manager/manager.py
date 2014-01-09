@@ -14,6 +14,8 @@ class Manager():
     
     def __init__(self):
         
+        print("Constructing Manager")
+        
         ### Dispatcher variables
         host = 'localhost'
         username = 'outside_world'
