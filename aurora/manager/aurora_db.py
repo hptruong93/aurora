@@ -53,7 +53,7 @@ class AuroraDB():
                 sys.exit(-1)
     
     def __del__(self):
-        print "Destructing AuroraDB()..."
+        print "Destructing AuroraDB..."
         if self.con:
             self.con.close()
         else:
