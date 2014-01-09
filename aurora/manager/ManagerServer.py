@@ -9,7 +9,7 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
     
     def __init__(self, request, clientaddress, server):
         #BaseHTTPRequestHandler().__init__(self)
-        super(MyHandler, self).__init__(self, request, clientaddress, server)
+        super(MyHandler, self).__init__()
         self.manager = Manager() #Start a manager instance
     
     def do_GET(self):
