@@ -9,11 +9,14 @@ import sys, json, os
 import MySQLdb as mdb
 
 class AuroraDB():
-
-    def __init__(self):
+    #Default values in __init__ should potentially be omitted
+    def __init__(self, mysql_host = 'localhost', mysql_username = 'root',\
+                 mysql_password = 'supersecret', mysql_db = 'aurora'):
+        print "Constructing AuroraDB..."
         #Connect to Aurora mySQL database
         try:
-            self.con = mdb.connect('localhost', 'root', 'supersecret', 'aurora') #Change address
+            self.con = mdb.connect(mysql_host, mysql_username,\
+                                   mysql_password, mysql_db) #Change address
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)
@@ -50,6 +53,7 @@ class AuroraDB():
                 sys.exit(-1)
     
     def __del__(self):
+        print "Destructing AuroraDB()..."
         if self.con:
             self.con.close()
         else:
@@ -103,11 +107,13 @@ class AuroraDB():
             with self.con:
                 #First get wnet-id
                 cur = self.con.cursor()
-                cur.execute("SELECT wnet_id FROM wnet WHERE wnet_id=\'"+str(name)+"\' OR name=\'"+str(name)+"\'")
+                cur.execute("SELECT wnet_id FROM wnet WHERE wnet_id=\'" + \
+                            str(name) + "\' OR name=\'" + str(name) + "\'")
                 wnetID = cur.fetchone()[0]
                 #Update to SQL database
                 
-                cur.execute("UPDATE ap_slice SET wnet_id=\'"+str(wnetID)+"\' WHERE ap_slice_id=\'"+str(slice_id)+"\'")
+                cur.execute("UPDATE ap_slice SET wnet_id=\'" + str(wnetID) + \
+                            "\' WHERE ap_slice_id=\'" + str(slice_id)+"\'")
         
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
@@ -167,11 +173,13 @@ class AuroraDB():
             with self.con:
                 #First get wnet-id
                 cur = self.con.cursor()
-                cur.execute("SELECT wnet_id FROM wnet WHERE wnet_id=\'"+str(name)+"\' OR name=\'"+str(name)+"\'")
+                cur.execute("SELECT wnet_id FROM wnet WHERE wnet_id=\'" + \
+                            str(name) + "\' OR name=\'" + str(name) + "\'")
                 wnetID = cur.fetchone()[0]
                 #Update to SQL database
                 
-                cur.execute("UPDATE ap_slice SET wnet_id=NULL WHERE ap_slice_id=\'"+str(slice_id)+"\' AND wnet_id=\'"+str(wnetID)+"\'")
+                cur.execute("UPDATE ap_slice SET wnet_id=NULL WHERE ap_slice_id=\'"\
+                            + str(slice_id) + "\' AND wnet_id=\'" + str(wnetID) + "\'")
         
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
@@ -182,7 +190,8 @@ class AuroraDB():
         try:
             with self.con:
                 cur = self.con.cursor()
-                cur.execute("INSERT INTO wnet VALUES (%s, %s, %s, %s)", (str(wnet_id), str(name), str(tenant_id), str(project_id)))
+                cur.execute("INSERT INTO wnet VALUES (%s, %s, %s, %s)",\
+                            (str(wnet_id), str(name), str(tenant_id), str(project_id)))
         
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
@@ -192,7 +201,8 @@ class AuroraDB():
         try:
             with self.con:
                 cur = self.con.cursor()
-                cur.execute("DELETE FROM wnet WHERE name=\'"+str(identifier)+"\' OR wnet_id=\'"+str(identifier)+"\'")
+                cur.execute("DELETE FROM wnet WHERE name=\'" + str(identifier) + \
+                            "\' OR wnet_id=\'" + str(identifier) + "\'")
         
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
@@ -201,7 +211,9 @@ class AuroraDB():
         try:
             with self.con:
                 cur = self.con.cursor()
-                cur.execute("INSERT INTO ap_slice VALUES (%s, %s, %s, %s, %s, %s)", (str(slice_uuid),str(tenant_id),str(physAP),str(project_id), "NULL", "PENDING"))
+                cur.execute("INSERT INTO ap_slice VALUES (%s, %s, %s, %s, %s, %s)",\
+                            ( str(slice_uuid), str(tenant_id),str(physAP),\
+                              str(project_id), "NULL",        "PENDING") )
         
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])

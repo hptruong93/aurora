@@ -13,17 +13,18 @@ import provision_server.ap_provision as provision
 class Manager():
     
     def __init__(self):
-        #Initialize AuroraDB Object
-        self.auroraDB = AuroraDB()
         
         ### Dispatcher variables
         host = 'localhost'
         username = 'outside_world'
         password = 'wireless_access'
-        mysql_host = 'localhost'
+        mysql_host = host
         mysql_username = 'root'
         mysql_password = 'supersecret'
-        mysql_db = 'aurora' 
+        mysql_db = 'aurora'
+        
+        #Initialize AuroraDB Object
+        self.auroraDB = AuroraDB(mysql_host, mysql_username, mysql_password, mysql_db)
         
         self.dispatch = dispatcher.Dispatcher(host, username, password, mysql_username, mysql_password)
         provision.run()
