@@ -4,7 +4,6 @@
 import json
 import sys, uuid
 from slice_plugin import *
-from sql_check import *
 from aurora_db import *
 import MySQLdb as mdb
 import dispatcher
@@ -76,7 +75,7 @@ class Manager():
                         newList[i][1]['free_disk'] = tempList[i][6]
                         newList[i][1]['supported_protocol'] = tempList[i][7]
                         newList[i][1]['number_radio_free'] = tempList[i][8]
-                        #Get a list of tags
+                        #Get a list of tag
                         cur.execute("SELECT name FROM location_tags WHERE ap_name=\'"+str(tempList[i][0])+"\'")
                         tagList = cur.fetchall()
                         tagString = ""

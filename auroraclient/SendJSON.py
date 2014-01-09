@@ -12,10 +12,10 @@ class JSONSender():
         try:
             r = requests.post(url, data=json.dumps(payload))
             
-    #        print("Response: "+str(r.status_code))
+            print("Response: "+str(r.status_code))
             
             #Sleep for 2 seconds while waiting for response
-      #      time.sleep(2)
+            time.sleep(2)
             
         except requests.exceptions.ConnectionError, e:
             print "Error:", e
