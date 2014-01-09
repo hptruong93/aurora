@@ -6,8 +6,22 @@ from manager import *
 
 class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
     server_version= "Aurora/0.2"
-    manager = Manager() #Start a manager instance
+    manager = None
+    print type(manager)
+#    manager = Manager() #Start a manager instance
+    # Override __init__ to instantiate Manager, pass along
+    # parameters:
+    # BaseHTTPServer.BaseHTTPRequestHandler(request, client_address, server)
+    def __init__(self, *args):
+        print "\nConstructing MyHandler using", MyHandler.manager
+        BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, *args)
+        
     
+    # __del__ does not override anything
+    def __del__(self):
+        print "Destructing MyHandler"
+        
+        
     def do_GET(self):
         self.send_response(200)
         self.send_header("Content-type", "application/json")
@@ -44,16 +58,42 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         self.end_headers()
         self.wfile.write( body )
         
+class ManagerServer(BaseHTTPServer.HTTPServer):
+    """Builds upon HTTPServer and also sets up and tears down single Manager() instance"""
+    def serve_forever(self):
+        # Manager is now in server instance's scope, will be deconstructed
+        # upon interrupt
+        
+#        print "Making manager in ManagerServer..."
+        self.manager = Manager()
+#        print "Made manager in ManagerServer:", self.manager
+
+        # When initialized, handler_class from main is stored in RequestHandlerClass
+        self.RequestHandlerClass.manager = self.manager
+        print self.RequestHandlerClass.manager
+        BaseHTTPServer.HTTPServer.serve_forever(self)
+    
+    def server_close(self):
+    
+#        print "Deleting manager in ManagerServer:", self.manager
+        # Delete all references to manager so it destructs
+        del self.manager, self.RequestHandlerClass.manager
+#        print "Deleted manager, closing server..."
+
+        BaseHTTPServer.HTTPServer.server_close(self)
+        
 
 if __name__ == "__main__":
     handler_class=MyHandler
     server_address = ('', 5554)
     try:
-        srvr = BaseHTTPServer.HTTPServer(server_address, handler_class)
+        srvr = ManagerServer(server_address, handler_class)
         print("Starting webserver...")
         srvr.serve_forever()
 
-    except:
+    except BaseException as e:
+        if e:
+            print e
         print("Shutting down webserver...")
         srvr.server_close()
 #    finally:

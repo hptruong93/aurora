@@ -123,6 +123,7 @@ class Dispatcher():
     def stop(self):
         self.channel.basic_cancel()
         self.connection.ioloop.stop()
+        del 
      
 
 

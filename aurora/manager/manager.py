@@ -39,7 +39,8 @@ class Manager():
         
     def __del__(self):
     #   self.dispatch.stop()
-        print("Deconstructing Manager...")
+        print("Destructing Manager...")
+        self.dispatch.stop()
         provision.stop()
         
     def parseargs(self, function, args, tenant_id, user_id, project_id):
