@@ -9,23 +9,19 @@ class JSONSender():
     
     def sendJSON(self, url, payload):
         
-        try:
-            r = requests.post(url, data=json.dumps(payload))
-            
-            print("Response: "+str(r.status_code))
-            
-            #Sleep for 2 seconds while waiting for response
-            time.sleep(2)
-            
-        except requests.exceptions.ConnectionError, e:
-            print "Error:", e
-
+        r = requests.post(url, data=json.dumps(payload))
+        print("Response: "+str(r.status_code))
+        
+        #Sleep for 2 seconds while waiting for response
+        time.sleep(2)
+        
         r = requests.get(url)
         dictresponse = ast.literal_eval(r.text)
         message = dictresponse['message']
         status = dictresponse['status']
         print status
         print message
+        
 
 if __name__ == "__main__": #FOR TESTING
     sender = JSONSender()
