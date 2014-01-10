@@ -44,10 +44,11 @@ server_address = ('', 5555)
 server = BaseHTTPServer.HTTPServer(server_address, handler_class)
 
 def run():
-
+    print "Starting provision server..."
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.start()
 
 def stop():
+    print "Shutting down provision server..."
     server.shutdown()
 

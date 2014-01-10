@@ -16,6 +16,7 @@ def main():
     import sys
     import shutil
     import os
+    import time
     args = sys.argv[1:]
     
     # Check proper usage
@@ -97,6 +98,7 @@ if __name__ == "__main__":
         server_proc = subprocess.Popen(execute_args)
         server_proc.wait()
     except KeyboardInterrupt:
+        time.sleep(2)
         pass
 ''')
 

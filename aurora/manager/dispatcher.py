@@ -26,13 +26,16 @@ class Dispatcher():
         
         # Setup complete, now start listening and processing
         # This jumpstarts the connection, which in turn uses the callbacks
-        self.connection.connect()
-        listener = threading.Thread(target=self.connection.ioloop.start)
-        listener.start()
+        # Note: connect() is called automatically in SelectConnection().__init__()
+        #
+        # self.connection.connect()
+        
+        # Start ioloop, this will quit by itself when Dispatcher().stop() is run
+        self.listener = threading.Thread(target=self.connection.ioloop.start)
+        self.listener.start()
         
     def __del__(self):
         print "Deconstructing Dispatcher..."
-        self.stop()
     
     def channel_open(self, new_channel):
         self.channel = new_channel
@@ -121,9 +124,9 @@ class Dispatcher():
         channel.basic_ack(delivery_tag = method.delivery_tag)
     
     def stop(self):
-        self.channel.basic_cancel()
-        self.connection.ioloop.stop()
-        #TODO: del all references to dispatcher 
+        # SelectConnection object close method cancels ioloop and cleanly
+        # closes associated channels
+        self.connection.close()
      
 
 
