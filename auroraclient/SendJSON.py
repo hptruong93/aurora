@@ -13,7 +13,7 @@ class JSONSender():
         print("Response: "+str(r.status_code))
         
         #Sleep for 2 seconds while waiting for response
-        time.sleep(2)
+        time.sleep(1)
         
         r = requests.get(url)
         dictresponse = ast.literal_eval(r.text)
