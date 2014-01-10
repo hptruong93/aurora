@@ -23,15 +23,15 @@ class Manager():
         host = 'localhost'
         username = 'outside_world'
         password = 'wireless_access'
-        mysql_host = host
-        mysql_username = 'root'
-        mysql_password = 'supersecret'
-        mysql_db = 'aurora'
+        self.mysql_host = host
+        self.mysql_username = 'root'
+        self.mysql_password = 'supersecret'
+        self.mysql_db = 'aurora'
         
         #Initialize AuroraDB Object
-        self.auroraDB = AuroraDB(mysql_host, mysql_username, mysql_password, mysql_db)
+        self.auroraDB = AuroraDB(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db)
     ##Commented for testing without AP 
-        self.dispatch = dispatcher.Dispatcher(host, username, password, mysql_username, mysql_password)
+        self.dispatch = dispatcher.Dispatcher(host, username, password, self.mysql_username, self.mysql_password)
         provision.run()
         
  #       print "Sleeping for 10"
@@ -53,7 +53,7 @@ class Manager():
     #STILL NEED TO IMPLEMENT TAG SEARCHING (location_tags table), maybe another connection with intersection?
     def ap_filter(self, args):
         try:
-            self.con = mdb.connect(mysql_host, mysql_username, mysql_password, mysql_db) #Change address
+            self.con = mdb.connect(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db) #Change address
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)
@@ -229,7 +229,7 @@ class Manager():
         for entry in slice_names:
             #Get ap name
             try:
-                with mdb.connect(mysql_host, mysql_username, mysql_password, mysql_db) as db:
+                with mdb.connect(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db) as db:
                     db.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(entry)+"\'")
                     ap_name = db.fetchone()[0]
             except mdb.Error, e:
@@ -265,7 +265,7 @@ class Manager():
         #Add tags
         for entry in slice_names:
             try:
-                with mdb.connect(mysql_host, mysql_username, mysql_password, mysql_db) as db:
+                with mdb.connect(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db) as db:
                     to_execute = "INSERT INTO tenant_tags VALUES (\'"+\
                                  str(tag[0])+"\', \'"+str(entry)+"\')"
                     
@@ -304,7 +304,7 @@ class Manager():
         #TODO: move to aurora_db
         for entry in slice_names:
             try:
-                with mdb.connect(mysql_host, mysql_username, mysql_password, mysql_db) as db:
+                with mdb.connect(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db) as db:
                     db.execute("DELETE FROM tenant_tags WHERE name=\'"+\
                                str(tag)+"\' AND ap_slice_id=\'"+str(entry)+"\'")
             except mdb.Error, e:
@@ -392,7 +392,7 @@ class Manager():
         #Figure out which AP has the slice/change status to DELETING
         
         try:
-            with mdb.connect(mysql_host, mysql_username, mysql_password, mysql_db) as db:
+            with mdb.connect(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db) as db:
                 db.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+\
                            str(arg_name)+"\'")
                 ap_name = db.fetchone()[0]
@@ -416,7 +416,7 @@ class Manager():
     
     def ap_slice_filter(self, arg_filter):
         try:
-            self.con = mdb.connect(mysql_host, mysql_username, mysql_password, mysql_db) #Change address
+            self.con = mdb.connect(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db) #Change address
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)
@@ -607,7 +607,7 @@ class Manager():
     
     def wnet_fetch(self, tenant_id):  
         try:
-            with mdb.connect(mysql_host, mysql_username, mysql_password, mysql_db) as db:
+            with mdb.connect(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db) as db:
                 if tenant_id == 0:
                     db.execute("SELECT * FROM wnet")
                     tempList =  db.fetchall()
@@ -691,7 +691,7 @@ class Manager():
         print "wnet_name: " + wnet_name
              
         try:
-           with mdb.connect(mysql_host, mysql_username, mysql_password, mysql_db) as db:
+           with mdb.connect(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db) as db:
                 to_execute = "SELECT wnet_id FROM wnet WHERE tenant_id=\'" + str(tenant_id) + \
                              "\' AND name=\'"+str(wnet_name)+"\'"
                 print to_execute
@@ -803,7 +803,7 @@ class Manager():
                     message += 'Modifying slices in \'' + str(wnet_name) + '\':\n'
                     #TODO: Move to aurora_db
                     try:
-                       with mdb.connect(mysql_host, mysql_username, mysql_password, mysql_db) as db:
+                       with mdb.connect(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db) as db:
                             for slice_tuple in wslices_dict["ap_slices"]:
                                 # For every slice in wnet
                                 slice_id = slice_tuple[0]
@@ -852,7 +852,7 @@ class Manager():
                     message += 'Modifying slices in \'' + str(wnet_name) + '\':\n'
                     #TODO: Move to aurora_db
                     try:
-                       with mdb.connect(mysql_host, mysql_username, mysql_password, mysql_db) as db:
+                       with mdb.connect(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db) as db:
                             for slice_tuple in wslices_dict["ap_slices"]:
                                 # For every slice in wnet
                                 slice_id = slice_tuple[0]
