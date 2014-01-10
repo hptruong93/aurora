@@ -10,8 +10,11 @@ import MySQLdb as mdb
 
 class AuroraDB():
     #Default values in __init__ should potentially be omitted
-    def __init__(self, mysql_host = 'localhost', mysql_username = 'root',\
-                 mysql_password = 'supersecret', mysql_db = 'aurora'):
+    def __init__(self, 
+                 mysql_host = 'localhost', 
+                 mysql_username = 'root',
+                 mysql_password = 'supersecret', 
+                 mysql_db = 'aurora'):
         print "Constructing AuroraDB..."
         #Connect to Aurora mySQL database
         try:
@@ -20,37 +23,6 @@ class AuroraDB():
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)
-        
-        #Load JSON Files
-        try:
-            JFILEAP = open('json/aplist.json', 'r')
-            JFILEWNET = open('json/wnet.json', 'r')
-            self.AP = json.load(JFILEAP)
-            self.wnet = json.load(JFILEWNET)
-            JFILEAP.close()
-            JFILEWNET.close()
-        except IOError:
-            print('Error opening file!')
-            sys.exit(-1)
-        self.apslice_list = []
-        #Determine number of tenant ids/apslice json files
-        filenames = os.listdir('json')
-        #Get all files with prefix 'apslice-'
-        filenames = filter(lambda x: 'apslice-' in x, filenames)
-        #Get rid of all temp files
-        filenames = filter(lambda x: '~' != x[len(x)-1], filenames)
-        #Sort alphabetically
-        filenames = sorted(filenames)
-       
-        #Load each file into apslice_list
-        for entry in filenames:
-            try:
-                JFILE = open('json/'+entry, 'r')
-                self.apslice_list.append(json.load(JFILE))
-                JFILE.close()
-            except IOError:
-                print('Error opening file!')
-                sys.exit(-1)
     
     def __del__(self):
         print "Destructing AuroraDB..."
@@ -59,50 +31,64 @@ class AuroraDB():
         else:
             print('Connection already closed!')
     
-    def wnet_add_wslice(self, tenant_id, slice_id, name):
-        '''
-        #Get the wnet_id
-        wnet_id = -1
-        for entry in self.wnet:
-            if str(entry['name']) == name:
-                wnet_id = entry['wnet_id']
-        
-        if wnet_id == -1:
-            print('wnet_id not found!')
-            return
-            
-
-        #Change the wnet JSON file
-        for wnet in self.wnet:
-            if int(wnet['wnet_id']) == wnet_id:
-                if slice_id not in wnet['ap-slices']:
-                    wnet['ap-slices'].append(slice_id)
+    def wslice_belongs_to(self, ap_slice_id, tenant_id, project_id = 1):
+        try:
+            with self.con:
+                cur = self.con.cursor()
+                to_execute = "SELECT ap_slice_id FROM ap_slice WHERE tenant_id = \'" + \
+                            str(tenant_id) + "\' AND project_id = \'" + \
+                            str(project_id) + "\'"
+                cur.execute(to_execute)
+                tenant_ap_slices_tt = cur.fetchall()
+                tenant_ap_slices = []
+                for tenant_tuple in tenant_ap_slices_tt:
+                    tenant_ap_slices.append(tenant_tuple[0])
+                if ap_slice_id in tenant_ap_slices:
+                    return True
                 else:
-                    print('This wnet already contains the specified slice!')
-                    return
-        try:
-            JFILE = open('json/wnet.json', 'w')
-        except IOError:
-            print('Error opening file for writing!')
-            sys.exit(-1)
-        json.dump(self.wnet, JFILE, sort_keys=True, indent=4)
-        JFILE.flush()
-        JFILE.close()
+                    return False
+        except mdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            sys.exit(1)
+    
+    #TODO: This function is untested
+    def wnet_belongs_to(self, tenant_id, project_id = 1, **kwargs):
+        if 'wnet_id' in kwargs:
+            try:
+                with self.con:
+                    cur = self.con.cursor()
+                    cur.execute("SELECT wnet_id FROM wnet WHERE tenant_id = \'" + \
+                                str(tenant_id) + "\' AND project_id = \'" + \
+                                str(project_id) + "\'")
+                    tenants_wnets = cur.fetchall()
+                    if wnet_id in tenant_wnets:
+                        return True
+                    else:
+                        return False
+            except mdb.Error, e:
+                print "Error %d: %s" % (e.args[0], e.args[1])
+                sys.exit(1)
+                        
+        elif 'name' in kwargs:
+            try:
+                with self.con:
+                    cur = self.con.cursor()
+                    cur.execute("SELECT name FROM wnet WHERE tenant_id = \'" + \
+                                str(tenant_id) + "\' AND project_id = \'" + \
+                                str(project_id) + "\'")
+                    tenants_wnets = cur.fetchall()
+                    if name in tenant_wnets:
+                        return True
+                    else:
+                        return False
+            except mdb.Error, e:
+                print "Error %d: %s" % (e.args[0], e.args[1])
+                sys.exit(1)
+        else:
+            print "Error: expected keyword argument, specify wnet_id or name."
         
-        #Change the apslice JSON file
-        for entry in self.apslice_list[tenant_id-1]:
-            if int(entry['ap_slice_id']) == slice_id:
-                entry['wnet_id'] = wnet_id
-        try:
-            JFILE = open('json/apslice-'+str(tenant_id)+'.json', 'w')
-        except IOError:
-            print('Error opening file for writing!')
-            sys.exit(-1)
-        json.dump(self.apslice_list[tenant_id-1], JFILE, sort_keys=True, indent=4)
-        JFILE.flush()
-        JFILE.close()
-        '''
-       
+    
+    def wnet_add_wslice(self, tenant_id, slice_id, name):
         try:
             with self.con:
                 #First get wnet-id
@@ -118,56 +104,7 @@ class AuroraDB():
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
            
-    def wnet_remove_wslice(self, tenant_id, slice_id, name):
-        '''
-        #Get the wnet_id
-        wnet_id = -1
-        for entry in self.wnet:
-            if str(entry['name']) == name:
-                wnet_id = entry['wnet_id']
-        
-        if wnet_id == -1:
-            print('wnet_id not found!')
-            return
-    
-        #Change the wnet JSON file
-        for wnet in self.wnet:
-            if int(wnet['wnet_id']) == wnet_id:
-                if slice_id in wnet['ap-slices']:
-                    wnet['ap-slices'].remove(slice_id)
-                else:
-                    print('This wnet does not contain the specified slice!')
-                    return
-        try:
-            JFILE = open('json/wnet.json', 'w')
-        except IOError:
-            print('Error opening file for writing!')
-            sys.exit(-1)
-        json.dump(self.wnet, JFILE, sort_keys=True, indent=4)
-        JFILE.flush()
-        JFILE.close()
-        
-        #Change the apslice JSON file
-        for entry in self.apslice_list[tenant_id-1]:
-            if int(entry['ap_slice_id']) == slice_id:
-                if int(entry['wnet_id']) == wnet_id:
-                    entry['wnet_id'] = None
-                else:
-                    print('Error. Slice not associated with specified wnet_id!')
-                    return
-        try:
-            JFILE = open('json/apslice-'+str(tenant_id)+'.json', 'w')
-        except IOError:
-            print('Error opening file for writing!')
-            sys.exit(-1)
-        json.dump(self.apslice_list[tenant_id-1], JFILE, sort_keys=True, indent=4)
-        JFILE.flush()
-        JFILE.close()
-        
-        #At this point, we know that both json file removals have succeeded (i.e. we don't need to check
-        #the database for wnet_id, we can just set it to NULL)
-        '''
-        
+    def wnet_remove_wslice(self, tenant_id, slice_id, name):        
         #Update to SQL database
         try:
             with self.con:
@@ -221,6 +158,15 @@ class AuroraDB():
     def slice_delete(self, slice_id):
         #Update SQL database and JSON file
         pass
+        
+    def slice_add_tag(self, ap_slice_id, tag):
+        try:
+            with self.con:
+                cur = self.con.cursor()
+                cur.execute("INSERT INTO tenant_tags VALUES (%s, %s)",\
+                            ( str(tag), str(ap_slice_id) ) )
+        except mdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
          
     def wnet_join(self, tenant_id, name):
         pass #TODO AFTER SAVI INTEGRATION

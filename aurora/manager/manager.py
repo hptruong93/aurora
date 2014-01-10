@@ -250,7 +250,7 @@ class Manager():
             print('Error: Please specify a tag with --tag')
             sys.exit(1)
         else:
-            tag = args['tag'][0]
+            tags = args['tag']
         #Get list of slice_ids
         if args['filter']:
             slice_names = []
@@ -263,22 +263,20 @@ class Manager():
             slice_names = args['ap-slice-add-tag']
         
         #Add tags
-        for entry in slice_names:
-            try:
-                with mdb.connect(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db) as db:
-                    to_execute = "INSERT INTO tenant_tags VALUES (\'"+\
-                                 str(tag[0])+"\', \'"+str(entry)+"\')"
-                    
-                    #TODO: Fix below syntax error
-                    to_execute = "REPLACE INTO tenant_tags VALUES (\'%s\', \'%s\')" \
-                                                 % (str(tag), str(slice_id))
-                                                 
-                    print to_execute
-                    db.execute("INSERT INTO tenant_tags VALUES (\'"\
-                               +str(tag)+"\', \'"+str(entry)+"\')")
-            except mdb.Error, e:
-                print "Error %d: %s" % (e.args[0], e.args[1])
-                
+        for slice_id in slice_names:
+            if self.auroraDB.wslice_belongs_to(slice_id, tenant_id, project_id):
+                for tag in tags:
+                    self.auroraDB.slice_add_tag(slice_id, tag)
+            else:
+                print "Error: Slice " + slice_id + " does not belong to you."
+               
+ #       to_execute = "INSERT INTO tenant_tags VALUES (\'"+\
+ #                    str(tag[0])+"\', \'"+str(entry)+"\')"
+        
+        #TODO: Fix below syntax error
+ #       to_execute = "REPLACE INTO tenant_tags VALUES (\'%s\', \'%s\')" \
+ #                                    % (str(tag), str(entry))
+
         #return response
         response = {"status":True, "message":""}
         return response     
