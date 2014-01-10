@@ -50,9 +50,10 @@ class Manager():
         response = getattr(self, function)(args, tenant_id, user_id, project_id)
         return response
     
-    def ap_filter(self, args): #STILL NEED TO IMPLEMENT TAG SEARCHING (location_tags table), maybe another connection with intersection?
+    #STILL NEED TO IMPLEMENT TAG SEARCHING (location_tags table), maybe another connection with intersection?
+    def ap_filter(self, args):
         try:
-            self.con = mdb.connect('localhost', 'root', 'supersecret', 'aurora') #Change address
+            self.con = mdb.connect(mysql_host, mysql_username, mysql_password, mysql_db) #Change address
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)
@@ -93,14 +94,16 @@ class Manager():
             args_list = args.split('&')
             for (index, entry) in enumerate(args_list):
                 args_list[index] = entry.strip()
-                 #Filter for tags (NOT Query is not yet implemented (future work?), support for only 1 tag (USE 'OR' STATEMENT IN FUTURE FOR MULTIPLE))
+                 #Filter for tags (NOT Query is not yet implemented (future work?), 
+                 #support for only 1 tag (USE 'OR' STATEMENT IN FUTURE FOR MULTIPLE))
                 if 'tag' in args_list[index]:
                     tag_compare = True
                     try:
                         with self.con:
                             cur = self.con.cursor()
                             if '=' in args_list[index]:
-                                cur.execute("SELECT ap_name FROM location_tags WHERE name=\'"+args_list[index].split('=')[1]+"\'")
+                                cur.execute("SELECT ap_name FROM location_tags WHERE name=\'"+\
+                                            args_list[index].split('=')[1]+"\'")
                             else:
                                 print("Unexpected character in tag query. Please check syntax and try again!")
                                 sys.exit(0)
@@ -112,10 +115,16 @@ class Manager():
                         print "Error %d: %s" % (e.args[0], e.args[1])
                         
                 elif '=' in args_list[index]:
-                    if (args_list[index].split('=')[0] == "name") or (args_list[index].split('=')[0] == "firmware") or (args_list[index].split('=')[0] == "region") or (args_list[index].split('=')[0] == "supported_protocol"):
+                    if (args_list[index].split('=')[0] == "name")           or \
+                       (args_list[index].split('=')[0] == "firmware")       or \
+                       (args_list[index].split('=')[0] == "region")         or \
+                       (args_list[index].split('=')[0] == "supported_protocol"):
                         args_list[index] = args_list[index].split('=')[0]+'=\''+args_list[index].split('=')[1]+'\''
                 elif '!' in args_list[index]:
-                    if (args_list[index].split('!')[0] == "name") or (args_list[index].split('!')[0] == "firmware") or (args_list[index].split('!')[0] == "region") or (args_list[index].split('!')[0] == "supported_protocol"):
+                    if (args_list[index].split('!')[0] == "name")           or \
+                       (args_list[index].split('!')[0] == "firmware")       or \
+                       (args_list[index].split('!')[0] == "region")         or \
+                       (args_list[index].split('!')[0] == "supported_protocol"):
                         args_list[index] = args_list[index].split('!')[0]+'<>\''+args_list[index].split('!')[1]+'\''
                     else:
                         args_list[index] = args_list[index].split('!')[0]+'<>'+args_list[index].split('!')[1]
@@ -220,10 +229,9 @@ class Manager():
         for entry in slice_names:
             #Get ap name
             try:
-                with self.con:
-                    cur = self.con.cursor()
-                    cur.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(entry)+"\'")
-                    ap_name = cur.fetchone()[0]
+                with mdb.connect(mysql_host, mysql_username, mysql_password, mysql_db) as db:
+                    db.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(entry)+"\'")
+                    ap_name = db.fetchone()[0]
             except mdb.Error, e:
                 print "Error %d: %s" % (e.args[0], e.args[1])
             
@@ -254,24 +262,20 @@ class Manager():
         else:
             slice_names = args['ap-slice-add-tag']
         
-        try:
-            self.con = mdb.connect('localhost', 'root', 'supersecret', 'aurora') #Change address
-        except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
-            sys.exit(1)
-        
         #Add tags
         for entry in slice_names:
             try:
-                with mdb.connect('localhost', 'root', 'supersecret', 'aurora') as db:
-                    to_execute = "INSERT INTO tenant_tags VALUES (\'"+str(tag[0])+"\', \'"+str(entry)+"\')"
+                with mdb.connect(mysql_host, mysql_username, mysql_password, mysql_db) as db:
+                    to_execute = "INSERT INTO tenant_tags VALUES (\'"+\
+                                 str(tag[0])+"\', \'"+str(entry)+"\')"
                     
                     #TODO: Fix below syntax error
                     to_execute = "REPLACE INTO tenant_tags VALUES (\'%s\', \'%s\')" \
                                                  % (str(tag), str(slice_id))
                                                  
                     print to_execute
-                    db.execute("INSERT INTO tenant_tags VALUES (\'"+str(tag)+"\', \'"+str(entry)+"\')")
+                    db.execute("INSERT INTO tenant_tags VALUES (\'"\
+                               +str(tag)+"\', \'"+str(entry)+"\')")
             except mdb.Error, e:
                 print "Error %d: %s" % (e.args[0], e.args[1])
                 
@@ -296,18 +300,13 @@ class Manager():
         else:
             slice_names = args['ap-slice-remove-tag']
         
-        try:
-            self.con = mdb.connect('localhost', 'root', 'supersecret', 'aurora') #Change address
-        except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
-            sys.exit(1)
-        
         #Remove tags
+        #TODO: move to aurora_db
         for entry in slice_names:
             try:
-                with self.con:
-                    cur = self.con.cursor()
-                    cur.execute("DELETE FROM tenant_tags WHERE name=\'"+str(tag)+"\' AND ap_slice_id=\'"+str(entry)+"\'")
+                with mdb.connect(mysql_host, mysql_username, mysql_password, mysql_db) as db:
+                    db.execute("DELETE FROM tenant_tags WHERE name=\'"+\
+                               str(tag)+"\' AND ap_slice_id=\'"+str(entry)+"\'")
             except mdb.Error, e:
                 print "Error %d: %s" % (e.args[0], e.args[1])
                 
@@ -343,12 +342,19 @@ class Manager():
             for entry in result:
                 aplist.append(entry[0])
                 
-        #Initialize json_list structure (We do NOT yet have a plugin for VirtualWIFI/RadioInterfaces, just load and send for now)
+        #Initialize json_list structure (We do NOT yet have a plugin for 
+        #VirtualWIFI/RadioInterfaces, just load and send for now)
         for i in range(len(aplist)):
-            json_list.append({'VirtualInterfaces':[], 'VirtualBridges':[], 'RadioInterfaces':arg_file['VirtualWIFI']})
+            json_list.append({'VirtualInterfaces':[],
+                              'VirtualBridges':[], 
+                              'RadioInterfaces':arg_file['VirtualWIFI']})
             
         #Send to plugin for parsing
-        json_list = SlicePlugin(tenant_id, user_id, arg_tag).parseCreateSlice(arg_file, len(aplist), json_list)
+        json_list = SlicePlugin(tenant_id,
+                                user_id, 
+                                arg_tag).parseCreateSlice(arg_file, 
+                                                          len(aplist), 
+                                                          json_list)
         
         message = ""
         
@@ -360,14 +366,17 @@ class Manager():
         
         #Dispatch
         for (index,json_entry) in enumerate(json_list):
-            #Generate unique slice_id and add entry to database
+            #Generate unique slice_id and add entry to database TODO: is str() correct here?
             slice_uuid = str(uuid.uuid4())
             print slice_uuid
             self.auroraDB.slice_add(slice_uuid, tenant_id, aplist[index], project_id)
             message += "Slice "+str(index+1)+": "+str(slice_uuid)+'\n'
             #Add tags if present
             if args['tag']:
-                self.ap_slice_add_tag({'ap-slice-add-tag':[str(slice_uuid)], 'tag': [arg_tag], 'filter':""}, tenant_id, user_id, project_id)
+                self.ap_slice_add_tag({'ap-slice-add-tag':[str(slice_uuid)],
+                                       'tag': [arg_tag],
+                                       'filter':""},
+                                       tenant_id, user_id, project_id)
             #Dispatch (use slice_uuid as a message identifier)
             self.dispatch.dispatch(json_entry, aplist[index], slice_uuid)
         #Return response (message returns a list of uuids for created slices)
@@ -381,20 +390,17 @@ class Manager():
         config = {"slice":arg_name, "command":"delete_slice", "user":user_id}
         
         #Figure out which AP has the slice/change status to DELETING
-        try:
-            self.con = mdb.connect('localhost', 'root', 'supersecret', 'aurora') #Change address
-        except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
-            sys.exit(1)
         
         try:
-            with self.con:
-                cur = self.con.cursor()
-                cur.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(arg_name)+"\'")
-                ap_name = cur.fetchone()[0]
-                cur.execute("UPDATE ap_slice SET status=\'DELETING\' WHERE ap_slice_id=\'"+str(arg_name)+"\'")
+            with mdb.connect(mysql_host, mysql_username, mysql_password, mysql_db) as db:
+                db.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+\
+                           str(arg_name)+"\'")
+                ap_name = db.fetchone()[0]
+                db.execute("UPDATE ap_slice SET status=\'DELETING\' WHERE ap_slice_id=\'"+\
+                           str(arg_name)+"\'")
                 #Remove tags
-                cur.execute("DELETE FROM tenant_tags WHERE ap_slice_id=\'"+str(arg_name)+"\'")
+                db.execute("DELETE FROM tenant_tags WHERE ap_slice_id=\'"+\
+                           str(arg_name)+"\'")
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)
@@ -410,7 +416,7 @@ class Manager():
     
     def ap_slice_filter(self, arg_filter):
         try:
-            self.con = mdb.connect('localhost', 'root', 'supersecret', 'aurora') #Change address
+            self.con = mdb.connect(mysql_host, mysql_username, mysql_password, mysql_db) #Change address
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)
@@ -432,7 +438,8 @@ class Manager():
                         newList[i]['wnet_id'] = tempList[i][4]
                         newList[i]['status'] = tempList[i][5]
                         #Get a list of tags
-                        cur.execute("SELECT name FROM tenant_tags WHERE ap_slice_id=\'"+str(tempList[i][0])+"\'")
+                        cur.execute("SELECT name FROM tenant_tags WHERE ap_slice_id=\'"+\
+                                    str(tempList[i][0])+"\'")
                         tagList = cur.fetchall()
                         tagString = ""
                         for tag in tagList:
@@ -447,14 +454,16 @@ class Manager():
             args_list = arg_filter.split('&')
             for (index, entry) in enumerate(args_list):
                 args_list[index] = entry.strip()
-                #Filter for tags (NOT Query is not yet implemented (future work?), support for only 1 tag (USE 'OR' STATEMENT IN FUTURE FOR MULTIPLE))
+                #Filter for tags (NOT Query is not yet implemented (future work?),
+                #support for only 1 tag (USE 'OR' STATEMENT IN FUTURE FOR MULTIPLE))
                 if 'tag' in args_list[index]:
                     tag_compare = True
                     try:
                         with self.con:
                             cur = self.con.cursor()
                             if '=' in args_list[index]:
-                                cur.execute("SELECT ap_slice_id FROM tenant_tags WHERE name=\'"+args_list[index].split('=')[1]+"\'")
+                                cur.execute("SELECT ap_slice_id FROM tenant_tags WHERE name=\'"+\
+                                            args_list[index].split('=')[1]+"\'")
                             else:
                                 print("Unexpected character in tag query. Please check syntax and try again!")
                                 sys.exit(0)
@@ -507,7 +516,8 @@ class Manager():
                         newList[i]['wnet_id'] = tempList[i][4]
                         newList[i]['status'] = tempList[i][5]
                         #Get a list of tags
-                        cur.execute("SELECT name FROM tenant_tags WHERE ap_slice_id=\'"+str(tempList[i][0])+"\'")
+                        cur.execute("SELECT name FROM tenant_tags WHERE ap_slice_id=\'"+\
+                                    str(tempList[i][0])+"\'")
                         tagList = cur.fetchall()
                         tagString = ""
                         for tag in tagList:
@@ -595,49 +605,36 @@ class Manager():
         #Send to database
         print('NOT YET IMPLEMENTED')
     
-    def wnet_fetch(self, tenant_id):
+    def wnet_fetch(self, tenant_id):  
         try:
-            self.con = mdb.connect('localhost', 'root', 'supersecret', 'aurora') #Change address
+            with mdb.connect(mysql_host, mysql_username, mysql_password, mysql_db) as db:
+                if tenant_id == 0:
+                    db.execute("SELECT * FROM wnet")
+                    tempList =  db.fetchall()
+                    #Prune thorugh list
+                    newList = []
+                    for i in range(len(tempList)):
+                        newList.append({})
+                        newList[i]['wnet_id'] = tempList[i][0]
+                        newList[i]['name'] = tempList[i][1]
+                        newList[i]['tenant_id'] = tempList[i][2]
+                        newList[i]['project_id'] = tempList[i][3]
+                else:
+                    db.execute("SELECT * FROM wnet WHERE tenant_id=\'"+str(tenant_id)+"\'")
+                    tempList =  db.fetchall()
+                    #Prune thorugh list
+                    newList = []
+                    for i in range(len(tempList)):
+                        newList.append({})
+                        newList[i]['wnet_id'] = tempList[i][0]
+                        newList[i]['name'] = tempList[i][1]
+                        newList[i]['tenant_id'] = tempList[i][2]
+                        newList[i]['project_id'] = tempList[i][3]
+                        
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)
-        if tenant_id == 0: #Admin, show all
-            try:
-                with self.con:
-                    cur = self.con.cursor()
-                    cur.execute("SELECT * FROM wnet")
-                    tempList =  cur.fetchall()
-                    #Prune thorugh list
-                    newList = []
-                    for i in range(len(tempList)):
-                        newList.append({})
-                        newList[i]['wnet_id'] = tempList[i][0]
-                        newList[i]['name'] = tempList[i][1]
-                        newList[i]['tenant_id'] = tempList[i][2]
-                        newList[i]['project_id'] = tempList[i][3]
-                        
-            except mdb.Error, e:
-                print "Error %d: %s" % (e.args[0], e.args[1])
-                sys.exit(1)   
-        else: #Match tenant_id
-            try:
-                with self.con:
-                    cur = self.con.cursor()
-                    cur.execute("SELECT * FROM wnet WHERE tenant_id=\'"+str(tenant_id)+"\'")
-                    tempList =  cur.fetchall()
-                    #Prune thorugh list
-                    newList = []
-                    for i in range(len(tempList)):
-                        newList.append({})
-                        newList[i]['wnet_id'] = tempList[i][0]
-                        newList[i]['name'] = tempList[i][1]
-                        newList[i]['tenant_id'] = tempList[i][2]
-                        newList[i]['project_id'] = tempList[i][3]
-                        
-            except mdb.Error, e:
-                print "Error %d: %s" % (e.args[0], e.args[1])
-                sys.exit(1)
-            
+  
         return newList
     
     def wnet_remove_wslice(self, args, tenant_id, user_id, project_id): #TODO:Slice filter integration
@@ -804,6 +801,7 @@ class Manager():
                 else:
                     # Add tags to sql table tenant_tags
                     message += 'Modifying slices in \'' + str(wnet_name) + '\':\n'
+                    #TODO: Move to aurora_db
                     try:
                        with mdb.connect(mysql_host, mysql_username, mysql_password, mysql_db) as db:
                             for slice_tuple in wslices_dict["ap_slices"]:
@@ -852,6 +850,7 @@ class Manager():
                 else:
                     # Add tags to sql table tenant_tags
                     message += 'Modifying slices in \'' + str(wnet_name) + '\':\n'
+                    #TODO: Move to aurora_db
                     try:
                        with mdb.connect(mysql_host, mysql_username, mysql_password, mysql_db) as db:
                             for slice_tuple in wslices_dict["ap_slices"]:
