@@ -15,7 +15,6 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
     def __init__(self, *args):
         print "\nConstructing MyHandler using", MyHandler.manager
         BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, *args)
-        
     
     # __del__ does not override anything
     def __del__(self):

@@ -113,8 +113,7 @@ class AuroraConsole():
             ##END DEBUG
             
             if toSend: #--help commands will not start the server
-                JSONSender().sendJSON("http://localhost:5554", toSend)
-#                JSONSender().sendJSON("http://132.206.206.133:5554", toSend)
+                JSONSender().sendJSON("http://132.206.206.133:5554", toSend)
 
             
         
