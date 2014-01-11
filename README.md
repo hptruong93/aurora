@@ -31,7 +31,6 @@ python paste: http://bitbucket.org/ianb/paste
 requests: www.python-requests.org
 Version 2.0.1 tested
 
-python-mysqldb: http://mysql-python.sourceforge.net/
 =======
 Access Point:
 
