@@ -32,44 +32,50 @@ class AuroraDB():
             print('Connection already closed!')
     
     def wslice_belongs_to(self, tenant_id, project_id, ap_slice_id):
-        try:
-            with self.con:
-                cur = self.con.cursor()
-                to_execute = ( "SELECT ap_slice_id FROM ap_slice WHERE "
-                               "tenant_id = \'%s\' AND "
-                               "project_id = \'%s\'" % (tenant_id, project_id) )
-                cur.execute(to_execute)
-                tenant_ap_slices_tt = cur.fetchall()
-                tenant_ap_slices = []
-                for tenant_t in tenant_ap_slices_tt:
-                    tenant_ap_slices.append(tenant_t[0])
-                if ap_slice_id in tenant_ap_slices:
-                    return True
+        if tenant_id == 0:
+            return True
+        else:
+            try:
+                with self.con:
+                    cur = self.con.cursor()
+                    to_execute = ( "SELECT ap_slice_id FROM ap_slice WHERE "
+                                   "tenant_id = '%s' AND "
+                                   "project_id = '%s'" % (tenant_id, project_id) )
+                    cur.execute(to_execute)
+                    tenant_ap_slices_tt = cur.fetchall()
+                    tenant_ap_slices = []
+                    for tenant_t in tenant_ap_slices_tt:
+                        tenant_ap_slices.append(tenant_t[0])
+                    if ap_slice_id in tenant_ap_slices:
+                        return True
 
-        except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
-            sys.exit(1)
+            except mdb.Error, e:
+                print "Error %d: %s" % (e.args[0], e.args[1])
+                sys.exit(1)
         return False
     
     #TODO: This function is untested
     def wnet_belongs_to(self, tenant_id, project_id, wnet_name):
-        try:
-            with self.con:
-                cur = self.con.cursor()
-                to_execute = ( "SELECT name, wnet_id FROM wnet WHERE "
-                               "tenant_id = '%s' AND "
-                               "project_id = '%s'" % (tenant_id, project_id) )
-                cur.execute(to_execute)
-                tenant_wnets_tt = cur.fetchall()
-                tenant_wnets = []
-                for t in tenant_wnets_tt:
-                    tenant_wnets.append(t[0])
-                    tenant_wnets.append(t[1])
-                if wnet_name in tenant_wnets:
-                    return True
-        except mdb.Error, e:
-                print "Error %d: %s" % (e.args[0], e.args[1])
-                sys.exit(1)
+        if tenant_id == 0:
+            return True
+        else:
+            try:
+                with self.con:
+                    cur = self.con.cursor()
+                    to_execute = ( "SELECT name, wnet_id FROM wnet WHERE "
+                                   "tenant_id = '%s' AND "
+                                   "project_id = '%s'" % (tenant_id, project_id) )
+                    cur.execute(to_execute)
+                    tenant_wnets_tt = cur.fetchall()
+                    tenant_wnets = []
+                    for t in tenant_wnets_tt:
+                        tenant_wnets.append(t[0])
+                        tenant_wnets.append(t[1])
+                    if wnet_name in tenant_wnets:
+                        return True
+            except mdb.Error, e:
+                    print "Error %d: %s" % (e.args[0], e.args[1])
+                    sys.exit(1)
         return False
 
     def wslice_has_tag(self, ap_slice_id, tag):
@@ -114,13 +120,21 @@ class AuroraDB():
                 wnetID = cur.fetchone()[0]
                 
                 #TODO: Check if already exists
-                
-                #Update to SQL database
-                to_execute = ( "UPDATE ap_slice SET wnet_id='%s' WHERE "
-                               "ap_slice_id='%s'" % (wnetID, slice_id) )
+                to_execute = ( "SELECT ap_slice_id FROM ap_slice WHERE "
+                               "wnet_id = '%s'" % wnetID )
                 cur.execute(to_execute)
-                
-                return "Added '%s' to '%s'." % (slice_id, name)
+                ap_slice_id_tt = cur.fetchall()
+                ap_slice_id = []
+                for id_t in ap_slice_id_tt:
+                    ap_slice_id.append(id_t[0])
+                if slice_id in ap_slice_id:
+                    return "Slice '%s' already in '%s'.\n" % (slice_id, name)
+                else:
+                    #Update to SQL database
+                    to_execute = ( "UPDATE ap_slice SET wnet_id='%s' WHERE "
+                                   "ap_slice_id='%s'" % (wnetID, slice_id) )
+                    cur.execute(to_execute)
+                    return "Added '%s' to '%s'.\n" % (slice_id, name)
         
         except mdb.Error, e:
             err_msg = "Error %d: %s" % (e.args[0], e.args[1])
@@ -144,7 +158,7 @@ class AuroraDB():
                                "ap_slice_id='%s' AND "
                                "wnet_id='%s'" % (slice_id, wnetID) )
                 cur.execute(to_execute)
-
+                #TODO: Add messaging
         except mdb.Error, e:
             err_msg = "Error %d: %s" % (e.args[0], e.args[1])
             print err_msg
@@ -155,11 +169,19 @@ class AuroraDB():
         #Update the SQL database
         try:
             with self.con:
-                cur = self.con.cursor() #TODO: Test this
-                to_execute = ( "INSERT INTO wnet VALUES (%s, %s, %s, %s)",
-                               (wnet_id, name, tenant_id, project_id) )
+                cur = self.con.cursor()
+                to_execute = ( "SELECT wnet_id FROM wnet WHERE "
+                               "name = '%s' AND tenant_id = '%s'" % (name, tenant_id) )
                 cur.execute(to_execute)
-        
+                wnet_id_tt = cur.fetchall()
+                if len(wnet_id_tt) > 0:
+                    return "You already own '%s'.\n" % name
+                else:
+
+                    to_execute = ( "INSERT INTO wnet VALUES ('%s', '%s', %s, %s)" %
+                                   (wnet_id, name, tenant_id, project_id) )
+                    cur.execute(to_execute)
+                    return "Created '%s'.\n" % name
         except mdb.Error, e:
             err_msg = "Error %d: %s" % (e.args[0], e.args[1])
             print err_msg
@@ -189,7 +211,7 @@ class AuroraDB():
                                 project_id, "NULL", "PENDING") )
                 print to_execute
                 cur.execute(to_execute)
-                return "Added slice %s on %s." % (slice_uuid, physAP)
+                return "Added slice %s on %s.\n" % (slice_uuid, physAP)
         except mdb.Error, e:
             err_msg = "Error %d: %s" % (e.args[0], e.args[1])
             print err_msg
@@ -207,7 +229,7 @@ class AuroraDB():
                 to_execute = ( "DELETE FROM tenant_tags WHERE "
                                "ap_slice_id='%s'" % slice_id )
                 db.execute(to_execute)
-                return "Deleted slice %s." % slice_id
+                return "Deleted slice %s.\n" % slice_id
         except mdb.Error, e:
             err_msg = "Error %d: %s" % (e.args[0], e.args[1])
             print err_msg
@@ -220,7 +242,7 @@ class AuroraDB():
             try:
                 with self.con:
                     cur = self.con.cursor()
-                    to_execute = "INSERT INTO tenant_tags VALUES (%s, %s)" % (tag, ap_slice_id)      
+                    to_execute = "INSERT INTO tenant_tags VALUES ('%s', %s)" % (tag, ap_slice_id)      
                     cur.execute(to_execute)
                     return "Added tag '%s' to ap_slice '%s'.\n" % (tag, ap_slice_id)
             except mdb.Error, e:

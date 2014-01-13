@@ -245,7 +245,7 @@ class Manager():
                                  self.mysql_username, 
                                  self.mysql_password, 
                                  self.mysql_db) as db:
-                    db.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'%s\'" % ap_slice_id )
+                    db.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id='%s'" % ap_slice_id )
                     ap_name = db.fetchone()[0]
             except mdb.Error, e:
                 print "Error %d: %s" % (e.args[0], e.args[1])
@@ -287,7 +287,7 @@ class Manager():
                 for tag in tags:
                     message += self.auroraDB.wslice_add_tag(slice_id, tag)
             else:
-                err_msg = "Error: No slice '%s' belongs to you." % slice_id
+                err_msg = "Error: You have no slice '%s'." % slice_id
                 message += err_msg + '\n'
 
         #return response
@@ -307,7 +307,7 @@ class Manager():
         if args['filter']:
             slice_names = []
             args_filter = args['filter'][0]
-            slice_list = self.ap_slice_filter(args_filter)
+            slice_list = self.ap_slice_filter(args_filter) #TODO: Check this still works with filter
             #Get list of slice_ids
             for entry in slice_list:
                 slice_names.append(entry['ap_slice_id'])
@@ -320,7 +320,7 @@ class Manager():
                 for tag in tags:
                     message += self.auroraDB.wslice_remove_tag(slice_id, tag)
             else:
-                err_msg = "Error: No slice '%s' belongs to you." % slice_id
+                err_msg = "Error: You have no slice '%s'." % slice_id
                 message += err_msg + '\n'
 
         #Return response
@@ -415,7 +415,7 @@ class Manager():
         response = {"status":True, "message":message}
         return response
     
-    def ap_slice_filter(self, arg_filter):
+    def ap_slice_filter(self, arg_filter, tenant_id):
         try:
             self.con = mdb.connect(self.mysql_host, 
                                    self.mysql_username, 
@@ -429,9 +429,13 @@ class Manager():
             try:
                 with self.con:
                     cur = self.con.cursor()
-                    cur.execute("SELECT * FROM ap_slice")
+                    if tenant_id == 0:
+                        cur.execute("SELECT * FROM ap_slice")
+                    else:
+                        cur.execute( "SELECT * FROM ap_slice WHERE "
+                                     "tenant_id = '%s'" % tenant_id )
                     tempList =  cur.fetchall()
-                    pprint(tempList)
+                    #pprint(tempList)
                     #Prune thorugh list
                     for i in range(len(tempList)):
                         newList.append({})
@@ -442,8 +446,8 @@ class Manager():
                         newList[i]['wnet_id'] = tempList[i][4]
                         newList[i]['status'] = tempList[i][5]
                         #Get a list of tags
-                        cur.execute("SELECT name FROM tenant_tags WHERE ap_slice_id=\'"+\
-                                    str(tempList[i][0])+"\'")
+                        cur.execute( "SELECT name FROM tenant_tags WHERE "
+                                     "ap_slice_id = '%s'" % tempList[i][0] )
                         tagList = cur.fetchall()
                         tagString = ""
                         for tag in tagList:
@@ -456,6 +460,7 @@ class Manager():
             tag_compare = False #For tags, we need 2 queries and a quick result compare at the end
             tag_result = []
             args_list = arg_filter.split('&')
+            print "args_list:", args_list
             for (index, entry) in enumerate(args_list):
                 args_list[index] = entry.strip()
                 #Filter for tags (NOT Query is not yet implemented (future work?),
@@ -466,14 +471,20 @@ class Manager():
                         with self.con:
                             cur = self.con.cursor()
                             if '=' in args_list[index]:
-                                cur.execute("SELECT ap_slice_id FROM tenant_tags WHERE name=\'" + \
-                                            args_list[index].split('=')[1]+"\'")
+                                cur.execute( "SELECT ap_slice_id FROM tenant_tags WHERE "
+                                             "name = '%s'" % args_list[index].split('=')[1] )
+                                tempresult = cur.fetchall()
+                                for result in tempresult:
+                                    tag_result.append(result[0])
+                                cur.execute( "SELECT ap_name FROM location_tags WHERE "
+                                             "name = '%s'" % args_list[index].split('=')[1] )
+                                tempresult = cur.fetchall()
+                                #TODO: Finish this search by location tags
+                                
                             else:
-                                print("Unexpected character in tag query. Please check syntax and try again!")
-                                sys.exit(0)
-                            tempresult = cur.fetchall()
-                            for result in tempresult:
-                                tag_result.append(result[0])
+                                raise Exception("Unexpected character in tag query. "
+                                                "Please check syntax and try again!")
+                            
                                 
                     except mdb.Error, e:
                         print "Error %d: %s" % (e.args[0], e.args[1])
@@ -484,7 +495,8 @@ class Manager():
                 elif '!' in args_list[index]:
                     args_list[index] = args_list[index].split('!')[0]+'<>\'' + \
                                        args_list[index].split('!')[1]+'\''
-                
+                else:
+                    raise Exception("Error: Incorrect filter syntax.\n")
             #Combine to 1 string
             expression = args_list[0]
             if 'tag' in expression:
@@ -501,9 +513,11 @@ class Manager():
                 with self.con:
                     cur = self.con.cursor()
                     if len(expression) != 0:
-                        cur.execute("SELECT * FROM ap_slice WHERE "+expression)
+                        cur.execute( ("SELECT * FROM ap_slice WHERE "
+                                     "tenant_id = '%s' AND " % tenant_id) + expression )
                     else:
-                        cur.execute("SELECT * FROM ap_slice")
+                        cur.execute( "SELECT * FROM ap_slice WHERE "
+                                     "tenant_id = '%s'" % tenant_id )
                     tempList = list(cur.fetchall())
                     #Compare result with tag_list if necessary
                     if tag_compare:
@@ -537,25 +551,35 @@ class Manager():
         
     
     def ap_slice_list(self, args, tenant_id, user_id, project_id):
+        message = ""
         print "args: ", args
         if args['filter']:
-            arg_filter = args['filter'] #MK
-      #      arg_filter = args['filter'][0]
+            print args['filter']
+            arg_filter = args['filter'][0]
         else:
-            arg_filter = []
+            arg_filter = ""
         arg_i = args['i']
         
         
         print "arg_filter: ", arg_filter
         
-        newList = self.ap_slice_filter(arg_filter)
+        try:
+            newList = self.ap_slice_filter(arg_filter, tenant_id)
+        except Exception as e:
+            message += e.message
+            print e
+            response = {"status":False, "message":message}
+            return response
 
-        message = ""
+        newList.sort(key=lambda dict_item: int(dict_item['ap_slice_id']))
+        pprint (newList)
         if arg_i == False:
+
             for entry in newList:
-                message += 'ap_slice_id: '+entry['ap_slice_id']+'\n\n'
+                message += "ap_slice_id: '%s'\n" % entry['ap_slice_id']
         else:
             for entry in newList:
+                print "entry: ", entry
                 for attr in entry:
                     message += str(attr)+': '+str(entry[attr])+'\n'
                 message += '\n'
@@ -570,7 +594,7 @@ class Manager():
             return self.ap_slice_list({'filter':'ap_slice_id='+str(arg_id), 'i':True},\
                                       tenant_id, user_id, project_id)
         else:
-            message = "Error: No wnet '%s' belongs to you." % arg_name
+            message = "Error: You have no wnet '%s'." % arg_name
             response = {"status":True, "message": message}
             return response
 
@@ -589,13 +613,14 @@ class Manager():
            #self.auroraDB.wslice_belongs_to(tenant_id, project_id, arg_slice):
             message += self.auroraDB.wnet_add_wslice(tenant_id, arg_slice, arg_name)
         else:
-            message += "Error: No wnet '%s' belongs to you." % arg_name 
+            message += "Error: You have no wnet '%s'." % arg_name 
         
         #Return Response
         response = {"status":True, "message":message}
         return response
 
     def wnet_create(self, args, tenant_id, user_id, project_id):
+        message = ""
         #Functionality is limited, placeholder for future expansions
         arg_name = args['wnet-create'][0]
         
@@ -603,10 +628,10 @@ class Manager():
         arg_uuid = str(uuid.uuid4())
         
         #Send to database
-        self.auroraDB.wnet_add(arg_uuid, arg_name, tenant_id, project_id)
+        message += self.auroraDB.wnet_add(arg_uuid, arg_name, tenant_id, project_id)
         
         #Send Response
-        response = {"status":True, "message":""}
+        response = {"status":True, "message":message}
         return response
     
     def wnet_delete(self, args, tenant_id, user_id, project_id): 
@@ -645,7 +670,7 @@ class Manager():
                         newList[i]['tenant_id'] = tempList[i][2]
                         newList[i]['project_id'] = tempList[i][3]
                 else:
-                    db.execute("SELECT * FROM wnet WHERE tenant_id=\'"+str(tenant_id)+"\'")
+                    db.execute("SELECT * FROM wnet WHERE tenant_id='%s'" % tenant_id)
                     tempList =  db.fetchall()
                     #Prune thorugh list
                     newList = []
@@ -669,7 +694,7 @@ class Manager():
         
         #Send to database
         self.auroraDB.wnet_remove_wslice(tenant_id, arg_slice, arg_name)
-        message = 'Slice with ap_slice_id ' + arg_slice + ' removed from wnet ' + arg_name
+        message = "Slice '%s' removed from '%s'.\n" & (ap_slice_id, arg_name)
         
         #Send Response
         response = {"status":True, "message":message}
@@ -680,7 +705,7 @@ class Manager():
         message = ""
         for entry in toPrint:
             for attr in entry:
-                message += str(attr)+': '+str(entry[attr])+'\n'
+                message += "%s: %s\n" % (attr, entry[attr])
             message += '\n'
         
         #Return response
@@ -694,7 +719,7 @@ class Manager():
         for entry in toPrint:
             if entry['name'] == arg_name:
                 for attr in entry:
-                    message += str(attr)+': '+str(entry[attr])+'\n'
+                    message += "%s: %s\n" % (attr, entry[attr])
                 message += '\n'
         
         #Return response
