@@ -280,21 +280,24 @@ class Manager():
         for slice_id in slice_names:
             if self.auroraDB.wslice_belongs_to(tenant_id, project_id, slice_id):
                 for tag in tags:
-                    message += self.auroraDB.slice_add_tag(slice_id, tag)
+                    message += self.auroraDB.wslice_add_tag(slice_id, tag)
             else:
-                error_msg = "Error: No slice <" + slice_id + "> belongs to you."
-                message += error_msg + '\n'
+                err_msg = "Error: No slice <" + slice_id + "> belongs to you."
+                message += err_msg + '\n'
 
         #return response
         response = {"status":True, "message":message}
         return response     
         
     def ap_slice_remove_tag(self, args, tenant_id, user_id, project_id):
+        message = ""
         if not args['tag']:
-            print('Error: Please specify a tag with --tag')
-            sys.exit(1)
+            err_msg = 'Error: Please specify a tag with --tag'
+            print err_msg
+            response = {"status":False, "message": err_msg}
+            return response
         else:
-            tag = args['tag'][0]
+            tags = args['tag']
         #Get list of slice_ids
         if args['filter']:
             slice_names = []
@@ -308,19 +311,16 @@ class Manager():
         
         #Remove tags
         #TODO: move to aurora_db
-        for entry in slice_names:
-            try:
-                with mdb.connect(self.mysql_host, 
-                                 self.mysql_username, 
-                                 self.mysql_password, 
-                                 self.mysql_db) as db:
-                    db.execute("DELETE FROM tenant_tags WHERE name=\'" + \
-                               str(tag)+"\' AND ap_slice_id=\'"+str(entry)+"\'")
-            except mdb.Error, e:
-                print "Error %d: %s" % (e.args[0], e.args[1])
-                
+        for slice_id in slice_names:
+            if self.auroraDB.wslice_belongs_to(tenant_id, project_id, slice_id):
+                for tag in tags:
+                    message += self.auroraDB.wslice_remove_tag(slice_id, tag)
+            else:
+                err_msg = "Error: No slice <%s> belongs to you." % (slice_id)
+                message += err_msg + '\n'
+
         #Return response
-        response = {"status":True, "message":""}
+        response = {"status":True, "message":message}
         return response
     
     def ap_slice_create(self, args, tenant_id, user_id, project_id):

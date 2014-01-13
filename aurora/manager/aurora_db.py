@@ -176,7 +176,7 @@ class AuroraDB():
         #Update SQL database and JSON file
         pass
         
-    def slice_add_tag(self, ap_slice_id, tag):
+    def wslice_add_tag(self, ap_slice_id, tag):
         if self.wslice_has_tag(ap_slice_id, tag):
             return "Tag <%s> already exists for ap_slice <%s>\n" % (tag, ap_slice_id)
         else:
@@ -185,12 +185,42 @@ class AuroraDB():
                     cur = self.con.cursor()
                     cur.execute("INSERT INTO tenant_tags VALUES (%s, %s)",\
                                 ( tag, ap_slice_id ) )
-                    return "Added tag <" + str(tag) + "> to ap_slice <" + str(ap_slice_id) + ">\n"
+                    return "Added tag <%s> to ap_slice <%s>.\n" % (tag, ap_slice_id)
             except mdb.Error, e:
-                err_msg = "Error %d: %s" % (e.args[0], e.args[1])
+                err_msg = "Error %d: %s\n" % (e.args[0], e.args[1])
                 print err_msg
                 return err_msg + '\n'
+    
+    def wslice_remove_tag(self, ap_slice_id, tag):
+        if self.wslice_has_tag(ap_slice_id, tag):
+            try:
+                with self.con:
+                    cur = self.con.cursor()
+                    cur.execute("DELETE FROM tenant_tags WHERE name=\'%s\' AND ap_slice_id=\'%s\'"
+                                % (tag, ap_slice_id) )
+                    return "Deleted tag <%s> from ap_slice <%s>\n" % (tag, ap_slice_id)
+            except mdb.Error, e:
+                err_msg = "Error %d: %s\n" % (e.args[0], e.args[1])
+                print err_msg
+                return err_msg + '\n'
+        else:
+            return "Tag <%s> not found.\n" % (tag)
+            
          
     def wnet_join(self, tenant_id, name):
         pass #TODO AFTER SAVI INTEGRATION
+      
+      
         
+        
+        
+
+
+
+
+
+
+
+
+
+

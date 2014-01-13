@@ -1,4 +1,4 @@
 {
-    "message": "Error: Please specify a tag with --tag", 
-    "status": false
+    "message": "Tag <newTag> not found.\n", 
+    "status": true
 }

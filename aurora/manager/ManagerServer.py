@@ -21,7 +21,6 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
     def __del__(self):
         print "Destructing MyHandler"
         
-        
     def do_GET(self):
         self.send_response(200)
         self.send_header("Content-type", "application/json")
@@ -32,8 +31,6 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         response = json.load(RESPONSEFILE)
         
         self.wfile.write(response)
-        
-        
     
     def do_POST(self):
         # Clear previous response file (if exists)
