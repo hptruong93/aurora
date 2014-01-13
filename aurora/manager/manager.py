@@ -245,7 +245,7 @@ class Manager():
                                  self.mysql_username, 
                                  self.mysql_password, 
                                  self.mysql_db) as db:
-                    db.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'%s\'" % (ap_slice_id)
+                    db.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'%s\'" % ap_slice_id )
                     ap_name = db.fetchone()[0]
             except mdb.Error, e:
                 print "Error %d: %s" % (e.args[0], e.args[1])
@@ -287,7 +287,7 @@ class Manager():
                 for tag in tags:
                     message += self.auroraDB.wslice_add_tag(slice_id, tag)
             else:
-                err_msg = "Error: No slice <" + slice_id + "> belongs to you."
+                err_msg = "Error: No slice <%s> belongs to you." % slice_id
                 message += err_msg + '\n'
 
         #return response
@@ -320,7 +320,7 @@ class Manager():
                 for tag in tags:
                     message += self.auroraDB.wslice_remove_tag(slice_id, tag)
             else:
-                err_msg = "Error: No slice <%s> belongs to you." % (slice_id)
+                err_msg = "Error: No slice <%s> belongs to you." % slice_id
                 message += err_msg + '\n'
 
         #Return response
@@ -418,7 +418,7 @@ class Manager():
                            str(arg_name)+"\'")
                 db.execute("DELETE FROM tenant_tags WHERE ap_slice_id=\'"+\
                            str(arg_name)+"\'")
-                message += "Deleted %s." % (arg_name)
+                message += "Deleted %s." % arg_name
         except mdb.Error, e:
             err_msg = "Error %d: %s" % (e.args[0], e.args[1])
             print err_msg

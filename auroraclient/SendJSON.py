@@ -9,7 +9,12 @@ class JSONSender():
     
     def sendJSON(self, url, payload):
         
-        r = requests.post(url, data=json.dumps(payload))
+        try:
+            r = requests.post(url, data=json.dumps(payload))
+        except BaseException as e:
+            print "%s\n" % e
+            return
+
         if r.status_code == 200:
             print "Command sent."
         else:
