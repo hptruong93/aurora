@@ -152,13 +152,15 @@ class Manager():
             try:
                 with self.con:
                     cur = self.con.cursor()
+                    tempList = []
                     if len(expression) != 0:
                         cur.execute("SELECT * FROM ap WHERE "+expression)
                     else:
                         cur.execute("SELECT * FROM ap")
+                    tempList = list(cur.fetchall())
             except mdb.Error, e:
                 print "Error %d: %s" % (e.args[0], e.args[1])
-            tempList =  list(cur.fetchall())
+
             #Compare result with tag_list if necessary
             if tag_compare:
                 comparedList = []
@@ -198,10 +200,11 @@ class Manager():
         toPrint = self.ap_filter(arg_filter)
         message = ""
         for entry in toPrint:
-            message += '\nName: '+str(entry[0])+'\n'
+            message += 'Name: %s\n' % (entry[0])
             if arg_i == True: #Print extra data
                 for attr in entry[1]:
-                    message += str(attr)+': '+str(entry[1][attr])+'\n'
+                    message += "%s: %s\n" % (attr, entry[1][attr])
+                message += '\n'
         #return response
         response = {"status":True, "message":message}
         return response
@@ -211,9 +214,10 @@ class Manager():
         toPrint = self.ap_filter('name='+arg_name)
         message = ""
         for entry in toPrint:
-            message += '\nName: '+str(entry[0])+'\n'
+            message += 'Name: %s\n' % (entry[0])
             for attr in entry[1]:
-                message += str(attr)+': '+str(entry[1][attr])+'\n'
+                message += "%s: %s\n" % (attr, entry[1][attr])
+            message += '\n'
         #return response
         response = {"status":True, "message":message}
         return response
@@ -234,22 +238,23 @@ class Manager():
             for entry in slice_list:
                 slice_names.append(slice_list['ap-slice-id'])
         
-        for entry in slice_names:
+        for ap_slice_id in slice_names:
             #Get ap name
             try:
                 with mdb.connect(self.mysql_host, 
                                  self.mysql_username, 
                                  self.mysql_password, 
                                  self.mysql_db) as db:
-                    db.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(entry)+"\'")
+                    db.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'%s\'" % (ap_slice_id)
                     ap_name = db.fetchone()[0]
             except mdb.Error, e:
                 print "Error %d: %s" % (e.args[0], e.args[1])
             
-            print("Deleting Slice " + str(entry) + "...")
-            self.ap_slice_delete({"ap-slice-delete":str(entry)})
+            #Note: This will remove all associated tenant_tags
+            print("Deleting Slice " + str(ap_slice_id) + "...")
+            self.ap_slice_delete({"ap-slice-delete":str(ap_slice_id)})
             
-            print("Recreating Slice " + str(entry) + "...")
+            print("Recreating Slice " + str(ap_slice_id) + "...")
             self.ap_slice_create({"ap":str(ap_name)})
             
             #return response
@@ -259,7 +264,7 @@ class Manager():
     def ap_slice_add_tag(self, args, tenant_id, user_id, project_id):
         message = ""
         if not args['tag']:
-            err_msg = 'Error: Please specify a tag with --tag'
+            err_msg = 'Error: Please specify a tag with --tag\n'
             print err_msg
             response = {"status":False, "message": err_msg}
             return response
@@ -292,7 +297,7 @@ class Manager():
     def ap_slice_remove_tag(self, args, tenant_id, user_id, project_id):
         message = ""
         if not args['tag']:
-            err_msg = 'Error: Please specify a tag with --tag'
+            err_msg = 'Error: Please specify a tag with --tag\n'
             print err_msg
             response = {"status":False, "message": err_msg}
             return response
@@ -310,7 +315,6 @@ class Manager():
             slice_names = args['ap-slice-remove-tag']
         
         #Remove tags
-        #TODO: move to aurora_db
         for slice_id in slice_names:
             if self.auroraDB.wslice_belongs_to(tenant_id, project_id, slice_id):
                 for tag in tags:
@@ -324,7 +328,7 @@ class Manager():
         return response
     
     def ap_slice_create(self, args, tenant_id, user_id, project_id):
-    
+        message = ""
         pprint(args)
     
         if 'ap' in args:
@@ -365,9 +369,7 @@ class Manager():
                                 arg_tag).parseCreateSlice(arg_file, 
                                                           len(aplist), 
                                                           json_list)
-        
-        message = ""
-        
+
         #Print json_list (for debugging)
         for entry in json_list:
             print '\n'
@@ -381,7 +383,7 @@ class Manager():
             slice_uuid = str(uuid.uuid4())
             print slice_uuid
             self.auroraDB.slice_add(slice_uuid, tenant_id, aplist[index], project_id)
-            message += "Slice "+str(index+1)+": "+str(slice_uuid)+'\n'
+            message += "Added slice %s: %s\n" % (index + 1, slice_uuid)
             #Add tags if present
             if args['tag']:
                 self.ap_slice_add_tag({'ap-slice-add-tag':[str(slice_uuid)],
@@ -396,12 +398,12 @@ class Manager():
         return response
     
     def ap_slice_delete(self, args, tenant_id, user_id, project_id):
+        message = ""
         arg_name = args['ap-slice-delete'][0]
         
         config = {"slice":arg_name, "command":"delete_slice", "user":user_id}
         
         #Figure out which AP has the slice/change status to DELETING
-        
         try:
             with mdb.connect(self.mysql_host, 
                              self.mysql_username, 
@@ -416,9 +418,11 @@ class Manager():
                            str(arg_name)+"\'")
                 db.execute("DELETE FROM tenant_tags WHERE ap_slice_id=\'"+\
                            str(arg_name)+"\'")
+                message += "Deleted %s." % (arg_name)
         except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
-            sys.exit(1)
+            err_msg = "Error %d: %s" % (e.args[0], e.args[1])
+            print err_msg
+            message += err_msg + '\n'
         
         #Dispatch
         #Generate unique message id
@@ -426,7 +430,7 @@ class Manager():
         self.dispatch.dispatch(config, ap_name, str(message_id))
         
         #Return response
-        response = {"status":True, "message":"Deleted "+str(arg_name)}
+        response = {"status":True, "message":message}
         return response
     
     def ap_slice_filter(self, arg_filter):
