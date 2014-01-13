@@ -287,7 +287,7 @@ class Manager():
                 for tag in tags:
                     message += self.auroraDB.wslice_add_tag(slice_id, tag)
             else:
-                err_msg = "Error: No slice <%s> belongs to you." % slice_id
+                err_msg = "Error: No slice '%s' belongs to you." % slice_id
                 message += err_msg + '\n'
 
         #return response
@@ -320,7 +320,7 @@ class Manager():
                 for tag in tags:
                     message += self.auroraDB.wslice_remove_tag(slice_id, tag)
             else:
-                err_msg = "Error: No slice <%s> belongs to you." % slice_id
+                err_msg = "Error: No slice '%s' belongs to you." % slice_id
                 message += err_msg + '\n'
 
         #Return response
@@ -382,7 +382,7 @@ class Manager():
             #TODO: is str() correct here?
             slice_uuid = str(uuid.uuid4())
             print slice_uuid
-            self.auroraDB.slice_add(slice_uuid, tenant_id, aplist[index], project_id)
+            self.auroraDB.wslice_add(slice_uuid, tenant_id, aplist[index], project_id)
             message += "Added slice %s: %s\n" % (index + 1, slice_uuid)
             #Add tags if present
             if args['tag']:
@@ -399,30 +399,12 @@ class Manager():
     
     def ap_slice_delete(self, args, tenant_id, user_id, project_id):
         message = ""
-        arg_name = args['ap-slice-delete'][0]
+        ap_slice_id = args['ap-slice-delete'][0]
         
-        config = {"slice":arg_name, "command":"delete_slice", "user":user_id}
+        config = {"slice":ap_slice_id, "command":"delete_slice", "user":user_id}
         
-        #Figure out which AP has the slice/change status to DELETING
-        try:
-            with mdb.connect(self.mysql_host, 
-                             self.mysql_username, 
-                             self.mysql_password, 
-                             self.mysql_db) as db:
-                db.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+\
-                           str(arg_name)+"\'")
-                ap_name = db.fetchone()[0]
-                
-                #Remove tags
-                db.execute("UPDATE ap_slice SET status=\'DELETING\' WHERE ap_slice_id=\'"+\
-                           str(arg_name)+"\'")
-                db.execute("DELETE FROM tenant_tags WHERE ap_slice_id=\'"+\
-                           str(arg_name)+"\'")
-                message += "Deleted %s." % arg_name
-        except mdb.Error, e:
-            err_msg = "Error %d: %s" % (e.args[0], e.args[1])
-            print err_msg
-            message += err_msg + '\n'
+        ap_name = self.auroraDB.wslice_physical_ap(ap_slice_id)
+        message += self.auroraDB.wslice_delete(ap_slice_id)
         
         #Dispatch
         #Generate unique message id
@@ -584,10 +566,17 @@ class Manager():
                 
     def ap_slice_show(self, args, tenant_id, user_id, project_id):
         arg_id = args['ap-slice-show'][0]
-        return self.ap_slice_list({'filter':'ap_slice_id='+str(arg_id), 'i':True},\
-                                  tenant_id, user_id, project_id)
+        if self.auroraDB.wnet_belongs_to(tenant_id, project_id, wnet_id=arg_id):
+            return self.ap_slice_list({'filter':'ap_slice_id='+str(arg_id), 'i':True},\
+                                      tenant_id, user_id, project_id)
+        else:
+            message = "Error: No wnet '%s' belongs to you." % arg_name
+            response = {"status":True, "message": message}
+            return response
+
 
     def wnet_add_wslice(self, args, tenant_id, user_id, project_id):
+        message = ""
         #TODO:Slice filter integration
         arg_name = args['wnet-add-wslice'][0]
         arg_slice = args['slice'][0]
@@ -596,10 +585,14 @@ class Manager():
         print "arg_slice:", arg_slice
         
         #Send to database
-        self.auroraDB.wnet_add_wslice(tenant_id, arg_slice, arg_name)
+        if self.auroraDB.wnet_belongs_to(tenant_id, project_id, arg_name): #and \
+           #self.auroraDB.wslice_belongs_to(tenant_id, project_id, arg_slice):
+            message += self.auroraDB.wnet_add_wslice(tenant_id, arg_slice, arg_name)
+        else:
+            message += "Error: No wnet '%s' belongs to you." % arg_name 
         
         #Return Response
-        response = {"status":True, "message":""}
+        response = {"status":True, "message":message}
         return response
 
     def wnet_create(self, args, tenant_id, user_id, project_id):

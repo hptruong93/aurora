@@ -1,4 +1,4 @@
 {
-    "message": "Error: Please specify a tag with --tag\n", 
-    "status": false
+    "message": "Added '99' to 'wnet3'.", 
+    "status": true
 }
