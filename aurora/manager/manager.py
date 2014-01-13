@@ -16,7 +16,6 @@ from pprint import pprint
 class Manager():
     
     def __init__(self):
-        
         print("Constructing Manager...")
 
         ### Dispatcher variables
@@ -29,16 +28,19 @@ class Manager():
         self.mysql_db = 'aurora'
         
         #Initialize AuroraDB Object
-        self.auroraDB = AuroraDB(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db)
-    ##Commented for testing without AP 
-        self.dispatch = dispatcher.Dispatcher(host, username, password, self.mysql_username, self.mysql_password)
+        self.auroraDB = AuroraDB(self.mysql_host, 
+                                 self.mysql_username, 
+                                 self.mysql_password, 
+                                 self.mysql_db)
+        #Comment for testing without AP 
+        self.dispatch = dispatcher.Dispatcher(host, 
+                                              username, 
+                                              password, 
+                                              self.mysql_username, 
+                                              self.mysql_password)
         provision.run()
         
- #       print "Sleeping for 10"
- #       time.sleep(10)
-        
     def __del__(self):
-    #   self.dispatch.stop()
         print("Destructing Manager...")
         self.dispatch.stop()
         provision.stop()
@@ -53,7 +55,10 @@ class Manager():
     #STILL NEED TO IMPLEMENT TAG SEARCHING (location_tags table), maybe another connection with intersection?
     def ap_filter(self, args):
         try:
-            self.con = mdb.connect(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db) #Change address
+            self.con = mdb.connect(self.mysql_host, 
+                                   self.mysql_username, 
+                                   self.mysql_password, 
+                                   self.mysql_db) 
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)
@@ -119,15 +124,18 @@ class Manager():
                        (args_list[index].split('=')[0] == "firmware")       or \
                        (args_list[index].split('=')[0] == "region")         or \
                        (args_list[index].split('=')[0] == "supported_protocol"):
-                        args_list[index] = args_list[index].split('=')[0]+'=\''+args_list[index].split('=')[1]+'\''
+                        args_list[index] = args_list[index].split('=')[0]+'=\'' + \
+                                           args_list[index].split('=')[1]+'\''
                 elif '!' in args_list[index]:
                     if (args_list[index].split('!')[0] == "name")           or \
                        (args_list[index].split('!')[0] == "firmware")       or \
                        (args_list[index].split('!')[0] == "region")         or \
                        (args_list[index].split('!')[0] == "supported_protocol"):
-                        args_list[index] = args_list[index].split('!')[0]+'<>\''+args_list[index].split('!')[1]+'\''
+                        args_list[index] = args_list[index].split('!')[0]+'<>\'' + \
+                                           args_list[index].split('!')[1]+'\''
                     else:
-                        args_list[index] = args_list[index].split('!')[0]+'<>'+args_list[index].split('!')[1]
+                        args_list[index] = args_list[index].split('!')[0]+'<>' + \
+                                           args_list[index].split('!')[1]
                 
             #Combine to 1 string
             expression = args_list[0]
@@ -229,7 +237,10 @@ class Manager():
         for entry in slice_names:
             #Get ap name
             try:
-                with mdb.connect(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db) as db:
+                with mdb.connect(self.mysql_host, 
+                                 self.mysql_username, 
+                                 self.mysql_password, 
+                                 self.mysql_db) as db:
                     db.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(entry)+"\'")
                     ap_name = db.fetchone()[0]
             except mdb.Error, e:
@@ -302,8 +313,11 @@ class Manager():
         #TODO: move to aurora_db
         for entry in slice_names:
             try:
-                with mdb.connect(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db) as db:
-                    db.execute("DELETE FROM tenant_tags WHERE name=\'"+\
+                with mdb.connect(self.mysql_host, 
+                                 self.mysql_username, 
+                                 self.mysql_password, 
+                                 self.mysql_db) as db:
+                    db.execute("DELETE FROM tenant_tags WHERE name=\'" + \
                                str(tag)+"\' AND ap_slice_id=\'"+str(entry)+"\'")
             except mdb.Error, e:
                 print "Error %d: %s" % (e.args[0], e.args[1])
@@ -330,7 +344,8 @@ class Manager():
             arg_file = None
         if args['tag']:
             arg_tag = args['tag'][0]
-        json_list = [] #If a file is provided for multiple APs, we need to split the file for each AP, saved here
+        json_list = [] #If a file is provided for multiple APs, 
+                       #we need to split the file for each AP, saved here
         
         if arg_ap:
             aplist = arg_ap
@@ -364,7 +379,8 @@ class Manager():
         
         #Dispatch
         for (index,json_entry) in enumerate(json_list):
-            #Generate unique slice_id and add entry to database TODO: is str() correct here?
+            #Generate unique slice_id and add entry to database 
+            #TODO: is str() correct here?
             slice_uuid = str(uuid.uuid4())
             print slice_uuid
             self.auroraDB.slice_add(slice_uuid, tenant_id, aplist[index], project_id)
@@ -390,13 +406,17 @@ class Manager():
         #Figure out which AP has the slice/change status to DELETING
         
         try:
-            with mdb.connect(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db) as db:
+            with mdb.connect(self.mysql_host, 
+                             self.mysql_username, 
+                             self.mysql_password, 
+                             self.mysql_db) as db:
                 db.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+\
                            str(arg_name)+"\'")
                 ap_name = db.fetchone()[0]
+                
+                #Remove tags
                 db.execute("UPDATE ap_slice SET status=\'DELETING\' WHERE ap_slice_id=\'"+\
                            str(arg_name)+"\'")
-                #Remove tags
                 db.execute("DELETE FROM tenant_tags WHERE ap_slice_id=\'"+\
                            str(arg_name)+"\'")
         except mdb.Error, e:
@@ -414,7 +434,10 @@ class Manager():
     
     def ap_slice_filter(self, arg_filter):
         try:
-            self.con = mdb.connect(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db) #Change address
+            self.con = mdb.connect(self.mysql_host, 
+                                   self.mysql_username, 
+                                   self.mysql_password, 
+                                   self.mysql_db) #Change address
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)
@@ -460,7 +483,7 @@ class Manager():
                         with self.con:
                             cur = self.con.cursor()
                             if '=' in args_list[index]:
-                                cur.execute("SELECT ap_slice_id FROM tenant_tags WHERE name=\'"+\
+                                cur.execute("SELECT ap_slice_id FROM tenant_tags WHERE name=\'" + \
                                             args_list[index].split('=')[1]+"\'")
                             else:
                                 print("Unexpected character in tag query. Please check syntax and try again!")
@@ -473,9 +496,11 @@ class Manager():
                         print "Error %d: %s" % (e.args[0], e.args[1])
                 
                 elif '=' in args_list[index]:
-                    args_list[index] = args_list[index].split('=')[0]+'=\''+args_list[index].split('=')[1]+'\''
+                    args_list[index] = args_list[index].split('=')[0]+'=\'' + \
+                                       args_list[index].split('=')[1]+'\''
                 elif '!' in args_list[index]:
-                    args_list[index] = args_list[index].split('!')[0]+'<>\''+args_list[index].split('!')[1]+'\''
+                    args_list[index] = args_list[index].split('!')[0]+'<>\'' + \
+                                       args_list[index].split('!')[1]+'\''
                 
             #Combine to 1 string
             expression = args_list[0]
@@ -514,7 +539,7 @@ class Manager():
                         newList[i]['wnet_id'] = tempList[i][4]
                         newList[i]['status'] = tempList[i][5]
                         #Get a list of tags
-                        cur.execute("SELECT name FROM tenant_tags WHERE ap_slice_id=\'"+\
+                        cur.execute("SELECT name FROM tenant_tags WHERE ap_slice_id=\'" + \
                                     str(tempList[i][0])+"\'")
                         tagList = cur.fetchall()
                         tagString = ""
@@ -561,7 +586,8 @@ class Manager():
         return self.ap_slice_list({'filter':'ap_slice_id='+str(arg_id), 'i':True},\
                                   tenant_id, user_id, project_id)
 
-    def wnet_add_wslice(self, args, tenant_id, user_id, project_id): #TODO:Slice filter integration
+    def wnet_add_wslice(self, args, tenant_id, user_id, project_id):
+        #TODO:Slice filter integration
         arg_name = args['wnet-add-wslice'][0]
         arg_slice = args['slice'][0]
         
@@ -581,6 +607,7 @@ class Manager():
         
         #Generate uuid
         arg_uuid = str(uuid.uuid4())
+        
         #Send to database
         self.auroraDB.wnet_add(arg_uuid, arg_name, tenant_id, project_id)
         
@@ -590,6 +617,7 @@ class Manager():
     
     def wnet_delete(self, args, tenant_id, user_id, project_id): 
         arg_name = args['wnet-delete'][0]
+        
         #Send to database
         self.auroraDB.wnet_remove(arg_name)
         
@@ -597,15 +625,20 @@ class Manager():
         response = {"status":True, "message":""}
         return response
     
-    def wnet_join_subnet(self, args, tenant_id, user_id, project_id): #TODO AFTER SAVI INTEGRATION
+    def wnet_join_subnet(self, args, tenant_id, user_id, project_id):
+        #TODO AFTER SAVI INTEGRATION
         arg_netname = args['wnet-join-subnet'][0]
         arg_wnetname = args['wnet_name'][0]
+        
         #Send to database
         print('NOT YET IMPLEMENTED')
     
     def wnet_fetch(self, tenant_id):  
         try:
-            with mdb.connect(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db) as db:
+            with mdb.connect(self.mysql_host, 
+                             self.mysql_username, 
+                             self.mysql_password, 
+                             self.mysql_db) as db:
                 if tenant_id == 0:
                     db.execute("SELECT * FROM wnet")
                     tempList =  db.fetchall()
@@ -635,12 +668,15 @@ class Manager():
   
         return newList
     
-    def wnet_remove_wslice(self, args, tenant_id, user_id, project_id): #TODO:Slice filter integration
+    def wnet_remove_wslice(self, args, tenant_id, user_id, project_id):
+        #TODO:Slice filter integration
         arg_name = args['wnet-remove-wslice'][0]
         arg_slice = args['slice'][0]
+        
         #Send to database
         self.auroraDB.wnet_remove_wslice(tenant_id, arg_slice, arg_name)
         message = 'Slice with ap_slice_id ' + arg_slice + ' removed from wnet ' + arg_name
+        
         #Send Response
         response = {"status":True, "message":message}
         return response
@@ -656,8 +692,7 @@ class Manager():
         #Return response
         response = {"status":True, "message":message}
         return response
-            
-    
+
     def wnet_show(self, args, tenant_id, user_id, project_id):
         arg_name = args['wnet-show'][0]
         toPrint = self.wnet_fetch(tenant_id)
@@ -689,7 +724,10 @@ class Manager():
         print "wnet_name: " + wnet_name
              
         try:
-           with mdb.connect(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db) as db:
+           with mdb.connect(self.mysql_host, 
+                            self.mysql_username, 
+                            self.mysql_password, 
+                            self.mysql_db) as db:
                 to_execute = "SELECT wnet_id FROM wnet WHERE tenant_id=\'" + str(tenant_id) + \
                              "\' AND name=\'"+str(wnet_name)+"\'"
                 print to_execute
@@ -801,7 +839,10 @@ class Manager():
                     message += 'Modifying slices in \'' + str(wnet_name) + '\':\n'
                     #TODO: Move to aurora_db
                     try:
-                       with mdb.connect(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db) as db:
+                       with mdb.connect(self.mysql_host, 
+                                        self.mysql_username, 
+                                        self.mysql_password, 
+                                        self.mysql_db) as db:
                             for slice_tuple in wslices_dict["ap_slices"]:
                                 # For every slice in wnet
                                 slice_id = slice_tuple[0]
@@ -850,7 +891,10 @@ class Manager():
                     message += 'Modifying slices in \'' + str(wnet_name) + '\':\n'
                     #TODO: Move to aurora_db
                     try:
-                       with mdb.connect(self.mysql_host, self.mysql_username, self.mysql_password, self.mysql_db) as db:
+                       with mdb.connect(self.mysql_host, 
+                                        self.mysql_username, 
+                                        self.mysql_password, 
+                                        self.mysql_db) as db:
                             for slice_tuple in wslices_dict["ap_slices"]:
                                 # For every slice in wnet
                                 slice_id = slice_tuple[0]
