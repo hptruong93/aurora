@@ -31,7 +31,7 @@ class AuroraDB():
         else:
             print('Connection already closed!')
     
-    def wslice_belongs_to(self, ap_slice_id, tenant_id, project_id = 1):
+    def wslice_belongs_to(self, tenant_id, project_id, ap_slice_id):
         try:
             with self.con:
                 cur = self.con.cursor()
@@ -52,7 +52,7 @@ class AuroraDB():
             sys.exit(1)
     
     #TODO: This function is untested
-    def wnet_belongs_to(self, tenant_id, project_id = 1, **kwargs):
+    def wnet_belongs_to(self, tenant_id, project_id, **kwargs):
         if 'wnet_id' in kwargs:
             try:
                 with self.con:
@@ -86,8 +86,25 @@ class AuroraDB():
                 sys.exit(1)
         else:
             print "Error: expected keyword argument, specify wnet_id or name."
-        
-    
+
+    def wslice_has_tag(self, ap_slice_id, tag):
+        try:
+            with self.con:
+                cur = self.con.cursor()
+                cur.execute("SELECT name FROM tenant_tags WHERE ap_slice_id = \'" + \
+                            str(ap_slice_id) + "\'")
+                ap_slice_tags_tt = cur.fetchall()
+                ap_slice_tags = []
+                for tag_t in ap_slice_tags_tt:
+                    ap_slice_tags.append(tag_t[0])
+                if tag in ap_slice_tags:
+                    return True
+                else:
+                    return False
+        except mdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            sys.exit(1)
+
     def wnet_add_wslice(self, tenant_id, slice_id, name):
         try:
             with self.con:
@@ -160,13 +177,19 @@ class AuroraDB():
         pass
         
     def slice_add_tag(self, ap_slice_id, tag):
-        try:
-            with self.con:
-                cur = self.con.cursor()
-                cur.execute("INSERT INTO tenant_tags VALUES (%s, %s)",\
-                            ( str(tag), str(ap_slice_id) ) )
-        except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
+        if self.wslice_has_tag(ap_slice_id, tag):
+            return "Tag <%s> already exists for ap_slice <%s>\n" % (tag, ap_slice_id)
+        else:
+            try:
+                with self.con:
+                    cur = self.con.cursor()
+                    cur.execute("INSERT INTO tenant_tags VALUES (%s, %s)",\
+                                ( tag, ap_slice_id ) )
+                    return "Added tag <" + str(tag) + "> to ap_slice <" + str(ap_slice_id) + ">\n"
+            except mdb.Error, e:
+                err_msg = "Error %d: %s" % (e.args[0], e.args[1])
+                print err_msg
+                return err_msg + '\n'
          
     def wnet_join(self, tenant_id, name):
         pass #TODO AFTER SAVI INTEGRATION

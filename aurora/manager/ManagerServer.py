@@ -11,6 +11,9 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
     # Override __init__ to instantiate Manager, pass along parameters:
     # BaseHTTPServer.BaseHTTPRequestHandler(request, client_address, server)
     def __init__(self, *args):
+        if MyHandler.manager == None:
+            print "Error: No manager to handle request."
+            sys.exit(1)
         print "\nConstructing MyHandler using", MyHandler.manager
         BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, *args)
     
@@ -29,8 +32,18 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         response = json.load(RESPONSEFILE)
         
         self.wfile.write(response)
+        
+        
     
     def do_POST(self):
+        # Clear previous response file (if exists)
+        default_response = {}
+        default_response['status'] = False
+        default_response['message'] = ""
+        RESPONSEFILE = open('json/response.json', 'w')
+        json.dump(default_response, RESPONSEFILE, sort_keys=True, indent=4)
+        RESPONSEFILE.close()
+        
         # Parse the form data posted
         data_string = self.rfile.read(int(self.headers['Content-Length']))
         JSONfile = json.loads(data_string)

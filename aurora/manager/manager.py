@@ -257,9 +257,12 @@ class Manager():
             return response
     
     def ap_slice_add_tag(self, args, tenant_id, user_id, project_id):
+        message = ""
         if not args['tag']:
-            print('Error: Please specify a tag with --tag')
-            sys.exit(1)
+            err_msg = 'Error: Please specify a tag with --tag'
+            print err_msg
+            response = {"status":False, "message": err_msg}
+            return response
         else:
             tags = args['tag']
         #Get list of slice_ids
@@ -275,21 +278,15 @@ class Manager():
         
         #Add tags
         for slice_id in slice_names:
-            if self.auroraDB.wslice_belongs_to(slice_id, tenant_id, project_id):
+            if self.auroraDB.wslice_belongs_to(tenant_id, project_id, slice_id):
                 for tag in tags:
-                    self.auroraDB.slice_add_tag(slice_id, tag)
+                    message += self.auroraDB.slice_add_tag(slice_id, tag)
             else:
-                print "Error: Slice " + slice_id + " does not belong to you."
-               
- #       to_execute = "INSERT INTO tenant_tags VALUES (\'"+\
- #                    str(tag[0])+"\', \'"+str(entry)+"\')"
-        
-        #TODO: Fix below syntax error
- #       to_execute = "REPLACE INTO tenant_tags VALUES (\'%s\', \'%s\')" \
- #                                    % (str(tag), str(entry))
+                error_msg = "Error: No slice <" + slice_id + "> belongs to you."
+                message += error_msg + '\n'
 
         #return response
-        response = {"status":True, "message":""}
+        response = {"status":True, "message":message}
         return response     
         
     def ap_slice_remove_tag(self, args, tenant_id, user_id, project_id):

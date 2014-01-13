@@ -1,4 +1,4 @@
 {
-    "message": "", 
-    "status": true
+    "message": "Error: Please specify a tag with --tag", 
+    "status": false
 }
