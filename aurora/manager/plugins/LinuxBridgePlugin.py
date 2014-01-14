@@ -22,7 +22,8 @@ class LinuxBridgePlugin():
         if self.attributes.keys().sort() == entry['attributes'].keys().sort():
             #Loop through the attributes
             for key in self.attributes:
-                parsedEntry['attributes'][key] = str(entry['attributes'][key])
+                #parsedEntry['attributes'][key] = str(entry['attributes'][key])
+                parsedEntry['attributes'][key] = entry['attributes'][key]
                 
         else:
             print('Error in json file, attributes do not match in linux_bridge Flavor (VirtualBridges)!')

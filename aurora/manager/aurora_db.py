@@ -206,14 +206,14 @@ class AuroraDB():
         try:
             with self.con:
                 cur = self.con.cursor()
-                to_execute = ( "INSERT INTO ap_slice VALUES (%s, %s, '%s', %s, %s, '%s')" %
+                to_execute = ( "INSERT INTO ap_slice VALUES ('%s', %s, '%s', %s, %s, '%s')" %
                                (slice_uuid,  tenant_id, physAP,
                                 project_id, "NULL", "PENDING") )
                 print to_execute
                 cur.execute(to_execute)
                 return "Added slice %s on %s.\n" % (slice_uuid, physAP)
         except mdb.Error, e:
-            err_msg = "Error %d: %s" % (e.args[0], e.args[1])
+            err_msg = "-->> Error %d: %s" % (e.args[0], e.args[1])
             print err_msg
             return err_msg + '\n'
     
@@ -242,7 +242,7 @@ class AuroraDB():
             try:
                 with self.con:
                     cur = self.con.cursor()
-                    to_execute = "INSERT INTO tenant_tags VALUES ('%s', %s)" % (tag, ap_slice_id)      
+                    to_execute = "INSERT INTO tenant_tags VALUES (%s, '%s')" % (tag, ap_slice_id)      
                     cur.execute(to_execute)
                     return "Added tag '%s' to ap_slice '%s'.\n" % (tag, ap_slice_id)
             except mdb.Error, e:

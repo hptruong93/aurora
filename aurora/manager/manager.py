@@ -330,31 +330,35 @@ class Manager():
     def ap_slice_create(self, args, tenant_id, user_id, project_id):
         message = ""
         pprint(args)
-    
+        
+        arg_ap = None
+        arg_filter = None
+        arg_file = None
+        arg_tag = None
         if 'ap' in args:
             arg_ap = args['ap']
-        else:
-            arg_ap = None
         if args['filter']:
             arg_filter = args['filter'][0]
-        else:
-            arg_filter = None
         if 'file' in args:
             arg_file = args['file']
-        else:
-            arg_file = None
         if args['tag']:
             arg_tag = args['tag'][0]
+
         json_list = [] #If a file is provided for multiple APs, 
                        #we need to split the file for each AP, saved here
         
         if arg_ap:
             aplist = arg_ap
-        else: #We need to apply the filter
+        elif arg_filter: #We need to apply the filter
             result = self.ap_filter(arg_filter)
             aplist = []
             for entry in result:
                 aplist.append(entry[0])
+        else:
+            err_msg = "Error: Specify an access point or filter\n"
+            print err_msg
+            response = {"status":False, "message":err_msg}
+            return response
                 
         #Initialize json_list structure (We do NOT yet have a plugin for 
         #VirtualWIFI/RadioInterfaces, just load and send for now)
@@ -371,27 +375,33 @@ class Manager():
                                                           json_list)
 
         #Print json_list (for debugging)
-        for entry in json_list:
+        for i, entry in enumerate(json_list):
             print '\n'
             print json.dumps(entry, indent=4, sort_keys=True)
             print '\n'
+    #        with open("json/wifi__%s.json" % i,"w") as f:
+    #            print "Writing file json/wifi__%s.json\n" % i
+    #            json.dump(entry, f, indent=4)
+    #            f.flush()
+    #            f.close()
+            
         
         #Dispatch
         for (index,json_entry) in enumerate(json_list):
             #Generate unique slice_id and add entry to database 
             #TODO: is str() correct here?
-            slice_uuid = str(uuid.uuid4())
+            slice_uuid = uuid.uuid4()
             print slice_uuid
             self.auroraDB.wslice_add(slice_uuid, tenant_id, aplist[index], project_id)
             message += "Added slice %s: %s\n" % (index + 1, slice_uuid)
             #Add tags if present
             if args['tag']:
-                self.ap_slice_add_tag({'ap-slice-add-tag':[str(slice_uuid)],
+                self.ap_slice_add_tag({'ap-slice-add-tag':[slice_uuid],
                                        'tag': [arg_tag],
                                        'filter':""},
                                        tenant_id, user_id, project_id)
             #Dispatch (use slice_uuid as a message identifier)
-            self.dispatch.dispatch(json_entry, aplist[index], slice_uuid)
+            self.dispatch.dispatch(json_entry, aplist[index], str(slice_uuid))
         #Return response (message returns a list of uuids for created slices)
         
         response = {"status":True, "message":message}
