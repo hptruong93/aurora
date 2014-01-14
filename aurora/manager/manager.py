@@ -391,7 +391,6 @@ class Manager():
             #Generate unique slice_id and add entry to database 
             #TODO: is str() correct here?
             slice_uuid = uuid.uuid4()
-            print type(slice_uuid), slice_uuid
             self.auroraDB.wslice_add(slice_uuid, tenant_id, aplist[index], project_id)
             message += "Added slice %s: %s\n" % (index + 1, slice_uuid)
             #Add tags if present
@@ -524,18 +523,14 @@ class Manager():
                 elif '=' in args_list[index]:
                     args_list[index] = "%s='%s'" % (args_list[index].split('=')[0],
                                                     args_list[index].split('=')[1])
-           #         args_list[index] = args_list[index].split('=')[0]+'=\'' + \
-           #                            args_list[index].split('=')[1]+'\''
                 elif '!' in args_list[index]:
                     args_list[index] = "%s<>'%s'" % (args_list[index].split('!')[0],
                                                      args_list[index].split('!')[1])
-           #         args_list[index] = args_list[index].split('!')[0]+'<>\'' + \
-           #                            args_list[index].split('!')[1]+'\''
                 else:
                     raise Exception("Error: Incorrect filter syntax.\n")
             #Combine to 1 string
             expression = args_list[0]
-            print "expression1:",expression
+            print " [x] expression1:",expression
             if 'tag' in expression:
                 expression = ""
             for (index, entry) in enumerate(args_list):
@@ -544,7 +539,7 @@ class Manager():
                         expression = expression+' AND '+ entry 
                     else:
                         expression = entry
-            print "expression2:",expression
+            print " [x] expression2:",expression
             
             #Execute Query
             try:

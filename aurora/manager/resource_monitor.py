@@ -89,9 +89,7 @@ class resourceMonitor():
                     
                     # Get status
                     cur.execute("SELECT status FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-                    print "1"
                     status = cur.fetchone()[0]
-                    print "2"
                     # Update status
                     if status == 'PENDING':
                         if success:
@@ -113,14 +111,8 @@ class resourceMonitor():
                     to_execute = "SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'"
                     print to_execute
                     cur.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-                    print "3"
-                    physical_ap = cur.fetchone()
-                    if not physical_ap:
-                        print "Database Error: physical_ap could not be queried"
-                        return
-                    physical_ap = physical_ap[0]
-                    print physical_ap
-                    print "4"
+                    physical_ap = cur.fetchone()[0]
+                    
                     #Get all slices associated with this ap
                     cur.execute("SELECT ap_slice_id FROM ap_slice WHERE physical_ap=\'"+str(physical_ap)+"\'")
                     
@@ -131,10 +123,7 @@ class resourceMonitor():
                     for entry in raw_list:
                         slice_list.append(entry[0])
                     
-                    print "slice_list:",slice_list
-                    
                     for entry in slice_list:
-                        
                         #Get status
                         cur.execute("SELECT status FROM ap_slice WHERE ap_slice_id=\'"+str(entry)+"\'")
                         status = cur.fetchone()[0]

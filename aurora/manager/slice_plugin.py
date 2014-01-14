@@ -15,7 +15,6 @@ class SlicePlugin():
         self.tag = None
         if tag:
             self.tag = tag
-            print "Assigning tag:", self.tag
         
     def parseCreateSlice(self, data, numSlice, json_list):
         #Loop through values in plugin
@@ -41,10 +40,7 @@ class SlicePlugin():
             tempdata = {}
             tempdata['config'] = entry
             tempdata['user'] = user_id
-            if tag:
-                tempdata['slice'] = tag[0]
-            else:
-                tempdata['slice'] = tag
+            tempdata['slice'] = tag
             tempdata['command'] = 'create_slice'
             newlist.append(tempdata)     
         return newlist
