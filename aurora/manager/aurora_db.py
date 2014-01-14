@@ -54,7 +54,6 @@ class AuroraDB():
                 sys.exit(1)
         return False
     
-    #TODO: This function is untested
     def wnet_belongs_to(self, tenant_id, project_id, wnet_name):
         if tenant_id == 0:
             return True
@@ -209,7 +208,6 @@ class AuroraDB():
                 to_execute = ( "INSERT INTO ap_slice VALUES ('%s', %s, '%s', %s, %s, '%s')" %
                                (slice_uuid,  tenant_id, physAP,
                                 project_id, "NULL", "PENDING") )
-                print to_execute
                 cur.execute(to_execute)
                 return "Added slice %s on %s.\n" % (slice_uuid, physAP)
         except mdb.Error, e:

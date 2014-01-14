@@ -56,7 +56,7 @@ class Dispatcher():
         properties such as status."""
         # Convert JSON to string 
         message = json.dumps(config)
-            
+
         # Send JSON
         # We attach a reply_to and correlation ID to tell the AP to send a message to the queue we create (randomly generated name) at init
         # with the correlation id specified.  This means that 

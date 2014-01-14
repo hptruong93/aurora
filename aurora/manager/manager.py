@@ -391,7 +391,7 @@ class Manager():
             #Generate unique slice_id and add entry to database 
             #TODO: is str() correct here?
             slice_uuid = uuid.uuid4()
-            print slice_uuid
+            print type(slice_uuid), slice_uuid
             self.auroraDB.wslice_add(slice_uuid, tenant_id, aplist[index], project_id)
             message += "Added slice %s: %s\n" % (index + 1, slice_uuid)
             #Add tags if present
@@ -462,6 +462,11 @@ class Manager():
                         tagString = ""
                         for tag in tagList:
                             tagString += str(tag[0])+" "
+                        cur.execute( "SELECT name FROM location_tags WHERE "
+                                     "ap_name = '%s'" % tempList[i][2] )
+                        tagList = cur.fetchall()
+                        for tag in tagList:
+                            tagString += str(tag[0])+" "
                         newList[i]['tags'] = tagString
             
             except mdb.Error, e:
@@ -488,7 +493,24 @@ class Manager():
                                     tag_result.append(result[0])
                                 cur.execute( "SELECT ap_name FROM location_tags WHERE "
                                              "name = '%s'" % args_list[index].split('=')[1] )
-                                tempresult = cur.fetchall()
+                                ap_locations = cur.fetchall()
+                                for (i, location) in enumerate(ap_locations):
+                                    print "Looking for location info:", location
+                                    if tenant_id == 0:
+                                        cur.execute( "SELECT ap_slice_id FROM ap_slice WHERE "
+                                                     "physical_ap = '%s'" % location[0] )
+                                    else:
+                                        cur.execute( "SELECT ap_slice_id FROM ap_slice WHERE "
+                                                     "tenant_id = '%s' AND "
+                                                     "physical_ap = '%s'" % (tenant_id, location[0]) )
+                                    phys_ap = cur.fetchall()
+                                    print "phys_ap:", phys_ap
+                                    for result in phys_ap:
+                                        if result[0] not in tag_result:
+                                            tag_result.append(result[0])
+                                    
+                                    
+                                
                                 #TODO: Finish this search by location tags
                                 
                             else:
@@ -500,15 +522,20 @@ class Manager():
                         print "Error %d: %s" % (e.args[0], e.args[1])
                 
                 elif '=' in args_list[index]:
-                    args_list[index] = args_list[index].split('=')[0]+'=\'' + \
-                                       args_list[index].split('=')[1]+'\''
+                    args_list[index] = "%s='%s'" % (args_list[index].split('=')[0],
+                                                    args_list[index].split('=')[1])
+           #         args_list[index] = args_list[index].split('=')[0]+'=\'' + \
+           #                            args_list[index].split('=')[1]+'\''
                 elif '!' in args_list[index]:
-                    args_list[index] = args_list[index].split('!')[0]+'<>\'' + \
-                                       args_list[index].split('!')[1]+'\''
+                    args_list[index] = "%s<>'%s'" % (args_list[index].split('!')[0],
+                                                     args_list[index].split('!')[1])
+           #         args_list[index] = args_list[index].split('!')[0]+'<>\'' + \
+           #                            args_list[index].split('!')[1]+'\''
                 else:
                     raise Exception("Error: Incorrect filter syntax.\n")
             #Combine to 1 string
             expression = args_list[0]
+            print "expression1:",expression
             if 'tag' in expression:
                 expression = ""
             for (index, entry) in enumerate(args_list):
@@ -517,6 +544,7 @@ class Manager():
                         expression = expression+' AND '+ entry 
                     else:
                         expression = entry
+            print "expression2:",expression
             
             #Execute Query
             try:

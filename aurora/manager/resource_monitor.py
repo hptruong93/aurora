@@ -4,7 +4,9 @@ import sys
 
 
 class resourceMonitor():
-
+    
+    sql_locked = None
+    
     def __init__(self, dispatcher, host, username, password):
         self.dispatcher = dispatcher
         
@@ -12,6 +14,7 @@ class resourceMonitor():
         print "Connecting to SQLdb in resourceMonitor..."
         try:
             self.con = mdb.connect(host, username, password, 'aurora')
+            resourceMonitor.sql_locked = False
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)
@@ -54,10 +57,13 @@ class resourceMonitor():
         If the ap_up variable is false, the access point
         is considered to be offline and in an unknown state,
         so *all* slices are marked as such (down, failed, etc.)."""
-
+        
         # DEBUG
         print("Updating ap status for ID " + str(unique_id) + ".\nRequest successful: " + str(success) + "\nAccess Point up: " + str(ap_up))
-
+        if resourceMonitor.sql_locked:
+            print "SQL Access is locked, waiting..."
+            while resourceMonitor.sql_locked:
+                pass
         # Code:
         # Identify slice by unique_id
         # if ap_up:
@@ -75,6 +81,7 @@ class resourceMonitor():
         #   else if slice is pending, mark failed
         try:
             with self.con:
+                resourceMonitor.sql_locked = True
                 cur = self.con.cursor()
 
                 # Access point is up - we are receiving individual packets
@@ -82,8 +89,9 @@ class resourceMonitor():
                     
                     # Get status
                     cur.execute("SELECT status FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'")
+                    print "1"
                     status = cur.fetchone()[0]
-                    
+                    print "2"
                     # Update status
                     if status == 'PENDING':
                         if success:
@@ -102,9 +110,17 @@ class resourceMonitor():
                 
                 # Access point down, mark all slices and failed/down
                 else:
+                    to_execute = "SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'"
+                    print to_execute
                     cur.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-                    physical_ap = cur.fetchone()[0]
-                    
+                    print "3"
+                    physical_ap = cur.fetchone()
+                    if not physical_ap:
+                        print "Database Error: physical_ap could not be queried"
+                        return
+                    physical_ap = physical_ap[0]
+                    print physical_ap
+                    print "4"
                     #Get all slices associated with this ap
                     cur.execute("SELECT ap_slice_id FROM ap_slice WHERE physical_ap=\'"+str(physical_ap)+"\'")
                     
@@ -115,25 +131,30 @@ class resourceMonitor():
                     for entry in raw_list:
                         slice_list.append(entry[0])
                     
+                    print "slice_list:",slice_list
+                    
                     for entry in slice_list:
                         
                         #Get status
                         cur.execute("SELECT status FROM ap_slice WHERE ap_slice_id=\'"+str(entry)+"\'")
                         status = cur.fetchone()[0]
-                        
+                        print "Current status:",status
                         # Update status
                         if status == 'ACTIVE':
                             cur.execute("UPDATE ap_slice SET status='DOWN' WHERE ap_slice_id=\'"+str(entry)+"\'")
+                            print "Updated to status: 'DOWN'"
                         elif status == 'DELETING':
                             cur.execute("UPDATE ap_slice SET status='DELETED' WHERE ap_slice_id=\'"+str(entry)+"\'")
+                            print "Updated to status: 'DELETED'"
                         elif status == 'PENDING':
                             cur.execute("UPDATE ap_slice SET status='FAILED' WHERE ap_slice_id=\'"+str(entry)+"\'")
+                            print "Updated to status: 'FAILED'"
                         else:
                             print("Unknown Status, ignoring...")
-            
         except Exception, e:
                 print "Database Error: " + str(e)
-        
+        finally:
+            resourceMonitor.sql_locked = False
 
         
     def reset_AP(self, ap):
