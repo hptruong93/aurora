@@ -322,9 +322,10 @@
                         {
                             "action":"store",
                             "help":"List of slices or tags",
-                            "nargs":"*",
+                            "nargs":"+",
                             "default":null,
                             "choices":null,
+                            "required":"TRUE",
                             "metavar":"slices/tags"
                         }
                     ]
@@ -413,7 +414,14 @@
                     "metavar":""
                 },
                 [
-                    
+                   [
+                        "-i",
+                        {
+                            "action":"store_true",
+                            "help":"Expanded List",
+                            "default":false
+                        }
+                    ] 
                 ]
             ],
             [
@@ -451,7 +459,14 @@
                     "metavar":"wnet_name"
                 },
                 [
-                    
+                    [
+                        "-i",
+                        {
+                            "action":"store_true",
+                            "help":"Expanded List",
+                            "default":false
+                        }
+                    ]
                 ]
             ],
             [

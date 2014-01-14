@@ -1,4 +1,4 @@
 {
-    "message": "status: FAILED\nap_slice_id: 592ff8e4-4875-4d3e-a99a-a719d6d6a9b5\nwnet_id: None\ntenant_id: 1\ntags: \nphysical_ap: openflow\nproject_id: 1\n\n", 
+    "message": " Name: wnet-1\n", 
     "status": true
 }

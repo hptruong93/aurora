@@ -8,6 +8,8 @@ Collection of methods for adding, updating, deleting, and querying the database
 import sys, json, os
 import MySQLdb as mdb
 
+from pprint import pprint
+
 class AuroraDB():
     #Default values in __init__ should potentially be omitted
     def __init__(self, 
@@ -94,27 +96,16 @@ class AuroraDB():
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)
         return False
-            
-    def wslice_physical_ap(self, ap_slice_id):
-        try:
-            with self.con:
-                cur = self.con.cursor()
-                to_execute = ( "SELECT physical_ap FROM ap_slice WHERE "
-                               "ap_slice_id='%s'" % ap_slice_id )
-                db.execute(to_execute)
-                return db.fetchone()[0]
-        except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
-            sys.exit(1)
 
     def wnet_add_wslice(self, tenant_id, slice_id, name):
         try:
             with self.con:
                 #First get wnet-id
                 cur = self.con.cursor()
+                #TODO: Catch tenant 0 call, ambiguous with multiple wnets of same name
                 to_execute = ( "SELECT wnet_id FROM wnet WHERE "
-                               "wnet_id='%s' OR "
-                               "name='%s'" % (name, name) )
+                               "wnet_id='%s' AND tenant_id = '%s' OR "
+                               "name='%s' AND tenant_id = '%s'" % (name, tenant_id, name, tenant_id) )
                 cur.execute(to_execute)
                 wnetID = cur.fetchone()[0]
                 
@@ -188,6 +179,7 @@ class AuroraDB():
 
     def wnet_remove(self, wnet_id):
         #Update the SQL database, at this point we know the wnet exists under the specified tenant
+        #TODO: remove association from ap_slices
         try:
             with self.con:
                 cur = self.con.cursor()
@@ -264,14 +256,100 @@ class AuroraDB():
                 return err_msg + '\n'
         else:
             return "Tag '%s' not found.\n" % (tag)
-            
          
     def wnet_join(self, tenant_id, name):
         pass #TODO AFTER SAVI INTEGRATION
-      
-      
+    
+    def get_wslice_physical_ap(self, ap_slice_id):
+        try:
+            with self.con:
+                cur = self.con.cursor()
+                to_execute = ( "SELECT physical_ap FROM ap_slice WHERE "
+                               "ap_slice_id='%s'" % ap_slice_id )
+                db.execute(to_execute)
+                return db.fetchone()[0]
+        except mdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            sys.exit(1)
+            
+    def get_wnet_list(self, tenant_id, wnet_arg = None):
+        try:
+            with self.con:
+                cur = self.con.cursor()
+                if tenant_id == 0:
+                    to_execute = "SELECT * FROM wnet"
+                elif wnet_arg:
+                    to_execute = ( "SELECT * FROM wnet WHERE "
+                                   "tenant_id = '%s' AND wnet_id = '%s' OR "
+                                   "tenant_id = '%s' AND name = '%s'" % 
+                                   (tenant_id, wnet_arg, tenant_id, wnet_arg) )
+                else:
+                    to_execute = "SELECT * FROM wnet WHERE tenant_id = '%s'" % tenant_id
+                cur.execute(to_execute)
+                wnet_tt = cur.fetchall()
+                if not wnet_tt:
+                    err_msg = "AuroraDB Error: No wnets available"
+                    if wnet_arg:
+                        err_msg += " by handle '%s'" % wnet_arg
+                    err_msg += ".\n"
+                    raise Exception(err_msg)
+                #Prune through list
+                wnet_list = []
+                for (i, wnet_t) in enumerate(wnet_tt):
+                    wnet_list.append({})
+                    wnet_list[i]['wnet_id'] = wnet_t[0]
+                    wnet_list[i]['name'] = wnet_t[1]
+                    wnet_list[i]['tenant_id'] = wnet_t[2]
+                    wnet_list[i]['project_id'] = wnet_t[3]
+        except mdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            sys.exit(1)
+        return wnet_list
         
-        
+    def get_wnet_slices(self, wnet_arg, tenant_id):
+        try:
+            with self.con:
+                cur = self.con.cursor()
+                if tenant_id == 0:
+                    to_execute = ( "SELECT wnet_id FROM wnet WHERE "
+                                   "name = '%s' OR wnet_id = '%s'" %
+                                   (wnet_arg, wnet_arg) )
+                else:
+                    to_execute = ( "SELECT wnet_id FROM wnet WHERE "
+                                   "name = '%s' AND tenant_id = '%s' OR "
+                                   "wnet_id = '%s' AND tenant_id = '%s'" %
+                                   (wnet_arg, tenant_id, wnet_arg, tenant_id) )
+                cur.execute(to_execute)
+                wnet_id_raw = cur.fetchall()
+                if not wnet_id_raw:
+                    raise Exception("AuroraDB Error: No wnet '%s'." % wnet_arg)
+                elif tenant_id == 0 and len(wnet_id_raw) > 1:
+                    err_msg = "Ambiguous input.  Did you mean:"
+                    for wnet_id_t in wnet_id_raw:
+                        err_msg += "\n\t%s: %s" % (wnet_arg, wnet_id_t[0])
+                    raise Exception(err_msg)
+                else:
+                    wnet_id = wnet_id_raw[0][0]
+                
+                #Get slices associated with this wnet
+                cur.execute( "SELECT * FROM ap_slice WHERE "
+                             "wnet_id = '%s'" % wnet_id )
+                slice_info_tt = cur.fetchall()
+                
+                #Prune through list
+                slice_list = []
+                for (i, slice_t) in enumerate(slice_info_tt):
+                    slice_list.append({})
+                    slice_list[i]['ap_slice_id'] = slice_t[0]
+                    slice_list[i]['tenant_id'] = slice_t[1]
+                    slice_list[i]['physical_ap'] = slice_t[2]
+                    slice_list[i]['project_id'] = slice_t[3]
+                    slice_list[i]['wnet_id'] = slice_t[4]
+                    slice_list[i]['status'] = slice_t[5]
+        except mdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            sys.exit(1)
+        return slice_list
         
 
 

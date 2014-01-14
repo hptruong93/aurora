@@ -192,6 +192,7 @@ class Manager():
             return newList
             
     def ap_list(self, args, tenant_id, user_id, project_id):
+        #TODO: Verify filter passes correctly
         if args['filter']:
             arg_filter = args['filter'][0]
         else:
@@ -200,23 +201,27 @@ class Manager():
         toPrint = self.ap_filter(arg_filter)
         message = ""
         for entry in toPrint:
-            message += 'Name: %s\n' % (entry[0])
-            if arg_i == True: #Print extra data
+            if not arg_i: 
+                message += "%5s: %s\n" % ("Name", entry[0])
+            else: #Print extra data 
+                message += "%19s: %s\n" % ("Name", entry[0])
                 for attr in entry[1]:
-                    message += "%s: %s\n" % (attr, entry[1][attr])
+                    message += "%19s: %s\n" % (attr, entry[1][attr])
                 message += '\n'
+            
         #return response
         response = {"status":True, "message":message}
         return response
     
     def ap_show(self, args, tenant_id, user_id, project_id):
+        #TODO: Verify filter passes correctly
         arg_name = args['ap-show'][0]
         toPrint = self.ap_filter('name='+arg_name)
         message = ""
         for entry in toPrint:
-            message += 'Name: %s\n' % (entry[0])
+            message += "%19s: %s\n" % ("Name", entry[0])
             for attr in entry[1]:
-                message += "%s: %s\n" % (attr, entry[1][attr])
+                message += "%19s: %s\n" % (attr, entry[1][attr])
             message += '\n'
         #return response
         response = {"status":True, "message":message}
@@ -388,8 +393,7 @@ class Manager():
         
         #Dispatch
         for (index,json_entry) in enumerate(json_list):
-            #Generate unique slice_id and add entry to database 
-            #TODO: is str() correct here?
+            #Generate unique slice_id and add entry to database
             slice_uuid = uuid.uuid4()
             self.auroraDB.wslice_add(slice_uuid, tenant_id, aplist[index], project_id)
             message += "Added slice %s: %s\n" % (index + 1, slice_uuid)
@@ -412,7 +416,7 @@ class Manager():
         
         config = {"slice":ap_slice_id, "command":"delete_slice", "user":user_id}
         
-        ap_name = self.auroraDB.wslice_physical_ap(ap_slice_id)
+        ap_name = self.auroraDB.get_wslice_physical_ap(ap_slice_id)
         message += self.auroraDB.wslice_delete(ap_slice_id)
         
         #Dispatch
@@ -480,6 +484,8 @@ class Manager():
                 #Filter for tags (NOT Query is not yet implemented (future work?),
                 #support for only 1 tag (USE 'OR' STATEMENT IN FUTURE FOR MULTIPLE))
                 if 'tag' in args_list[index]:
+                    #This now supports filters like --filter tag=mcgill.
+                    #Should it be instead --filter location=mcgill?
                     tag_compare = True
                     try:
                         with self.con:
@@ -507,11 +513,6 @@ class Manager():
                                     for result in phys_ap:
                                         if result[0] not in tag_result:
                                             tag_result.append(result[0])
-                                    
-                                    
-                                
-                                #TODO: Finish this search by location tags
-                                
                             else:
                                 raise Exception("Unexpected character in tag query. "
                                                 "Please check syntax and try again!")
@@ -565,7 +566,7 @@ class Manager():
                         newList[i]['ap_slice_id'] = tempList[i][0]
                         newList[i]['tenant_id'] = tempList[i][1]
                         newList[i]['physical_ap'] = tempList[i][2]
-                        newList[i]['project_id'] = tempList[i][3]
+                        newList[i]['projct_id'] = tempList[i][3]
                         newList[i]['wnet_id'] = tempList[i][4]
                         newList[i]['status'] = tempList[i][5]
                         #Get a list of tags
@@ -606,15 +607,13 @@ class Manager():
 
  #       newList.sort(key=lambda dict_item: int(dict_item['ap_slice_id']))
         pprint (newList)
-        if arg_i == False:
 
-            for entry in newList:
-                message += "ap_slice_id: '%s'\n" % entry['ap_slice_id']
-        else:
-            for entry in newList:
-                print "entry: ", entry
-                for attr in entry:
-                    message += str(attr)+': '+str(entry[attr])+'\n'
+        for entry in newList:
+            message += "%12s: %s\n" % ("ap_slice_id", entry['ap_slice_id'])
+            if arg_i:
+                for key,value in entry.iteritems():
+                    if key != 'ap_slice_id':
+                        message += "%12s: %s\n" % (key, value)
                 message += '\n'
         
         #Return response
@@ -637,14 +636,19 @@ class Manager():
         message = ""
         #TODO:Slice filter integration
         arg_name = args['wnet-add-wslice'][0]
+        if not args['slice']:
+            err_msg = "Error: No slices specified.\n"
+            response = {"status":False, "message":err_msg}
+            return response
+
         arg_slice = args['slice'][0]
         
         print "arg_name:", arg_name
         print "arg_slice:", arg_slice
         
         #Send to database
-        if self.auroraDB.wnet_belongs_to(tenant_id, project_id, arg_name): #and \
-           #self.auroraDB.wslice_belongs_to(tenant_id, project_id, arg_slice):
+        if (self.auroraDB.wnet_belongs_to(tenant_id, project_id, arg_name) and 
+            self.auroraDB.wslice_belongs_to(tenant_id, project_id, arg_slice)):
             message += self.auroraDB.wnet_add_wslice(tenant_id, arg_slice, arg_name)
         else:
             message += "Error: You have no wnet '%s'." % arg_name 
@@ -659,7 +663,7 @@ class Manager():
         arg_name = args['wnet-create'][0]
         
         #Generate uuid
-        arg_uuid = str(uuid.uuid4())
+        arg_uuid = uuid.uuid4()
         
         #Send to database
         message += self.auroraDB.wnet_add(arg_uuid, arg_name, tenant_id, project_id)
@@ -727,27 +731,39 @@ class Manager():
         arg_slice = args['slice'][0]
         
         #Send to database
+        #TODO: Confirm tenant owns wslice and wnet
         self.auroraDB.wnet_remove_wslice(tenant_id, arg_slice, arg_name)
-        message = "Slice '%s' removed from '%s'.\n" & (ap_slice_id, arg_name)
+        message = "Slice '%s' removed from '%s'.\n" % (arg_slice, arg_name)
         
         #Send Response
         response = {"status":True, "message":message}
         return response
     
     def wnet_list(self, args, tenant_id, user_id, project_id):
-        toPrint = self.wnet_fetch(tenant_id)
-        message = ""
-        for entry in toPrint:
-            for attr in entry:
-                message += "%s: %s\n" % (attr, entry[attr])
-            message += '\n'
+        """Lists the wnets available to tenant"""
+        arg_i = args['i']
+        try:
+            wnet_to_print = self.auroraDB.get_wnet_list(tenant_id)
+        except Exception as e:
+            response = {"status":False, "message":e.message}
+            return response
         
-        #Return response
+        message = ""
+        for entry in wnet_to_print:
+            if not arg_i:
+                message += "%5s: %s\n" % ("Name", entry['name'])
+            else: #Print extra data
+                message += "%11s: %s\n" % ("Name", entry['name'])
+                for key,value in entry.iteritems():
+                    if key != 'name':
+                        message += "%11s: %s\n" % (key, value)
+                message += '\n'
+        #return response
         response = {"status":True, "message":message}
         return response
 
     def wnet_show(self, args, tenant_id, user_id, project_id):
-        arg_name = args['wnet-show'][0]
+        """arg_name = args['wnet-show'][0]
         toPrint = self.wnet_fetch(tenant_id)
         message = ""
         for entry in toPrint:
@@ -757,6 +773,35 @@ class Manager():
                 message += '\n'
         
         #Return response
+        response = {"status":True, "message":message}
+        return response"""
+        arg_i = args['i']
+        arg_wnet = args['wnet-show'][0]
+        
+        try:
+            wnet_to_print = self.auroraDB.get_wnet_list(tenant_id, arg_wnet)
+
+            slices_to_print = self.auroraDB.get_wnet_slices(arg_wnet, tenant_id)
+        except Exception as e:
+            response = {"status":False, "message":e.message}
+            return response
+        
+        message = ""
+        for entry in wnet_to_print:
+            message += "%13s: %s\n" % ("Name", entry['name'])
+            for key,value in entry.iteritems():
+                if key != 'name':
+                    message += "%13s: %s\n" % (key, value)
+            message += '\n'
+        message += "Associated slices:\n"
+        for entry in slices_to_print:
+            message += "%13s: %s\n" % ("ap_slice_id", entry['ap_slice_id'])
+            if arg_i:
+                for key,value in entry.iteritems():
+                    if key != 'ap_slice_id':
+                        message += "%13s: %s\n" % (key, value)
+                message += '\n'
+        #Return response    
         response = {"status":True, "message":message}
         return response
 
@@ -770,7 +815,6 @@ class Manager():
                                   a tuple of tuples with ap_slice
                                   info related to specified wnet_name>
                 }
-
         """
         return_dictionary = {}
         #DEBUG
