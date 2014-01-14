@@ -127,19 +127,18 @@ class resourceMonitor():
                         #Get status
                         cur.execute("SELECT status FROM ap_slice WHERE ap_slice_id=\'"+str(entry)+"\'")
                         status = cur.fetchone()[0]
-                        print "Current status:",status
                         # Update status
                         if status == 'ACTIVE':
                             cur.execute("UPDATE ap_slice SET status='DOWN' WHERE ap_slice_id=\'"+str(entry)+"\'")
-                            print "Updated to status: 'DOWN'"
+                            print "%s: %s >>> Updated to status: 'DOWN'" % (entry, status)
                         elif status == 'DELETING':
                             cur.execute("UPDATE ap_slice SET status='DELETED' WHERE ap_slice_id=\'"+str(entry)+"\'")
-                            print "Updated to status: 'DELETED'"
+                            print "%s: %s >>> Updated to status: 'DELETED'" % (entry, status)
                         elif status == 'PENDING':
                             cur.execute("UPDATE ap_slice SET status='FAILED' WHERE ap_slice_id=\'"+str(entry)+"\'")
-                            print "Updated to status: 'FAILED'"
+                            print "%s: %s >>> Updated to status: 'FAILED'" % (entry, status)
                         else:
-                            print("Unknown Status, ignoring...")
+                            print("%s: %s >>> Unknown Status, ignoring..." % (entry, status))
         except Exception, e:
                 print "Database Error: " + str(e)
         finally:

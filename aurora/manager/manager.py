@@ -604,7 +604,7 @@ class Manager():
             response = {"status":False, "message":message}
             return response
 
-        newList.sort(key=lambda dict_item: int(dict_item['ap_slice_id']))
+ #       newList.sort(key=lambda dict_item: int(dict_item['ap_slice_id']))
         pprint (newList)
         if arg_i == False:
 
@@ -623,11 +623,12 @@ class Manager():
                 
     def ap_slice_show(self, args, tenant_id, user_id, project_id):
         arg_id = args['ap-slice-show'][0]
-        if self.auroraDB.wnet_belongs_to(tenant_id, project_id, wnet_id=arg_id):
-            return self.ap_slice_list({'filter':'ap_slice_id='+str(arg_id), 'i':True},\
+        if self.auroraDB.wslice_belongs_to(tenant_id, project_id, arg_id):
+            return self.ap_slice_list({'filter':['ap_slice_id=%s' % arg_id,],
+                                       'i':True},
                                       tenant_id, user_id, project_id)
         else:
-            message = "Error: You have no wnet '%s'." % arg_name
+            message = "Error: You have no slice '%s'." % arg_name
             response = {"status":True, "message": message}
             return response
 

@@ -1,4 +1,4 @@
 {
-    "message": "Added slice 1: 2b4451bb-841d-4393-9928-ac5e99ea3ee5\nAdded slice 2: b0dff615-7815-46a1-a98c-9775b6b2068d\nAdded slice 3: 65f5933a-dcb0-4227-8dfe-e911e9d61195\n", 
+    "message": "status: FAILED\nap_slice_id: 592ff8e4-4875-4d3e-a99a-a719d6d6a9b5\nwnet_id: None\ntenant_id: 1\ntags: \nphysical_ap: openflow\nproject_id: 1\n\n", 
     "status": true
 }
