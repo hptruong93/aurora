@@ -53,7 +53,10 @@ class CapsulatorPlugin():
             if not key in entry['attributes']: #Default
                 parsedEntry['attributes'][key] = str(self.attributes[key]['default'] + TuntagOffset)
             elif not self.attributes[key]['listable']: #Not a list, append to parsedEntry directly
-                parsedEntry['attributes'][key] = str(entry['attributes'][key])
+                if key == 'is_virtual':
+                    parsedEntry['attributes'][key] = (entry['attributes'][key])
+                else:
+                    parsedEntry['attributes'][key] = str(entry['attributes'][key])
             else: #List entry, check for cases
                 #Case 1, single AP
                 if numSlice == 1 and len(entry['attributes'][key]) == 1:
