@@ -137,17 +137,22 @@ class AuroraDB():
             with self.con:
                 #First get wnet-id
                 cur = self.con.cursor()
-                to_execute = ( "SELECT wnet_id FROM wnet WHERE "
-                               "wnet_id='%s' OR "
-                               "name='%s'" % (name, name) )
-                cur.execute(to_execute)
-                wnetID = cur.fetchone()[0]
+                
+                try:
+                    wnet_info = self.get_wnet_name_id(name, tenant_id)
+                except Exception as e:
+                    raise Exception(e.message)
+                    
+                wnet_id = wnet_info['wnet_id']
+                wnet_name = wnet_info['name']
+                
                 
                 #Update to SQL database
                 to_execute = ( "UPDATE ap_slice SET wnet_id=NULL WHERE "
                                "ap_slice_id='%s' AND "
-                               "wnet_id='%s'" % (slice_id, wnetID) )
+                               "wnet_id='%s' AND tenant_id = '%s'" % (slice_id, wnet_id, tenant_id) )
                 cur.execute(to_execute)
+                return "%s: %s removed\n" % (wnet_name, slice_id)
                 #TODO: Add messaging
         except mdb.Error, e:
             err_msg = "Error %d: %s" % (e.args[0], e.args[1])
@@ -177,21 +182,51 @@ class AuroraDB():
             print err_msg
             return err_msg + '\n'
 
-    def wnet_remove(self, wnet_id):
+    def wnet_remove(self, wnet_arg, tenant_id):
         #Update the SQL database, at this point we know the wnet exists under the specified tenant
         #TODO: remove association from ap_slices
         try:
             with self.con:
+                message = ""
                 cur = self.con.cursor()
-                to_execute = ( "DELETE FROM wnet WHERE "
-                               "name='%s' OR "
-                               "wnet_id='%s'" % (wnet_id, wnet_id) )
+                try:
+                    wnet_info = self.get_wnet_name_id(wnet_arg, tenant_id)
+                except Exception as e:
+                    raise Exception(e.message)
+                wnet_id = wnet_info['wnet_id']
+                wnet_name = wnet_info['name']
+                
+                if tenant_id == 0:
+                    to_execute = ( "SELECT ap_slice_id FROM ap_slice WHERE "
+                                   "wnet_id = '%s'" % wnet_id )
+           #         to_execute_slice = ( "UPDATE ap_slice SET wnet_id = NULL WHERE "
+           #                              "wnet_id = '%s'" % wnet_id )
+                    to_execute_wnet = ( "DELETE FROM wnet WHERE wnet_id = '%s'" % wnet_id )
+                else:
+                    to_execute = ( "SELECT ap_slice_id FROM ap_slice WHERE "
+                                   "wnet_id = '%s' AND tenant_id = '%s'" %
+                                   (wnet_id, tenant_id) )
+           #         to_execute_slice = ( "UPDATE ap_slice SET wnet_id = NULL WHERE "
+           #                            "wnet_id = '%s' AND tenant_id = '%s'" %
+           #                            (wnet_id, tenant_id) )
+                    to_execute_wnet = ( "DELETE FROM wnet WHERE wnet_id = '%s'"
+                                        "AND tenant_id = '%s'" % (wnet_id, tenant_id) )
                 cur.execute(to_execute)
-        
+                slice_id_tt = cur.fetchall()
+                if slice_id_tt:
+             #       message += "\nRemoving slices from '%s':" % wnet_arg
+                    for slice_id_t in slice_id_tt:
+                        message += self.wnet_remove_wslice(tenant_id, slice_id_t[0], wnet_id)
+                    message += '\n'
+           #     cur.execute(to_execute_slice)
+                message += "Deleting '%s'.\n" % wnet_arg
+                cur.execute(to_execute_wnet)
+
         except mdb.Error, e:
             err_msg = "Error %d: %s" % (e.args[0], e.args[1])
             print err_msg
             return err_msg + '\n'
+        return message
     
     def wslice_add(self, slice_uuid, tenant_id, physAP, project_id):
         try:
@@ -310,26 +345,7 @@ class AuroraDB():
         try:
             with self.con:
                 cur = self.con.cursor()
-                if tenant_id == 0:
-                    to_execute = ( "SELECT wnet_id FROM wnet WHERE "
-                                   "name = '%s' OR wnet_id = '%s'" %
-                                   (wnet_arg, wnet_arg) )
-                else:
-                    to_execute = ( "SELECT wnet_id FROM wnet WHERE "
-                                   "name = '%s' AND tenant_id = '%s' OR "
-                                   "wnet_id = '%s' AND tenant_id = '%s'" %
-                                   (wnet_arg, tenant_id, wnet_arg, tenant_id) )
-                cur.execute(to_execute)
-                wnet_id_raw = cur.fetchall()
-                if not wnet_id_raw:
-                    raise Exception("AuroraDB Error: No wnet '%s'." % wnet_arg)
-                elif tenant_id == 0 and len(wnet_id_raw) > 1:
-                    err_msg = "Ambiguous input.  Did you mean:"
-                    for wnet_id_t in wnet_id_raw:
-                        err_msg += "\n\t%s: %s" % (wnet_arg, wnet_id_t[0])
-                    raise Exception(err_msg)
-                else:
-                    wnet_id = wnet_id_raw[0][0]
+                wnet_id = self.get_wnet_name_id(wnet_arg, tenant_id)['wnet_id']
                 
                 #Get slices associated with this wnet
                 cur.execute( "SELECT * FROM ap_slice WHERE "
@@ -351,9 +367,36 @@ class AuroraDB():
             sys.exit(1)
         return slice_list
         
+    def get_wnet_name_id(self, wnet_arg, tenant_id):
+        try:
+            with self.con:
+                cur = self.con.cursor()
+                wnet_info = {}
+                if tenant_id == 0:
+                    to_execute = ( "SELECT wnet_id, name FROM wnet WHERE "
+                                   "name='%s' OR wnet_id = '%s'" % (wnet_arg, wnet_arg) )
+                else:    
+                    to_execute = ( "SELECT wnet_id, name FROM wnet WHERE "
+                                   "name='%s' AND tenant_id = '%s' OR "
+                                   "wnet_id='%s' AND tenant_id = '%s'" % 
+                                   (wnet_arg, tenant_id, wnet_arg, tenant_id) )
+                cur.execute(to_execute)
+                wnet_info_tt = cur.fetchall()
+                if not wnet_info_tt:
+                    raise Exception("AuroraDB Error: No wnet '%s'.\n" % wnet_arg)
+                elif tenant_id == 0 and len(wnet_info_tt) > 1:
+                    err_msg = "Ambiguous input.  Did you mean:"
+                    for wnet_info_t in wnet_info_tt:
+                        err_msg += "\n\t%s: %s - %s" % (wnet_arg, wnet_info_t[0], wnet_info-t[1])
+                    raise Exception(err_msg)
+                else:
+                    wnet_info['wnet_id'] = wnet_info_tt[0][0]
+                    wnet_info['name'] = wnet_info_tt[0][1]
 
-
-
+        except mdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            sys.exit(1)
+        return wnet_info
 
 
 
