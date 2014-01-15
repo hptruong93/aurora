@@ -6,7 +6,7 @@ import logging
 import provision_server.ap_provision as provision
 
 class Dispatcher():
-
+    lock = None
     TIMEOUT = 30
     
     def __init__(self, host, username, password, mysql_username, mysql_password):
@@ -29,10 +29,11 @@ class Dispatcher():
         # Note: connect() is called automatically in SelectConnection().__init__()
         #
         # self.connection.connect()
-        
+        Dispatcher.lock = False
         # Start ioloop, this will quit by itself when Dispatcher().stop() is run
         self.listener = threading.Thread(target=self.connection.ioloop.start)
         self.listener.start()
+        
         
     def __del__(self):
         print "Deconstructing Dispatcher..."
@@ -62,6 +63,11 @@ class Dispatcher():
         # with the correlation id specified.  This means that 
         # we can see if our request executed successfully or not
         # See http://www.rabbitmq.com/tutorials/tutorial-six-python.html for more info
+        if Dispatcher.lock
+            print " [x] Dispatcher locked, waiting..."
+            while Dispatcher.lock:
+                pass
+        Dispatcher.lock = True
         self.channel.basic_publish(exchange='', routing_key=ap, body=message, properties=pika.BasicProperties(reply_to = self.callback_queue, correlation_id = unique_id, content_type="application/json"))
         
         print("Message for %s dispatched" % ap)
@@ -74,6 +80,7 @@ class Dispatcher():
         self.requests_sent.append((unique_id, time, ap_slice_id))
         time.start()
         print "Starting timer:",self.requests_sent[-1]
+        Dispatcher.lock = False
 
 
     def process_response(self, channel, method, props, body):
@@ -101,6 +108,10 @@ class Dispatcher():
         print "body:", body
         print "\nrequests_sent:",self.requests_sent
         
+        if Dispatcher.lock:
+            print " [x] Dispatcher locked, waiting..."
+            while Dispatcher.lock:
+                pass
         
         for request in self.requests_sent:
             if request[0] == props.correlation_id:
@@ -144,6 +155,10 @@ class Dispatcher():
     def stop(self):
         # SelectConnection object close method cancels ioloop and cleanly
         # closes associated channels
+        # Stop timers
+        for entry in self.requests_sent:
+            print " [x] Cancelling timer %s" % entry[1]
+            entry[1].cancel()
         self.connection.close()
      
 
