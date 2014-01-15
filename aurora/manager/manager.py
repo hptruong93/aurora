@@ -422,6 +422,7 @@ class Manager():
         #Dispatch
         #Generate unique message id
         message_id = uuid.uuid4()
+        print "message_id:",message_id
         self.dispatch.dispatch(config, ap_name, str(message_id))
         
         #Return response

@@ -89,7 +89,11 @@ class resourceMonitor():
                     
                     # Get status
                     cur.execute("SELECT status FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-                    status = cur.fetchone()[0]
+                    status = cur.fetchone()
+                    if status:
+                        status = status[0]
+                    else:
+                        raise Exception("Database Error: no status for ap_slice_id %s\n" % unique_id)
                     # Update status
                     if status == 'PENDING':
                         if success:
@@ -111,22 +115,34 @@ class resourceMonitor():
                     to_execute = "SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'"
                     print to_execute
                     cur.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-                    physical_ap = cur.fetchone()[0]
-                    
+                    physical_ap = cur.fetchone()
+                    if physical_ap:
+                        physical_ap = physical_ap[0]
+                    else
+                        raise Exception("Database Error: Cannot fetch physical_ap for slice %s\n" % unique_id)
                     #Get all slices associated with this ap
                     cur.execute("SELECT ap_slice_id FROM ap_slice WHERE physical_ap=\'"+str(physical_ap)+"\'")
                     
                     #Prune List of ap_slice_id
                     raw_list = cur.fetchall()
-                    slice_list = []
+                    if raw_list:
+                        slice_list = []
+                        for entry in raw_list:
+                            slice_list.append(entry[0])
+                    else
+                        raise Exception("Database Error: Cannot slices from physical_ap '%s'\n" % physical_ap)
                     
-                    for entry in raw_list:
-                        slice_list.append(entry[0])
+                    slice_list = []
                     
                     for entry in slice_list:
                         #Get status
                         cur.execute("SELECT status FROM ap_slice WHERE ap_slice_id=\'"+str(entry)+"\'")
-                        status = cur.fetchone()[0]
+                        status = cur.fetchone()
+                        if status:
+                            status = status[0]
+                        else:
+                            raise Exception("Database Error: no status for ap_slice_id %s\n" % unique_id)
+                        
                         # Update status
                         if status == 'ACTIVE':
                             cur.execute("UPDATE ap_slice SET status='DOWN' WHERE ap_slice_id=\'"+str(entry)+"\'")
