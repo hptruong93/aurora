@@ -595,6 +595,7 @@ class Manager():
         else:
             arg_filter = ""
         arg_i = args['i']
+        arg_a = args['a']
         
         
       #  print "arg_filter: ", arg_filter
@@ -611,15 +612,25 @@ class Manager():
     #    pprint (newList)
 
         for entry in newList:
-            message += "%12s: %s" % ("ap_slice_id", entry['ap_slice_id'])
-            if not arg_i:
-                message += " - %s\n" % entry['status']
+            if not arg_a:
+                if entry['status'] != 'DELETED': 
+                    message += "%12s: %s" % ("ap_slice_id", entry['ap_slice_id'])
+                    if not arg_i:
+                        message += " - %s\n" % entry['status']
+                        
             else:
-                message += '\n'
-                for key,value in entry.iteritems():
-                    if key != 'ap_slice_id':
-                        message += "%12s: %s\n" % (key, value)
-                message += '\n'
+                message += "%12s: %s" % ("ap_slice_id", entry['ap_slice_id'])
+                
+                if not arg_i:
+                    if arg_a:
+                        message += " - %s\n" % entry['status']
+                    
+                else:
+                    message += '\n'
+                    for key,value in entry.iteritems():
+                        if key != 'ap_slice_id':
+                            message += "%12s: %s\n" % (key, value)
+                    message += '\n'
         
         #Return response
         response = {"status":True, "message":message}
