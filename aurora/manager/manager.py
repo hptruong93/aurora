@@ -611,6 +611,8 @@ class Manager():
  #       newList.sort(key=lambda dict_item: int(dict_item['ap_slice_id']))
     #    pprint (newList)
 
+
+        # Note I broke this, will fix tomorrow.
         for entry in newList:
             if not arg_a:
                 if entry['status'] != 'DELETED': 
