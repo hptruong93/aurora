@@ -68,7 +68,7 @@ class Dispatcher():
         print("Message for %s dispatched" % ap)
         
         # Start a timeout countdown
-        time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=[unique_id])
+        time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=[config['slice']])
         
         self.requests_sent.append((unique_id, time))
         time.start()
@@ -92,6 +92,14 @@ class Dispatcher():
         # Check if we have a record of this ID
         have_request = False
         entry = None
+        
+        print "channel:",channel
+        print "method:", method
+        print "props:", props
+        print "body:", body
+        print "\nrequests_sent:",requests_sent
+        
+        
         for request in self.requests_sent:
             if request[0] == props.correlation_id:
                 have_request = True

@@ -93,7 +93,7 @@ class resourceMonitor():
                     if status:
                         status = status[0]
                     else:
-                        raise Exception("Database Error: no status for ap_slice_id %s\n" % unique_id)
+                        raise Exception("No status for ap_slice_id %s\n" % unique_id)
                     # Update status
                     if status == 'PENDING':
                         if success:
@@ -119,7 +119,7 @@ class resourceMonitor():
                     if physical_ap:
                         physical_ap = physical_ap[0]
                     else:
-                        raise Exception("Database Error: Cannot fetch physical_ap for slice %s\n" % unique_id)
+                        raise Exception("Cannot fetch physical_ap for slice %s\n" % unique_id)
                     #Get all slices associated with this ap
                     cur.execute("SELECT ap_slice_id FROM ap_slice WHERE physical_ap=\'"+str(physical_ap)+"\'")
                     
@@ -130,7 +130,7 @@ class resourceMonitor():
                         for entry in raw_list:
                             slice_list.append(entry[0])
                     else:
-                        raise Exception("Database Error: Cannot slices from physical_ap '%s'\n" % physical_ap)
+                        raise Exception("Cannot slices from physical_ap '%s'\n" % physical_ap)
                     
                     slice_list = []
                     
@@ -141,7 +141,7 @@ class resourceMonitor():
                         if status:
                             status = status[0]
                         else:
-                            raise Exception("Database Error: no status for ap_slice_id %s\n" % unique_id)
+                            raise Exception("No status for ap_slice_id %s\n" % unique_id)
                         
                         # Update status
                         if status == 'ACTIVE':
