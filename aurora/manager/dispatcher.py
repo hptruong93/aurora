@@ -73,7 +73,7 @@ class Dispatcher():
         
         self.requests_sent.append((unique_id, time, ap_slice_id))
         time.start()
-        print "Starting timer:",requests_sent[-1]
+        print "Starting timer:",self.requests_sent[-1]
 
 
     def process_response(self, channel, method, props, body):
