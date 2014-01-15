@@ -55,50 +55,50 @@ class SliceAgent:
         for interfaces in config['VirtualInterfaces']:
             try:
                 self.v_interfaces.create(interfaces["flavor"], interfaces["attributes"])
-            except:
+            except Exception as e:
                 # Abort, delete
                 self.delete_slice(slice)
-                raise exception.SliceCreationFailed("Aborting.\nVirtual Interface creation failed: " + interfaces['attributes']['name'])
+                raise exception.SliceCreationFailed("Aborting.\nVirtual Interface creation failed: " + interfaces['attributes']['name'] + '\n' + e.message)
                 
         # Create all virtual bridges
         for bridges in config['VirtualBridges']:
             bridge_name = bridges['attributes']['name']
             try:
                 self.v_bridges.create_bridge(bridges['flavor'], bridge_name)
-            except:
+            except Exception as e:
                 # Abort, delete
                 self.delete_slice(slice)
-                raise exception.SliceCreationFailed("Aborting.\nBridge creation failed: " + bridge_name)
+                raise exception.SliceCreationFailed("Aborting.\nBridge creation failed: " + bridge_name + '\n' + e.message)
             else:    
                 # Bridge created, now apply the settings
                 # Add ports
                 for port in bridges['attributes']['interfaces']:
                     try:
                         self.v_bridges.add_port_to_bridge(bridge_name, port)
-                    except:
+                    except Exception as e:
                         # Abort, delete.
                         self.delete_slice(slice)
-                        raise exception.SliceCreationFailed("Aborting.\nError adding port " + port + " to bridge " + bridge_name)
+                        raise exception.SliceCreationFailed("Aborting.\nError adding port " + port + " to bridge " + bridge_name + '\n' + e.message)
                 
                 # Bridge settings
                 setting_list = bridges['attributes']['bridge_settings']
                 for setting in setting_list:
                     try:
                         self.v_bridges.modify_bridge(bridge_name, setting, setting_list[setting])
-                    except:
+                    except Exception as e:
                         # Abort, delete. Settings don't matter when deleting
                         self.delete_slice(slice)
-                        raise exception.SliceCreationFailed("Aborting.\nError applying setting " + setting + " to bridge " + bridge_name)
+                        raise exception.SliceCreationFailed("Aborting.\nError applying setting " + setting + " to bridge " + bridge_name + '\n' + e.message)
                     
                 # Port settings
                 for port in bridges['attributes']['port_settings']:
                     for setting in bridges['attributes']['port_settings'][port]:
                         try:
                             self.v_bridges.modify_port(bridge_name, port, setting, bridges['attributes']['port_settings'][port][setting])
-                        except:
+                        except Exception as e:
                             # Abort, delete
                             self.delete_slice(slice)
-                            raise exception.SliceCreationFailed("Aborting.\nError applying setting " + setting + " to port " + port + " on bridge " + bridge_name)
+                            raise exception.SliceCreationFailed("Aborting.\nError applying setting " + setting + " to port " + port + " on bridge " + bridge_name + '\n' + e.message)
                     
         
         self.database.reset_active_slice()        
