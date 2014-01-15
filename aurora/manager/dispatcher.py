@@ -118,7 +118,7 @@ class Dispatcher():
 
             # Set status, stop timer, delete record
             print "entry[2]:",entry[2]
-            if entry[2] != 'admin'
+            if entry[2] != 'admin':
                 self.resourceMonitor.set_status(entry[2], decoded_response['successful'])
             else:
                 #Probably a reset or restart command sent from resource_monitor
