@@ -397,7 +397,7 @@ class Manager():
             slice_uuid = uuid.uuid4()
             json_entry['slice'] = str(slice_uuid)
             self.auroraDB.wslice_add(slice_uuid, tenant_id, aplist[index], project_id)
-            message += "Added slice %s: %s\n" % (index + 1, slice_uuid)
+            message += "Adding slice %s: %s\n" % (index + 1, slice_uuid)
             #Add tags if present
             if args['tag']:
                 self.ap_slice_add_tag({'ap-slice-add-tag':[slice_uuid],

@@ -236,7 +236,7 @@ class AuroraDB():
                                (slice_uuid,  tenant_id, physAP,
                                 project_id, "NULL", "PENDING") )
                 cur.execute(to_execute)
-                return "Added slice %s on %s.\n" % (slice_uuid, physAP)
+                return "Adding slice %s on %s.\n" % (slice_uuid, physAP)
         except mdb.Error, e:
             err_msg = "-->> Error %d: %s" % (e.args[0], e.args[1])
             print err_msg
@@ -254,7 +254,7 @@ class AuroraDB():
                 to_execute = ( "DELETE FROM tenant_tags WHERE "
                                "ap_slice_id='%s'" % slice_id )
                 cur.execute(to_execute)
-                return "Deleted slice %s.\n" % slice_id
+                return "Deleting slice %s.\n" % slice_id
         except mdb.Error, e:
             err_msg = "Error %d: %s" % (e.args[0], e.args[1])
             print err_msg
