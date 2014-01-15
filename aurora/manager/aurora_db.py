@@ -266,8 +266,8 @@ class AuroraDB():
                 cur = self.con.cursor()
                 to_execute = ( "SELECT physical_ap FROM ap_slice WHERE "
                                "ap_slice_id='%s'" % ap_slice_id )
-                db.execute(to_execute)
-                return db.fetchone()[0]
+                cur.execute(to_execute)
+                return cur.fetchone()[0]
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)
