@@ -586,16 +586,16 @@ class Manager():
     
     def ap_slice_list(self, args, tenant_id, user_id, project_id):
         message = ""
-        print "args: ", args
+      #  print "args: ", args
         if args['filter']:
-            print args['filter']
+      #      print args['filter']
             arg_filter = args['filter'][0]
         else:
             arg_filter = ""
         arg_i = args['i']
         
         
-        print "arg_filter: ", arg_filter
+      #  print "arg_filter: ", arg_filter
         
         try:
             newList = self.ap_slice_filter(arg_filter, tenant_id)
@@ -627,7 +627,7 @@ class Manager():
                                        'i':True},
                                       tenant_id, user_id, project_id)
         else:
-            message = "Error: You have no slice '%s'." % arg_name
+            message = "Error: You have no slice '%s'.\n" % arg_name
             response = {"status":True, "message": message}
             return response
 
@@ -640,19 +640,25 @@ class Manager():
             err_msg = "Error: No slices specified.\n"
             response = {"status":False, "message":err_msg}
             return response
+        
+        for arg_slice in args['slice']:
 
-        arg_slice = args['slice'][0]
-        
-        print "arg_name:", arg_name
-        print "arg_slice:", arg_slice
-        
-        #Send to database
-        if (self.auroraDB.wnet_belongs_to(tenant_id, project_id, arg_name) and 
-            self.auroraDB.wslice_belongs_to(tenant_id, project_id, arg_slice)):
-            message += self.auroraDB.wnet_add_wslice(tenant_id, arg_slice, arg_name)
-        else:
-            message += "Error: You have no wnet '%s'." % arg_name 
-        
+            print "arg_name:", arg_name
+            print "arg_slice:", arg_slice
+            
+            my_slice = self.auroraDB.wslice_belongs_to(tenant_id, project_id, arg_slice)
+            my_wnet = self.auroraDB.wnet_belongs_to(tenant_id, project_id, arg_name)
+            
+            #Send to database
+            if my_slice and my_wnet:
+                message += self.auroraDB.wnet_add_wslice(tenant_id, arg_slice, arg_name)
+            else:
+                if not my_slice:
+                    message += "Error: You have no slice '%s'.\n" % arg_slice
+                else:
+                    message += "Error: You have no wnet '%s'.\n" % arg_name 
+                response = {"status":False, "message":message}
+                return response
         #Return Response
         response = {"status":True, "message":message}
         return response
@@ -676,10 +682,13 @@ class Manager():
         arg_name = args['wnet-delete'][0]
         
         #Send to database
-        self.auroraDB.wnet_remove(arg_name)
-        
+        try:
+            message = self.auroraDB.wnet_remove(arg_name, tenant_id)
+        except Exception as e:
+            response = {"status":False, "message":e.message}
+            return response
         #Send Response
-        response = {"status":True, "message":""}
+        response = {"status":True, "message":message}
         return response
     
     def wnet_join_subnet(self, args, tenant_id, user_id, project_id):
@@ -690,50 +699,38 @@ class Manager():
         #Send to database
         print('NOT YET IMPLEMENTED')
     
-    def wnet_fetch(self, tenant_id):  
-        try:
-            with mdb.connect(self.mysql_host, 
-                             self.mysql_username, 
-                             self.mysql_password, 
-                             self.mysql_db) as db:
-                if tenant_id == 0:
-                    db.execute("SELECT * FROM wnet")
-                    tempList =  db.fetchall()
-                    #Prune thorugh list
-                    newList = []
-                    for i in range(len(tempList)):
-                        newList.append({})
-                        newList[i]['wnet_id'] = tempList[i][0]
-                        newList[i]['name'] = tempList[i][1]
-                        newList[i]['tenant_id'] = tempList[i][2]
-                        newList[i]['project_id'] = tempList[i][3]
-                else:
-                    db.execute("SELECT * FROM wnet WHERE tenant_id='%s'" % tenant_id)
-                    tempList =  db.fetchall()
-                    #Prune thorugh list
-                    newList = []
-                    for i in range(len(tempList)):
-                        newList.append({})
-                        newList[i]['wnet_id'] = tempList[i][0]
-                        newList[i]['name'] = tempList[i][1]
-                        newList[i]['tenant_id'] = tempList[i][2]
-                        newList[i]['project_id'] = tempList[i][3]
-                        
-        except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
-            sys.exit(1)
-  
-        return newList
-    
     def wnet_remove_wslice(self, args, tenant_id, user_id, project_id):
         #TODO:Slice filter integration
+        message = ""
         arg_name = args['wnet-remove-wslice'][0]
-        arg_slice = args['slice'][0]
-        
-        #Send to database
-        #TODO: Confirm tenant owns wslice and wnet
-        self.auroraDB.wnet_remove_wslice(tenant_id, arg_slice, arg_name)
-        message = "Slice '%s' removed from '%s'.\n" % (arg_slice, arg_name)
+        if not args['slice']:
+            err_msg = "No slice specified.\n"
+            response = {"status":False, "message":err_msg}
+            return response
+            
+        for arg_slice in args['slice']:
+            try:
+                my_slice = self.auroraDB.wslice_belongs_to(tenant_id, project_id, arg_slice)
+                my_wnet = self.auroraDB.wnet_belongs_to(tenant_id, project_id, arg_name)
+            
+                
+                if my_slice and my_wnet:
+                    message += self.auroraDB.wnet_remove_wslice(tenant_id, arg_slice, arg_name)
+                else:
+                    if not my_slice:
+                        message += "Error: You have no slice '%s'.\n" % arg_slice
+                    else:
+                        message += "Error: You have no wnet '%s'.\n" % arg_name 
+                    response = {"status":False, "message":message}
+                    return response
+                    
+            except Exception as e:
+                response = {"status":False, "message":e.message}
+                return response
+            
+            #Send to database
+          #  message += self.auroraDB.wnet_remove_wslice(tenant_id, arg_slice, arg_name)
+          #  message = "Slice '%s' removed from '%s'.\n" % (arg_slice, arg_name)
         
         #Send Response
         response = {"status":True, "message":message}
@@ -763,18 +760,6 @@ class Manager():
         return response
 
     def wnet_show(self, args, tenant_id, user_id, project_id):
-        """arg_name = args['wnet-show'][0]
-        toPrint = self.wnet_fetch(tenant_id)
-        message = ""
-        for entry in toPrint:
-            if entry['name'] == arg_name:
-                for attr in entry:
-                    message += "%s: %s\n" % (attr, entry[attr])
-                message += '\n'
-        
-        #Return response
-        response = {"status":True, "message":message}
-        return response"""
         arg_i = args['i']
         arg_wnet = args['wnet-show'][0]
         
@@ -783,6 +768,7 @@ class Manager():
 
             slices_to_print = self.auroraDB.get_wnet_slices(arg_wnet, tenant_id)
         except Exception as e:
+            print e
             response = {"status":False, "message":e.message}
             return response
         
@@ -794,6 +780,8 @@ class Manager():
                     message += "%13s: %s\n" % (key, value)
             message += '\n'
         message += "Associated slices:\n"
+        if not slices_to_print:
+            message += " None\n"
         for entry in slices_to_print:
             message += "%13s: %s\n" % ("ap_slice_id", entry['ap_slice_id'])
             if arg_i:
