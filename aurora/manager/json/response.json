@@ -1,4 +1,4 @@
 {
-    "message": " Name: wnet-1\n", 
-    "status": true
+    "message": "Error: You have no wnet 'wnet-4'.\n", 
+    "status": false
 }
