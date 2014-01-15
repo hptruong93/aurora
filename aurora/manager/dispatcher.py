@@ -68,10 +68,12 @@ class Dispatcher():
 
         ap_slice_id = config['slice']
         # Start a timeout countdown
+        print "ap_slice_id >>>",ap_slice_id
         time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=ap_slice_id)
         
         self.requests_sent.append((unique_id, time, ap_slice_id))
         time.start()
+        print "Starting timer:",requests_sent[-1]
 
 
     def process_response(self, channel, method, props, body):
@@ -116,7 +118,13 @@ class Dispatcher():
 
             # Set status, stop timer, delete record
             print "entry[2]:",entry[2]
-            self.resourceMonitor.set_status(entry[2], decoded_response['successful'])
+            if entry[2] != 'admin'
+                self.resourceMonitor.set_status(entry[2], decoded_response['successful'])
+            else:
+                #Probably a reset or restart command sent from resource_monitor
+                #Just stop timer and remove entry
+                pass
+                
             
             entry[1].cancel()
             
@@ -125,6 +133,7 @@ class Dispatcher():
         else:
 
             decoded_response = json.loads(body)
+            print " [x] Sending reset to '%s'" % decoded_response['ap']
             # Reset the access point
             self.resourceMonitor.reset_AP(decoded_response['ap'])
             
