@@ -118,7 +118,7 @@ class resourceMonitor():
                     physical_ap = cur.fetchone()
                     if physical_ap:
                         physical_ap = physical_ap[0]
-                    else
+                    else:
                         raise Exception("Database Error: Cannot fetch physical_ap for slice %s\n" % unique_id)
                     #Get all slices associated with this ap
                     cur.execute("SELECT ap_slice_id FROM ap_slice WHERE physical_ap=\'"+str(physical_ap)+"\'")
@@ -129,7 +129,7 @@ class resourceMonitor():
                         slice_list = []
                         for entry in raw_list:
                             slice_list.append(entry[0])
-                    else
+                    else:
                         raise Exception("Database Error: Cannot slices from physical_ap '%s'\n" % physical_ap)
                     
                     slice_list = []
