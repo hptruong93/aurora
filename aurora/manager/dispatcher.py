@@ -97,7 +97,7 @@ class Dispatcher():
         print "method:", method
         print "props:", props
         print "body:", body
-        print "\nrequests_sent:",requests_sent
+        print "\nrequests_sent:",self.requests_sent
         
         
         for request in self.requests_sent:
