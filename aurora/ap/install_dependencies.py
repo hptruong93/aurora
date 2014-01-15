@@ -6,6 +6,8 @@ def install(library):
         import pip
     except ImportError:
         subprocess.check_call(["easy_install", "pip"])
+        # Upgrade distribute; seems a requirement for pip 1.5 on OpenWRT
+        subprocess.check_call(["easy_install","-U","setuptools"])
     
     try:
         subprocess.check_call(["pip", "install", library])
