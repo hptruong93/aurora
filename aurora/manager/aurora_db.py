@@ -250,10 +250,10 @@ class AuroraDB():
                 cur = self.con.cursor()
                 to_execute = ( "UPDATE ap_slice SET status='DELETING' WHERE "
                                "ap_slice_id='%s'" % slice_id )
-                db.execute(to_execute)
+                cur.execute(to_execute)
                 to_execute = ( "DELETE FROM tenant_tags WHERE "
                                "ap_slice_id='%s'" % slice_id )
-                db.execute(to_execute)
+                cur.execute(to_execute)
                 return "Deleted slice %s.\n" % slice_id
         except mdb.Error, e:
             err_msg = "Error %d: %s" % (e.args[0], e.args[1])
