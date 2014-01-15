@@ -140,7 +140,9 @@ class SliceAgent:
                 
         # Delete database entry; catch errors
         try:
+            print ">>>"
             self.database.delete_slice(slice)
+            print "<<<"
         except:
             pass
         self.database.reset_active_slice()
