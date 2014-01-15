@@ -65,11 +65,12 @@ class Dispatcher():
         self.channel.basic_publish(exchange='', routing_key=ap, body=message, properties=pika.BasicProperties(reply_to = self.callback_queue, correlation_id = unique_id, content_type="application/json"))
         
         print("Message for %s dispatched" % ap)
-        
+
+        ap_slice_id = config['slice']
         # Start a timeout countdown
-        time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=[config['slice']])
+        time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=ap_slice_id])
         
-        self.requests_sent.append((unique_id, time, config['slice']))
+        self.requests_sent.append((unique_id, time, ap_slice_id))
         time.start()
 
 
