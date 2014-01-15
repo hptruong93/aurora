@@ -64,9 +64,10 @@ class Dispatcher():
         # we can see if our request executed successfully or not
         # See http://www.rabbitmq.com/tutorials/tutorial-six-python.html for more info
         if Dispatcher.lock:
-            print " [x] Dispatcher locked, waiting..."
+            print " [x] Dispatch: Dispatcher locked, waiting..."
             while Dispatcher.lock:
                 pass
+        print " [x] Dispatch: Locking..."
         Dispatcher.lock = True
         self.channel.basic_publish(exchange='', routing_key=ap, body=message, properties=pika.BasicProperties(reply_to = self.callback_queue, correlation_id = unique_id, content_type="application/json"))
         
@@ -80,6 +81,8 @@ class Dispatcher():
         self.requests_sent.append((unique_id, time, ap_slice_id))
         time.start()
         print "Starting timer:",self.requests_sent[-1]
+        
+        print " [x] Dispatch: Unlocking..."
         Dispatcher.lock = False
 
 
@@ -102,16 +105,18 @@ class Dispatcher():
         have_request = False
         entry = None
         
+        if Dispatcher.lock:
+            print " [x] Response: Dispatcher locked, waiting..."
+            while Dispatcher.lock:
+                pass
+
         print "channel:",channel
         print "method:", method
         print "props:", props
         print "body:", body
         print "\nrequests_sent:",self.requests_sent
         
-        if Dispatcher.lock:
-            print " [x] Dispatcher locked, waiting..."
-            while Dispatcher.lock:
-                pass
+
         
         for request in self.requests_sent:
             if request[0] == props.correlation_id:
