@@ -68,7 +68,7 @@ class Dispatcher():
 
         ap_slice_id = config['slice']
         # Start a timeout countdown
-        time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=ap_slice_id])
+        time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=ap_slice_id)
         
         self.requests_sent.append((unique_id, time, ap_slice_id))
         time.start()
