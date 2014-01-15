@@ -412,18 +412,17 @@ class Manager():
     
     def ap_slice_delete(self, args, tenant_id, user_id, project_id):
         message = ""
-        ap_slice_id = args['ap-slice-delete'][0]
         
-        config = {"slice":ap_slice_id, "command":"delete_slice", "user":user_id}
-        
-        ap_name = self.auroraDB.get_wslice_physical_ap(ap_slice_id)
-        message += self.auroraDB.wslice_delete(ap_slice_id)
-        
-        #Dispatch
-        #Generate unique message id
-        message_id = uuid.uuid4()
-        print "message_id:",message_id
-        self.dispatch.dispatch(config, ap_name, str(message_id))
+        for ap_slice_id in args['ap-slice-delete']:
+            config = {"slice":ap_slice_id, "command":"delete_slice", "user":user_id}
+            
+            ap_name = self.auroraDB.get_wslice_physical_ap(ap_slice_id)
+            message += self.auroraDB.wslice_delete(ap_slice_id)
+            
+            #Dispatch
+            #Generate unique message id
+            message_id = uuid.uuid4()
+            self.dispatch.dispatch(config, ap_name, str(message_id))
         
         #Return response
         response = {"status":True, "message":message}
