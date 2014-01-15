@@ -62,7 +62,6 @@ class Dispatcher():
         # with the correlation id specified.  This means that 
         # we can see if our request executed successfully or not
         # See http://www.rabbitmq.com/tutorials/tutorial-six-python.html for more info
-            
         self.channel.basic_publish(exchange='', routing_key=ap, body=message, properties=pika.BasicProperties(reply_to = self.callback_queue, correlation_id = unique_id, content_type="application/json"))
         
         print("Message for %s dispatched" % ap)
@@ -70,7 +69,7 @@ class Dispatcher():
         # Start a timeout countdown
         time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=[config['slice']])
         
-        self.requests_sent.append((unique_id, time))
+        self.requests_sent.append((unique_id, time, config['slice']))
         time.start()
 
 
@@ -115,7 +114,8 @@ class Dispatcher():
             print(decoded_response['message'])
 
             # Set status, stop timer, delete record
-            self.resourceMonitor.set_status(props.correlation_id, decoded_response['successful'])
+            print "entry[2]:",entry[2]
+            self.resourceMonitor.set_status(entry[2], decoded_response['successful'])
             
             entry[1].cancel()
             
