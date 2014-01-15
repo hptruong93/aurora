@@ -621,16 +621,16 @@ class Manager():
             else:
                 message += "%12s: %s" % ("ap_slice_id", entry['ap_slice_id'])
                 
-                if not arg_i:
-                    if arg_a:
-                        message += " - %s\n" % entry['status']
-                    
-                else:
-                    message += '\n'
-                    for key,value in entry.iteritems():
-                        if key != 'ap_slice_id':
-                            message += "%12s: %s\n" % (key, value)
-                    message += '\n'
+            if not arg_i:
+                if arg_a:
+                    message += " - %s\n" % entry['status']
+                
+            else:
+                message += '\n'
+                for key,value in entry.iteritems():
+                    if key != 'ap_slice_id':
+                        message += "%12s: %s\n" % (key, value)
+                message += '\n'
         
         #Return response
         response = {"status":True, "message":message}
