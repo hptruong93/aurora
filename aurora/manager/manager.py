@@ -413,7 +413,7 @@ class Manager():
     
     def ap_slice_delete(self, args, tenant_id, user_id, project_id):
         message = ""
-        
+        #TODO: Checking to see if slice is already deleted
         for ap_slice_id in args['ap-slice-delete']:
             config = {"slice":ap_slice_id, "command":"delete_slice", "user":user_id}
             
@@ -423,6 +423,7 @@ class Manager():
             #Dispatch
             #Generate unique message id
             message_id = uuid.uuid4()
+            print "Launching dispatcher, message_id:",message_id
             self.dispatch.dispatch(config, ap_name, str(message_id))
         
         #Return response
