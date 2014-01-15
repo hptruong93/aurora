@@ -63,7 +63,7 @@ class Dispatcher():
         # with the correlation id specified.  This means that 
         # we can see if our request executed successfully or not
         # See http://www.rabbitmq.com/tutorials/tutorial-six-python.html for more info
-        if Dispatcher.lock
+        if Dispatcher.lock:
             print " [x] Dispatcher locked, waiting..."
             while Dispatcher.lock:
                 pass
