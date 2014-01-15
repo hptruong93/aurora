@@ -8,8 +8,8 @@
         "init_hardware_database" : 
         {
             "firmware":"OpenWRT",
-            "firmware_version":"r38462",
-            "aurora_version":"0.1",
+            "firmware_version":"r39154",
+            "aurora_version":"0.2",
             "memory_mb":"256",
             "wifi_radio":
             {
