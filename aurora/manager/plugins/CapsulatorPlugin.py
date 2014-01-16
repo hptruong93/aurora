@@ -47,6 +47,9 @@ class CapsulatorPlugin():
             else:
                 if not attr in entry['attributes']:
                     parsedEntry['attributes'][attr] = self.attributes[attr]['default']
+        
+        print "numSlice:",numSlice
+        print entry['attributes'][key]
                      
         #Loop through the attributes
         for key in self.attributes:

@@ -6,7 +6,7 @@ import logging
 import provision_server.ap_provision as provision
 
 class Dispatcher():
-
+    lock = None
     TIMEOUT = 30
     
     def __init__(self, host, username, password, mysql_username, mysql_password):
@@ -29,10 +29,11 @@ class Dispatcher():
         # Note: connect() is called automatically in SelectConnection().__init__()
         #
         # self.connection.connect()
-        
+        Dispatcher.lock = False
         # Start ioloop, this will quit by itself when Dispatcher().stop() is run
         self.listener = threading.Thread(target=self.connection.ioloop.start)
         self.listener.start()
+        
         
     def __del__(self):
         print "Deconstructing Dispatcher..."
@@ -62,16 +63,27 @@ class Dispatcher():
         # with the correlation id specified.  This means that 
         # we can see if our request executed successfully or not
         # See http://www.rabbitmq.com/tutorials/tutorial-six-python.html for more info
-            
+        if Dispatcher.lock:
+            print " [x] Dispatch: Dispatcher locked, waiting..."
+            while Dispatcher.lock:
+                pass
+        print " [x] Dispatch: Locking..."
+        Dispatcher.lock = True
         self.channel.basic_publish(exchange='', routing_key=ap, body=message, properties=pika.BasicProperties(reply_to = self.callback_queue, correlation_id = unique_id, content_type="application/json"))
         
         print("Message for %s dispatched" % ap)
-        
+
+        ap_slice_id = config['slice']
         # Start a timeout countdown
-        time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=[unique_id])
+        print "ap_slice_id >>>",ap_slice_id
+        time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=ap_slice_id)
         
-        self.requests_sent.append((unique_id, time))
+        self.requests_sent.append((unique_id, time, ap_slice_id))
         time.start()
+        print "Starting timer:",self.requests_sent[-1]
+        
+        print " [x] Dispatch: Unlocking..."
+        Dispatcher.lock = False
 
 
     def process_response(self, channel, method, props, body):
@@ -92,6 +104,20 @@ class Dispatcher():
         # Check if we have a record of this ID
         have_request = False
         entry = None
+        
+        if Dispatcher.lock:
+            print " [x] Response: Dispatcher locked, waiting..."
+            while Dispatcher.lock:
+                pass
+
+        print "channel:",channel
+        print "method:", method
+        print "props:", props
+        print "body:", body
+        print "\nrequests_sent:",self.requests_sent
+        
+
+        
         for request in self.requests_sent:
             if request[0] == props.correlation_id:
                 have_request = True
@@ -107,7 +133,14 @@ class Dispatcher():
             print(decoded_response['message'])
 
             # Set status, stop timer, delete record
-            self.resourceMonitor.set_status(props.correlation_id, decoded_response['successful'])
+            print "entry[2]:",entry[2]
+            if entry[2] != 'admin':
+                self.resourceMonitor.set_status(entry[2], decoded_response['successful'])
+            else:
+                #Probably a reset or restart command sent from resource_monitor
+                #Just stop timer and remove entry
+                pass
+                
             
             entry[1].cancel()
             
@@ -116,6 +149,7 @@ class Dispatcher():
         else:
 
             decoded_response = json.loads(body)
+            print " [x] Sending reset to '%s'" % decoded_response['ap']
             # Reset the access point
             self.resourceMonitor.reset_AP(decoded_response['ap'])
             
@@ -126,6 +160,10 @@ class Dispatcher():
     def stop(self):
         # SelectConnection object close method cancels ioloop and cleanly
         # closes associated channels
+        # Stop timers
+        for entry in self.requests_sent:
+            print " [x] Cancelling timer %s" % entry[1]
+            entry[1].cancel()
         self.connection.close()
      
 

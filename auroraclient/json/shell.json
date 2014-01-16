@@ -289,6 +289,14 @@
                             "help":"Expanded List",
                             "default":false
                         }
+                    ],
+                    [
+                        "-a",
+                        {
+                            "action":"store_true",
+                            "help":"Show all wslices",
+                            "default":false
+                        }
                     ]
                 ]
             ],

@@ -395,8 +395,9 @@ class Manager():
         for (index,json_entry) in enumerate(json_list):
             #Generate unique slice_id and add entry to database
             slice_uuid = uuid.uuid4()
+            json_entry['slice'] = str(slice_uuid)
             self.auroraDB.wslice_add(slice_uuid, tenant_id, aplist[index], project_id)
-            message += "Added slice %s: %s\n" % (index + 1, slice_uuid)
+            message += "Adding slice %s: %s\n" % (index + 1, slice_uuid)
             #Add tags if present
             if args['tag']:
                 self.ap_slice_add_tag({'ap-slice-add-tag':[slice_uuid],
@@ -412,18 +413,19 @@ class Manager():
     
     def ap_slice_delete(self, args, tenant_id, user_id, project_id):
         message = ""
-        ap_slice_id = args['ap-slice-delete'][0]
-        
-        config = {"slice":ap_slice_id, "command":"delete_slice", "user":user_id}
-        
-        ap_name = self.auroraDB.get_wslice_physical_ap(ap_slice_id)
-        message += self.auroraDB.wslice_delete(ap_slice_id)
-        
-        #Dispatch
-        #Generate unique message id
-        message_id = uuid.uuid4()
-        self.dispatch.dispatch(config, ap_name, str(message_id))
-        print "Message dispatched"
+        #TODO: Checking to see if slice is already deleted
+        for ap_slice_id in args['ap-slice-delete']:
+            config = {"slice":ap_slice_id, "command":"delete_slice", "user":user_id}
+            
+            ap_name = self.auroraDB.get_wslice_physical_ap(ap_slice_id)
+            message += self.auroraDB.wslice_delete(ap_slice_id)
+            
+            #Dispatch
+            #Generate unique message id
+            message_id = uuid.uuid4()
+            print "Launching dispatcher, message_id:",message_id
+            self.dispatch.dispatch(config, ap_name, str(message_id))
+
         #Return response
         response = {"status":True, "message":message}
         return response
@@ -593,6 +595,7 @@ class Manager():
         else:
             arg_filter = ""
         arg_i = args['i']
+        arg_a = args['a']
         
         
       #  print "arg_filter: ", arg_filter
@@ -606,11 +609,26 @@ class Manager():
             return response
 
  #       newList.sort(key=lambda dict_item: int(dict_item['ap_slice_id']))
-        pprint (newList)
+    #    pprint (newList)
 
+
+        # Note I broke this, will fix tomorrow.
         for entry in newList:
-            message += "%12s: %s\n" % ("ap_slice_id", entry['ap_slice_id'])
-            if arg_i:
+            if not arg_a:
+                if entry['status'] != 'DELETED': 
+                    message += "%12s: %s" % ("ap_slice_id", entry['ap_slice_id'])
+                    if not arg_i:
+                        message += " - %s\n" % entry['status']
+                        
+            else:
+                message += "%12s: %s" % ("ap_slice_id", entry['ap_slice_id'])
+                
+            if not arg_i:
+                if arg_a:
+                    message += " - %s\n" % entry['status']
+                
+            else:
+                message += '\n'
                 for key,value in entry.iteritems():
                     if key != 'ap_slice_id':
                         message += "%12s: %s\n" % (key, value)
