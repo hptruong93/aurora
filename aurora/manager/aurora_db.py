@@ -79,6 +79,21 @@ class AuroraDB():
                     print "Error %d: %s" % (e.args[0], e.args[1])
                     sys.exit(1)
         return False
+    
+    def wslice_is_deleted(self, ap_slice):
+        try:
+            with self.con:
+                cur = self.con.cursor()
+                to_execute = ( "SELECT status FROM ap_slice WHERE "
+                               "ap_slice_id = '%s'" % (ap_slice) )
+                cur.execute(to_execute)
+                status = cur.fetchone()
+                if status[0] == 'DELETED':
+                    return True
+        except mdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            sys.exit(1)
+        return False
 
     def wslice_has_tag(self, ap_slice_id, tag):
         try:
