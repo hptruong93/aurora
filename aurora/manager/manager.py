@@ -373,11 +373,16 @@ class Manager():
                               'RadioInterfaces':arg_file['VirtualWIFI']})
             
         #Send to plugin for parsing
-        json_list = SlicePlugin(tenant_id,
-                                user_id, 
-                                arg_tag).parseCreateSlice(arg_file, 
-                                                          len(aplist), 
-                                                          json_list)
+        try:
+            json_list = SlicePlugin(tenant_id,
+                                    user_id, 
+                                    arg_tag).parseCreateSlice(arg_file, 
+                                                              len(aplist), 
+                                                              json_list)
+        except Exception as e:
+            print e.message
+            response = {"status":False, "message":e.message}
+            return response
 
         #Print json_list (for debugging)
         for i, entry in enumerate(json_list):
@@ -417,10 +422,24 @@ class Manager():
         for ap_slice_id in args['ap-slice-delete']:
             config = {"slice":ap_slice_id, "command":"delete_slice", "user":user_id}
             
+            my_slice = self.auroraDB.wslice_belongs_to(tenant_id, project_id, ap_slice_id)
+            if not my_slice:
+                message += "No slice '%s'\n" % ap_slice_id
+                if ap_slice_id == args['ap-slice-delete'][-1]:
+                    response = {"status":False, "message":message}
+                    return response
+                else:
+                    continue
             try:
-                ap_name = self.auroraDB.get_wslice_physical_ap(ap_slice_id)
+                arg_filter = "ap_slice_id=%s&status=DELETED" % ap_slice_id
+                slice_list = self.ap_slice_filter(arg_filter, tenant_id)
+                if slice_list:
+                    message += "Slice already deleted: '%s'\n" % ap_slice_id
+                    continue
+                else:
+                    ap_name = self.auroraDB.get_wslice_physical_ap(ap_slice_id)
             except Exception as e:
-                response = {"status":False, "message":e.message}
+                response = {"status":False, "message":message + e.message}
                 return response
             message += self.auroraDB.wslice_delete(ap_slice_id)
             
@@ -610,7 +629,8 @@ class Manager():
             print e
             response = {"status":False, "message":message}
             return response
-
+        if not newList:
+            message += " None\n"
         for entry in newList:
             message += "%12s: %s" % ("ap_slice_id", entry['ap_slice_id'])
             if not arg_i:

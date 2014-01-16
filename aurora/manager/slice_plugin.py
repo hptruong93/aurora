@@ -24,8 +24,10 @@ class SlicePlugin():
                 module_name, class_name = self.plugins[key].rsplit(".",1)
                 newmodule = importlib.import_module(module_name) #If module is already loaded, importlib will not load it again (already implemented in importlib)
                 for i in range(numSlice): #loop through slice configs
-                    json_list[i][key] = getattr(newmodule, class_name)(self.tenant_id).parse(data[key], numSlice, i) #i is the current index
-           
+                    try:
+                        json_list[i][key] = getattr(newmodule, class_name)(self.tenant_id).parse(data[key], numSlice, i) #i is the current index
+                    except Exception as e:
+                        raise Exception(e.message)
             else: #Make default
                 print(key+' not found. File might not parse correctly. Please check configuration and try again!')
                 

@@ -25,6 +25,8 @@ class VirtualInterfaceManager():
                     #Load the module
                     module_name, class_name = self.flavors[entry['flavor']].rsplit(".",1)
                     newmodule = importlib.import_module(module_name) #If module is already loaded, importlib will not load it again (already implemented in importlib)
-                    VInt[index] = getattr(newmodule, class_name)(self.tenant_id).parse(entry, numSlice, currentIndex, index) #Last index represents the VInt entry number
-        
+                    try:
+                        VInt[index] = getattr(newmodule, class_name)(self.tenant_id).parse(entry, numSlice, currentIndex, index) #Last index represents the VInt entry number
+                    except Exception as e:
+                        raise Exception(e.message)
         return VInt

@@ -1,4 +1,4 @@
 {
-    "message": "Error: You have no slice 'aea46f92-7362-4e2d-b877-1f9db3ea6a95'.\n", 
+    "message": "Error in json file, please check that the tunnel_tags match the number of APs!\n", 
     "status": false
 }

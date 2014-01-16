@@ -42,8 +42,10 @@ class CapsulatorPlugin():
         for attr in self.attributes.keys():
             if not self.attributes[attr]['default']:
                 if not attr in entry['attributes']:
-                    print('Error in json file, attributes do not match in capsulator Flavor (VirtualInterfaces)!')
-                    sys.exit(-1) #Maybe implement an exception?
+                    err_msg = 'Error in json file, attributes do not match in capsulator Flavor (VirtualInterfaces)!'
+                    print(err_msg)
+                    raise Exception(err_msg + '\n')
+                  #  sys.exit(-1) #Maybe implement an exception?
             else:
                 if not attr in entry['attributes']:
                     parsedEntry['attributes'][attr] = self.attributes[attr]['default']
@@ -77,7 +79,9 @@ class CapsulatorPlugin():
                 else:
                     print numSlice
                     print len(entry['attributes'][key])
-                    print('Error in json file, please check that the tunnel_tags match the number of APs!')
-                    sys.exit(-1) #Maybe implement an exception?
+                    err_msg = 'Error in json file, please check that the tunnel_tags match the number of APs!'
+                #    print(err_msg)
+                    raise Exception(err_msg + '\n')
+              #      sys.exit(-1) #Maybe implement an exception?
             
         return parsedEntry
