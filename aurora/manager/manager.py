@@ -430,7 +430,10 @@ class Manager():
         else:
             ap_slice_list = args['ap-slice-delete']
         
-        print "ap_slice_list:",ap_slice_list        
+      #  print "ap_slice_list:",ap_slice_list        
+        
+        if not ap_slice_list:
+            message += " None to delete\n"
         
         for ap_slice_id in ap_slice_list:
             config = {"slice":ap_slice_id, "command":"delete_slice", "user":user_id}
@@ -697,7 +700,10 @@ class Manager():
             
             #Send to database
             if my_slice and my_wnet:
-                message += self.auroraDB.wnet_add_wslice(tenant_id, arg_slice, arg_name)
+                if not self.auroraDB.wslice_is_deleted(arg_slice):
+                    message += self.auroraDB.wnet_add_wslice(tenant_id, arg_slice, arg_name)
+                else:
+                    message += "Error: Cannot add deleted slice '%s'" % arg_slice
             else:
                 if not my_slice:
                     message += "Error: You have no slice '%s'.\n" % arg_slice
@@ -759,9 +765,12 @@ class Manager():
                 my_slice = self.auroraDB.wslice_belongs_to(tenant_id, project_id, arg_slice)
                 my_wnet = self.auroraDB.wnet_belongs_to(tenant_id, project_id, arg_name)
             
-                
                 if my_slice and my_wnet:
-                    message += self.auroraDB.wnet_remove_wslice(tenant_id, arg_slice, arg_name)
+                    if not self.auroraDB.wslice_is_deleted(arg_slice):
+                        message += self.auroraDB.wnet_remove_wslice(tenant_id, arg_slice, arg_name)
+                    else:
+                        message += "Error: Cannot add deleted slice '%s'" % arg_slice
+                        
                 else:
                     if not my_slice:
                         message += "Error: You have no slice '%s'.\n" % arg_slice
