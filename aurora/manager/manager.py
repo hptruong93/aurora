@@ -483,6 +483,10 @@ class Manager():
             print "args_list:", args_list
             for (index, entry) in enumerate(args_list):
                 args_list[index] = entry.strip()
+                print "1:",args_list[index]
+                if args_list[index] == '':
+                    continue
+                print "2:",args_list[index]
                 #Filter for tags (NOT Query is not yet implemented (future work?),
                 #support for only 1 tag (USE 'OR' STATEMENT IN FUTURE FOR MULTIPLE))
                 if 'tag' in args_list[index]:
@@ -588,17 +592,15 @@ class Manager():
     
     def ap_slice_list(self, args, tenant_id, user_id, project_id):
         message = ""
-      #  print "args: ", args
         if args['filter']:
-      #      print args['filter']
             arg_filter = args['filter'][0]
         else:
             arg_filter = ""
         arg_i = args['i']
         arg_a = args['a']
-        
-        
-      #  print "arg_filter: ", arg_filter
+        if not arg_a:
+            arg_filter += "&status!DELETED"
+        print "arg_filter: ", arg_filter
         
         try:
             newList = self.ap_slice_filter(arg_filter, tenant_id)
@@ -608,25 +610,11 @@ class Manager():
             response = {"status":False, "message":message}
             return response
 
- #       newList.sort(key=lambda dict_item: int(dict_item['ap_slice_id']))
-    #    pprint (newList)
-
-
-        # Note I broke this, will fix tomorrow.
         for entry in newList:
-            if not arg_a:
-                if entry['status'] != 'DELETED': 
-                    message += "%12s: %s" % ("ap_slice_id", entry['ap_slice_id'])
-                    if not arg_i:
-                        message += " - %s\n" % entry['status']
-                        
-            else:
-                message += "%12s: %s" % ("ap_slice_id", entry['ap_slice_id'])
-                
+            message += "%12s: %s" % ("ap_slice_id", entry['ap_slice_id'])
             if not arg_i:
-                if arg_a:
-                    message += " - %s\n" % entry['status']
-                
+                message += " - %s\n" % entry['status']
+                        
             else:
                 message += '\n'
                 for key,value in entry.iteritems():
@@ -639,15 +627,21 @@ class Manager():
         return response
                 
     def ap_slice_show(self, args, tenant_id, user_id, project_id):
+        message = ""
         arg_id = args['ap-slice-show'][0]
-        if self.auroraDB.wslice_belongs_to(tenant_id, project_id, arg_id):
-            return self.ap_slice_list({'filter':['ap_slice_id=%s' % arg_id,],
-                                       'i':True},
-                                      tenant_id, user_id, project_id)
-        else:
-            message = "Error: You have no slice '%s'.\n" % arg_name
-            response = {"status":True, "message": message}
-            return response
+        for arg_id in args['ap-slice-show']:
+            if self.auroraDB.wslice_belongs_to(tenant_id, project_id, arg_id):
+                message += self.ap_slice_list({'filter':['ap_slice_id=%s' % arg_id,],
+                                           'i':True,
+                                           'a':True},
+                                          tenant_id, user_id, project_id)['message']
+            else:
+                message = "Error: You have no slice '%s'.\n" % arg_name
+                response = {"status":True, "message": message}
+                return response
+                
+        response = {"status":True, "message": message}
+        return response
 
 
     def wnet_add_wslice(self, args, tenant_id, user_id, project_id):

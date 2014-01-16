@@ -34,11 +34,13 @@ class resourceMonitor():
         after a certain time period.  It modifies the database
         to reflect the current status of the AP."""
 
+
+        print unique_id
         # A timeout is serious: it is likely that
         # the AP's OS has crashed, or at least aurora is
         # no longer running.
         
-        self.set_status(unique_id, success=False, ap_up=False)
+        self.set_status(unique_id[0], success=False, ap_up=False)
                 
         # In the future we might do something more with the unique_id besides
         # identifying the AP, like log it to a list of commands that cause
@@ -120,6 +122,8 @@ class resourceMonitor():
                         physical_ap = physical_ap[0]
                     else:
                         raise Exception("Cannot fetch physical_ap for slice %s\n" % unique_id)
+                        
+                    print "physical_ap:",physical_ap
                     #Get all slices associated with this ap
                     cur.execute("SELECT ap_slice_id FROM ap_slice WHERE physical_ap=\'"+str(physical_ap)+"\'")
                     
@@ -132,7 +136,8 @@ class resourceMonitor():
                     else:
                         raise Exception("Cannot slices from physical_ap '%s'\n" % physical_ap)
                     
-                    slice_list = []
+                    print "raw_list:",raw_list
+                    print "slice_list:",slice_list
                     
                     for entry in slice_list:
                         #Get status

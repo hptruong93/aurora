@@ -305,7 +305,7 @@
                 {
                     "action":"store",
                     "help":"Show a specific slice",
-                    "nargs":1,
+                    "nargs":"+",
                     "default":null,
                     "choices":null,
                     "metavar":"id"

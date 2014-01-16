@@ -49,7 +49,7 @@ class CapsulatorPlugin():
                     parsedEntry['attributes'][attr] = self.attributes[attr]['default']
         
         print "numSlice:",numSlice
-        print entry['attributes'][key]
+  #      print entry['attributes'][key]
                      
         #Loop through the attributes
         for key in self.attributes:
