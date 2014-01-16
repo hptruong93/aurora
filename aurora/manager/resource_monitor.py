@@ -138,7 +138,7 @@ class resourceMonitor():
                         for entry in raw_list:
                             slice_list.append(entry[0])
                     else:
-                        raise Exception("Cannot slices from physical_ap '%s'\n" % physical_ap)
+                        raise Exception("No slices on physical_ap '%s'\n" % physical_ap)
                     
                     print "raw_list:",raw_list
                     print "slice_list:",slice_list
