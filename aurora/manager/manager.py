@@ -418,14 +418,27 @@ class Manager():
     
     def ap_slice_delete(self, args, tenant_id, user_id, project_id):
         message = ""
-        #TODO: Checking to see if slice is already deleted
-        for ap_slice_id in args['ap-slice-delete']:
+        
+        args_all = args['all']
+        if args_all:
+            arg_filter = "status!DELETED"
+            ap_slice_dict= self.ap_slice_filter(arg_filter, tenant_id)
+            ap_slice_list = []
+            for entry in ap_slice_dict:
+                ap_slice_list.append(entry['ap_slice_id'])
+        
+        else:
+            ap_slice_list = args['ap-slice-delete']
+        
+        print "ap_slice_list:",ap_slice_list        
+        
+        for ap_slice_id in ap_slice_list:
             config = {"slice":ap_slice_id, "command":"delete_slice", "user":user_id}
             
             my_slice = self.auroraDB.wslice_belongs_to(tenant_id, project_id, ap_slice_id)
             if not my_slice:
                 message += "No slice '%s'\n" % ap_slice_id
-                if ap_slice_id == args['ap-slice-delete'][-1]:
+                if ap_slice_id == ap_slice_list[-1]:
                     response = {"status":False, "message":message}
                     return response
                 else:

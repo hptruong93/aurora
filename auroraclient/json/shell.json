@@ -117,7 +117,14 @@
                     "metavar":"slices/tags"
                 },
                 [
-                    
+                    [
+                        "--all",
+                        {
+                            "action":"store_true",
+                            "help":"Select all available slices for delete",
+                            "default":false
+                        }
+                    ]
                 ]
             ],
             [
