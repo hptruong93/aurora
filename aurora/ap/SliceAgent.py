@@ -45,6 +45,7 @@ class SliceAgent:
         try:
             self.wifi.create_slice(config["RadioInterfaces"])
         except Exception as e:
+            print " [v] Exception: %s" %e.message
             self.delete_slice(slice)
             # DEBUG
             #raise
@@ -56,6 +57,7 @@ class SliceAgent:
             try:
                 self.v_interfaces.create(interfaces["flavor"], interfaces["attributes"])
             except Exception as e:
+                print " [v] Exception: %s" %e.message
                 # Abort, delete
                 self.delete_slice(slice)
                 raise exception.SliceCreationFailed("Aborting.\nVirtual Interface creation failed: " + interfaces['attributes']['name'] + '\n' + e.message)
@@ -67,6 +69,7 @@ class SliceAgent:
                 self.v_bridges.create_bridge(bridges['flavor'], bridge_name)
             except Exception as e:
                 # Abort, delete
+                print " [v] Exception: %s" %e.message
                 self.delete_slice(slice)
                 raise exception.SliceCreationFailed("Aborting.\nBridge creation failed: " + bridge_name + '\n' + e.message)
             else:    
@@ -76,6 +79,7 @@ class SliceAgent:
                     try:
                         self.v_bridges.add_port_to_bridge(bridge_name, port)
                     except Exception as e:
+                        print " [v] Exception: %s" %e.message
                         # Abort, delete.
                         self.delete_slice(slice)
                         raise exception.SliceCreationFailed("Aborting.\nError adding port " + port + " to bridge " + bridge_name + '\n' + e.message)
@@ -86,6 +90,7 @@ class SliceAgent:
                     try:
                         self.v_bridges.modify_bridge(bridge_name, setting, setting_list[setting])
                     except Exception as e:
+                        print " [v] Exception: %s" %e.message
                         # Abort, delete. Settings don't matter when deleting
                         self.delete_slice(slice)
                         raise exception.SliceCreationFailed("Aborting.\nError applying setting " + setting + " to bridge " + bridge_name + '\n' + e.message)
@@ -96,6 +101,7 @@ class SliceAgent:
                         try:
                             self.v_bridges.modify_port(bridge_name, port, setting, bridges['attributes']['port_settings'][port][setting])
                         except Exception as e:
+                            print " [v] Exception: %s" %e.message
                             # Abort, delete
                             self.delete_slice(slice)
                             raise exception.SliceCreationFailed("Aborting.\nError applying setting " + setting + " to port " + port + " on bridge " + bridge_name + '\n' + e.message)

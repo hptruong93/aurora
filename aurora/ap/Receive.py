@@ -75,7 +75,7 @@ class Receive():
     def handle_delivery(self, channel, method, header, body):
         """Called when we receive a message from RabbitMQ.  Executes the command received
         and returns data or an error message if needed."""
-
+        print "Receiving..."
         # Convert data to JSON
         message = json.loads(body)
 
