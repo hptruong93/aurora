@@ -71,11 +71,14 @@ class VirtualBridges:
             raise exception.FlavourNotExist(flavour)
         
         # Load module
+        print "Loading module:",flavour
         program = self.__load_module(flavour)
         
         # Module should now be running and we can execute commands
         # The assumption is that we try and create a bridge before modifying one
+        print "Creating bridge:",name,
         program.create_bridge(name)
+        print "SUCCESS"
     
     def delete_bridge(self, name):
         """Delete a bridge 'name'."""
