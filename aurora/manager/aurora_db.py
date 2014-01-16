@@ -68,6 +68,7 @@ class AuroraDB():
                                    "project_id = '%s'" % (tenant_id, project_id) )
                     cur.execute(to_execute)
                     tenant_wnets_tt = cur.fetchall()
+                    
                     tenant_wnets = []
                     for t in tenant_wnets_tt:
                         tenant_wnets.append(t[0])
@@ -302,7 +303,11 @@ class AuroraDB():
                 to_execute = ( "SELECT physical_ap FROM ap_slice WHERE "
                                "ap_slice_id='%s'" % ap_slice_id )
                 cur.execute(to_execute)
-                return cur.fetchone()[0]
+                physical_ap = cur.fetchone()
+                if physical_ap:
+                    return physical_ap[0]
+                else:
+                    raise Exception("No slice '%s'\n" % ap_slice_id)
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)

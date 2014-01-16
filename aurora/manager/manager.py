@@ -417,7 +417,11 @@ class Manager():
         for ap_slice_id in args['ap-slice-delete']:
             config = {"slice":ap_slice_id, "command":"delete_slice", "user":user_id}
             
-            ap_name = self.auroraDB.get_wslice_physical_ap(ap_slice_id)
+            try:
+                ap_name = self.auroraDB.get_wslice_physical_ap(ap_slice_id)
+            except Exception as e:
+                response = {"status":False, "message":e.message}
+                return response
             message += self.auroraDB.wslice_delete(ap_slice_id)
             
             #Dispatch
@@ -480,13 +484,11 @@ class Manager():
             tag_compare = False #For tags, we need 2 queries and a quick result compare at the end
             tag_result = []
             args_list = arg_filter.split('&')
-            print "args_list:", args_list
+           # print "args_list:", args_list
             for (index, entry) in enumerate(args_list):
                 args_list[index] = entry.strip()
-                print "1:",args_list[index]
                 if args_list[index] == '':
                     continue
-                print "2:",args_list[index]
                 #Filter for tags (NOT Query is not yet implemented (future work?),
                 #support for only 1 tag (USE 'OR' STATEMENT IN FUTURE FOR MULTIPLE))
                 if 'tag' in args_list[index]:
@@ -537,7 +539,6 @@ class Manager():
                     raise Exception("Error: Incorrect filter syntax.\n")
             #Combine to 1 string
             expression = args_list[0]
-            print " [x] expression1:",expression
             if 'tag' in expression:
                 expression = ""
             for (index, entry) in enumerate(args_list):
@@ -546,7 +547,7 @@ class Manager():
                         expression = expression+' AND '+ entry 
                     else:
                         expression = entry
-            print " [x] expression2:",expression
+            print " [x] SQL Filter:",expression
             
             #Execute Query
             try:
@@ -600,7 +601,7 @@ class Manager():
         arg_a = args['a']
         if not arg_a:
             arg_filter += "&status!DELETED"
-        print "arg_filter: ", arg_filter
+     #   print "arg_filter: ", arg_filter
         
         try:
             newList = self.ap_slice_filter(arg_filter, tenant_id)
@@ -628,7 +629,6 @@ class Manager():
                 
     def ap_slice_show(self, args, tenant_id, user_id, project_id):
         message = ""
-        arg_id = args['ap-slice-show'][0]
         for arg_id in args['ap-slice-show']:
             if self.auroraDB.wslice_belongs_to(tenant_id, project_id, arg_id):
                 message += self.ap_slice_list({'filter':['ap_slice_id=%s' % arg_id,],
@@ -636,8 +636,9 @@ class Manager():
                                            'a':True},
                                           tenant_id, user_id, project_id)['message']
             else:
-                message = "Error: You have no slice '%s'.\n" % arg_name
-                response = {"status":True, "message": message}
+                message += "Error: You have no slice '%s'.\n" % arg_id
+            if arg_id == args['ap-slice-show'][-1]:    
+                response = {"status":False, "message": message}
                 return response
                 
         response = {"status":True, "message": message}

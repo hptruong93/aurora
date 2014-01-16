@@ -1,4 +1,4 @@
 {
-    "message": " ap_slice_id: d401cd8b-7b9d-460c-abbb-d70433ffc068\n      status: FAILED\n     wnet_id: None\n   tenant_id: 1\n        tags: \n physical_ap: openflow\n   projct_id: 1\n\n ap_slice_id: cf916ae6-7916-4305-8852-3a1ceb90d203\n      status: FAILED\n     wnet_id: None\n   tenant_id: 1\n        tags: \n physical_ap: openflow3\n   projct_id: 1\n\n", 
-    "status": true
+    "message": "Error: You have no slice 'aea46f92-7362-4e2d-b877-1f9db3ea6a95'.\n", 
+    "status": false
 }

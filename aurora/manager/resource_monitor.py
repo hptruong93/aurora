@@ -5,6 +5,10 @@ import sys
 
 class resourceMonitor():
     
+    
+    #TODO: Query SQL db for slices with status other than 'DELETED'
+    #and ping associated ap to determine whether they are still up
+    
     sql_locked = None
     
     def __init__(self, dispatcher, host, username, password):
