@@ -46,6 +46,7 @@ class Receive():
         self.parameters = pika.ConnectionParameters(host=rabbitmq_host, credentials=credentials)
         self.connection = pika.SelectConnection(self.parameters, self.on_connected)
 
+    
     # Step #2
     def on_connected(self, connection):
         """Called when we are fully connected to RabbitMQ"""
@@ -154,8 +155,9 @@ if __name__ == '__main__':
     # Thanks to Matt J http://stackoverflow.com/a/1112350
     def signal_handler(signal, frame):
         # Be nice and let the ioloop know it's time to go
-        receiver.channel.basic_cancel()
-        receiver.connection.ioloop.stop()
+    #    receiver.channel.basic_cancel()
+    #    receiver.connection.ioloop.stop()
+        receiver.connection.close()
         print("Connections closed.  Cleaning up and exiting.")
 
     signal.signal(signal.SIGINT, signal_handler)
