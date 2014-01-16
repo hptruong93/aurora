@@ -634,7 +634,7 @@ class Manager():
         for entry in newList:
             message += "%12s: %s" % ("ap_slice_id", entry['ap_slice_id'])
             if not arg_i:
-                message += " - %s\n" % entry['status']
+                message += " (%s) - %s\n" % (entry['physical_ap'], entry['status'])
                         
             else:
                 message += '\n'

@@ -7,7 +7,7 @@ import provision_server.ap_provision as provision
 
 class Dispatcher():
     lock = None
-    TIMEOUT = 30
+    TIMEOUT = 10
     
     def __init__(self, host, username, password, mysql_username, mysql_password):
         """Establishes the connection to RabbitMQ and sets up the queues"""
@@ -73,12 +73,12 @@ class Dispatcher():
         
         print("Message for %s dispatched" % ap)
 
-        ap_slice_id = (config['slice'],)
+        ap_slice_id = config['slice']
         # Start a timeout countdown
         print "ap_slice_id >>>",ap_slice_id
-        time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=ap_slice_id)
-        
-        self.requests_sent.append((unique_id, time, ap_slice_id[0]))
+        time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=(ap_slice_id,))
+
+        self.requests_sent.append((unique_id, time, ap_slice_id))
         time.start()
         print "Starting timer:",self.requests_sent[-1]
         
