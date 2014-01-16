@@ -7,7 +7,7 @@ import provision_server.ap_provision as provision
 
 class Dispatcher():
     lock = None
-    TIMEOUT = 10
+    TIMEOUT = 30
     
     def __init__(self, host, username, password, mysql_username, mysql_password):
         """Establishes the connection to RabbitMQ and sets up the queues"""
