@@ -93,7 +93,7 @@ class Receive():
             data_for_sender['message'] = traceback.format_exc()
             data_for_sender = json.dumps(data_for_sender)
 
-            print(" [x] Error; command " + message["command"] + " failed")
+            print(" [x] Error; command " + message["command"] + " failed\n" + e.message)
 
         # No error, we (may) return data
         else:
