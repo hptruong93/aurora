@@ -54,7 +54,8 @@ class OvsPlugin():
         #Loop through the attributes
         for key in self.attributes:
             if not self.attributes[key]['subattributes']: #Does not have sub_attributes, append to parsedEntry directly
-                parsedEntry['attributes'][key] = str(entry['attributes'][key])
+                #parsedEntry['attributes'][key] = str(entry['attributes'][key])
+                parsedEntry['attributes'][key] = entry['attributes'][key]
             else: #Check subattributes
                 #Initialize to empty dictionary
                 parsedEntry['attributes'][key] = {}

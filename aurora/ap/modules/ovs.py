@@ -161,7 +161,7 @@ class OpenVSwitch:
     
     def add_port(self, bridge, port):
         """Add a port to the given bridge."""
-        print " [x] Adding port '%s' to bridge", port
+        print " [x] Adding port '%s' to bridge" % port
         self.__exec_command(["add-port", bridge, port])
         entry = self.database.get_entry("VirtualBridges", bridge)
         entry["attributes"]["interfaces"].append(port)
