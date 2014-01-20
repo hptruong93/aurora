@@ -193,49 +193,49 @@ class OpenWRTWifi:
 
     def __radio_set_command(self, radio_num, command, value):
         # We str() value, radio and command in case they are not strings (i.e. int)
-        command = ["uci","set","wireless.radio" + str(radio_num) + "." + str(command) + "=" +str(value)]
-        print "\n  $ "," ".join(command)
+        prtcmd = ["uci","set","wireless.radio" + str(radio_num) + "." + str(command) + "=" +str(value)]
+        print "\n  $ "," ".join(prtcmd)
         subprocess.check_call(["uci","set","wireless.radio" + str(radio_num) + "." + str(command) + "=" +str(value)])
 
     def __radio_get_command(self, radio_num, command):
         # rstrip is used to remove newlines from UCI
-        command = ["uci","get","wireless.radio" + str(radio_num) + "." + str(command)]
-        print "\n  $ "," ".join(command)
+        prtcmd = ["uci","get","wireless.radio" + str(radio_num) + "." + str(command)]
+        print "\n  $ "," ".join(prtcmd)
         return subprocess.check_output(["uci","get","wireless.radio" + str(radio_num) + "." + str(command)]).rstrip()
 
     def __generic_set_command(self, section, command, value):
-        command = ["uci","set", "wireless." + str(section) + "." + str(command) + "=" +str(value)]
-        print "\n  $ "," ".join(command)
+        prtcmd = ["uci","set", "wireless." + str(section) + "." + str(command) + "=" +str(value)]
+        print "\n  $ "," ".join(prtcmd)
         subprocess.check_call(["uci","set", "wireless." + str(section) + "." + str(command) + "=" +str(value)])
 
     def __create_new_section(self, section_type, name):
-        command = ["uci","set", "wireless." + str(name) + "=" +str(section_type)]
-        print "\n  $ "," ".join(command)
+        prtcmd = ["uci","set", "wireless." + str(name) + "=" +str(section_type)]
+        print "\n  $ "," ".join(prtcmd)
         subprocess.check_call(["uci","set", "wireless." + str(name) + "=" +str(section_type)])
 
     def __generic_get_command(self, section, command):
-        command = ["uci","get","wireless." + str(section) + "." + str(command)]
-        print "\n  $ "," ".join(command)
+        prtcmd = ["uci","get","wireless." + str(section) + "." + str(command)]
+        print "\n  $ "," ".join(prtcmd)
         return subprocess.check_output(["uci","get","wireless." + str(section) + "." + str(command)]).rstrip()
 
     def __uci_delete_section_name(self, section):
-        command = ["uci","delete","wireless." + str(section)]
-        print "\n  $ "," ".join(command)
+        prtcmd = ["uci","delete","wireless." + str(section)]
+        print "\n  $ "," ".join(prtcmd)
         subprocess.call(["uci","delete","wireless." + str(section)])
 
     def __uci_delete_bss_index(self, bss_num):
-        command = ["uci","delete","wireless.@wifi-iface[" + str(bss_num) + "]"]
-        print "\n  $ "," ".join(command)
+        prtcmd = ["uci","delete","wireless.@wifi-iface[" + str(bss_num) + "]"]
+        print "\n  $ "," ".join(prtcmd)
         subprocess.call(["uci","delete","wireless.@wifi-iface[" + str(bss_num) + "]"])
 
     def __uci_delete_radio(self, radio_num, section):
-        command = ["uci","delete","wireless.radio" + str(radio_num) + "." + str(section)]
-        print "\n  $ "," ".join(command)
+        prtcmd = ["uci","delete","wireless.radio" + str(radio_num) + "." + str(section)]
+        print "\n  $ "," ".join(prtcmd)
         subprocess.call(["uci","delete","wireless.radio" + str(radio_num) + "." + str(section)])
 
     def __uci_add_wireless_section(self, section):
-        command = ["uci","add","wireless",str(section)]
-        print "\n  $ "," ".join(command)
+        prtcmd = ["uci","add","wireless",str(section)]
+        print "\n  $ "," ".join(prtcmd)
         subprocess.call(["uci","add","wireless",str(section)])
 
     def add_bss(self, radio, name, mode=None, encryption_type=None, key=None, auth_server=None, auth_port=None, auth_secret=None, acct_server=None, acct_port=None, acct_secret=None,nasid=None, new_entry=True, macaddr=None, if_name=None):
