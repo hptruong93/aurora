@@ -535,7 +535,7 @@ class OpenWRTWifi:
         # If we have a "main" BSS, we must use UCI
         elif bss_entry["main"]:
             # We set the format of the name in add_bss, now we simply delete the section
-            self.__uci_delete_section_name("BSS" + radio)
+            self.__uci_delete_section_name("BSS" + radio_num)
             # Remove database entries of all BSS for the radio
             # Otherwise, we get problems if other users depend on use and we delete and try to recreate a slice
             del bss_list[0:len(bss_list)]
