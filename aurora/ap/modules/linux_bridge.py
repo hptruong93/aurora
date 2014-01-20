@@ -26,7 +26,8 @@ class Brctl:
         # Format: [ arg1, arg2, arg3...]
         command = ["brctl"]
         command.extend(args)
-        print "  $ "," ".join(command)
+        
+        print "\n  $ "," ".join(command)
         subprocess.check_call(command)
     
     def __init__(self, database):
@@ -43,10 +44,13 @@ class Brctl:
     def create_bridge(self, name):
         """Create a bridge with the given name."""
         self.__exec_command(["addbr",name])
+        
         # Bring bridge up
         command = ["ifconfig", name, "up"]
+        
         print "  $ "," ".join(command)
         subprocess.check_call(["ifconfig", name, "up"])
+        
         self.database.add_entry("VirtualBridges", "linux_bridge", { "name" : name, "interfaces" : [], "bridge_settings" : {}, "port_settings" : {} })
     
     def delete_bridge(self,name):
@@ -54,8 +58,10 @@ class Brctl:
         # Bridge must be brought down first
         # Ignoring any errors for ifconfig
         command = ["ifconfig", name, "down"]
+        
         print "  $ "," ".join(command)
         subprocess.call(["ifconfig", name, "down"])
+        
         self.__exec_command(["delbr",name])
         self.database.delete_entry("VirtualBridges", name)
         

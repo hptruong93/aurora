@@ -31,6 +31,8 @@ class OpenWRTWifi:
         print("Finding and setting up radios")
 
         # Bring down any existing wifi
+        command = ["wifi", "down"]
+        print "\n  $ "," ".join(command)
         subprocess.call(["wifi", "down"])
 
         # First, remove wireless configuration file; ignore errors
@@ -41,12 +43,16 @@ class OpenWRTWifi:
 
         # Regenerate it.  We rely on wifi detect, especially
         # since it can detect the MAC address & number of radios
+        command = ["wifi","detect"]
+        print "\n  $ "," ".join(command)
         detect = subprocess.check_output(["wifi","detect"])
 
         # Add package name to string, since UCI needs it
         detect2 = "package wireless\n" + detect
 
         # Call UCI, import the data (UCI automatically commits)
+        command = ["uci", "import"]
+        print "\n  $ "," ".join(command)
         uci_process = subprocess.Popen(["uci", "import"], stdin=subprocess.PIPE)
         uci_process.communicate(input=detect2)
 
@@ -143,12 +149,20 @@ class OpenWRTWifi:
         # If there are no changes pending, commit will do nothing
         # All other code ensures change_pending is set when a commit
         # is needed, so this should be fine
+        command = ["uci","commit"]
+        print "\n  $ "," ".join(command)
         subprocess.call(["uci","commit"])
 
         # If no radios require changes, this will not execute
         for radio in self.change_pending:
+            command = ["wifi", "down", str(radio)]
+            print "\n  $ "," ".join(command)
             subprocess.call(["wifi", "down", str(radio)])
+            
+            command = ["wifi", "up", str(radio)]
+            print "\n  $ "," ".join(command)
             subprocess.call(["wifi", "up", str(radio)])
+            
             radio_entry = self.database.hw_get_radio_entry(radio)
             # If a radio is disabled, do not try adding bss
             if radio_entry["disabled"] == 0:
@@ -179,31 +193,49 @@ class OpenWRTWifi:
 
     def __radio_set_command(self, radio_num, command, value):
         # We str() value, radio and command in case they are not strings (i.e. int)
+        command = ["uci","set","wireless.radio" + str(radio_num) + "." + str(command) + "=" +str(value)]
+        print "\n  $ "," ".join(command)
         subprocess.check_call(["uci","set","wireless.radio" + str(radio_num) + "." + str(command) + "=" +str(value)])
 
     def __radio_get_command(self, radio_num, command):
         # rstrip is used to remove newlines from UCI
+        command = ["uci","get","wireless.radio" + str(radio_num) + "." + str(command)]
+        print "\n  $ "," ".join(command)
         return subprocess.check_output(["uci","get","wireless.radio" + str(radio_num) + "." + str(command)]).rstrip()
 
     def __generic_set_command(self, section, command, value):
+        command = ["uci","set", "wireless." + str(section) + "." + str(command) + "=" +str(value)]
+        print "\n  $ "," ".join(command)
         subprocess.check_call(["uci","set", "wireless." + str(section) + "." + str(command) + "=" +str(value)])
 
     def __create_new_section(self, section_type, name):
+        command = ["uci","set", "wireless." + str(name) + "=" +str(section_type)]
+        print "\n  $ "," ".join(command)
         subprocess.check_call(["uci","set", "wireless." + str(name) + "=" +str(section_type)])
 
     def __generic_get_command(self, section, command):
+        command = ["uci","get","wireless." + str(section) + "." + str(command)]
+        print "\n  $ "," ".join(command)
         return subprocess.check_output(["uci","get","wireless." + str(section) + "." + str(command)]).rstrip()
 
     def __uci_delete_section_name(self, section):
+        command = ["uci","delete","wireless." + str(section)]
+        print "\n  $ "," ".join(command)
         subprocess.call(["uci","delete","wireless." + str(section)])
 
     def __uci_delete_bss_index(self, bss_num):
+        command = ["uci","delete","wireless.@wifi-iface[" + str(bss_num) + "]"]
+        print "\n  $ "," ".join(command)
         subprocess.call(["uci","delete","wireless.@wifi-iface[" + str(bss_num) + "]"])
 
     def __uci_delete_radio(self, radio_num, section):
+        command = ["uci","delete","wireless.radio" + str(radio_num) + "." + str(section)]
+        print "\n  $ "," ".join(command)
         subprocess.call(["uci","delete","wireless.radio" + str(radio_num) + "." + str(section)])
 
     def __uci_add_wireless_section(self, section):
+        command = ["uci","add","wireless",str(section)]
+        print "\n  $ "," ".join(command)
         subprocess.call(["uci","add","wireless",str(section)])
 
     def add_bss(self, radio, name, mode=None, encryption_type=None, key=None, auth_server=None, auth_port=None, auth_secret=None, acct_server=None, acct_port=None, acct_secret=None,nasid=None, new_entry=True, macaddr=None, if_name=None):
@@ -462,6 +494,7 @@ class OpenWRTWifi:
 
             command = ["hostapd_cli", "-p", "/var/run/hostapd-phy" + str(radio_num), "add_bss", temp_file.name]
             if new_entry:
+                print "\n  $ "," ".join(command)
                 subprocess.call(command)
                 # Write to database
                 bss_entry["mode"] = "ap"
@@ -470,6 +503,7 @@ class OpenWRTWifi:
                 bss_entry["macaddr"] = final_mac
                 bss_list.append(bss_entry)
             else:
+                print "\n  $ "," ".join(command)
                 subprocess.check_call(command)
                 # Already exists in database,no need to write
 
@@ -513,5 +547,7 @@ class OpenWRTWifi:
             # but waiting for changes to be applied, or vice versa.
             # Regardless, this code will eliminate the BSS, even if 
             # the remove command fails because the interface is down.
+            command = ["hostapd_cli", "-p", "/var/run/hostapd-phy" + str(radio_num), "del_bss", name]
+            print "\n  $ "," ".join(command)
             subprocess.call(["hostapd_cli", "-p", "/var/run/hostapd-phy" + str(radio_num), "del_bss", name])
             bss_list.remove(bss_entry)

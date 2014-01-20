@@ -28,10 +28,13 @@ class Veth:
         # TODO: see if subprocess can be replaced with psutil
         
         # Launch program.  Will raise exception if there is an issue.
+        print "\n  $ "," ".join(command)
         subprocess.check_call(command)
         
         # Bring interface up
         interface_command = [ "ifconfig", name, "up" ]
+        
+        print "\n  $ "," ".join(interface_command)
         subprocess.check_call(interface_command)
         
         # Since veth forks, we need to find the PID

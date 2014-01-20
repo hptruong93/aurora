@@ -38,6 +38,7 @@ class Capsulator:
             raise exception.NameAlreadyInUse("Capsulator already running with " + name)
        
         # Launch process
+        print "\n  $ "," ".join(command)
         process = subprocess.Popen(command)
         
         # Bring interface up; this will throw an exception if it fails
@@ -49,6 +50,7 @@ class Capsulator:
         attempts = 0
         while attempts < self.retry_attempts:
             try:
+                print "\n  $ "," ".join(interface_command)
                 subprocess.check_call(interface_command)
                 # Successful, break out of loop
                 break
@@ -59,6 +61,9 @@ class Capsulator:
                 if attempts == self.retry_attempts:
                     process.terminate()
                     process.wait()
+                    command = ["ip", "link", "del", name]
+                    
+                    print "\n  $ "," ".join(command)
                     subprocess.call(["ip", "link", "del", name])
                     raise
                 
@@ -82,7 +87,9 @@ class Capsulator:
         
         # Delete old interface
         # Will not raise exception if it fails; this is OK
-        subprocess.call(["ip", "link", "del", name])
+        command = ["ip", "link", "del", name]
+        print "\n  $ "," ".join(command)
+        subprocess.call(command)
         
         # Remove entry
         del self.process_list[name]

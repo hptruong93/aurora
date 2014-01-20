@@ -31,6 +31,7 @@ class OpenVSwitch:
         # Format: [ arg1, arg2, arg3...]
         command = ["ovs-vsctl", "--db=unix:" + self.socket_file.name]
         command.extend(args)
+        print "\n  $ "," ".join(command)
         subprocess.check_call(command)
     
     def start(self):
@@ -45,13 +46,20 @@ class OpenVSwitch:
 
         # Create database in temporary file
         # Will raise exception if it fails
+        command = ["ovsdb-tool", "create", self.database_file.name, self.ovs_schema]
+        print "\n  $ "," ".join(command)
         subprocess.check_call(["ovsdb-tool", "create", self.database_file.name, self.ovs_schema])
        
         # Start ovs database server
+        command = ["ovsdb-server", "--remote=punix:" + 
+                                                self.socket_file.name, self.database_file.name]
+        print "\n  $ "," ".join(command)
         self.database_process = psutil.Popen(["ovsdb-server", "--remote=punix:" + 
-        self.socket_file.name, self.database_file.name])
+                                                self.socket_file.name, self.database_file.name])
        
         # Start vswitchd
+        command = ["ovs-vswitchd", "unix:" + self.socket_file.name]
+        print "\n  $ "," ".join(command)
         self.vswitch_process = psutil.Popen(["ovs-vswitchd", "unix:" + self.socket_file.name])
        
     def stop(self):
@@ -80,6 +88,8 @@ class OpenVSwitch:
         """Create a bridge with the given name."""
         self.__exec_command(["add-br", bridge])
         # Bring bridge up
+        command = ["ifconfig", bridge, "up"]
+        print "\n  $ "," ".join(command)
         subprocess.check_call(["ifconfig", bridge, "up"])
         
         self.database.add_entry("VirtualBridges", "ovs", { "name" : bridge, "interfaces" : [], "bridge_settings" : {}, "port_settings" : {} })
@@ -141,6 +151,7 @@ class OpenVSwitch:
         if ovs_command:
             self.__exec_command(args)
         else:
+            print "\n  $ "," ".join(args)
             subprocess.check_call(args)
         
         # Update database
@@ -169,4 +180,9 @@ class OpenVSwitch:
     def show(self):
         """Returns the output of the show command as a byte string."""
         # Need to get output, which is not provided by __exec_command
+        command = ["ovs-vsctl", "--db=unix:" + self.socket_file.name, "show"]
+        print "\n  $ "," ".join(command)
         return subprocess.check_output(["ovs-vsctl", "--db=unix:" + self.socket_file.name, "show"])
+        
+        
+
