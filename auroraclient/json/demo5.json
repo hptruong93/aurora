@@ -16,9 +16,9 @@
             "flavor" : "wifi_bss",
             "attributes" : 
                 {
-                    "name" : "BCRL 1",
+                    "name" : "BCRL 2",
                     "radio" : "radio0",
-                    "if_name" : "wlan0",
+                    "if_name" : "wlan0"
                 }
         }
     ], 
@@ -27,9 +27,9 @@
             "flavor":"linux_bridge",
             "attributes":   
                 {
-                    "name":"linux-br",
+                    "name":"linux-br2",
                     "interfaces":
-                        ["vwlan0","veth0"],
+                        ["vwlan0","veth1"],
                     "bridge_settings":{},
                     "port_settings":{}
                 }
@@ -41,17 +41,17 @@
             "attributes": 
                 {
                     "attach_to":"eth0",
-                    "name":"veth0",
-                    "mac":"00:00:00:00:00:01"
+                    "name":"veth1",
+                    "mac":"00:00:00:00:00:10"
                 }
         },
         {
             "flavor":"veth",
-            "attributes": 
+            "attributes":
                 {
                     "attach_to":"wlan0",
                     "name":"vwlan0",
-                    "mac":"00:00:00:00:00:02"
+                    "mac":"00:00:00:00:00:11"
                 }
         }
     ]

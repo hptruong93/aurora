@@ -16,9 +16,10 @@
             "flavor" : "wifi_bss",
             "attributes" : 
                 {
-                    "name" : "BCRL 1",
+                    "name" : "BCRL Rules",
                     "radio" : "radio0",
                     "if_name" : "wlan0",
+
                 }
         }
     ], 

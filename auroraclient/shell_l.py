@@ -3,6 +3,8 @@
 # SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
 """
+NOTE: THIS VERSION IS FOR LOCAL TESTING ONLY
+
 Command-line interface to the Aurora API
 Uses a JSON file for commands
 Format:[
@@ -91,7 +93,6 @@ class AuroraConsole():
                     return
                 else:
                     try:
-                        print params['file'][0]
                         JFILE = open(params['file'][0], 'r')
                         fileContent = json.load(JFILE)
                         params['file'] = fileContent
@@ -114,7 +115,8 @@ class AuroraConsole():
             ##END DEBUG
             
             if toSend: #--help commands will not start the server
-                JSONSender().sendJSON("http://132.206.206.133:5554", toSend)
+                #JSONSender().sendJSON("http://132.206.206.133:5554", toSend)
+                JSONSender().sendJSON("http://localhost:5554", toSend)
 
             
         

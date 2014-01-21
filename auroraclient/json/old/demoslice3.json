@@ -16,11 +16,9 @@
             "flavor" : "wifi_bss",
             "attributes" : 
                 {
-                    "name" : "temp_slice",
+                    "name" : "BCRL 1",
                     "radio" : "radio0",
                     "if_name" : "wlan0",
-                    "encryption_type":"wep-open",
-                    "key":"12345"
                 }
         }
     ], 
@@ -31,7 +29,7 @@
                 {
                     "name":"linux-br",
                     "interfaces":
-                        ["wlan0","veth0"],
+                        ["vwlan0","veth0"],
                     "bridge_settings":{},
                     "port_settings":{}
                 }
@@ -44,6 +42,15 @@
                 {
                     "attach_to":"eth0",
                     "name":"veth0",
+                    "mac":"00:00:00:00:00:01"
+                }
+        },
+        {
+            "flavor":"veth",
+            "attributes": 
+                {
+                    "attach_to":"wlan0",
+                    "name":"vwlan0",
                     "mac":"00:00:00:00:00:02"
                 }
         }

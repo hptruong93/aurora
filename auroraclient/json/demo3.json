@@ -31,7 +31,7 @@
                 {
                     "name":"linux-br3",
                     "interfaces":
-                        ["veth0","vwlan0"],
+                        ["test-tap0","vwlan0"],
                     "bridge_settings":{},
                     "port_settings":{}
                 }
@@ -39,12 +39,14 @@
     ], 
     "VirtualInterfaces": [
         {
-            "flavor":"veth",
+            "flavor":"capsulator",
             "attributes": 
                 {
                     "attach_to":"eth0",
-                    "name":"veth0",
-                    "mac":"00:00:00:00:00:20"
+                    "forward_to":"10.5.8.1",
+                    "name":"test-tap0",
+                    "tunnel_tag":[9,10],
+                    "is_virtual":true
                 }
         },
         {

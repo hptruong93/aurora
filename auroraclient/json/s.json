@@ -16,9 +16,9 @@
             "flavor" : "wifi_bss",
             "attributes" : 
                 {
-                    "name" : "BCRL 1",
+                    "name" : "new_slice",
                     "radio" : "radio0",
-                    "if_name" : "wlan0",
+                    "if_name" : "wlan0"
                 }
         }
     ], 
@@ -27,7 +27,7 @@
             "flavor":"linux_bridge",
             "attributes":   
                 {
-                    "name":"linux-br",
+                    "name":"linux-bridge1",
                     "interfaces":
                         ["vwlan0","veth0"],
                     "bridge_settings":{},
@@ -47,7 +47,7 @@
         },
         {
             "flavor":"veth",
-            "attributes": 
+            "attributes":
                 {
                     "attach_to":"wlan0",
                     "name":"vwlan0",
