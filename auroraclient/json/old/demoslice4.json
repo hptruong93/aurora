@@ -1,0 +1,59 @@
+{
+    "VirtualWIFI": [
+        {
+            "flavor" : "wifi_radio",
+            "attributes" : 
+                {
+                    "name" : "radio0",
+                    "channel" : "1",
+                    "txpower" : "20",
+                    "disabled" : "0",
+                    "country" : "CA",
+                    "hwmode" : "abg"   
+                }
+        },
+        {
+            "flavor" : "wifi_bss",
+            "attributes" : 
+                {
+                    "name" : "demo-slice-5c",
+                    "radio" : "radio0",
+                    "if_name" : "wlan0-2"
+                    
+                }
+        }
+    ], 
+    "VirtualBridges": [
+        {
+            "flavor":"linux_bridge",
+            "attributes":   
+                {
+                    "name":"linux-br2",
+                    "interfaces":
+                        ["vwlan0-2","veth2"],
+                    "bridge_settings":{},
+                    "port_settings":{}
+                }
+        }
+    ], 
+    "VirtualInterfaces": [
+        {
+            "flavor":"veth",
+            "attributes": 
+                {
+                    "attach_to":"eth0",
+                    "name":"veth2",
+                    "mac":"00:00:00:00:00:05"
+                }
+        },
+        {
+            "flavor":"veth",
+            "attributes": 
+                {
+                    "attach_to":"wlan0-2",
+                    "name":"vwlan0-2",
+                    "mac":"00:00:00:00:00:06"
+                }
+        }
+    ]
+}
