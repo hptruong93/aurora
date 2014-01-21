@@ -8,7 +8,7 @@ class OvsPlugin():
     def __init__(self, tenant_id):
         self.tenant_id = tenant_id
         self.bridge_attributes = {
-            'controller':{'listable':True, 'default':'tcp:132.206.206.130'},
+            'controller':{'listable':True, 'default':'tcp:132.206.206.133'},
             'dpid':{'listable':True, 'default':self.default_dpid()}
         }
         self.attributes = {
@@ -54,7 +54,8 @@ class OvsPlugin():
         #Loop through the attributes
         for key in self.attributes:
             if not self.attributes[key]['subattributes']: #Does not have sub_attributes, append to parsedEntry directly
-                parsedEntry['attributes'][key] = str(entry['attributes'][key])
+                #parsedEntry['attributes'][key] = str(entry['attributes'][key])
+                parsedEntry['attributes'][key] = entry['attributes'][key]
             else: #Check subattributes
                 #Initialize to empty dictionary
                 parsedEntry['attributes'][key] = {}

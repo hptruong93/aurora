@@ -109,7 +109,7 @@ class VirtualBridges:
         """Add a port to the specified bridge."""
         # Find module associated with bridge
         module = self.__get_module_used(bridge)
-
+        
         # Any bad input will be handled by the module
         # Usually the base program will send a non-zero return code
         # which will in turn raise an exception (i.e. port does not exist)
