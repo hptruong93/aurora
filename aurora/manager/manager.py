@@ -143,7 +143,6 @@ class Manager():
             if 'tag' in expression or 'location' in expression:
                 expression = ""
             for (index, entry) in enumerate(args_list):
-                print index, entry
                 #if index != 0 and 'tag' or 'location' not in entry:
                 if index != 0 and 'tag' not in entry and 'location' not in entry:
                     if len(expression) != 0:
