@@ -428,6 +428,7 @@ class Manager():
         return response
     
     def ap_slice_delete(self, args, tenant_id, user_id, project_id):
+        #TODO: Remove tags associated with deleted slices
         message = ""
         
         args_all = args['all']
