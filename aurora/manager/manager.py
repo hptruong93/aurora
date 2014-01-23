@@ -97,11 +97,12 @@ class Manager():
             tag_compare = False #For tags, we need 2 queries and a quick result compare at the end
             tag_result = []
             args_list = args.split('&')
+            print args_list
             for (index, entry) in enumerate(args_list):
                 args_list[index] = entry.strip()
                  #Filter for tags (NOT Query is not yet implemented (future work?), 
                  #support for only 1 tag (USE 'OR' STATEMENT IN FUTURE FOR MULTIPLE))
-                if 'tag' in args_list[index]:
+                if 'tag' in args_list[index] or 'location' in args_list[index]:
                     tag_compare = True
                     try:
                         with self.con:
@@ -118,7 +119,7 @@ class Manager():
                                 
                     except mdb.Error, e:
                         print "Error %d: %s" % (e.args[0], e.args[1])
-                        
+                
                 elif '=' in args_list[index]:
                     if (args_list[index].split('=')[0] == "name")           or \
                        (args_list[index].split('=')[0] == "firmware")       or \
@@ -138,15 +139,24 @@ class Manager():
                                            args_list[index].split('!')[1]
                 
             #Combine to 1 string
+            print args_list
             expression = args_list[0]
-            if 'tag' in expression:
+            print expression
+            if 'tag' in expression or 'location' in expression:
                 expression = ""
+                print "a"
             for (index, entry) in enumerate(args_list):
-                if index != 0 and 'tag' not in entry:
-                    if len(expression != 0):
+                print index, entry
+                #if index != 0 and 'tag' or 'location' not in entry:
+                if index != 0 and 'tag' not in entry and 'location' not in entry:
+                    print "b"
+                    if len(expression) != 0:
                         expression = expression+' AND '+ entry
+                        print "c"
                     else:
                         expression = entry
+                        print "d"
+            print expression
             
             #execute query
             try:
@@ -154,6 +164,7 @@ class Manager():
                     cur = self.con.cursor()
                     tempList = []
                     if len(expression) != 0:
+                        print "SELECT * FROM ap WHERE "+expression
                         cur.execute("SELECT * FROM ap WHERE "+expression)
                     else:
                         cur.execute("SELECT * FROM ap")
@@ -470,6 +481,10 @@ class Manager():
         return response
     
     def ap_slice_filter(self, arg_filter, tenant_id):
+        # NOTE: LOCATION FILTERING IS HACKED BY APPENDING TO TENANT TAGS
+        #       This means it is possible that by typing a location field,
+        #       the user may get results that have the tagged value in
+        #       tenant_tags value instead of location_tags exclusively
         try:
             self.con = mdb.connect(self.mysql_host, 
                                    self.mysql_username, 
@@ -526,7 +541,7 @@ class Manager():
                     continue
                 #Filter for tags (NOT Query is not yet implemented (future work?),
                 #support for only 1 tag (USE 'OR' STATEMENT IN FUTURE FOR MULTIPLE))
-                if 'tag' in args_list[index]:
+                if 'tag' in args_list[index] or 'location' in args_list[index]:
                     #This now supports filters like --filter tag=mcgill.
                     #Should it be instead --filter location=mcgill?
                     tag_compare = True
@@ -574,10 +589,10 @@ class Manager():
                     raise Exception("Error: Incorrect filter syntax.\n")
             #Combine to 1 string
             expression = args_list[0]
-            if 'tag' in expression:
+            if 'tag' in expression or 'location' in expression:
                 expression = ""
             for (index, entry) in enumerate(args_list):
-                if index != 0 and 'tag' not in entry:
+                if index != 0 and 'tag' not in entry  and 'location' not in entry:
                     if len(expression) != 0:
                         expression = expression+' AND '+ entry 
                     else:
