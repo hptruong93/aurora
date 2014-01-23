@@ -189,9 +189,9 @@ class resourceMonitor():
 
 
 #for test
-if __name__ == '__main__':
-    host = 'localhost'
-    mysql_username = 'root'
-    mysql_password = 'supersecret'
-    manager = resourceMonitor(None, host , mysql_username, mysql_password)
-    manager.set_status(12, True)
+#if __name__ == '__main__':
+#    host = 'localhost'
+#    mysql_username = 'root'
+#    mysql_password = 'supersecret'
+#    manager = resourceMonitor(None, host , mysql_username, mysql_password)
+#    manager.set_status(12, True)
