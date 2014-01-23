@@ -172,7 +172,7 @@ class resourceMonitor():
         finally:
             resourceMonitor.sql_locked = False
 
-        self.accountingManager.update_status(unique_id)
+        self.accountingManager.update_status(unique_id, ap_up)
 
     def reset_AP(self, ap):
         """Reset the access point.  If there are serious issues, however,
@@ -189,9 +189,9 @@ class resourceMonitor():
 
 
 #for test
-#if __name__ == '__main__':
-#    host = 'localhost'
-#    mysql_username = 'root'
-#    mysql_password = 'supersecret'
-#    manager = resourceMonitor(None, host , mysql_username, mysql_password)
-#    manager.set_status(12, True)
+if __name__ == '__main__':
+    host = 'localhost'
+    mysql_username = 'root'
+    mysql_password = 'supersecret'
+    manager = resourceMonitor(None, host , mysql_username, mysql_password)
+    manager.set_status(12, True)

@@ -29,20 +29,48 @@ class accountingManager():
         else:
             print('Connection already closed!')
 
-    def update_status(self, unique_id):
+    def update_status(self, unique_id, ap_up=True):
+        #Access Point is up update the ap_slice
+        if ap_up:
+            self.update_apslice(unique_id)
+        #Access Point down fetch all ap_slice and update them
+        else:
+            try:
+                with self.con:
+                    cur = self.con.cursor()
+                    cur.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=%s", str(unique_id))
+                    physical_ap = cur.fetchone()
+                    if physical_ap:
+                        physical_ap = physical_ap[0]
+                    else:
+                        raise Exception("Cannot fetch physical_ap for slice=%s\n" % unique_id)
+                    #Get all slices associated with this ap
+                    cur.execute("SELECT ap_slice_id FROM ap_sice WHERE physical_ap=%s", str(physical_ap))
+                    raw_list = cur.fetchall()
+                    if raw_list:
+                        slice_list = []
+                        for entry in raw_list:
+                            slice_list.append(entry[0])
+                    else:
+                        raise Exception("No slices on physical_ap '%s'\n" % physical_ap)
+                    for entry in slice_list:
+                        self.update_apslice(entry)
+            except Exception, e:
+                print "Database Error: " + str(e)
+
+    def update_apslice(self, unique_id):
         print "update status"
         try:
             with self.con:
                 cur = self.con.cursor()
 
                 #Check ap slice status in ap_slice table
-                cur.execute("SELECT status FROM ap_slice WHERE ap_slice_id=%s",
-                            str(unique_id))
+                cur.execute("SELECT status FROM ap_slice WHERE ap_slice_id=%s", str(unique_id))
                 cur_status = cur.fetchone()[0]
 
                 #Check ap slice status in ap_slice_status table
                 row_count = cur.execute("SELECT * FROM ap_slice_status WHERE \
-                                        ap_slice_id=%s", str(unique_id))
+                                   ap_slice_id=%s", str(unique_id))
                 if row_count > 0:
                     ap_slice_info = cur.fetchone()
                     pre_status = ap_slice_info[1]
