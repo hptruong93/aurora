@@ -139,24 +139,17 @@ class Manager():
                                            args_list[index].split('!')[1]
                 
             #Combine to 1 string
-            print args_list
             expression = args_list[0]
-            print expression
             if 'tag' in expression or 'location' in expression:
                 expression = ""
-                print "a"
             for (index, entry) in enumerate(args_list):
                 print index, entry
                 #if index != 0 and 'tag' or 'location' not in entry:
                 if index != 0 and 'tag' not in entry and 'location' not in entry:
-                    print "b"
                     if len(expression) != 0:
                         expression = expression+' AND '+ entry
-                        print "c"
                     else:
                         expression = entry
-                        print "d"
-            print expression
             
             #execute query
             try:
