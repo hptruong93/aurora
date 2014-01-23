@@ -97,7 +97,6 @@ class Manager():
             tag_compare = False #For tags, we need 2 queries and a quick result compare at the end
             tag_result = []
             args_list = args.split('&')
-            print args_list
             for (index, entry) in enumerate(args_list):
                 args_list[index] = entry.strip()
                  #Filter for tags (NOT Query is not yet implemented (future work?), 
@@ -156,7 +155,6 @@ class Manager():
                     cur = self.con.cursor()
                     tempList = []
                     if len(expression) != 0:
-                        print "SELECT * FROM ap WHERE "+expression
                         cur.execute("SELECT * FROM ap WHERE "+expression)
                     else:
                         cur.execute("SELECT * FROM ap")
