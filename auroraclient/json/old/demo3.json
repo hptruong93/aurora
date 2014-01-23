@@ -1,0 +1,62 @@
+{
+    "VirtualWIFI": [
+        {
+            "flavor" : "wifi_radio",
+            "attributes" : 
+                {
+                    "name" : "radio0",
+                    "channel" : "1",
+                    "txpower" : "20",
+                    "disabled" : "0",
+                    "country" : "CA",
+                    "hwmode" : "abg"   
+                }
+        },
+        {
+            "flavor" : "wifi_bss",
+            "attributes" : 
+                {
+                    "name" : "BRCL 3",
+                    "radio" : "radio0",
+                    "if_name" : "wlan0",
+                    "encryption_type":"wep-open",
+                    "key":"12345"
+                }
+        }
+    ], 
+    "VirtualBridges": [
+        {
+            "flavor":"linux_bridge",
+            "attributes":   
+                {
+                    "name":"linux-br3",
+                    "interfaces":
+                        ["test-tap0","vwlan0"],
+                    "bridge_settings":{},
+                    "port_settings":{}
+                }
+        }
+    ], 
+    "VirtualInterfaces": [
+        {
+            "flavor":"capsulator",
+            "attributes": 
+                {
+                    "attach_to":"eth0",
+                    "forward_to":"10.5.8.1",
+                    "name":"test-tap0",
+                    "tunnel_tag":[9,10],
+                    "is_virtual":true
+                }
+        },
+        {
+            "flavor":"veth",
+            "attributes":
+                {
+                    "attach_to":"wlan0",
+                    "name":"vwlan0",
+                    "mac":"00:00:00:00:00:21"
+                }
+        }
+    ]
+}

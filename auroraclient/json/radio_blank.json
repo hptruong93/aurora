@@ -1,0 +1,60 @@
+{
+    "VirtualWIFI": [
+        {
+            "flavor" : "wifi_radio",
+            "attributes" : 
+                {
+                    "name" : "radio0",
+                    "channel" : "1",
+                    "txpower" : "20",
+                    "disabled" : "0",
+                    "country" : "CA",
+                    "hwmode" : "abg"   
+                }
+        },
+        {
+            "flavor" : "wifi_bss",
+            "attributes" : 
+                {
+                    "name" : "blank",
+                    "radio" : "radio0",
+                    "if_name" : "wlan0",
+                    "encryption_type":"wep-open",
+                    "key":"12345"
+                }
+        }
+    ], 
+    "VirtualBridges": [
+        {
+            "flavor":"linux_bridge",
+            "attributes":   
+                {
+                    "name":"blank-br",
+                    "interfaces":
+                        ["ifb0"],
+                    "bridge_settings":{},
+                    "port_settings":{}
+                }
+        }
+    ], 
+    "VirtualInterfaces": [
+        {
+            "flavor":"veth",
+            "attributes": 
+                {
+                    "attach_to":"eth0",
+                    "name":"veth0",
+                    "mac":"00:00:00:00:00:20"
+                }
+        },
+        {
+            "flavor":"veth",
+            "attributes": 
+                {
+                    "attach_to":"wlan0",
+                    "name":"vwlan0",
+                    "mac":"00:00:00:00:00:21"
+                }
+        }
+    ]
+}

@@ -91,8 +91,9 @@ class AuroraConsole():
                     return
                 else:
                     try:
-                        print params['file'][0]
+                        print os.getcwd() + params['file'][0]
                         JFILE = open(params['file'][0], 'r')
+                        print JFILE
                         fileContent = json.load(JFILE)
                         params['file'] = fileContent
                         JFILE.close()
