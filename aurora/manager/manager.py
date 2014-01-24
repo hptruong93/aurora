@@ -13,8 +13,14 @@ import time
 
 from pprint import pprint
 
+#Dispatcher variables
+_MYSQL_HOST = 'localhost'
+_MYSQL_USERNAME = 'root'
+_MYSQL_PASSWORD = 'supersecret'
+_MYSQL_DB = 'aurora'
+
 class Manager():
-    
+ 
     def __init__(self):
         print("Constructing Manager...")
 
@@ -22,10 +28,10 @@ class Manager():
         host = 'localhost'
         username = 'outside_world'
         password = 'wireless_access'
-        self.mysql_host = host
-        self.mysql_username = 'root'
-        self.mysql_password = 'supersecret'
-        self.mysql_db = 'aurora'
+        self.mysql_host = _MYSQL_HOST #host
+        self.mysql_username = _MYSQL_USERNAME #'root'
+        self.mysql_password = _MYSQL_PASSWORD #'supersecret'
+        self.mysql_db = _MYSQL_DB #'aurora'
         
         #Initialize AuroraDB Object
         self.auroraDB = AuroraDB(self.mysql_host, 
