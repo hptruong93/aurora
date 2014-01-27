@@ -69,8 +69,8 @@ class accountingManager():
                 cur_status = cur.fetchone()[0]
 
                 #Check ap slice status in ap_slice_status table
-                row_count = cur.execute("SELECT * FROM ap_slice_status WHERE \
-                                   ap_slice_id=%s", str(unique_id))
+                row_count = cur.execute("SELECT * FROM ap_slice_status WHERE " \
+                                        "ap_slice_id=%s", str(unique_id))
                 if row_count > 0:
                     ap_slice_info = cur.fetchone()
                     pre_status = ap_slice_info[1]
@@ -80,23 +80,23 @@ class accountingManager():
                 #Update ap_slice_status table
                 if cur_status == 'ACTIVE':
                     if row_count == 0:
-                        cur.execute("INSERT INTO ap_slice_status VALUES\
-                                    (%s,%s,'0000',Now(),0)",
+                        cur.execute("INSERT INTO ap_slice_status VALUES " \
+                                    "(%s,%s,'0000',Now(),0)",
                                     (str(unique_id), 'ACTIVE'))
                     else:
-                        cur.execute("UPDATE ap_slice_status SET \
-                                    status='ACTIVE', last_active_time=Now()\
-                                    WHERE ap_slice_id=%s", (str(unique_id)))
+                        cur.execute("UPDATE ap_slice_status SET "\
+                                    "status='ACTIVE', last_active_time=Now() "\
+                                    "WHERE ap_slice_id=%s", (str(unique_id)))
                 else:
                     if row_count > 0 and pre_status == 'ACTIVE':
                         time_diff = datetime.datetime.now() - last_active_time
                         time_active = time_active + time_diff
-                        cur.execute("UPDATE ap_slice_status SET status=%s,\
-                                    time_active=%s WHERE ap_slice_id=%s",
+                        cur.execute("UPDATE ap_slice_status SET status=%s, "\
+                                    "time_active=%s WHERE ap_slice_id=%s",
                                     (cur_status, self.get_time_format(time_active), str(unique_id)))
                     else:
-                        cur.execute("UPDATE ap_slice_status SET status=%s,\
-                                    WHERE ap_slice_id=%s", (cur_status, str(unique_id)))
+                        cur.execute("UPDATE ap_slice_status SET status=%s "\
+                                    "WHERE ap_slice_id=%s", (cur_status, str(unique_id)))
         except Exception, e:
             print "Database Error: " + str(e)
 
