@@ -329,7 +329,7 @@ class AuroraDB():
             sys.exit(1)
 
     def get_wslice_status(self, ap_slice_id):
-        #get ap slice status
+        #get ap slice active time and bytes_sent
         try:
             with self.con:
                 cur = self.con.cursor()
