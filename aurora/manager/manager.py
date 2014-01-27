@@ -594,7 +594,7 @@ class Manager():
                         expression = expression+' AND '+ entry
                     else:
                         expression = entry
-            print " [x] SQL Filter:",expression
+            #print " [x] SQL Filter:",expression
 
             #Execute Query
             try:
