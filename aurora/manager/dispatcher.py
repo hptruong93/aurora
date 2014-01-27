@@ -80,7 +80,7 @@ class Dispatcher():
 
         self.requests_sent.append((unique_id, time, ap_slice_id))
         time.start()
-        print "Starting timer:",self.requests_sent[-1]
+        #print "Starting timer:",self.requests_sent[-1]
         
         print " [x] Dispatch: Unlocking..."
         Dispatcher.lock = False
@@ -110,11 +110,11 @@ class Dispatcher():
             while Dispatcher.lock:
                 pass
 
-        print "channel:",channel
-        print "method:", method
-        print "props:", props
-        print "body:", body
-        print "\nrequests_sent:",self.requests_sent
+        #print "channel:",channel
+        #print "method:", method
+        print props[1]
+        print body
+        #print "\nrequests_sent:",self.requests_sent
         
 
         
@@ -133,7 +133,7 @@ class Dispatcher():
             print(decoded_response['message'])
 
             # Set status, stop timer, delete record
-            print "entry[2]:",entry[2]
+            #print "entry[2]:",entry[2]
             if entry[2] != 'admin':
                 self.resourceMonitor.set_status(entry[2], decoded_response['successful'])
             else:

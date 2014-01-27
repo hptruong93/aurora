@@ -14,12 +14,13 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         if MyHandler.manager == None:
             print "Error: No manager to handle request."
             sys.exit(1)
-        print "\nConstructing MyHandler using", MyHandler.manager
+        #print "\nConstructing MyHandler using", MyHandler.manager
         BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, *args)
     
     # __del__ does not override anything
     def __del__(self):
-        print "Destructing MyHandler"
+        #print "Destructing MyHandler"
+        pass
         
     def do_GET(self):
         self.send_response(200)
@@ -75,7 +76,7 @@ class ManagerServer(BaseHTTPServer.HTTPServer):
 
         # When initialized, handler_class from main is stored in RequestHandlerClass
         self.RequestHandlerClass.manager = self.manager
-        print self.RequestHandlerClass.manager
+        #print self.RequestHandlerClass.manager
         BaseHTTPServer.HTTPServer.serve_forever(self)
     
     def server_close(self):
