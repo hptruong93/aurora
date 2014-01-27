@@ -112,7 +112,7 @@ class Dispatcher():
 
         #print "channel:",channel
         #print "method:", method
-        print props[1]
+        print repr(props)
         print body
         #print "\nrequests_sent:",self.requests_sent
         
