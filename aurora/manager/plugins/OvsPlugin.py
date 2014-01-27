@@ -8,7 +8,8 @@ class OvsPlugin():
     def __init__(self, tenant_id):
         self.tenant_id = tenant_id
         self.bridge_attributes = {
-            'controller':{'listable':True, 'default':'tcp:132.206.206.133'},
+            #'controller':{'listable':True, 'default':'tcp:132.206.206.133'},
+            'controller':{'listable':True, 'default':''},
             'dpid':{'listable':True, 'default':self.default_dpid()}
         }
         self.attributes = {
