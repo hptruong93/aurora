@@ -45,6 +45,7 @@ class Dispatcher():
     
     def on_queue_declared(self, frame):
         self.callback_queue = frame.method.queue
+        print "Callback queue:",self.callback_queue
         self.channel.basic_consume(self.process_response, queue=self.callback_queue)
         
     
