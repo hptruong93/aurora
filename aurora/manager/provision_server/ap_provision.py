@@ -1,6 +1,7 @@
 import BaseHTTPServer
 import json, os
 import threading
+from pprint import pprint
 
 class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
     server_version= "Aurora/0.2"
@@ -69,10 +70,13 @@ def update_last_known_config(ap, config):
         if prev_config['queue'] == ap:
             ap_config_name = F.name
             break
+    print F
     F.close()
     del F
     config['default_config']['init_database'] = config
+    pprint(config)
     with openf(ap_config_name, 'w') as F:
+        print "Dumping config to ", F.name
         json.dump(config, F, indent=4)
         print F.name + " updated for " + ap
     
