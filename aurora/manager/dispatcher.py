@@ -115,11 +115,14 @@ class Dispatcher():
         print repr(props)
         print body
         #print "\nrequests_sent:",self.requests_sent
-
-        if body['successful'] == 'FIN':
-            print body['ap'] + " is shutting down..."
+        
+        # Decode response
+        decoded_response = json.loads(body)
+        
+        if decoded_response['successful'] == 'FIN':
+            print decoded_response['ap'] + " is shutting down..."
             print "Last known config:"
-            print body['config']
+            print decoded_response['config']
             return
         
         for request in self.requests_sent:
@@ -130,8 +133,8 @@ class Dispatcher():
                 
         if have_request:
 
-            # Decode response
-            decoded_response = json.loads(body)
+
+            # decoded_response = json.loads(body)
             
             print(' [x] DEBUG: Printing received message')
             print(decoded_response['message'])
