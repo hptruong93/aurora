@@ -41,12 +41,9 @@ class Dispatcher():
     def channel_open(self, new_channel):
         self.channel = new_channel
         response = self.channel.queue_declare(exclusive=True, durable=True, callback=self.on_queue_declared)
-        print "response",response
-        
     
     def on_queue_declared(self, frame):
         self.callback_queue = frame.method.queue
-        print "Callback queue:",self.callback_queue
         provision.update_reply_queue(self.callback_queue)
         self.channel.basic_consume(self.process_response, queue=self.callback_queue)
     

@@ -75,14 +75,18 @@ class OpenVSwitch:
         # Can't use close for database since it is already closed
         # Socket should already have been removed, but just in case
         try:
+            print "Removing ovs_db", self.database_file.name
             os.remove(self.database_file.name)
         except Exception:
-            pass
+            print "...doesn't exist"
+            #pass
         
         try:
+            print "Removing ovs_socket", self.database_file.name
             os.remove(self.socket_file.name)
         except Exception:
-            pass
+            print "...doesn't exist"
+            #pass
     
     def create_bridge(self, bridge):
         """Create a bridge with the given name."""

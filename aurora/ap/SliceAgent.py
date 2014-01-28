@@ -35,6 +35,9 @@ class SliceAgent:
         if slice in self.database.get_slice_list():
             raise exception.SliceCreationFailed("Slice " + slice  + " already exists!")
         
+        
+        print "Creating slice", slice
+        
         # Create datbase entry
         self.database.create_slice(slice, user)
         self.database.set_active_slice(slice)
@@ -113,14 +116,16 @@ class SliceAgent:
     def delete_slice(self, slice):
         """Delete a given slice, and ignore any errors that occur in
         the process in case a slice is corrupted."""
-        
+        print "Deleting slice", slice
         try:
             slice_data = self.database.get_slice_data(slice)
             self.database.set_active_slice(slice)
         except KeyError:
             # If slice does not exist, ignore
-            pass
+            print "...does not exist"
+            #pass
         else:   
+            
             # Delete all bridges
             for bridge in slice_data['VirtualBridges']:
                 try:

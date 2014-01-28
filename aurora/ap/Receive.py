@@ -127,7 +127,7 @@ class Receive():
 
     def shutdown_signal_received(self):
         current_database = self.agent.database.list_all()
-        print "Sending current database"
+        print "Sending current database..."
         print current_database
         data_for_sender = {'successful':'FIN', 'message': current_database, 'ap': self.queue}
         data_for_sender = json.dumps(data_for_sender)
@@ -180,7 +180,7 @@ if __name__ == '__main__':
     #    receiver.channel.basic_cancel()
     #    receiver.connection.ioloop.stop()
         receiver.shutdown_signal_received()
-        time.sleep(5)
+        time.sleep(1)
         receiver.connection.close()
         print("Connections closed.  Cleaning up and exiting.")
 
