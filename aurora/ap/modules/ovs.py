@@ -41,8 +41,8 @@ class OpenVSwitch:
         # Close the files since we won't be writing to them
         # Also, tools like ovsdb-tool won't overwrite existing files
         # We are simply using temporary files to generate random names that don't conflict
-        self.database_file.close()
-        self.socket_file.close()
+        #self.database_file.close()
+        #self.socket_file.close()
 
         # Create database in temporary file
         # Will raise exception if it fails
