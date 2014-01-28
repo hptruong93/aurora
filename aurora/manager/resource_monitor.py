@@ -175,7 +175,7 @@ class resourceMonitor():
         finally:
             resourceMonitor.sql_locked = False
 
-        self.accountingManager.update_status(unique_id, ap_up)
+        self.accountingManager.update_status(unique_id, ap_up, ap_name)
 
     def reset_AP(self, ap):
         """Reset the access point.  If there are serious issues, however,
