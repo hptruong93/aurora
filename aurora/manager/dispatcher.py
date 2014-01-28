@@ -120,7 +120,6 @@ class Dispatcher():
             print body['ap'] + " is shutting down..."
             print "Last known config:"
             print body['config']
-            channel.basic_ack(delivery_tag = method.delivery_tag)
             return
         
         for request in self.requests_sent:
