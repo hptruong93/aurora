@@ -119,9 +119,12 @@ class Dispatcher():
         decoded_response = json.loads(body)
         
         if decoded_response['message'] == 'FIN':
-            print decoded_response['ap'] + " is shutting down..."
+            ap_name = decoded_response['ap']
+            print ap_name + " is shutting down..."
             try:
-                self.resourceMonitor.set_status(None, None, False, decoded_response['ap'])
+                self.resourceMonitor.set_status(None, None, False, ap_name)
+                print "Updating config files..."
+                self.provision.update_last_known_config(ap_name, decoded_response['config'])
             except Exception as e:
                 print e.message
             print "Last known config:"

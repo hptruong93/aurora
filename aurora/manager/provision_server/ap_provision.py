@@ -60,7 +60,7 @@ def update_reply_queue(reply_queue):
         with open(fname, 'w') as CONFIG_FILE:
             json.dump(config, CONFIG_FILE, indent=4)   
 
-def update_last_known_status(ap, config):
+def update_last_known_config(ap, config):
     flist = get_json_files()
     ap_config_name = None
     for fname in flist:
