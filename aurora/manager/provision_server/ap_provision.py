@@ -1,5 +1,5 @@
 import BaseHTTPServer
-import json
+import json, os
 import threading
 
 class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
@@ -42,6 +42,15 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
 handler_class = MyHandler
 server_address = ('', 5555)
 server = BaseHTTPServer.HTTPServer(server_address, handler_class)
+
+def update_reply_queue(reply_queue):
+    paths = os.listdir("./")
+    result = []
+    for fname in paths:
+        if fname.endswith(".json"):
+            result.append(fname)
+    print result
+    
 
 def run():
     print "Starting provision server..."
