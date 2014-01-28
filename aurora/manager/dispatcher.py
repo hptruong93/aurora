@@ -124,7 +124,7 @@ class Dispatcher():
         if decoded_response['successful'] == 'FIN':
             print decoded_response['ap'] + " is shutting down..."
             print "Last known config:"
-            print decoded_response['config']
+            print decoded_response['message']
             return
         
         for request in self.requests_sent:

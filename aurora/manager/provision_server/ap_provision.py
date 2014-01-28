@@ -46,7 +46,6 @@ server = BaseHTTPServer.HTTPServer(server_address, handler_class)
 def update_reply_queue(reply_queue):
     provision_dir = "provision_server"
     paths = os.listdir(provision_dir)
-    print "paths", paths
     result = []
     for fname in paths:
         if fname.endswith(".json"):
