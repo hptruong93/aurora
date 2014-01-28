@@ -36,8 +36,8 @@ class OpenVSwitch:
     
     def start(self):
         """Start required ovs daemons."""
-        self.database_file = tempfile.NamedTemporaryFile()
-        self.socket_file = tempfile.NamedTemporaryFile()
+        self.database_file = tempfile.NamedTemporaryFile(delete=False)
+        self.socket_file = tempfile.NamedTemporaryFile(delete=False)
         # Close the files since we won't be writing to them
         # Also, tools like ovsdb-tool won't overwrite existing files
         # We are simply using temporary files to generate random names that don't conflict
