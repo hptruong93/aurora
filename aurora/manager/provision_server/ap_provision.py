@@ -73,7 +73,7 @@ def update_last_known_config(ap, config):
     print F
     F.close()
     del F
-    config = json.dump(config)
+    config = json.dumps(config)
     prev_config['default_config']['init_database'] = config
     config = prev_config
     pprint(config)
