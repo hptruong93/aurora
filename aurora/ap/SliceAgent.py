@@ -245,10 +245,11 @@ class SliceAgent:
         # Clear out all slices
         for slice in self.database.get_slice_list():
             self.delete_slice(slice)
-            
+        
+        print "Slices deleted, resetting...
         # Execute any specific reset functions
         # Usually, these need to be executed AFTER we 
         # finish using the class to delete stuff
         self.v_bridges.reset()
         self.v_interfaces.reset()
-        return "RESETTING"
+        return "AP reset"
