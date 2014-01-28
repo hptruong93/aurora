@@ -62,7 +62,9 @@ class accountingManager():
                 print "Database Error: " + str(e)
 
     def update_apslice(self, unique_id):
-        print "update status"
+        #TODO: Add checking so this doesn't execute for 
+        #archived slices with "DELETED" status
+        #print "update status"
         try:
             with self.con:
                 cur = self.con.cursor()
