@@ -1,6 +1,6 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
-import sys, json, threading, traceback, os, signal
+import sys, json, threading, traceback, os, signal, time
 import install_dependencies
 
 try:
@@ -122,8 +122,6 @@ class Receive():
         self.channel.basic_publish(exchange='', routing_key=self.queue,
                                     properties=pika.BasicProperties(content_type="application/json"),
                                     body=data_for_sender)
-        receiver.connection.close()
-        print("Connections closed.  Cleaning up and exiting.")
 
 # Executed when run from the command line.
 # *** NORMAL USAGE ***        
@@ -169,6 +167,9 @@ if __name__ == '__main__':
     #    receiver.channel.basic_cancel()
     #    receiver.connection.ioloop.stop()
         receiver.shutdown_signal_received()
+        time.sleep(5)
+        receiver.connection.close()
+        print("Connections closed.  Cleaning up and exiting.")
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.pause()
