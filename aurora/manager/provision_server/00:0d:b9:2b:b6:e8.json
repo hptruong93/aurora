@@ -1,28 +1,38 @@
 {
-    "rabbitmq_password": "let_me_in", 
-    "rabbitmq_username": "access_point", 
-    "rabbitmq_host": "10.5.8.3", 
-    "queue": "openflow2", 
-    "rabbitmq_reply_queue": "amq.gen-nVq5pkrStdmGczskQoMM3g", 
-    "default_config": {
-        "init_hardware_database": {
-            "memory_mb": "256", 
-            "firmware_version": "r39154", 
-            "firmware": "OpenWRT", 
-            "wifi_radio": {
-                "number_radio_free": "0", 
-                "max_bss_per_radio": "4", 
-                "radio_list": [], 
-                "number_radio": "0"
-            }, 
-            "aurora_version": "0.2"
-        }, 
-        "init_database": "{u'cdee7914-2d9f-4375-8ff5-1f79354c0ba5': {'RadioInterfaces': [{'attributes': {u'channel': u'1',\n                                                                               u'country': u'CA',\n                                                                               u'disabled': u'0',\n                                                                               u'hwmode': u'abg',\n                                                                               u'name': u'radio0',\n                                                                               u'txpower': u'20'},\n                                                                'flavor': 'wifi_radio'},\n                                                               {'attributes': {u'encryption_type': u'wep-open',\n                                                                               u'if_name': u'wlan0',\n                                                                               u'key': u'12345',\n                                                                               u'name': u'MK',\n                                                                               u'radio': u'radio0'},\n                                                                'flavor': 'wifi_bss'}],\n                                           'VirtualBridges': [{'attributes': {'bridge_settings': {},\n                                                                              'interfaces': [u'vwlan0',\n                                                                                             u'veth0'],\n                                                                              'name': u'linux-br',\n                                                                              'port_settings': {u'veth0': {},\n                                                                                                u'vwlan0': {}}},\n                                                               'flavor': 'linux_bridge'}],\n                                           'VirtualInterfaces': [{'attributes': {u'attach_to': u'eth0',\n                                                                                 u'name': u'veth0'},\n                                                                  'flavor': u'veth'},\n                                                                 {'attributes': {u'attach_to': u'wlan0',\n                                                                                 u'name': u'vwlan0'},\n                                                                  'flavor': u'veth'}]},\n u'default_slice': {u'RadioInterfaces': [],\n                    u'VirtualBridges': [],\n                    u'VirtualInterfaces': []}}", 
-        "init_user_id_database": {
-            "default_user": [
-                "default_slice"
-            ]
-        }, 
-        "default_active_slice": "default_slice"
+    "queue": "openflow2",
+    "rabbitmq_username" : "access_point",
+    "rabbitmq_password" : "let_me_in",
+    "rabbitmq_host" : "10.5.8.3",
+    "default_config" : 
+    {
+        "init_hardware_database" : 
+        {
+            "firmware":"OpenWRT",
+            "firmware_version":"r39154",
+            "aurora_version":"0.2",
+            "memory_mb":"256",
+            "wifi_radio":
+            {
+                "number_radio":"0",
+                "number_radio_free":"0",
+                "max_bss_per_radio" : "4",
+                "radio_list":[]  
+            }
+        },
+        "init_database" : 
+        {
+            "default_slice": 
+            {
+            "VirtualInterfaces": [],
+            "VirtualBridges": [],
+            "RadioInterfaces" : []
+            }
+        },
+        "default_active_slice" : "default_slice",
+        "init_user_id_database" :
+        {
+            "default_user" : ["default_slice"]
+        }
     }
+        
 }

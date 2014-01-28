@@ -122,7 +122,7 @@ class Receive():
                                     body=data_for_sender)
 
     def shutdown_signal_received(self):
-        current_database = self.agent.database.list_all()
+        current_database = self.agent.database.list_all(as_json=True)
         print "Sending current database..."
         print current_database
         data_for_sender = {'successful':True, 'message': 'FIN', 'config': current_database, 'ap': self.queue}
