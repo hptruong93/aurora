@@ -103,7 +103,10 @@ class OpenVSwitch:
     
     def delete_bridge(self, bridge):
         """Delete a bridge with the given name."""
-        self.__exec_command(["del-br", bridge])
+        if os.path.isfile(bridge):
+            self.__exec_command(["del-br", bridge])
+        else:
+            print bridge + " does not exist, maybe it was already killed."
         self.database.delete_entry("VirtualBridges", bridge)
     
     def modify_bridge(self, bridge, command, parameters=None):

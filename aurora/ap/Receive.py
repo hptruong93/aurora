@@ -171,7 +171,7 @@ if __name__ == '__main__':
 
     listener = threading.Thread(target=receiver.connection.ioloop.start)
     listener.start()
-    clean_exit = False
+
     # Thanks to Matt J http://stackoverflow.com/a/1112350
     def signal_handler(signal, frame):
         # Be nice and let the ioloop know it's time to go
@@ -180,11 +180,12 @@ if __name__ == '__main__':
         receiver.shutdown_signal_received()
         time.sleep(1)
         receiver.connection.close()
-        del receiver
         print("Connections closed.  Cleaning up and exiting.")
-        clean_exit = True
-
     signal.signal(signal.SIGINT, signal_handler)
     signal.pause()
-    while not clean_exit:
-        pass
+
+        
+        
+        
+        
+    
