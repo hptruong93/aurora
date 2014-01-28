@@ -79,10 +79,10 @@ class Receive():
         and returns data or an error message if needed."""
         print "Receiving..."
         
-        print channel
-        print method
-        print header
-        print body
+        #print channel
+        #print method
+        #print header
+        #print body
         
         
         # Convert data to JSON
