@@ -124,7 +124,7 @@ class Dispatcher():
             try:
                 self.resourceMonitor.set_status(None, None, False, ap_name)
                 print "Updating config files..."
-                self.provision.update_last_known_config(ap_name, decoded_response['config'])
+                provision.update_last_known_config(ap_name, decoded_response['config'])
             except Exception as e:
                 print e.message
             print "Last known config:"
