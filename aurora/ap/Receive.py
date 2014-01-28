@@ -40,6 +40,7 @@ class Receive():
         # Init AP code, pass along any initialization configuration
         self.agent = SliceAgent.SliceAgent(config)
         self.queue = queue
+        self.manager_queue = None
 
         # Connect to RabbitMQ (Step #1)
         credentials = pika.PlainCredentials(rabbitmq_username, rabbitmq_password)
@@ -86,6 +87,10 @@ class Receive():
         
         # Convert data to JSON
         message = json.loads(body)
+        
+        if message['command'] == 'init':
+            self.manager_queue = message['reply_queue']
+            return
 
         # Prepare JSON data to return
         data_for_sender = {'successful': False, 'message': None, 'ap': self.queue}
@@ -126,7 +131,7 @@ class Receive():
         print current_database
         data_for_sender = {'successful':'FIN', 'message': current_database, 'ap': self.queue}
         data_for_sender = json.dumps(data_for_sender)
-        self.channel.basic_publish(exchange='', routing_key=self.queue,
+        self.channel.basic_publish(exchange='', routing_key=self.manager_queue,
                                     properties=pika.BasicProperties(content_type="application/json"),
                                     body=data_for_sender)
 
