@@ -85,7 +85,7 @@ class OpenVSwitch:
             #pass
         
         try:
-            print "Removing ovs_socket", self.database_file.name
+            print "Removing ovs_socket", self.socket_file.name
             os.remove(self.socket_file.name)
         except Exception:
             print "...doesn't exist"
