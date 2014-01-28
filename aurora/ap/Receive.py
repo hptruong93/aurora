@@ -31,7 +31,7 @@ class Receive():
     only this file need be executed on the machine - it will import
     the rest of Aurora and pass the commands along."""
 
-    def __init__(self, queue, config, rabbitmq_host, rabbitmq_username, rabbitmq_password):
+    def __init__(self, queue, config, rabbitmq_host, rabbitmq_username, rabbitmq_password, rabbitmq_reply_queue):
         """Connects to RabbitMQ and initializes Aurora locally."""
 
         # Run Pika logger so that error messages get printed
@@ -40,7 +40,7 @@ class Receive():
         # Init AP code, pass along any initialization configuration
         self.agent = SliceAgent.SliceAgent(config)
         self.queue = queue
-        self.manager_queue = None
+        self.manager_queue = rabbitmq_reply_queue
 
         # Connect to RabbitMQ (Step #1)
         credentials = pika.PlainCredentials(rabbitmq_username, rabbitmq_password)
@@ -162,13 +162,14 @@ if __name__ == '__main__':
     username = config_full['rabbitmq_username']
     password = config_full['rabbitmq_password']
     rabbitmq_host = config_full['rabbitmq_host']
+    rabbitmq_reply_queue = config_full['rabbitmq_reply_queue']
 
     if queue == None:
         raise Exception("AP identifier specified is not valid.")
 
     print("Joining queue %s" % queue)
     # Establish connection, start listening for commands
-    receiver = Receive(queue, config, rabbitmq_host, username, password)
+    receiver = Receive(queue, config, rabbitmq_host, username, password, rabbitmq_reply_queue)
 
     listener = threading.Thread(target=receiver.connection.ioloop.start)
     listener.start()

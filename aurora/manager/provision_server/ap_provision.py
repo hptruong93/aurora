@@ -44,13 +44,20 @@ server_address = ('', 5555)
 server = BaseHTTPServer.HTTPServer(server_address, handler_class)
 
 def update_reply_queue(reply_queue):
-    paths = os.listdir("./")
+    provision_dir = "provision_server"
+    paths = os.listdir(provision_dir)
+    print "paths", paths
     result = []
     for fname in paths:
         if fname.endswith(".json"):
-            result.append(fname)
-    print result
-    
+            result.append(os.path.join(provision_dir, fname))
+            
+    for fname in result:
+        with open(fname, 'r') as CONFIG_FILE:
+            config = json.load(CONFIG_FILE)
+        config['rabbitmq_reply_queue'] = reply_queue
+        with open(fname, 'w') as CONFIG_FILE:
+            json.dump(config, CONFIG_FILE, indent=4)   
 
 def run():
     print "Starting provision server..."
