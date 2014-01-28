@@ -110,8 +110,8 @@ class Dispatcher():
             while Dispatcher.lock:
                 pass
 
-        #print "channel:",channel
-        #print "method:", method
+        print "channel:",channel
+        print "method:", method
         print repr(props)
         print body
         #print "\nrequests_sent:",self.requests_sent
