@@ -113,7 +113,7 @@ class Receive():
 
             print(" [x] Command executed")
 
-        data_for_sender['config'] = self.agent.database
+        data_for_sender['config'] = self.agent.database.database
         print data_for_sender
         data_for_sender = json.dumps(data_for_sender)
         # Send response
@@ -123,7 +123,7 @@ class Receive():
                                     body=data_for_sender)
 
     def shutdown_signal_received(self):
-        current_database = self.agent.database
+        current_database = self.agent.database.database
         print "Sending current database..."
         print current_database
         data_for_sender = {'successful':True, 'message': 'FIN', 'config': current_database, 'ap': self.queue}
