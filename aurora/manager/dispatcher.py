@@ -47,9 +47,11 @@ class Dispatcher():
         self.callback_queue = frame.method.queue
         print "Callback queue:",self.callback_queue
         self.channel.basic_consume(self.process_response, queue=self.callback_queue)
+        
+        # Tell the AP where it can send its 'FIN' message upon shutdown
         message = {"command":"init","reply_queue":self.callback_queue}
-        self.self.channel.basic_publish(exchange='', routing_key=ap, body=message, 
-                                        properties=pika.BasicProperties(content_type="application/json"))
+        self.channel.basic_publish(exchange='', routing_key=ap, body=message, 
+                                   properties=pika.BasicProperties(content_type="application/json"))
         
     
     def on_connected(self, connection):
