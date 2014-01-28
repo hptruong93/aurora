@@ -73,7 +73,8 @@ def update_last_known_config(ap, config):
     print F
     F.close()
     del F
-    config['default_config']['init_database'] = config
+    prev_config['default_config']['init_database'] = config
+    config = prev_config
     pprint(config)
     with openf(ap_config_name, 'w') as F:
         print "Dumping config to ", F.name
