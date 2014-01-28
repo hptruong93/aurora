@@ -114,6 +114,7 @@ class Receive():
             print(" [x] Command executed")
 
         data_for_sender['config'] = self.agent.database.list_all(as_json=True)
+        print data_for_sender
         data_for_sender = json.dumps(data_for_sender)
         # Send response
         self.channel.basic_publish(exchange='', routing_key=header.reply_to,
