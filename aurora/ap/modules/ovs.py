@@ -37,8 +37,8 @@ class OpenVSwitch:
     
     def start(self):
         """Start required ovs daemons."""
-        self.database_file = open(tempfile.NamedTemporaryFile().name + '1','w')
-        self.socket_file = open(tempfile.NamedTemporaryFile().name + '1','w')
+        self.database_file = tempfile.NamedTemporaryFile()
+        self.socket_file = tempfile.NamedTemporaryFile()
         print self.database_file
         print self.socket_file
         # Close the files since we won't be writing to them
