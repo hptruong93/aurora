@@ -119,9 +119,8 @@ class Receive():
         print current_database
         data_for_sender = {'successful':'FIN', 'message': current_database, 'ap': self.queue}
         data_for_sender = json.dumps(data_for_sender)
-        self.channel.basic_publish(exchange='', routing_key=header.reply_to,
-                                    properties=pika.BasicProperties(correlation_id=header.correlation_id,
-                                                                    content_type="application/json"),
+        self.channel.basic_publish(exchange='', routing_key=self.queue,
+                                    properties=pika.BasicProperties(content_type="application/json"),
                                     body=data_for_sender)
         receiver.connection.close()
         print("Connections closed.  Cleaning up and exiting.")
