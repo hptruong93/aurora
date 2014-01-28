@@ -76,7 +76,7 @@ def update_last_known_config(ap, config):
     prev_config['default_config']['init_database'] = config
     config = prev_config
     pprint(config)
-    with openf(ap_config_name, 'w') as F:
+    with open(ap_config_name, 'w') as F:
         print "Dumping config to ", F.name
         json.dump(config, F, indent=4)
         print F.name + " updated for " + ap
