@@ -33,7 +33,7 @@
                     "interfaces":
                         ["vwlan0","veth0"],
                     "bridge_settings":{
-                        "controller":"0"
+                        "controller":["0"]
                     },
                     "port_settings":{}
                 }

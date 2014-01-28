@@ -113,6 +113,18 @@ class Receive():
                                                                     content_type="application/json"),
                                     body=data_for_sender)
 
+    def shutdown_signal_received(self):
+        current_database = self.agent.database.list_all()
+        print "Sending current database"
+        print current_database
+        data_for_sender = {'successful':'FIN', 'message': current_database, 'ap': self.queue}
+        data_for_sender = json.dumps(data_for_sender)
+        self.channel.basic_publish(exchange='', routing_key=header.reply_to,
+                                    properties=pika.BasicProperties(correlation_id=header.correlation_id,
+                                                                    content_type="application/json"),
+                                    body=data_for_sender)
+        receiver.connection.close()
+        print("Connections closed.  Cleaning up and exiting.")
 
 # Executed when run from the command line.
 # *** NORMAL USAGE ***        
@@ -157,8 +169,7 @@ if __name__ == '__main__':
         # Be nice and let the ioloop know it's time to go
     #    receiver.channel.basic_cancel()
     #    receiver.connection.ioloop.stop()
-        receiver.connection.close()
-        print("Connections closed.  Cleaning up and exiting.")
+        receiver.shutdown_signal_received()
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.pause()

@@ -115,8 +115,13 @@ class Dispatcher():
         print repr(props)
         print body
         #print "\nrequests_sent:",self.requests_sent
-        
 
+        if body['successful'] == 'FIN':
+            print body['ap'] + " is shutting down..."
+            print "Last known config:"
+            print body['config']
+            channel.basic_ack(delivery_tag = method.delivery_tag)
+            return
         
         for request in self.requests_sent:
             if request[0] == props.correlation_id:
