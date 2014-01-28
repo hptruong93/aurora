@@ -121,7 +121,7 @@ class Dispatcher():
         if decoded_response['message'] == 'FIN':
             print decoded_response['ap'] + " is shutting down..."
             try:
-                self.resourceMonitor.set_status(None, None, False, decoded_response['ap']):
+                self.resourceMonitor.set_status(None, None, False, decoded_response['ap'])
             except Exception as e:
                 print e.message
             print "Last known config:"

@@ -125,7 +125,7 @@ class Receive():
         current_database = self.agent.database.list_all()
         print "Sending current database..."
         print current_database
-        data_for_sender = {'successful':'FIN', 'message': None, 'config': current_database, 'ap': self.queue}
+        data_for_sender = {'successful':True, 'message': 'FIN', 'config': current_database, 'ap': self.queue}
         data_for_sender = json.dumps(data_for_sender)
         self.channel.basic_publish(exchange='', routing_key=self.manager_queue,
                                     properties=pika.BasicProperties(content_type="application/json"),
