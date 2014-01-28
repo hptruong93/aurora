@@ -41,6 +41,7 @@ class Dispatcher():
     def channel_open(self, new_channel):
         self.channel = new_channel
         response = self.channel.queue_declare(exclusive=True, durable=True, callback=self.on_queue_declared)
+        print response
         
     
     def on_queue_declared(self, frame):
