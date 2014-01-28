@@ -28,7 +28,23 @@ class SliceAgent:
         # Clean up on exit
         atexit.register(self.__reset)
 
+    def __find_main_slice(config):
+        for slice, attributes in config["init_database"].iteritems():
+            for item in attributes["RadioInterfaces"]
+                if item["flavor"] == "wifi_radio":
+                    return slice
+        return None
 
+    def __setup_existing_slices(self, config):
+        main_slice = __find_main_slice(config)
+        if not main_slice:
+            # No slices configured
+            self.database = Database.Database(config)
+        else:
+            pass
+            #Set up slices
+            #self.create_slice(main_slice   UNFINISHED
+    
     def create_slice(self, slice, user, config):
         """Create a slice with the given confiuration.
         Will raise exceptions if errors are encountered."""
