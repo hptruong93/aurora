@@ -83,14 +83,12 @@ class Receive():
         #print method
         #print header
         #print body
+        if header.reply_to != self.manager_queue:
+            self.manager_queue = header.reply_to
         
         
         # Convert data to JSON
         message = json.loads(body)
-        
-        if message['command'] == 'init':
-            self.manager_queue = message['reply_queue']
-            return
 
         # Prepare JSON data to return
         data_for_sender = {'successful': False, 'message': None, 'ap': self.queue}
