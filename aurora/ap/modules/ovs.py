@@ -9,7 +9,7 @@
 # and format the command line.  The current parsing is done as simple if statements,
 # but more complicated cases (i.e. optional parameters) can easily be added.
 
-import tempfile, subprocess, psutil
+import tempfile, subprocess, psutil, os
 import exception
 class OpenVSwitch:
     """OpenVSwitch module.  Controls the OpenVSwitch daemon, allowing
@@ -23,6 +23,7 @@ class OpenVSwitch:
     
     def __init__(self, database):
         self.database = database
+        
         self.start()
     
     def __exec_command(self, args):
@@ -36,8 +37,8 @@ class OpenVSwitch:
     
     def start(self):
         """Start required ovs daemons."""
-        self.database_file = open("/tmp/" + tempfile.NamedTemporaryFile().name + '1','w')
-        self.socket_file = open("/tmp/" + tempfile.NamedTemporaryFile().name + '1','w')
+        self.database_file = open(tempfile.NamedTemporaryFile().name + '1','w')
+        self.socket_file = open(tempfile.NamedTemporaryFile().name + '1','w')
         print self.database_file
         print self.socket_file
         # Close the files since we won't be writing to them
