@@ -42,21 +42,43 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
 handler_class = MyHandler
 server_address = ('', 5555)
 server = BaseHTTPServer.HTTPServer(server_address, handler_class)
-
-def update_reply_queue(reply_queue):
+def get_json_files():
     provision_dir = "provision_server"
     paths = os.listdir(provision_dir)
     result = []
     for fname in paths:
         if fname.endswith(".json"):
             result.append(os.path.join(provision_dir, fname))
-            
-    for fname in result:
+    return result
+
+def update_reply_queue(reply_queue):
+    flist = get_json_files()
+    for fname in flist:
         with open(fname, 'r') as CONFIG_FILE:
             config = json.load(CONFIG_FILE)
         config['rabbitmq_reply_queue'] = reply_queue
         with open(fname, 'w') as CONFIG_FILE:
             json.dump(config, CONFIG_FILE, indent=4)   
+
+def update_last_known_status(ap, config):
+    flist = get_json_files()
+    ap_config_name = None
+    for fname in flist:
+        F = open(fname, 'r'):
+        prev_config = json.load(F)
+        if prev_config['queue'] == ap:
+            ap_config_name = F.name
+            break
+    F.close()
+    del F
+    config['default_config']['init_database'] = config
+    with openf(ap_config_name, 'w') as F:
+        json.dump(config, F, indent=4)
+        print F.name + " updated for " + ap
+    
+    
+                
+    
 
 def run():
     print "Starting provision server..."
