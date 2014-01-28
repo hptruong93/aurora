@@ -45,7 +45,7 @@ class accountingManager():
                     else:
                         raise Exception("Cannot fetch physical_ap for slice=%s\n" % unique_id)
                     #Get all slices associated with this ap
-                    cur.execute("SELECT ap_slice_id FROM ap_sice WHERE physical_ap=%s", str(physical_ap))
+                    cur.execute("SELECT ap_slice_id FROM ap_slice WHERE physical_ap=%s", str(physical_ap))
                     raw_list = cur.fetchall()
                     if raw_list:
                         slice_list = []
