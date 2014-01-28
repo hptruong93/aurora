@@ -77,6 +77,13 @@ class Receive():
         """Called when we receive a message from RabbitMQ.  Executes the command received
         and returns data or an error message if needed."""
         print "Receiving..."
+        
+        print channel
+        print method
+        print header
+        print body
+        
+        
         # Convert data to JSON
         message = json.loads(body)
 
