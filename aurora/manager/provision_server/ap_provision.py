@@ -64,7 +64,7 @@ def update_last_known_status(ap, config):
     flist = get_json_files()
     ap_config_name = None
     for fname in flist:
-        F = open(fname, 'r'):
+        F = open(fname, 'r')
         prev_config = json.load(F)
         if prev_config['queue'] == ap:
             ap_config_name = F.name
