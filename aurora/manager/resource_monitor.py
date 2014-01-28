@@ -58,7 +58,7 @@ class resourceMonitor():
 
 
 
-    def set_status(self, unique_id, success, ap_up=True):
+    def set_status(self, unique_id, success, ap_up=True, ap_name = None):
         """Sets the status of the associated request in the
         database based on the previous status, i.e. pending -> active if
         create slice, deleting -> deleted if deleting a slice, etc.
@@ -120,14 +120,17 @@ class resourceMonitor():
 
                 # Access point down, mark all slices and failed/down
                 else:
-                    to_execute = "SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'"
-                    print to_execute
-                    cur.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-                    physical_ap = cur.fetchone()
-                    if physical_ap:
-                        physical_ap = physical_ap[0]
+                    if ap_name:
+                        physical_ap = ap_name
                     else:
-                        raise Exception("Cannot fetch physical_ap for slice %s\n" % unique_id)
+                        to_execute = "SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'"
+                        print to_execute
+                        cur.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'")
+                        physical_ap = cur.fetchone()
+                        if physical_ap:
+                            physical_ap = physical_ap[0]
+                        else:
+                            raise Exception("Cannot fetch physical_ap for slice %s\n" % unique_id)
 
                     print "physical_ap:",physical_ap
                     #Get all slices associated with this ap

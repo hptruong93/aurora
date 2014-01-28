@@ -91,7 +91,7 @@ class Receive():
         message = json.loads(body)
 
         # Prepare JSON data to return
-        data_for_sender = {'successful': False, 'message': None, 'ap': self.queue}
+        data_for_sender = {'successful': False, 'message': None, 'config': None, 'ap': self.queue}
 
         # Execute the command specified
         try:
@@ -99,10 +99,8 @@ class Receive():
 
         # If there is an error, let the sender know    
         except Exception as e:
-
             # Finalize message and convert to JSON
             data_for_sender['message'] = traceback.format_exc()
-            data_for_sender = json.dumps(data_for_sender)
 
             print(" [x] Error; command " + message["command"] + " failed\n" + e.message)
 
@@ -112,11 +110,11 @@ class Receive():
             # Finalize message and convert to JSON
             data_for_sender['successful'] = True
             data_for_sender['message'] = return_data
-            data_for_sender = json.dumps(data_for_sender)
 
             print(" [x] Command executed")
 
-
+        data_for_sender['config'] = self.agent.database.list_all()
+        data_for_sender = json.dumps(data_for_sender)
         # Send response
         self.channel.basic_publish(exchange='', routing_key=header.reply_to,
                                     properties=pika.BasicProperties(correlation_id=header.correlation_id,
@@ -127,7 +125,7 @@ class Receive():
         current_database = self.agent.database.list_all()
         print "Sending current database..."
         print current_database
-        data_for_sender = {'successful':'FIN', 'message': current_database, 'ap': self.queue}
+        data_for_sender = {'successful':'FIN', 'message': None, 'config': current_database, 'ap': self.queue}
         data_for_sender = json.dumps(data_for_sender)
         self.channel.basic_publish(exchange='', routing_key=self.manager_queue,
                                     properties=pika.BasicProperties(content_type="application/json"),

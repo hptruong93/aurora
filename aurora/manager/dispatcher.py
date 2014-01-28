@@ -118,10 +118,14 @@ class Dispatcher():
         # Decode response
         decoded_response = json.loads(body)
         
-        if decoded_response['successful'] == 'FIN':
+        if decoded_response['message'] == 'FIN':
             print decoded_response['ap'] + " is shutting down..."
+            try:
+                self.resourceMonitor.set_status(None, None, False, decoded_response['ap']):
+            except Exception as e:
+                print e.message
             print "Last known config:"
-            print decoded_response['message']
+            print decoded_response['config']
             return
         
         for request in self.requests_sent:
