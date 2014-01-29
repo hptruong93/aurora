@@ -9,7 +9,7 @@
 # and format the command line.  The current parsing is done as simple if statements,
 # but more complicated cases (i.e. optional parameters) can easily be added.
 
-import tempfile, subprocess, psutil
+import tempfile, subprocess, psutil, os
 import exception
 class OpenVSwitch:
     """OpenVSwitch module.  Controls the OpenVSwitch daemon, allowing
@@ -23,6 +23,7 @@ class OpenVSwitch:
     
     def __init__(self, database):
         self.database = database
+        
         self.start()
     
     def __exec_command(self, args):
@@ -38,6 +39,8 @@ class OpenVSwitch:
         """Start required ovs daemons."""
         self.database_file = tempfile.NamedTemporaryFile()
         self.socket_file = tempfile.NamedTemporaryFile()
+        print self.database_file
+        print self.socket_file
         # Close the files since we won't be writing to them
         # Also, tools like ovsdb-tool won't overwrite existing files
         # We are simply using temporary files to generate random names that don't conflict
@@ -75,14 +78,18 @@ class OpenVSwitch:
         # Can't use close for database since it is already closed
         # Socket should already have been removed, but just in case
         try:
+            print "Removing ovs_db", self.database_file.name
             os.remove(self.database_file.name)
         except Exception:
-            pass
+            print "...doesn't exist"
+            #pass
         
         try:
+            print "Removing ovs_socket", self.socket_file.name
             os.remove(self.socket_file.name)
         except Exception:
-            pass
+            print "...doesn't exist"
+            #pass
     
     def create_bridge(self, bridge):
         """Create a bridge with the given name."""
@@ -96,7 +103,10 @@ class OpenVSwitch:
     
     def delete_bridge(self, bridge):
         """Delete a bridge with the given name."""
-        self.__exec_command(["del-br", bridge])
+        if os.path.isfile(bridge):
+            self.__exec_command(["del-br", bridge])
+        else:
+            print bridge + " does not exist, maybe it was already killed."
         self.database.delete_entry("VirtualBridges", bridge)
     
     def modify_bridge(self, bridge, command, parameters=None):

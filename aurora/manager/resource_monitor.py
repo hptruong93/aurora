@@ -1,6 +1,6 @@
 import MySQLdb as mdb
 import atexit
-import sys
+import sys, uuid
 import accountingManager
 
 
@@ -56,9 +56,13 @@ class resourceMonitor():
         # but all slices should already be marked
         # as deleted, down or failed, so there will not be any issue
 
+    def update_records(self, message):
+        """Update the traffic information of each ap slice"""
 
+        # DEBUG
+        print message
 
-    def set_status(self, unique_id, success, ap_up=True):
+    def set_status(self, unique_id, success, ap_up=True, ap_name = None):
         """Sets the status of the associated request in the
         database based on the previous status, i.e. pending -> active if
         create slice, deleting -> deleted if deleting a slice, etc.
@@ -115,19 +119,27 @@ class resourceMonitor():
                         else:
                             cur.execute("UPDATE ap_slice SET status='FAILED' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
 
+                    elif status == 'DOWN':
+                        if success:
+                            cur.execute("UPDATE ap_slice SET status='ACTIVE' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
+                        else:
+                            cur.execute("UPDATE ap_slice SET status='FAILED' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
                     else:
                         print("Unknown Status, ignoring...")
 
                 # Access point down, mark all slices and failed/down
                 else:
-                    to_execute = "SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'"
-                    print to_execute
-                    cur.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-                    physical_ap = cur.fetchone()
-                    if physical_ap:
-                        physical_ap = physical_ap[0]
+                    if ap_name:
+                        physical_ap = ap_name
                     else:
-                        raise Exception("Cannot fetch physical_ap for slice %s\n" % unique_id)
+                        to_execute = "SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'"
+                        print to_execute
+                        cur.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'")
+                        physical_ap = cur.fetchone()
+                        if physical_ap:
+                            physical_ap = physical_ap[0]
+                        else:
+                            raise Exception("Cannot fetch physical_ap for slice %s\n" % unique_id)
 
                     print "physical_ap:",physical_ap
                     #Get all slices associated with this ap
@@ -172,7 +184,43 @@ class resourceMonitor():
         finally:
             resourceMonitor.sql_locked = False
 
-        self.accountingManager.update_status(unique_id, ap_up)
+        self.accountingManager.update_status(unique_id, ap_up, ap_name)
+
+    def restart_slices(self, ap, slice_list):
+        if resourceMonitor.sql_locked:
+            print "SQL Access is locked, waiting..."
+            while resourceMonitor.sql_locked:
+                pass
+        try:
+            with self.con:
+                resourceMonitor.sql_locked = True
+                cur = self.con.cursor()
+                for slice_id in slice_list:
+                    print "Restarting", slice_id
+                    cur.execute("SELECT status, tenant_id FROM ap_slice WHERE ap_slice_id = '%s'" %
+                                slice_id)
+                    items = cur.fetchone()
+                    if items:
+                        status = items[0]
+                        user_id = items[1]
+                        print "%s %s for tenant %s" % (slice_id, status, user_id)
+                    else:
+                        raise Exception("No slice %s\n" % slice_id)
+                    if status != 'DELETED' and status != 'DELETING':
+                        # Restart slice as it wasn't deleted since AP went down
+                        self.dispatcher.dispatch( { 'slice': slice_id,
+                                                    'command': 'restart_slice',
+                                                    'user': user_id},
+                                                  ap,
+                                                  str(uuid.uuid4()) )
+        except Exception, e:
+            print "Database Error: " + str(e)
+        finally:
+            resourceMonitor.sql_locked = False
+                                        
+    def start_poller(self, ap_name):
+        print "Not yet implemented..."
+        #poller_thread = thread(ThreadClass, self)
 
     def reset_AP(self, ap):
         """Reset the access point.  If there are serious issues, however,
@@ -187,6 +235,11 @@ class resourceMonitor():
         # The unique ID is fixed to be all F's for resets/restarts.
         self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'restart' } , ap, 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF')
 
+    def update_AP(self, ap):
+        """Update the access point """
+
+        # The unique ID is fixed to be all F's
+        self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'update'}, ap , 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF')
 
 #for test
 #if __name__ == '__main__':

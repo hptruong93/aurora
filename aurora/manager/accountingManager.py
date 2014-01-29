@@ -29,7 +29,7 @@ class accountingManager():
         else:
             print('Connection already closed!')
 
-    def update_status(self, unique_id, ap_up=True):
+    def update_status(self, unique_id, ap_up=True, ap_name=None):
         #Access Point is up update the ap_slice
         if ap_up:
             self.update_apslice(unique_id)
@@ -38,14 +38,17 @@ class accountingManager():
             try:
                 with self.con:
                     cur = self.con.cursor()
-                    cur.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=%s", str(unique_id))
-                    physical_ap = cur.fetchone()
-                    if physical_ap:
-                        physical_ap = physical_ap[0]
+                    if ap_name:
+                        physical_ap = ap_name
                     else:
-                        raise Exception("Cannot fetch physical_ap for slice=%s\n" % unique_id)
+                        cur.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=%s", str(unique_id))
+                        physical_ap = cur.fetchone()
+                        if physical_ap:
+                            physical_ap = physical_ap[0]
+                        else:
+                            raise Exception("Cannot fetch physical_ap for slice=%s\n" % unique_id)
                     #Get all slices associated with this ap
-                    cur.execute("SELECT ap_slice_id FROM ap_sice WHERE physical_ap=%s", str(physical_ap))
+                    cur.execute("SELECT ap_slice_id FROM ap_slice WHERE physical_ap=%s", str(physical_ap))
                     raw_list = cur.fetchall()
                     if raw_list:
                         slice_list = []
@@ -59,7 +62,9 @@ class accountingManager():
                 print "Database Error: " + str(e)
 
     def update_apslice(self, unique_id):
-        print "update status"
+        #TODO: Add checking so this doesn't execute for 
+        #archived slices with "DELETED" status
+        #print "update status"
         try:
             with self.con:
                 cur = self.con.cursor()

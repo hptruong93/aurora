@@ -1,38 +1,34 @@
 {
-    "queue": "openflow3",
-    "rabbitmq_username" : "access_point",
-    "rabbitmq_password" : "let_me_in",
-    "rabbitmq_host" : "10.5.8.3",
-    "default_config" : 
-    {
-        "init_hardware_database" : 
-        {
-            "firmware":"OpenWRT",
-            "firmware_version":"r39154",
-            "aurora_version":"0.2",
-            "memory_mb":"256",
-            "wifi_radio":
-            {
-                "number_radio":"0",
-                "number_radio_free":"0",
-                "max_bss_per_radio" : "4",
-                "radio_list":[]  
+    "rabbitmq_password": "let_me_in", 
+    "rabbitmq_username": "access_point", 
+    "rabbitmq_host": "10.5.8.3", 
+    "queue": "openflow3", 
+    "rabbitmq_reply_queue": "amq.gen-nVq5pkrStdmGczskQoMM3g", 
+    "default_config": {
+        "init_hardware_database": {
+            "memory_mb": "256", 
+            "firmware_version": "r39154", 
+            "firmware": "OpenWRT", 
+            "wifi_radio": {
+                "number_radio_free": "0", 
+                "max_bss_per_radio": "4", 
+                "radio_list": [], 
+                "number_radio": "0"
+            }, 
+            "aurora_version": "0.2"
+        }, 
+        "default_active_slice": "default_slice", 
+        "init_database": {
+            "default_slice": {
+                "VirtualInterfaces": [], 
+                "RadioInterfaces": [], 
+                "VirtualBridges": []
             }
-        },
-        "init_database" : 
-        {
-            "default_slice": 
-            {
-            "VirtualInterfaces": [],
-            "VirtualBridges": [],
-            "RadioInterfaces" : []
-            }
-        },
-        "default_active_slice" : "default_slice",
-        "init_user_id_database" :
-        {
-            "default_user" : ["default_slice"]
+        }, 
+        "init_user_id_database": {
+            "default_user": [
+                "default_slice"
+            ]
         }
     }
-        
 }
