@@ -204,6 +204,9 @@ class SliceAgent:
                 self.v_bridges.modify_port(name, port, port_setting, data["port_settings"][port][port_setting])
 
         self.database.reset_active_slice()
+    
+    def restart_slice(self, slice, user):
+        
 
     def remote_API(self, slice, info):
         """The remote API command accepts a specially formatted JSON
@@ -243,6 +246,8 @@ class SliceAgent:
             self.delete_slice(slice)
         elif command == "modify_slice":
             self.modify_slice(slice, config)
+        elif command == "restart_slice":
+            self.restart_slice(slice, user)
         elif command == "remote_API":
             # The remote API can return data
             return self.remote_API(slice, config)
