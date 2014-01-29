@@ -28,10 +28,10 @@ class SliceAgent:
         # Clean up on exit
         atexit.register(self.__reset)
 
-    def find_main_slice(config):
-        return __find_main_slice(config)    
+    def find_main_slice(self, config):
+        return self.__find_main_slice(config)    
     
-    def __find_main_slice(config):
+    def __find_main_slice(self, config):
         for slice, attributes in config.iteritems():
             for item in attributes["RadioInterfaces"]:
                 if item["flavor"] == "wifi_radio":

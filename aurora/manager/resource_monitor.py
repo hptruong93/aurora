@@ -209,7 +209,7 @@ class resourceMonitor():
                         # Restart slice as it wasn't deleted since AP went down
                         self.dispatcher.dispatch( { 'slice': slice_id,
                                                     'command': 'restart_slice',
-                                                    'user': user_id}
+                                                    'user': user_id},
                                                   ap,
                                                   uuid.uuid4() )
         except Exception, e:

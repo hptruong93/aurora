@@ -31,10 +31,10 @@ class Receive():
     commands, which it executes.  During normal use,
     only this file need be executed on the machine - it will import
     the rest of Aurora and pass the commands along."""
-
+    
     def __init__(self, queue, config, rabbitmq_host, rabbitmq_username, rabbitmq_password, rabbitmq_reply_queue):
         """Connects to RabbitMQ and initializes Aurora locally."""
-
+        
         # Run Pika logger so that error messages get printed
         logging.basicConfig()
 
@@ -42,7 +42,7 @@ class Receive():
         self.agent = SliceAgent.SliceAgent(config)
         self.queue = queue
         self.manager_queue = rabbitmq_reply_queue
-
+        self.channel_open = False
         # Connect to RabbitMQ (Step #1)
         credentials = pika.PlainCredentials(rabbitmq_username, rabbitmq_password)
         self.parameters = pika.ConnectionParameters(host=rabbitmq_host, credentials=credentials)
@@ -73,6 +73,7 @@ class Receive():
     def on_queue_declared(self, frame):
         """Called when RabbitMQ has told us our Queue has been declared, frame is the response from RabbitMQ"""
         self.channel.basic_consume(self.handle_delivery, queue=self.queue, no_ack=True,)
+        self.channel_open = True
 
     # Step #5
     def handle_delivery(self, channel, method, header, body):
@@ -127,6 +128,8 @@ class Receive():
     
     
     def send_ap_up_status(self, config):
+        while not self.channel_open:
+            pass
         print "AP up: alerting manager"
         if len(config['last_known_config']) > 0:
             slices_to_restart = []
@@ -138,12 +141,12 @@ class Receive():
             slices_to_restart.append(main_slice)
             
             for key in last_db_config.keys():
-                if key != "default_slice" && key != main_slice:
+                if key != "default_slice" and key != main_slice:
                     slices_to_restart.append(key)
             if len(slices_to_restart) > 0:
                 data_for_sender = {"successful":True,
-                                   "message":"SYN"
-                                   "config":slices_to_restart
+                                   "message":"SYN",
+                                   "config":slices_to_restart,
                                    "ap":self.queue}
                 self.channel.basic_publish(exchange='', routing_key=self.manager_queue,
                                            properties=pika.BasicProperties(content_type="application/json"),
@@ -208,7 +211,7 @@ if __name__ == '__main__':
     listener = threading.Thread(target=receiver.connection.ioloop.start)
     listener.start()
     
-    receiver.send_ap_up_status(self, config)
+    receiver.send_ap_up_status(config)
 
     # Thanks to Matt J http://stackoverflow.com/a/1112350
     def signal_handler(signal, frame):
