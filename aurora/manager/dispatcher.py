@@ -126,6 +126,7 @@ class Dispatcher():
             # AP has started, check if we need to restart slices
             print ap_name + " has connected..."
             # Tell resource monitor, let it handle restart of slices
+            #self.resourceMonitor.start_poller(ap_name)
             self.resourceMonitor.restart_slices(ap_name, config)
             return
 

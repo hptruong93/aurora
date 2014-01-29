@@ -217,6 +217,9 @@ class resourceMonitor():
         finally:
             resourceMonitor.sql_locked = False
                                         
+    def start_poller(self, ap_name)
+        print "Not yet implemented..."
+        #poller_thread = thread(ThreadClass, self)
 
     def reset_AP(self, ap):
         """Reset the access point.  If there are serious issues, however,
