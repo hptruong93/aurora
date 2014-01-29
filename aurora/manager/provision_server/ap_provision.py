@@ -74,8 +74,8 @@ def update_last_known_config(ap, config):
     F.close()
     del F
     prev_config['last_known_config'] = config
-    prev_config['last_known_config']['init_database'] = config['init_database']
-    prev_config['last_known_config']['init_user_id_database'] = config['init_user_id_database']
+    #prev_config['last_known_config']['init_database'] = config['init_database']
+    #prev_config['last_known_config']['init_user_id_database'] = config['init_user_id_database']
     config = prev_config
     pprint(config)
     with open(ap_config_name, 'w') as F:
