@@ -28,22 +28,15 @@ class SliceAgent:
         # Clean up on exit
         atexit.register(self.__reset)
 
+    def find_main_slice(config):
+        return __find_main_slice(config)    
+    
     def __find_main_slice(config):
-        for slice, attributes in config["init_database"].iteritems():
+        for slice, attributes in config.iteritems():
             for item in attributes["RadioInterfaces"]:
                 if item["flavor"] == "wifi_radio":
                     return slice
         return None
-
-    def __setup_existing_slices(self, config):
-        main_slice = __find_main_slice(config)
-        if not main_slice:
-            # No slices configured
-            self.database = Database.Database(config)
-        else:
-            pass
-            #Set up slices
-            #self.create_slice(main_slice   UNFINISHED
     
     def create_slice(self, slice, user, config):
         """Create a slice with the given confiuration.
@@ -127,7 +120,6 @@ class SliceAgent:
                             self.delete_slice(slice)
                             raise exception.SliceCreationFailed("Aborting.\nError applying setting " + setting + " to port " + port + " on bridge " + bridge_name + '\n' + e.message)
 
-
         self.database.reset_active_slice()
 
 
@@ -206,6 +198,11 @@ class SliceAgent:
         self.database.reset_active_slice()
     
     def restart_slice(self, slice, user):
+        if slice in self.database.prev_database.keys():
+            create_slice(slice, user, self.database.prev_database[slice])
+        else:
+            raise Exception("Error: No slice configuration found for" + slice)
+        
         
 
     def remote_API(self, slice, info):

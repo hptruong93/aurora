@@ -124,13 +124,21 @@ class Receive():
                                                                     content_type="application/json"),
                                     body=data_for_sender)
 
+    
+    
     def send_ap_up_status(self, config):
         print "AP up: alerting manager"
         if len(config['last_known_config']) > 0:
             slices_to_restart = []
             last_db_config = config['last_known_config']['init_database']
+            main_slice = self.agent.find_main_slice(last_db_config)
+            if not main_slice:
+                print "Error: No slice with radio profile"
+                return
+            slices_to_restart.append(main_slice)
+            
             for key in last_db_config.keys():
-                if key != "default_slice":
+                if key != "default_slice" && key != main_slice:
                     slices_to_restart.append(key)
             if len(slices_to_restart) > 0:
                 data_for_sender = {"successful":True,
