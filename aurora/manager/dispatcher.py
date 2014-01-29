@@ -4,6 +4,7 @@ from threading import Timer
 import resource_monitor
 import logging
 import provision_server.ap_provision as provision
+from pprint import pprint
 
 class Dispatcher():
     lock = None
@@ -117,18 +118,20 @@ class Dispatcher():
         
         # Decode response
         decoded_response = json.loads(body)
+        message = decoded_response['message']
+        ap_name = decoded_response['ap']
+        config = decoded_response['config']
         
-        if decoded_response['message'] == 'FIN':
-            ap_name = decoded_response['ap']
+        if message == 'FIN':
             print ap_name + " is shutting down..."
             try:
                 self.resourceMonitor.set_status(None, None, False, ap_name)
                 print "Updating config files..."
-                provision.update_last_known_config(ap_name, decoded_response['config'])
+                provision.update_last_known_config(ap_name, config)
             except Exception as e:
                 print e.message
             print "Last known config:"
-            print decoded_response['config']
+            pprint(config)
             return
         
         for request in self.requests_sent:
@@ -138,35 +141,29 @@ class Dispatcher():
                 break
                 
         if have_request:
-
-
             # decoded_response = json.loads(body)
-            
             print(' [x] DEBUG: Printing received message')
-            print(decoded_response['message'])
+            print(message)
 
             # Set status, stop timer, delete record
             #print "entry[2]:",entry[2]
             if entry[2] != 'admin':
                 self.resourceMonitor.set_status(entry[2], decoded_response['successful'])
                 print "Updating config files..."
-                provision.update_last_known_config(ap_name, decoded_response['config'])
+                provision.update_last_known_config(ap_name, config)
             else:
                 #Probably a reset or restart command sent from resource_monitor
                 #Just stop timer and remove entry
                 pass
-                
-            
+
             entry[1].cancel()
             
             self.requests_sent.remove(entry)
         
         else:
-
-            decoded_response = json.loads(body)
-            print " [x] Sending reset to '%s'" % decoded_response['ap']
+            print " [x] Sending reset to '%s'" % ap_name
             # Reset the access point
-            self.resourceMonitor.reset_AP(decoded_response['ap'])
+            self.resourceMonitor.reset_AP(ap_name)
             
             
         # Regardless of content of message, acknowledge receipt of it
