@@ -8,6 +8,7 @@ Collection of methods for adding, updating, deleting, and querying the database
 import sys, json, os
 import MySQLdb as mdb
 import datetime
+import request_verification as Verify
 
 from pprint import pprint
 
@@ -81,12 +82,12 @@ class AuroraDB():
                     sys.exit(1)
         return False
 
-    def wslice_is_deleted(self, ap_slice):
+    def wslice_is_deleted(self, ap_slice_id):
         try:
             with self.con:
                 cur = self.con.cursor()
                 to_execute = ( "SELECT status FROM ap_slice WHERE "
-                               "ap_slice_id = '%s'" % (ap_slice) )
+                               "ap_slice_id = '%s'" % (ap_slice_id) )
                 cur.execute(to_execute)
                 status = cur.fetchone()
                 if status[0] == 'DELETED':
@@ -246,6 +247,11 @@ class AuroraDB():
         return message
 
     def wslice_add(self, slice_uuid, tenant_id, physAP, project_id):
+        #Verify adding process. See request_verification for more information
+        result = Verify.isVerifyOK('wslice_add', {'physical_ap' : physAP})
+        if result:
+            result()
+
         try:
             with self.con:
                 cur = self.con.cursor()
