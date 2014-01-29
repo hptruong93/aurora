@@ -56,7 +56,11 @@ class resourceMonitor():
         # but all slices should already be marked
         # as deleted, down or failed, so there will not be any issue
 
+    def update_records(self, message):
+        """Update the traffic information of each ap slice"""
 
+        # DEBUG
+        print message
 
     def set_status(self, unique_id, success, ap_up=True, ap_name = None):
         """Sets the status of the associated request in the
@@ -195,6 +199,11 @@ class resourceMonitor():
         # The unique ID is fixed to be all F's for resets/restarts.
         self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'restart' } , ap, 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF')
 
+    def update_AP(self, ap):
+        """Update the access point """
+
+        # The unique ID is fixed to be all F's
+        self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'update'}, ap , 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF')
 
 #for test
 #if __name__ == '__main__':
