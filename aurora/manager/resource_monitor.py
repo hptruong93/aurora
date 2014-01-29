@@ -121,7 +121,7 @@ class resourceMonitor():
 
                     elif status == 'DOWN':
                         if success:
-                            cur.execute("UPDATE ap_slice SET status='DELETED' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
+                            cur.execute("UPDATE ap_slice SET status='ACTIVE' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
                         else:
                             cur.execute("UPDATE ap_slice SET status='FAILED' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
                     else:
@@ -206,7 +206,7 @@ class resourceMonitor():
                         print "%s %s for tenant %s" % (slice_id, status, user_id)
                     else:
                         raise Exception("No slice %s\n" % slice_id)
-                    if status != 'DELETED' or status != 'DELETING':
+                    if status != 'DELETED' and status != 'DELETING':
                         # Restart slice as it wasn't deleted since AP went down
                         self.dispatcher.dispatch( { 'slice': slice_id,
                                                     'command': 'restart_slice',
