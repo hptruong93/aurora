@@ -199,7 +199,7 @@ class SliceAgent:
     
     def restart_slice(self, slice, user):
         if slice in self.database.prev_database.keys():
-            create_slice(slice, user, self.database.prev_database[slice])
+            self.create_slice(slice, user, self.database.prev_database[slice])
         else:
             raise Exception("Error: No slice configuration found for" + slice)
         

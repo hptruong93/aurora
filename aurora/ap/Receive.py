@@ -128,10 +128,13 @@ class Receive():
     
     
     def send_ap_up_status(self, config):
+        printed = False
         while not self.channel_open:
-            pass
+            if not printed:
+                print "Waiting for channel"
+                printed = True
         print "AP up",
-        if len(config['last_known_config']) > 1:
+        if len(config['last_known_config']['init_database']) > 1:
             print " - alerting manager"
             slices_to_restart = []
             last_db_config = config['last_known_config']['init_database']
