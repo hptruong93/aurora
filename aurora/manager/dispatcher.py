@@ -121,8 +121,15 @@ class Dispatcher():
         message = decoded_response['message']
         ap_name = decoded_response['ap']
         config = decoded_response['config']
-        
-        if message == 'FIN':
+
+        if message == 'SYN':
+            # AP has started, check if we need to restart slices
+            print ap_name + " has connected..."
+            # Tell resource monitor, let it handle restart of slices
+            self.resourceMonitor.restart_slices(ap_name, config)
+            return
+
+        elif message == 'FIN':
             print ap_name + " is shutting down..."
             try:
                 self.resourceMonitor.set_status(None, None, False, ap_name)
@@ -133,7 +140,7 @@ class Dispatcher():
             print "Last known config:"
             pprint(config)
             return
-        
+            
         for request in self.requests_sent:
             if request[0] == props.correlation_id:
                 have_request = True

@@ -1,6 +1,6 @@
 import MySQLdb as mdb
 import atexit
-import sys
+import sys, uuid
 import accountingManager
 
 
@@ -181,6 +181,38 @@ class resourceMonitor():
             resourceMonitor.sql_locked = False
 
         self.accountingManager.update_status(unique_id, ap_up, ap_name)
+
+    def restart_slices(self, ap, slice_list):
+        if resourceMonitor.sql_locked:
+            print "SQL Access is locked, waiting..."
+            while resourceMonitor.sql_locked:
+                pass
+        try:
+            with self.con:
+                resourceMonitor.sql_locked = True
+                cur = self.con.cursor()
+                for slice_id in slice_list:
+                    print "Restarting", slice_id
+                    cur.execute("SELECT status, tenant_id FROM ap_slice WHERE ap_slice_id = '%s'" %
+                                slice_id)
+                    items = cur.fetchone()
+                    if items:
+                        status = items[0]
+                        user_id = items[1]
+                    else:
+                        raise Exception("No slice %s\n" % slice_id)
+                    if status != 'DELETED' or status != 'DELETING':
+                        # Restart slice as it wasn't deleted since AP went down
+                        self.dispatcher.dispatch( { 'slice': slice_id,
+                                                    'command': 'restart_slice',
+                                                    'user': user_id}
+                                                  ap,
+                                                  uuid.uuid4() )
+        except Exception, e:
+            print "Database Error: " + str(e)
+        finally:
+            resourceMonitor.sql_locked = False
+                                        
 
     def reset_AP(self, ap):
         """Reset the access point.  If there are serious issues, however,

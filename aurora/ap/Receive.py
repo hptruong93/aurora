@@ -126,7 +126,21 @@ class Receive():
 
     def send_ap_up_status(self, config):
         print "AP up: alerting manager"
-        
+        if len(config['last_known_config']) > 0:
+            slices_to_restart = []
+            last_db_config = config['last_known_config']['init_database']
+            for key in last_db_config.keys():
+                if key != "default_slice":
+                    slices_to_restart.append(key)
+            if len(slices_to_restart) > 0:
+                data_for_sender = {"successful":True,
+                                   "message":"SYN"
+                                   "config":slices_to_restart
+                                   "ap":self.queue}
+                self.channel.basic_publish(exchange='', routing_key=self.manager_queue,
+                                           properties=pika.BasicProperties(content_type="application/json"),
+                                           body=data_for_sender)
+        return
 
     def shutdown_signal_received(self):
         current_database = {}
@@ -139,18 +153,6 @@ class Receive():
         self.channel.basic_publish(exchange='', routing_key=self.manager_queue,
                                     properties=pika.BasicProperties(content_type="application/json"),
                                     body=data_for_sender)
-
-def create_init_config(config):
-    init_config = config
-    init_config['init_database'] = {i:init_config['init_database'][i]
-                                    for i in init_config['init_database'] 
-                                    if i == "default_slice"}
-    init_config['init_user_id_database'] = {i:init_config['init_user_id_database'][i]
-                                            for i in init_config['init_user_id_database']
-                                            if i == "default_user"}
-    print "init_config"
-    pprint(init_config)
-    return init_config
 
 # Executed when run from the command line.
 # *** NORMAL USAGE ***        
@@ -197,6 +199,8 @@ if __name__ == '__main__':
 
     listener = threading.Thread(target=receiver.connection.ioloop.start)
     listener.start()
+    
+    receiver.send_ap_up_status(self, config)
 
     # Thanks to Matt J http://stackoverflow.com/a/1112350
     def signal_handler(signal, frame):
