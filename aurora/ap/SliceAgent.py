@@ -17,7 +17,7 @@ class SliceAgent:
         # base configuration information. It should be passed to classes
         # that need the data; they can each take what they need
         # and ignore what they don't.
-        
+
         self.database = Database.Database(config)
         # Init sub classes
         self.v_bridges = VirtualBridges.VirtualBridges(self.database)
@@ -30,7 +30,7 @@ class SliceAgent:
 
     def __find_main_slice(config):
         for slice, attributes in config["init_database"].iteritems():
-            for item in attributes["RadioInterfaces"]
+            for item in attributes["RadioInterfaces"]:
                 if item["flavor"] == "wifi_radio":
                     return slice
         return None

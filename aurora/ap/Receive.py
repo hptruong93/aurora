@@ -2,6 +2,7 @@
 
 import sys, json, threading, traceback, os, signal, time
 import install_dependencies
+from pprint import pprint
 
 try:
     import pika
@@ -112,7 +113,7 @@ class Receive():
             data_for_sender['message'] = return_data
 
             print(" [x] Command executed")
-
+        data_for_sender['config'] = {}
         data_for_sender['config']['init_database'] = self.agent.database.database
         data_for_sender['config']['init_user_id_database'] = self.agent.database.user_id_data
         print data_for_sender
@@ -128,6 +129,7 @@ class Receive():
         
 
     def shutdown_signal_received(self):
+        current_database = {}
         current_database['init_database'] = self.agent.database.database
         current_database['init_user_id_database'] = self.agent.database.user_id_data
         print "Sending current database..."
@@ -146,7 +148,8 @@ def create_init_config(config):
     init_config['init_user_id_database'] = {i:init_config['init_user_id_database'][i]
                                             for i in init_config['init_user_id_database']
                                             if i == "default_user"}
-    print "init_config",init_config
+    print "init_config"
+    pprint(init_config)
     return init_config
 
 # Executed when run from the command line.
@@ -172,20 +175,25 @@ if __name__ == '__main__':
 
     config_full = request.json()
     queue = config_full['queue']
-    config = config_full['default_config']
+    config = {}
+    config['default_config'] = config_full['default_config']
+    try:
+        config['last_known_config'] = config_full['last_known_config']
+    except:
+        config['last_known_config'] = {}
     username = config_full['rabbitmq_username']
     password = config_full['rabbitmq_password']
     rabbitmq_host = config_full['rabbitmq_host']
     rabbitmq_reply_queue = config_full['rabbitmq_reply_queue']
-    print "config",config
-    init_config = create_init_config(config)
+    print "config"
+    pprint(config)
 
     if queue == None:
         raise Exception("AP identifier specified is not valid.")
 
     print("Joining queue %s" % queue)
     # Establish connection, start listening for commands
-    receiver = Receive(queue, init_config, rabbitmq_host, username, password, rabbitmq_reply_queue)
+    receiver = Receive(queue, config, rabbitmq_host, username, password, rabbitmq_reply_queue)
 
     listener = threading.Thread(target=receiver.connection.ioloop.start)
     listener.start()

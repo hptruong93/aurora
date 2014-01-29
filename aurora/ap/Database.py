@@ -55,12 +55,20 @@ class Database:
     
     def __init__(self, config):
         # Create intial database from template
-        self.database = config["init_database"]
-        self.user_id_data = config["init_user_id_database"]
-        self.active_slice = config["default_active_slice"]
-        self.DEFAULT_ACTIVE_SLICE = config["default_active_slice"]
+        self.database = config["default_config"]["init_database"]
+        if "init_database" in config["last_known_config"].keys():
+            self.prev_database = config["last_known_config"]["init_database"]
+        else:
+            self.prev_database = {}
+        self.user_id_data = config["default_config"]["init_user_id_database"]
+        if "init_user_id_database" in config["last_known_config"].keys():
+            self.prev_user_id_data = config["last_known_config"]["init_database"]
+        else:
+            self.prev_user_id_data = {}
+        self.active_slice = config["default_config"]["default_active_slice"]
+        self.DEFAULT_ACTIVE_SLICE = config["default_config"]["default_active_slice"]
         
-        self.hw_database = config["init_hardware_database"]
+        self.hw_database = config["default_config"]["init_hardware_database"]
     
     def set_active_slice(self, slice):
         """Set the active slice, used for commands such as

@@ -118,7 +118,7 @@ class resourceMonitor():
                     elif status == 'DOWN':
                         if success:
                             cur.execute("UPDATE ap_slice SET status='DELETED' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-                        else
+                        else:
                             cur.execute("UPDATE ap_slice SET status='FAILED' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
                     else:
                         print("Unknown Status, ignoring...")

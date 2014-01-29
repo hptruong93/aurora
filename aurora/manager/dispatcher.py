@@ -149,6 +149,8 @@ class Dispatcher():
             #print "entry[2]:",entry[2]
             if entry[2] != 'admin':
                 self.resourceMonitor.set_status(entry[2], decoded_response['successful'])
+                print "Updating config files..."
+                provision.update_last_known_config(ap_name, decoded_response['config'])
             else:
                 #Probably a reset or restart command sent from resource_monitor
                 #Just stop timer and remove entry
