@@ -113,7 +113,8 @@ class Receive():
 
             print(" [x] Command executed")
 
-        data_for_sender['config'] = self.agent.database.database
+        data_for_sender['config']['init_database'] = self.agent.database.database
+        data_for_sender['config']['init_user_id_database'] = self.agent.database.user_id_data
         print data_for_sender
         data_for_sender = json.dumps(data_for_sender)
         # Send response
@@ -122,8 +123,13 @@ class Receive():
                                                                     content_type="application/json"),
                                     body=data_for_sender)
 
+    def send_ap_up_status(self, config):
+        print "AP up: alerting manager"
+        
+
     def shutdown_signal_received(self):
-        current_database = self.agent.database.database
+        current_database['init_database'] = self.agent.database.database
+        current_database['init_user_id_database'] = self.agent.database.user_id_data
         print "Sending current database..."
         print current_database
         data_for_sender = {'successful':True, 'message': 'FIN', 'config': current_database, 'ap': self.queue}
@@ -131,6 +137,17 @@ class Receive():
         self.channel.basic_publish(exchange='', routing_key=self.manager_queue,
                                     properties=pika.BasicProperties(content_type="application/json"),
                                     body=data_for_sender)
+
+def create_init_config(config):
+    init_config = config
+    init_config['init_database'] = {i:init_config['init_database'][i]
+                                    for i in init_config['init_database'] 
+                                    if i == "default_slice"}
+    init_config['init_user_id_database'] = {i:init_config['init_user_id_database'][i]
+                                            for i in init_config['init_user_id_database']
+                                            if i == "default_user"}
+    print "init_config",init_config
+    return init_config
 
 # Executed when run from the command line.
 # *** NORMAL USAGE ***        
@@ -160,13 +177,15 @@ if __name__ == '__main__':
     password = config_full['rabbitmq_password']
     rabbitmq_host = config_full['rabbitmq_host']
     rabbitmq_reply_queue = config_full['rabbitmq_reply_queue']
+    print "config",config
+    init_config = create_init_config(config)
 
     if queue == None:
         raise Exception("AP identifier specified is not valid.")
 
     print("Joining queue %s" % queue)
     # Establish connection, start listening for commands
-    receiver = Receive(queue, config, rabbitmq_host, username, password, rabbitmq_reply_queue)
+    receiver = Receive(queue, init_config, rabbitmq_host, username, password, rabbitmq_reply_queue)
 
     listener = threading.Thread(target=receiver.connection.ioloop.start)
     listener.start()

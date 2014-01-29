@@ -17,7 +17,7 @@ class SliceAgent:
         # base configuration information. It should be passed to classes
         # that need the data; they can each take what they need
         # and ignore what they don't.
-
+        
         self.database = Database.Database(config)
         # Init sub classes
         self.v_bridges = VirtualBridges.VirtualBridges(self.database)
