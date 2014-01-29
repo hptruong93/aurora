@@ -203,6 +203,7 @@ class resourceMonitor():
                     if items:
                         status = items[0]
                         user_id = items[1]
+                        print "%s %s for tenant %s" % (slice_id, status, user_id)
                     else:
                         raise Exception("No slice %s\n" % slice_id)
                     if status != 'DELETED' or status != 'DELETING':
