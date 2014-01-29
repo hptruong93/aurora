@@ -28,7 +28,7 @@ class SliceAgent:
     
     
     def create_slice(self, slice, user, config):
-        """Create a slice with the given confiuration.
+        """Create a slice with the given configuration.
         Will raise exceptions if errors are encountered."""
         
         # Make sure slice does not already exist
