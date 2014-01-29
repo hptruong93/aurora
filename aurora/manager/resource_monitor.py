@@ -211,7 +211,7 @@ class resourceMonitor():
                                                     'command': 'restart_slice',
                                                     'user': user_id},
                                                   ap,
-                                                  uuid.uuid4() )
+                                                  str(uuid.uuid4()) )
         except Exception, e:
             print "Database Error: " + str(e)
         finally:
