@@ -130,8 +130,9 @@ class Receive():
     def send_ap_up_status(self, config):
         while not self.channel_open:
             pass
-        print "AP up: alerting manager"
+        print "AP up",
         if len(config['last_known_config']) > 0:
+            print " - alerting manager"
             slices_to_restart = []
             last_db_config = config['last_known_config']['init_database']
             main_slice = self.agent.find_main_slice(last_db_config)
@@ -148,6 +149,7 @@ class Receive():
                                    "message":"SYN",
                                    "config":slices_to_restart,
                                    "ap":self.queue}
+                data_for_sender = json.dumps(data_for_sender)
                 self.channel.basic_publish(exchange='', routing_key=self.manager_queue,
                                            properties=pika.BasicProperties(content_type="application/json"),
                                            body=data_for_sender)

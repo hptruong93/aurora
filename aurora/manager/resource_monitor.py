@@ -217,7 +217,7 @@ class resourceMonitor():
         finally:
             resourceMonitor.sql_locked = False
                                         
-    def start_poller(self, ap_name)
+    def start_poller(self, ap_name):
         print "Not yet implemented..."
         #poller_thread = thread(ThreadClass, self)
 
