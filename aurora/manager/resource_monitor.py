@@ -2,6 +2,8 @@ import MySQLdb as mdb
 import atexit
 import sys, uuid
 import accountingManager
+import threading
+import time
 
 
 class resourceMonitor():
@@ -11,11 +13,12 @@ class resourceMonitor():
     #and ping associated ap to determine whether they are still up
 
     sql_locked = None
+    SLEEP_TIME = 45
 
     def __init__(self, dispatcher, host, username, password):
         self.dispatcher = dispatcher
         self.accountingManager = accountingManager.accountingManager(host, username, password)
-
+        self.poller_threads = {}
         #Connect to Aurora mySQL Database
         print "Connecting to SQLdb in resourceMonitor..."
         try:
@@ -34,7 +37,7 @@ class resourceMonitor():
         else:
             print('Connection already closed!')
 
-    def timeout(self, unique_id):
+    def timeout(self, unique_id, ap_name):
         """This code will execute when a response is not
         received for the command associated with the unique_id
         after a certain time period.  It modifies the database
@@ -47,6 +50,9 @@ class resourceMonitor():
         # no longer running.
 
         self.set_status(unique_id, success=False, ap_up=False)
+
+        #remove thread from the thread pool
+        self.poller_threads.pop(ap_name, None)
 
         # In the future we might do something more with the unique_id besides
         # identifying the AP, like log it to a list of commands that cause
@@ -217,10 +223,18 @@ class resourceMonitor():
             print "Database Error: " + str(e)
         finally:
             resourceMonitor.sql_locked = False
-                                        
+
     def start_poller(self, ap_name):
         print "Not yet implemented..."
         #poller_thread = thread(ThreadClass, self)
+        poller_thread = threading.Thread(target=self.poll_AP, args=(ap_name))
+        poller_thread.start()
+        self.poller_threads[ap_name] = poller_thread
+
+    def poll_AP(self, ap_name):
+        while ap_name in self.poller_threads:
+            time.sleep(SLEEP_TIME)
+            self.update_AP(ap_name)
 
     def reset_AP(self, ap):
         """Reset the access point.  If there are serious issues, however,

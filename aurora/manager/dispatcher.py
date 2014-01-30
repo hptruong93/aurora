@@ -76,7 +76,7 @@ class Dispatcher():
         ap_slice_id = config['slice']
         # Start a timeout countdown
         print "ap_slice_id >>>",ap_slice_id
-        time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=(ap_slice_id,))
+        time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=(ap_slice_id,ap,))
 
         self.requests_sent.append((unique_id, time, ap_slice_id))
         time.start()
@@ -128,6 +128,7 @@ class Dispatcher():
             # Tell resource monitor, let it handle restart of slices
             #self.resourceMonitor.start_poller(ap_name)
             self.resourceMonitor.restart_slices(ap_name, config)
+            self.resourceMonitor.start_poller(ap_name)
             return
 
         elif message == 'FIN':
