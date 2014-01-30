@@ -20,7 +20,7 @@
                     "radio" : "radio0",
                     "if_name" : "wlan0",
                     "encryption_type":"wep-open",
-                    "key":"12345"
+                    "key":"23456"
                 }
         }
     ], 
