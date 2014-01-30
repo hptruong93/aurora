@@ -29,6 +29,17 @@ class accountingManager():
         else:
             print('Connection already closed!')
 
+    def update_traffic(self, message):
+        try:
+            with self.con:
+                cur = self.con.cursor()
+                for ap_slice in message.keys():
+                    cur.execute("UPDATE ap_slice_status SET\
+                                bytes_sent=%s WHERE ap_slice_id='%s'"
+                                % (str(message.get(ap_slice)), ap_slice))
+        except Exception, e:
+            print "Database Error: " + str(e)
+
     def update_status(self, unique_id, ap_up=True, ap_name=None):
         #Access Point is up update the ap_slice
         if ap_up:
@@ -62,7 +73,7 @@ class accountingManager():
                 print "Database Error: " + str(e)
 
     def update_apslice(self, unique_id):
-        #TODO: Add checking so this doesn't execute for 
+        #TODO: Add checking so this doesn't execute for
         #archived slices with "DELETED" status
         #print "update status"
         try:

@@ -66,11 +66,8 @@ class resourceMonitor():
         # as deleted, down or failed, so there will not be any issue
 
     def update_records(self, message):
-        """Update the traffic information of each ap slice"""
-
-        # DEBUG
-        #print message
-        pass
+        """Update the traffic information of ap_slice"""
+        self.accountingManager.update_traffic(message)
 
     def set_status(self, unique_id, success, ap_up=True, ap_name = None):
         """Sets the status of the associated request in the
