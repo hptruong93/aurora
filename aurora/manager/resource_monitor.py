@@ -227,13 +227,13 @@ class resourceMonitor():
     def start_poller(self, ap_name):
         print "Not yet implemented..."
         #poller_thread = thread(ThreadClass, self)
-        poller_thread = threading.Thread(target=self.poll_AP, args=(ap_name))
-        poller_thread.start()
+        poller_thread = threading.Thread(target=self.poll_AP, args=(ap_name,))
         self.poller_threads[ap_name] = poller_thread
+        poller_thread.start()
 
     def poll_AP(self, ap_name):
         while ap_name in self.poller_threads:
-            time.sleep(SLEEP_TIME)
+            time.sleep(self.SLEEP_TIME)
             self.update_AP(ap_name)
 
     def reset_AP(self, ap):
