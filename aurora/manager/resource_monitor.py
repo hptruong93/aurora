@@ -48,8 +48,9 @@ class resourceMonitor():
         # A timeout is serious: it is likely that
         # the AP's OS has crashed, or at least aurora is
         # no longer running.
-
-        self.set_status(unique_id, success=False, ap_up=False)
+        
+        if unique_id != 'admin'
+            self.set_status(unique_id, success=False, ap_up=False)
 
         #remove thread from the thread pool
         print "Removing thread for",ap_name
