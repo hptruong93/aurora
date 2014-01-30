@@ -105,7 +105,7 @@ class OpenVSwitch:
     
     def delete_bridge(self, bridge):
         """Delete a bridge with the given name."""
-        if os.path.isfile(bridge):
+        if os.path.isfile(self.socket_file.name):
             self.__exec_command(["del-br", bridge])
         else:
             print bridge + " does not exist, maybe it was already killed."
