@@ -52,9 +52,10 @@ class resourceMonitor():
         self.set_status(unique_id, success=False, ap_up=False)
 
         #remove thread from the thread pool
-        
-        self.poller_threads[ap_name].join()
-        self.poller_threads.pop(ap_name, None)
+        if ap_name in self.poller_threads:
+            poller_thread_to_kill = self.poller_threads[ap_name]
+            self.poller_threads.pop(ap_name, None)
+            poller_thread_to_kill.join()
 
         # In the future we might do something more with the unique_id besides
         # identifying the AP, like log it to a list of commands that cause
@@ -236,7 +237,8 @@ class resourceMonitor():
 
     def poll_AP(self, ap_name):
         while ap_name in self.poller_threads:
-            time.sleep(resourceMonitor.SLEEP_TIME)
+            time.sleep(self.dispatcher.TIMEOUT + 5)
+            #time.sleep(resourceMonitor.SLEEP_TIME)
             self.update_AP(ap_name)
 
     def reset_AP(self, ap):
