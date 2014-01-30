@@ -1,0 +1,51 @@
+{
+    "VirtualWIFI": [
+        {
+            "flavor" : "wifi_bss",
+            "attributes" : 
+                {
+                    "name" : "BCRL vSwitch no3",
+                    "radio" : "radio0",
+                    "if_name" : "wlan0-2",
+                    "encryption_type":"wep-open",
+                    "key":"12345"
+                }
+        }
+    ], 
+    "VirtualBridges": [
+        {
+            "flavor":"ovs",
+            "attributes":   
+                {
+                    "name":"vswitch-br-1",
+                    "interfaces":
+                        ["vwlan0-2","veth2"],
+                    "bridge_settings":
+                        {
+                            "controller":["tcp:10.5.8.3"]
+                        },
+                    "port_settings":{}
+                }
+        }
+    ], 
+    "VirtualInterfaces": [
+        {
+            "flavor":"veth",
+            "attributes": 
+                {
+                    "attach_to":"eth0",
+                    "name":"veth2",
+                    "mac":"00:00:00:00:00:50"
+                }
+        },
+        {
+            "flavor":"veth",
+            "attributes":
+                {
+                    "attach_to":"wlan0-2",
+                    "name":"vwlan0-2",
+                    "mac":"00:00:00:00:00:51"
+                }
+        }
+    ]
+}

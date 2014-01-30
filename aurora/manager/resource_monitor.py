@@ -53,7 +53,7 @@ class resourceMonitor():
 
         #remove thread from the thread pool
         print "Removing thread for",ap_name
-	if ap_name in self.poller_threads:
+        if ap_name in self.poller_threads and unique_id == 'admin':
             poller_thread_to_kill = self.poller_threads[ap_name]
             self.poller_threads.pop(ap_name, None)
             poller_thread_to_kill.join()
@@ -236,11 +236,11 @@ class resourceMonitor():
 
     def poll_AP(self, ap_name):
         print "Timeout from Dispatcher", self.dispatcher.TIMEOUT
-	while ap_name in self.poller_threads:
+        while ap_name in self.poller_threads:
             #time.sleep(resourceMonitor.SLEEP_TIME)
             print "Updating ap in poller thread",self.poller_threads[ap_name]
-	    self.update_AP(ap_name)
-	    time.sleep(self.dispatcher.TIMEOUT + 5)
+            self.update_AP(ap_name)
+            time.sleep(self.dispatcher.TIMEOUT + 5)
 
     def reset_AP(self, ap):
         """Reset the access point.  If there are serious issues, however,
