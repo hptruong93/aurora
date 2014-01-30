@@ -72,8 +72,9 @@ class Receive():
     # Step #4
     def on_queue_declared(self, frame):
         """Called when RabbitMQ has told us our Queue has been declared, frame is the response from RabbitMQ"""
-        self.channel.basic_consume(self.handle_delivery, queue=self.queue, no_ack=True,)
         self.channel_open = True
+        self.channel.basic_consume(self.handle_delivery, queue=self.queue, no_ack=True,)
+        
 
     # Step #5
     def handle_delivery(self, channel, method, header, body):

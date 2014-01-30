@@ -24,37 +24,6 @@
                 }
         }
     ], 
-    "VirtualBridges": [
-        {
-            "flavor":"linux_bridge",
-            "attributes":   
-                {
-                    "name":"blank-br",
-                    "interfaces":
-                        ["ifb0"],
-                    "bridge_settings":{},
-                    "port_settings":{}
-                }
-        }
-    ], 
-    "VirtualInterfaces": [
-        {
-            "flavor":"veth",
-            "attributes": 
-                {
-                    "attach_to":"eth0",
-                    "name":"veth0",
-                    "mac":"00:00:00:00:00:20"
-                }
-        },
-        {
-            "flavor":"veth",
-            "attributes": 
-                {
-                    "attach_to":"wlan0",
-                    "name":"vwlan0",
-                    "mac":"00:00:00:00:00:21"
-                }
-        }
-    ]
+    "VirtualBridges": [], 
+    "VirtualInterfaces": []
 }
