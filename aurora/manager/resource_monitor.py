@@ -52,6 +52,8 @@ class resourceMonitor():
         self.set_status(unique_id, success=False, ap_up=False)
 
         #remove thread from the thread pool
+        
+        self.poller_threads[ap_name].join()
         self.poller_threads.pop(ap_name, None)
 
         # In the future we might do something more with the unique_id besides
@@ -66,7 +68,8 @@ class resourceMonitor():
         """Update the traffic information of each ap slice"""
 
         # DEBUG
-        print message
+        #print message
+        pass
 
     def set_status(self, unique_id, success, ap_up=True, ap_name = None):
         """Sets the status of the associated request in the
