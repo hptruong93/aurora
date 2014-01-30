@@ -233,7 +233,7 @@ class resourceMonitor():
 
     def poll_AP(self, ap_name):
         while ap_name in self.poller_threads:
-            time.sleep(self.SLEEP_TIME)
+            time.sleep(resourceMonitor.SLEEP_TIME)
             self.update_AP(ap_name)
 
     def reset_AP(self, ap):
