@@ -49,12 +49,13 @@ class resourceMonitor():
         # the AP's OS has crashed, or at least aurora is
         # no longer running.
         
-        if unique_id != 'admin'
+        if unique_id != 'admin':
             self.set_status(unique_id, success=False, ap_up=False)
 
         #remove thread from the thread pool
-        print "Removing thread for",ap_name
+        
         if ap_name in self.poller_threads and unique_id == 'admin':
+            print "Removing thread for",ap_name
             poller_thread_to_kill = self.poller_threads[ap_name]
             self.poller_threads.pop(ap_name, None)
             poller_thread_to_kill.join()

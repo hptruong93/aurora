@@ -16,7 +16,7 @@
             "flavor" : "wifi_bss",
             "attributes" : 
                 {
-                    "name" : "BRCL Multi",
+                    "name" : "BRCL 3",
                     "radio" : "radio0",
                     "if_name" : "wlan0",
                     "encryption_type":"wep-open",
