@@ -52,7 +52,8 @@ class resourceMonitor():
         self.set_status(unique_id, success=False, ap_up=False)
 
         #remove thread from the thread pool
-        if ap_name in self.poller_threads:
+        print "Removing thread for",ap_name
+	if ap_name in self.poller_threads:
             poller_thread_to_kill = self.poller_threads[ap_name]
             self.poller_threads.pop(ap_name, None)
             poller_thread_to_kill.join()
@@ -229,17 +230,20 @@ class resourceMonitor():
             resourceMonitor.sql_locked = False
 
     def start_poller(self, ap_name):
-        print "Not yet implemented..."
+        print "Starting poller on thread ",
         #poller_thread = thread(ThreadClass, self)
         poller_thread = threading.Thread(target=self.poll_AP, args=(ap_name,))
+	print poller_thread
         self.poller_threads[ap_name] = poller_thread
         poller_thread.start()
 
     def poll_AP(self, ap_name):
-        while ap_name in self.poller_threads:
-            time.sleep(self.dispatcher.TIMEOUT + 5)
+        print "Timeout from Dispatcher", self.dispatcher.TIMEOUT
+	while ap_name in self.poller_threads:
             #time.sleep(resourceMonitor.SLEEP_TIME)
-            self.update_AP(ap_name)
+            print "Updating ap in poller thread",self.poller_threads[ap_name]
+	    self.update_AP(ap_name)
+	    time.sleep(self.dispatcher.TIMEOUT + 5)
 
     def reset_AP(self, ap):
         """Reset the access point.  If there are serious issues, however,
