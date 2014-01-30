@@ -403,24 +403,32 @@ class Manager():
     #            f.close()
 
 
+        add_success = True
         #Dispatch
         for (index,json_entry) in enumerate(json_list):
             #Generate unique slice_id and add entry to database
             slice_uuid = uuid.uuid4()
             json_entry['slice'] = str(slice_uuid)
-            self.auroraDB.wslice_add(slice_uuid, tenant_id, aplist[index], project_id)
-            message += "Adding slice %s: %s\n" % (index + 1, slice_uuid)
-            #Add tags if present
-            if args['tag']:
-                self.ap_slice_add_tag({'ap-slice-add-tag':[slice_uuid],
-                                       'tag': [arg_tag],
-                                       'filter':""},
-                                       tenant_id, user_id, project_id)
-            #Dispatch (use slice_uuid as a message identifier)
-            self.dispatch.dispatch(json_entry, aplist[index], str(slice_uuid))
-        #Return response (message returns a list of uuids for created slices)
 
-        response = {"status":True, "message":message}
+            error = self.auroraDB.wslice_add(slice_uuid, tenant_id, aplist[index], project_id)
+            
+            if error:
+                message += error + "\n"
+                add_success = False
+            else:
+                message += "Adding slice %s: %s\n" % (index + 1, slice_uuid)
+            
+                #Add tags if present
+                if args['tag']:
+                    self.ap_slice_add_tag({'ap-slice-add-tag':[slice_uuid],
+                                        'tag': [arg_tag],
+                                        'filter':""},
+                                        tenant_id, user_id, project_id)
+                #Dispatch (use slice_uuid as a message identifier)
+                self.dispatch.dispatch(json_entry, aplist[index], str(slice_uuid))
+        
+        #Return response (message returns a list of uuids for created slices)
+        response = {"status":add_success, "message":message}
         return response
 
     def ap_slice_delete(self, args, tenant_id, user_id, project_id):

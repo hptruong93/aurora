@@ -114,7 +114,7 @@ class NoAvailableSpaceLeftInAP(VerificationException):
 	
 	def _handle_exception(self):
 	    #Tell the client of the problem here or resolve internally
-		print (self.message)
+		return self.message
 
 class RequestVerifier():
 	#The command names must be identical to the method calling
@@ -125,20 +125,20 @@ class RequestVerifier():
 	}
 
 	#If there is any problem with the verification process, the function will return
-	#another function _handle_exception for client to take further actions.
-	#If everything is OK, the function return null
+	#a string with error information for client to take further actions.
+	#If everything is OK, the function return None
 	@staticmethod
 	def isVerifyOK(command, request):
 		for verifier in RequestVerifier._commands[command]:
 			try:
 				verifier._verify(command, request)
 			except VerificationException as ex:
-				return ex._handle_exception
+				return ex._handle_exception()
 		return None
 
 
 #Use this method as an interface for the verification. Internal structure above must not be accessed from outside of the file
-def isVerifyOK(command = GENERAL_CHECK, request = None):
+def verifyOK(command = GENERAL_CHECK, request = None):
 	RequestVerifier.isVerifyOK(command, request)
 
 if __name__ == '__main__':

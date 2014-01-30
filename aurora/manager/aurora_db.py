@@ -248,9 +248,9 @@ class AuroraDB():
 
     def wslice_add(self, slice_uuid, tenant_id, physAP, project_id):
         #Verify adding process. See request_verification for more information
-        result = Verify.isVerifyOK('wslice_add', {'physical_ap' : physAP})
-        if result:
-            result()
+        result = Verify.verifyOK('wslice_add', {'physical_ap' : physAP})
+        if result: #An error message is retuned if there is any problem, else None is returned.
+            return result
 
         try:
             with self.con:
@@ -259,7 +259,12 @@ class AuroraDB():
                                (slice_uuid,  tenant_id, physAP,
                                 project_id, "NULL", "PENDING") )
                 cur.execute(to_execute)
-                return "Adding slice %s on %s.\n" % (slice_uuid, physAP)
+                #return "Adding slice %s on %s.\n" % (slice_uuid, physAP)
+                return None
+                #We the manager calling this method will generate this message after calling.
+                #Therefore it is not necessary to return a success notification. The message
+                #can be used for testing purposes.
+                #Return None when there is no problem instead.
         except mdb.Error, e:
             err_msg = "-->> Error %d: %s" % (e.args[0], e.args[1])
             print err_msg
