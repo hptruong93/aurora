@@ -1,3 +1,4 @@
+#!/usr/bin/python -tt
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
 import sys, json, threading, traceback, os, signal, time
