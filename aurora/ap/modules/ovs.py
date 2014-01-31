@@ -46,8 +46,9 @@ class OpenVSwitch:
         # We are simply using temporary files to generate random names that don't conflict
         self.database_file.close()
         self.socket_file.close()
-        os.remove(self.database_file.name)
-        os.remove(self.socket_file.name)
+
+        #os.remove(self.database_file.name)
+        #os.remove(self.socket_file.name)
 
         # Create database in temporary file
         # Will raise exception if it fails

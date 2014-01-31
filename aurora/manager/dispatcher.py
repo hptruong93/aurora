@@ -69,7 +69,12 @@ class Dispatcher():
                 pass
         print " [x] Dispatch: Locking..."
         Dispatcher.lock = True
-        self.channel.basic_publish(exchange='', routing_key=ap, body=message, properties=pika.BasicProperties(reply_to = self.callback_queue, correlation_id = unique_id, content_type="application/json"))
+
+        # Dispatch, catch if no channel exists
+        try:
+            self.channel.basic_publish(exchange='', routing_key=ap, body=message, properties=pika.BasicProperties(reply_to = self.callback_queue, correlation_id = unique_id, content_type="application/json"))
+        except Exception as e:
+            print e.message
 
         print("Message for %s dispatched" % ap)
 
