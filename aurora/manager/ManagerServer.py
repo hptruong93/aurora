@@ -3,6 +3,8 @@
 import BaseHTTPServer
 import json
 from manager import *
+from pprint import pprint
+
 
 class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
     server_version= "Aurora/0.2"
@@ -45,7 +47,8 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         # Parse the form data posted
         data_string = self.rfile.read(int(self.headers['Content-Length']))
         JSONfile = json.loads(data_string)
-        
+        print " [x]",JSONfile['function']
+
         # Begin the response
         self.send_response(200)
         self.end_headers()
@@ -53,7 +56,8 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         #Send to manager.py
         #Format of response: {"status":(true of false) ,"message":"string if necessary"}
         response = MyHandler.manager.parseargs(JSONfile['function'], JSONfile['parameters'], 1,1,1)
-        
+        print " [v]",response['message']
+
         #Save response to file
         RESPONSEFILE = open('json/response.json', 'w')
         json.dump(response, RESPONSEFILE, sort_keys=True, indent=4)
