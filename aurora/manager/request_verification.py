@@ -7,16 +7,20 @@ import exception
 import MySQLdb as mdb
 import manager
 
-GENERAL_CHECK = 'general_check'
+#This module is called by manager before acting on any AP.
+#This will detect inconsistency/ invalid request/operation of the manager requested by the client.
 
-#Base abstract class for all verification
+GENERAL_CHECK = 'general_check'
+CREATE_SLICE = 'create_slice' #This is the command name appears in the request parsed by manger.py
+
+#Base abstract class for all verifications
 class RequestVerification():
 	__metaclass__ = ABCMeta
 	
 	#This method return a connection to mysql database
 	#This method must be wrapped by a try catch block (catching mdb.Error)
 	@staticmethod
-	def _connect_database():
+	def database_connection():
 		return mdb.connect(manager._MYSQL_HOST,
                                    manager._MYSQL_USERNAME,
                                    manager._MYSQL_PASSWORD,
@@ -48,12 +52,12 @@ class APSliceNumberVerification(RequestVerification):
 	def _check_number_of_ap_slice(self, command, request):
 		_ADDITIONAL_SLICE = {#For each command, we will check for a certain adding constant
 			GENERAL_CHECK : 0, 
-			'wslice_add' : 1
+			CREATE_SLICE : 1
 		}
 		
 		
 		try:
-			con = RequestVerification._connect_database() 
+			con = RequestVerification.database_connection() 
 			with con:
 				cursor = con.cursor()
 
@@ -61,11 +65,14 @@ class APSliceNumberVerification(RequestVerification):
 				used_slice = 1
 				number_radio = 2
 
-				if not request:
+				if request is None:
 					cursor.execute("""SELECT name, used_slice, number_radio, number_radio_free 
 					                  FROM (SELECT physical_ap, COUNT(physical_ap) AS used_slice 
-					                        FROM ap_slice GROUP BY physical_ap) AS 
-					                  A LEFT JOIN ap ON A.physical_ap = ap.name""")
+					                        FROM ap_slice 
+					                        WHERE status <> "DELETING"
+					                        GROUP BY physical_ap) AS 
+					                  A LEFT JOIN ap ON A.physical_ap = ap.name
+					                  WHERE name IS NOT NULL""")
 					result = cursor.fetchall()
 					
 					for ap in result:
@@ -76,7 +83,9 @@ class APSliceNumberVerification(RequestVerification):
 				else:
 					cursor.execute("""SELECT name, used_slice, number_radio, number_radio_free 
 					                  FROM (SELECT physical_ap, COUNT(physical_ap) AS used_slice 
-					                        FROM ap_slice GROUP BY physical_ap) AS 
+					                        FROM ap_slice 
+					                        WHERE status <> "DELETING"
+					                        GROUP BY physical_ap) AS 
 					                  A LEFT JOIN ap ON A.physical_ap = ap.name
 					                  WHERE name = %s """, (request['physical_ap']))
 					result = cursor.fetchall()
@@ -98,12 +107,80 @@ class APSliceNumberVerification(RequestVerification):
            			sys.exit(1)
 		return None 
 		
+#See RadioConfigInvalid exception for what this class is verifying
+class RadioConfigExistedVerification(RequestVerification):
+	def _verify(self, command, request):
+		check_result = self._check_radio_config_existed(command, request)
+		if check_result:
+			raise RadioConfigInvalid(check_result)
+
+	def _check_radio_config_existed(self, command, request):
+		if request is None:
+			return None
+		else:
+			#Check for existed configuration on ap radio using the request
+			try:
+				con = RequestVerification.database_connection() 
+				with con:
+					cursor = con.cursor()
+
+					name = 0
+					used_slice = 1
+					number_radio = 2
+
+					cursor.execute("""SELECT name, used_slice, number_radio, number_radio_free 
+					                  FROM (SELECT physical_ap, COUNT(physical_ap) AS used_slice 
+					                        FROM ap_slice 
+					                        WHERE status <> "DELETED"
+					                        GROUP BY physical_ap) AS 
+					                  A LEFT JOIN ap ON A.physical_ap = ap.name
+					                  WHERE name = %s""", (request['physical_ap']))
+
+					result = cursor.fetchall()
+					config_existed = len(result) != 0 #This does not take into consideration the fact that there
+													  #can be more than 1 radios and the requested radio has not been
+													  # configured yet.
+					radio_interface = request['config']['RadioInterfaces']
+					if len(radio_interface) == 0:
+						request_has_config = True
+					else:
+						request_has_config = radio_interface[0]['flavor'] == "wifi_radio"
+
+					if config_existed and request_has_config:
+						return "Radio for the ap " + request['physical_ap'] + " has already been configured. Cannot change the radio's configurations."
+					else if (not config_existed) and (not request_has_config):
+						return "Radio for the ap " + request['physical_ap'] + " has not been configured. An initial configuration is required."
+        	except mdb.Error, e:
+            		print "Error %d: %s" % (e.args[0], e.args[1])
+            		sys.exit(1)
+           	except Exception, e:
+           			print "Error %d: %s" % (e.args[0], e.args[1])
+           			sys.exit(1)
+		return None 
+
+class VirtualInterfaceVerification(RequestVerification):
+	def _verify(self, command, request):
+		check_result = self._check_number_of_virtual_interface(command, request)
+		if check_result:
+			raise RadioConfigInvalid(check_result)
+
+	def _check_number_of_virtual_interface(self, command, request):
+		if request is None:
+			return None
+		else:
+			#Check for number of VirtualInterface in the request
+			number_of_virtual_interface = len(request['config']['VirtualInterfaces'])
+			if number_of_virtual_interface != 2:
+				return "Attempt to create slice with " + number_of_virtual_interface + ". Exactly two VirtualInterface is required."
+		return None
+
 #Base abstract class for all exception raised (when conflict detected)
 class VerificationException(exception.AuroraException):
 	__metaclass__ = ABCMeta
 	
 	@abstractmethod
 	def _handle_exception(self):
+	    #Tell the client of the problem here or resolve internally
 		pass
 
 #This exception is raised when an AP is having, or is requested to have more than 4n ap slices with n is the AP's number of radios
@@ -113,15 +190,37 @@ class NoAvailableSpaceLeftInAP(VerificationException):
 		super(NoAvailableSpaceLeftInAP, self).__init__(message)
 	
 	def _handle_exception(self):
-	    #Tell the client of the problem here or resolve internally
 		return self.message
+
+#This exception is raised when the client attempts to configure the radio when it is already configured, or the client
+# attempts to create new slice on a radio that has not been configured yet without any intial configurations.
+class RadioConfigInvalid(VerificationException):
+	def __init__(self, message = ""):
+		self.message = message
+		super(RadioConfigInvalid, self).__init__(message)
+
+	def _handle_exception(self):
+		return self.message
+
+#This exception is raised when the client attempts to create a new slice and provide an invalid number of VirtualInterface
+#The number of VirtualInterfaces expected is two.
+class VirtualInterfaceNumberInvalid(VerificationException):
+	def __init__(self, message = ""):
+		self.message = message
+		super(VirtualInterfaceNumberInvalid, self).__init__(message)
+
+	def _handle_exception(self):
+		return self.message	
+
 
 class RequestVerifier():
 	#The command names must be identical to the method calling
 	#verification from aurora_db.py
 	_commands = {
-	    'general_check' : [APSliceNumberVerification()],
-		'wslice_add' : [APSliceNumberVerification()]
+	    GENERAL_CHECK : [APSliceNumberVerification()],
+		CREATE_SLICE : [APSliceNumberVerification(), 
+						RadioConfigExistedVerification(),
+						VirtualInterfaceVerification()]
 	}
 
 	#If there is any problem with the verification process, the function will return
@@ -138,9 +237,13 @@ class RequestVerifier():
 
 
 #Use this method as an interface for the verification. Internal structure above must not be accessed from outside of the file
-def verifyOK(command = GENERAL_CHECK, request = None):
+def verifyOK(request = None):
+	if request is None:
+		command = GENERAL_CHECK
+	else:
+		command = request['command']
 	RequestVerifier.isVerifyOK(command, request)
 
 if __name__ == '__main__':
     #Testing
-    isVerifyOK('wslice_add', {'physical_ap' : 'openflow'})
+    isVerifyOK(CREATE_SLICE, {})

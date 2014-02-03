@@ -247,11 +247,6 @@ class AuroraDB():
         return message
 
     def wslice_add(self, slice_uuid, tenant_id, physAP, project_id):
-        #Verify adding process. See request_verification for more information
-        result = Verify.verifyOK('wslice_add', {'physical_ap' : physAP})
-        if result: #An error message is retuned if there is any problem, else None is returned.
-            return result
-
         try:
             with self.con:
                 cur = self.con.cursor()
@@ -451,10 +446,3 @@ class AuroraDB():
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)
         return wnet_info
-
-
-
-
-
-
-

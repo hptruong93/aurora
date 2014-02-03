@@ -386,6 +386,7 @@ class Manager():
                                     arg_tag).parseCreateSlice(arg_file,
                                                               len(aplist),
                                                               json_list)
+
         except Exception as e:
             print e.message
             response = {"status":False, "message":e.message}
@@ -409,23 +410,32 @@ class Manager():
             #Generate unique slice_id and add entry to database
             slice_uuid = uuid.uuid4()
             json_entry['slice'] = str(slice_uuid)
+            json_entry['physical_ap'] = ap_list[index]
 
-            error = self.auroraDB.wslice_add(slice_uuid, tenant_id, aplist[index], project_id)
+            #Verify adding process. See request_verification for more information
+            error = Verify.verifyOK('create_slice', json_entry)
+            #An error message is retuned if there is any problem, else None is returned.
+
+            if error is None: #There is no error
+                error = self.auroraDB.wslice_add(slice_uuid, tenant_id, aplist[index], project_id)
             
-            if error:
-                message += error + "\n"
-                add_success = False
-            else:
-                message += "Adding slice %s: %s\n" % (index + 1, slice_uuid)
+                if error is not None: #There is an error
+                    message += error + "\n"
+                    add_success = False
+                else:
+                    message += "Adding slice %s: %s\n" % (index + 1, slice_uuid)
             
-                #Add tags if present
-                if args['tag']:
-                    self.ap_slice_add_tag({'ap-slice-add-tag':[slice_uuid],
+                    #Add tags if present
+                    if args['tag']:
+                        self.ap_slice_add_tag({'ap-slice-add-tag':[slice_uuid],
                                         'tag': [arg_tag],
                                         'filter':""},
                                         tenant_id, user_id, project_id)
-                #Dispatch (use slice_uuid as a message identifier)
-                self.dispatch.dispatch(json_entry, aplist[index], str(slice_uuid))
+                    #Dispatch (use slice_uuid as a message identifier)
+                    self.dispatch.dispatch(json_entry, aplist[index], str(slice_uuid))
+            else:
+                message += error + "\n"
+                add_success = False
         
         #Return response (message returns a list of uuids for created slices)
         response = {"status":add_success, "message":message}
