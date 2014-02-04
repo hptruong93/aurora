@@ -18,7 +18,7 @@
     "rabbitmq_username": "access_point", 
     "rabbitmq_host": "10.5.8.3", 
     "queue": "openflow3", 
-    "rabbitmq_reply_queue": "amq.gen-q4bhSS46hojbJcedDiK8CA", 
+    "rabbitmq_reply_queue": "amq.gen-z6jzmb-Mnix3nRv81HTLSg", 
     "default_config": {
         "init_hardware_database": {
             "memory_mb": "256", 
@@ -32,6 +32,7 @@
             }, 
             "aurora_version": "0.2"
         }, 
+        "default_active_slice": "default_slice", 
         "init_database": {
             "default_slice": {
                 "VirtualInterfaces": [], 
@@ -43,7 +44,6 @@
             "default_user": [
                 "default_slice"
             ]
-        }, 
-        "default_active_slice": "default_slice"
+        }
     }
 }
