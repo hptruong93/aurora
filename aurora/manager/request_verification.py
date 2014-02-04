@@ -148,7 +148,7 @@ class RadioConfigExistedVerification(RequestVerification):
 
 					if config_existed and request_has_config:
 						return "Radio for the ap " + request['physical_ap'] + " has already been configured. Cannot change the radio's configurations."
-					else if (not config_existed) and (not request_has_config):
+					elif (not config_existed) and (not request_has_config):
 						return "Radio for the ap " + request['physical_ap'] + " has not been configured. An initial configuration is required."
         	except mdb.Error, e:
             		print "Error %d: %s" % (e.args[0], e.args[1])

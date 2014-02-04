@@ -56,5 +56,16 @@
                     "mac":"00:00:00:00:00:21"
                 }
         }
+    ],
+    "TrafficAttributes": [
+        {
+            "flavor":"tc",
+            "attributes":
+                {
+                    "rate_up":"2mbit",
+                    "rate_down":"1mbit"
+                }
+        }
+
     ]
 }
