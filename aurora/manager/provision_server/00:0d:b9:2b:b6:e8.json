@@ -1,9 +1,7 @@
 {
     "last_known_config": {
         "init_user_id_database": {
-            "1": [
-                "616d8df2-6427-494f-8d0f-6f05f21ce4e8"
-            ], 
+            "1": [], 
             "default_user": [
                 "default_slice"
             ]
@@ -13,64 +11,6 @@
                 "VirtualInterfaces": [], 
                 "RadioInterfaces": [], 
                 "VirtualBridges": []
-            }, 
-            "616d8df2-6427-494f-8d0f-6f05f21ce4e8": {
-                "VirtualInterfaces": [
-                    {
-                        "attributes": {
-                            "attach_to": "eth0", 
-                            "name": "veth0"
-                        }, 
-                        "flavor": "veth"
-                    }, 
-                    {
-                        "attributes": {
-                            "attach_to": "wlan0", 
-                            "name": "vwlan0"
-                        }, 
-                        "flavor": "veth"
-                    }
-                ], 
-                "RadioInterfaces": [
-                    {
-                        "attributes": {
-                            "txpower": "20", 
-                            "name": "radio0", 
-                            "country": "CA", 
-                            "disabled": "0", 
-                            "hwmode": "abg", 
-                            "channel": "1"
-                        }, 
-                        "flavor": "wifi_radio"
-                    }, 
-                    {
-                        "attributes": {
-                            "encryption_type": "wep-open", 
-                            "radio": "radio0", 
-                            "name": "MK", 
-                            "key": "12345", 
-                            "if_name": "wlan0"
-                        }, 
-                        "flavor": "wifi_bss"
-                    }
-                ], 
-                "VirtualBridges": [
-                    {
-                        "attributes": {
-                            "interfaces": [
-                                "vwlan0", 
-                                "veth0"
-                            ], 
-                            "bridge_settings": {}, 
-                            "name": "linux-br", 
-                            "port_settings": {
-                                "vwlan0": {}, 
-                                "veth0": {}
-                            }
-                        }, 
-                        "flavor": "linux_bridge"
-                    }
-                ]
             }
         }
     }, 
@@ -78,7 +18,7 @@
     "rabbitmq_username": "access_point", 
     "rabbitmq_host": "10.5.8.3", 
     "queue": "openflow2", 
-    "rabbitmq_reply_queue": "amq.gen-GQUBWEhbQluaFuYZO8TKcQ", 
+    "rabbitmq_reply_queue": "amq.gen-q4bhSS46hojbJcedDiK8CA", 
     "default_config": {
         "init_hardware_database": {
             "memory_mb": "256", 
@@ -92,6 +32,7 @@
             }, 
             "aurora_version": "0.2"
         }, 
+        "default_active_slice": "default_slice", 
         "init_database": {
             "default_slice": {
                 "VirtualInterfaces": [], 
@@ -103,7 +44,6 @@
             "default_user": [
                 "default_slice"
             ]
-        }, 
-        "default_active_slice": "default_slice"
+        }
     }
 }
