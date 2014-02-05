@@ -419,7 +419,7 @@ class Manager():
 
             #Get SSID of slice to be created, only first is captured
             ap_slice_ssid = None
-            for d_entry in json_entry['RadioInterfaces']:
+            for d_entry in json_entry['config']['RadioInterfaces']:
                 if d_entry['flavor'] is 'wifi_bss':
                     ap_slice_ssid = d_entry['attributes']['name']
                     break
@@ -427,7 +427,7 @@ class Manager():
 
 
             if error is None: #There is no error
-                error = self.auroraDB.wslice_add(slice_uuid, ap_slice_ssid, aplist[index], project_id)
+                error = self.auroraDB.wslice_add(slice_uuid, ap_slice_ssid, tenant_id, aplist[index], project_id)
             
                 if error is not None: #There is an error
                     message += error + "\n"
