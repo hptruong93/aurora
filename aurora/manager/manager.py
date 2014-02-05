@@ -417,8 +417,17 @@ class Manager():
             error = None
             #An error message is retuned if there is any problem, else None is returned.
 
+            #Get SSID of slice to be created, only first is captured
+            ap_slice_ssid = None
+            for d_entry in json_entry['RadioInterfaces']:
+                if d_entry['flavor'] is 'wifi_bss':
+                    ap_slice_ssid = d_entry['attributes']['name']
+                    break
+
+
+
             if error is None: #There is no error
-                error = self.auroraDB.wslice_add(slice_uuid, tenant_id, aplist[index], project_id)
+                error = self.auroraDB.wslice_add(slice_uuid, ap_slice_ssid, aplist[index], project_id)
             
                 if error is not None: #There is an error
                     message += error + "\n"
