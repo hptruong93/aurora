@@ -420,8 +420,10 @@ class Manager():
             #Get SSID of slice to be created, only first is captured
             ap_slice_ssid = None
             for d_entry in json_entry['config']['RadioInterfaces']:
+                print "d_entry",d_entry
                 if d_entry['flavor'] is 'wifi_bss':
                     ap_slice_ssid = d_entry['attributes']['name']
+                    print " [XXX] Got SSID:" ap_slice_ssid
                     break
 
 
