@@ -128,6 +128,8 @@ class Dispatcher():
         config = decoded_response['config']
 
         if message == 'SYN':
+            #TODO: If previous message has been dispatched and we are waiting 
+            #      for a response, cancel the timer and/or send the command again
             # AP has started, check if we need to restart slices
             print ap_name + " has connected..."
             # Tell resource monitor, let it handle restart of slices

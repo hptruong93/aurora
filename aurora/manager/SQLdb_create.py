@@ -49,7 +49,7 @@ class SQLdbCreate():
                 cur.execute(ap)
 
                 #Create ap_slice table
-                ap_slice = "CREATE TABLE ap_slice (ap_slice_id VARCHAR(40) NOT NULL PRIMARY KEY, tenant_id VARCHAR(255),\
+                ap_slice = "CREATE TABLE ap_slice (ap_slice_id VARCHAR(40) NOT NULL PRIMARY KEY, ap_slice_ssid VARCHAR(255), tenant_id VARCHAR(255),\
  physical_ap VARCHAR(255), project_id VARCHAR(255), wnet_id VARCHAR(40), status ENUM('PENDING','ACTIVE','FAILED','DOWN','DELETING','DELETED'))"
                 cur.execute(ap_slice)
 

@@ -246,12 +246,12 @@ class AuroraDB():
             return err_msg + '\n'
         return message
 
-    def wslice_add(self, slice_uuid, tenant_id, physAP, project_id):
+    def wslice_add(self, slice_uuid, slice_ssid, tenant_id, physAP, project_id):
         try:
             with self.con:
                 cur = self.con.cursor()
-                to_execute = ( "INSERT INTO ap_slice VALUES ('%s', %s, '%s', %s, %s, '%s')" %
-                               (slice_uuid,  tenant_id, physAP,
+                to_execute = ( "INSERT INTO ap_slice VALUES ('%s', '%s', %s, '%s', %s, %s, '%s')" %
+                               (slice_uuid, slice_ssid, tenant_id, physAP,
                                 project_id, "NULL", "PENDING") )
                 cur.execute(to_execute)
                 #return "Adding slice %s on %s.\n" % (slice_uuid, physAP)
@@ -406,11 +406,12 @@ class AuroraDB():
                 for (i, slice_t) in enumerate(slice_info_tt):
                     slice_list.append({})
                     slice_list[i]['ap_slice_id'] = slice_t[0]
-                    slice_list[i]['tenant_id'] = slice_t[1]
-                    slice_list[i]['physical_ap'] = slice_t[2]
-                    slice_list[i]['project_id'] = slice_t[3]
-                    slice_list[i]['wnet_id'] = slice_t[4]
-                    slice_list[i]['status'] = slice_t[5]
+                    slice_list[i]['ap_slice_ssid'] = slice_t[1]
+                    slice_list[i]['tenant_id'] = slice_t[2]
+                    slice_list[i]['physical_ap'] = slice_t[3]
+                    slice_list[i]['project_id'] = slice_t[4]
+                    slice_list[i]['wnet_id'] = slice_t[5]
+                    slice_list[i]['status'] = slice_t[6]
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)

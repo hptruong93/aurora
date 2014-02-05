@@ -525,11 +525,12 @@ class Manager():
                     for i in range(len(tempList)):
                         newList.append({})
                         newList[i]['ap_slice_id'] = tempList[i][0]
-                        newList[i]['tenant_id'] = tempList[i][1]
-                        newList[i]['physical_ap'] = tempList[i][2]
-                        newList[i]['project_id'] = tempList[i][3]
-                        newList[i]['wnet_id'] = tempList[i][4]
-                        newList[i]['status'] = tempList[i][5]
+                        newList[i]['ap_slice_ssid'] = tempList[i][1]
+                        newList[i]['tenant_id'] = tempList[i][2]
+                        newList[i]['physical_ap'] = tempList[i][3]
+                        newList[i]['project_id'] = tempList[i][4]
+                        newList[i]['wnet_id'] = tempList[i][5]
+                        newList[i]['status'] = tempList[i][6]
                         #Get a list of tags
                         cur.execute( "SELECT name FROM tenant_tags WHERE "
                                      "ap_slice_id = '%s'" % tempList[i][0] )
@@ -538,7 +539,7 @@ class Manager():
                         for tag in tagList:
                             tagString += str(tag[0])+" "
                         cur.execute( "SELECT name FROM location_tags WHERE "
-                                     "ap_name = '%s'" % tempList[i][2] )
+                                     "ap_name = '%s'" % tempList[i][3] )
                         tagList = cur.fetchall()
                         for tag in tagList:
                             tagString += str(tag[0])+" "
@@ -619,6 +620,7 @@ class Manager():
             try:
                 with self.con:
                     cur = self.con.cursor()
+                    #TODO: Allow admin to see all (tenant_id of 0)
                     if len(expression) != 0:
                         cur.execute( ("SELECT * FROM ap_slice WHERE "
                                      "tenant_id = '%s' AND " % tenant_id) + expression )
@@ -637,11 +639,12 @@ class Manager():
                     for i in range(len(tempList)):
                         newList.append({})
                         newList[i]['ap_slice_id'] = tempList[i][0]
-                        newList[i]['tenant_id'] = tempList[i][1]
-                        newList[i]['physical_ap'] = tempList[i][2]
-                        newList[i]['projct_id'] = tempList[i][3]
-                        newList[i]['wnet_id'] = tempList[i][4]
-                        newList[i]['status'] = tempList[i][5]
+                        newList[i]['ap_slice_ssid'] = tempList[i][1]
+                        newList[i]['tenant_id'] = tempList[i][2]
+                        newList[i]['physical_ap'] = tempList[i][3]
+                        newList[i]['projct_id'] = tempList[i][4]
+                        newList[i]['wnet_id'] = tempList[i][5]
+                        newList[i]['status'] = tempList[i][6]
                         #Get a list of tags
                         cur.execute("SELECT name FROM tenant_tags WHERE ap_slice_id=\'" + \
                                     str(tempList[i][0])+"\'")
@@ -681,12 +684,12 @@ class Manager():
         for entry in newList:
             message += "%12s: %s" % ("ap_slice_id", entry['ap_slice_id'])
             if not arg_i:
-                message += " (%s) - %s\n" % (entry['physical_ap'], entry['status'])
+                message += " ('%s' on %s) - %s\n" % (entry['ap_slice_ssid'], entry['physical_ap'], entry['status'])
 
             else:
-                message += '\n'
+                message += " '%s'\n" % entry['ap_slice_ssid']
                 for key,value in entry.iteritems():
-                    if key != 'ap_slice_id':
+                    if key != 'ap_slice_id' and key != 'ap_slice_ssid':
                         message += "%12s: %s\n" % (key, value)
                 active_time, bytes_sent = self.auroraDB.get_wslice_status(entry['ap_slice_id'])
                 message += "(%12s): %s\n" % ("active_time", active_time)
