@@ -132,6 +132,7 @@ class SliceAgent:
         for traffic_control in config['TrafficAttributes']:
             try:
                 #find up if
+                print "vif_up,vif_down",vif_up, vif_down
                 traffic_control["attributes"]["if_up"] = vif_up
                 traffic_control["attributes"]["if_down"] = vif_down
                 self.tc.create(traffic_control["flavor"], traffic_control["attributes"])
@@ -163,10 +164,11 @@ class SliceAgent:
                     self.v_bridges.delete_bridge(bridge['attributes']['name'])
                 except:
                     print("Error: Unable to delete bridge " + bridge['attributes']['name'])
+            
             for traffic_control in slice_data['TrafficAttributes']:
                 try:
                     self.tc.delete(traffic_control['attributes']['name'])
-                except:
+                except Exception as e:
                     print("Error: Unable to remove Qos " + traffic_control['attributes']['name'])
 
             # Delete all virtual interfaces
