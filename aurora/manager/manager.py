@@ -420,10 +420,8 @@ class Manager():
             #Get SSID of slice to be created, only first is captured
             ap_slice_ssid = None
             for d_entry in json_entry['config']['RadioInterfaces']:
-                print "d_entry",d_entry
-                if d_entry['flavor'] is 'wifi_bss':
+                if d_entry['flavor'] == 'wifi_bss':
                     ap_slice_ssid = d_entry['attributes']['name']
-                    print " [XXX] Got SSID:" ap_slice_ssid
                     break
 
 
@@ -653,7 +651,7 @@ class Manager():
                         newList[i]['ap_slice_ssid'] = tempList[i][1]
                         newList[i]['tenant_id'] = tempList[i][2]
                         newList[i]['physical_ap'] = tempList[i][3]
-                        newList[i]['projct_id'] = tempList[i][4]
+                        newList[i]['project_id'] = tempList[i][4]
                         newList[i]['wnet_id'] = tempList[i][5]
                         newList[i]['status'] = tempList[i][6]
                         #Get a list of tags
