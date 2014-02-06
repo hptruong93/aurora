@@ -22,5 +22,11 @@
       "OpenWRTWifi" : {
         "class": "OpenWRTWifi"
        }
+  },
+  "VirtualTC" :
+  {
+      "tc" : {
+          "class" : "Tc"
+      }
   }
 }

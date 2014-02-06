@@ -1,5 +1,5 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
-import VirtualBridges, VirtualInterfaces
+import VirtualBridges, VirtualInterfaces, VirtualTC
 import exception, json, pprint, Database, atexit, sys
 import VirtualWifi
 import Monitor
@@ -23,6 +23,7 @@ class SliceAgent:
         self.v_bridges = VirtualBridges.VirtualBridges(self.database)
         self.v_interfaces = VirtualInterfaces.VirtualInterfaces(self.database)
         self.wifi = VirtualWifi.VirtualWifi(self.database)
+        self.tc = VirtualTC.VirtualTC(self.database)
         self.monitor = Monitor.Monitor(self.database)
 
         # Clean up on exit
@@ -70,11 +71,18 @@ class SliceAgent:
         for interfaces in config['VirtualInterfaces']:
             try:
                 self.v_interfaces.create(interfaces["flavor"], interfaces["attributes"])
+                #Hard code check for eth0 - this is uplink interface
+                if_names = (interfaces["attributes"]["attach_to"], interfaces["attributes"]["name"])
+                if if_names[0] == "eth0":
+                    vif_up = if_names[1]
+                else:
+                    vif_down = if_names[1]
             except Exception as e:
                 print " [v] Exception: %s" %e.message
                 # Abort, delete
                 self.delete_slice(slice)
                 raise exception.SliceCreationFailed("Aborting.\nVirtual Interface creation failed: " + interfaces['attributes']['name'] + '\n' + e.message)
+
 
         # Create all virtual bridges
         for bridges in config['VirtualBridges']:
@@ -120,6 +128,19 @@ class SliceAgent:
                             self.delete_slice(slice)
                             raise exception.SliceCreationFailed("Aborting.\nError applying setting " + setting + " to port " + port + " on bridge " + bridge_name + '\n' + e.message)
 
+        
+        for traffic_control in config['TrafficAttributes']:
+            try:
+                #find up if
+                traffic_control["attributes"]["if_up"] = vif_up
+                traffic_control["attributes"]["if_down"] = vif_down
+                self.tc.create(traffic_control["flavor"], traffic_control["attributes"])
+            except Exception as e:
+                print " [v] Exception: %s" %e.message
+                # Abort, delete
+                self.delete_slice(slice)
+                raise exception.SliceCreationFailed("Aborting.\nQoS creation failed\n" + e.message)
+        
         self.database.reset_active_slice()
 
 
@@ -142,6 +163,12 @@ class SliceAgent:
                     self.v_bridges.delete_bridge(bridge['attributes']['name'])
                 except:
                     print("Error: Unable to delete bridge " + bridge['attributes']['name'])
+            for traffic_control in slice_data['TrafficAttributes']:
+                try:
+                    self.tc.delete(traffic_control['attributes']['name'])
+                except:
+                    print("Error: Unable to remove Qos " + traffic_control['attributes']['name'])
+
             # Delete all virtual interfaces
             for interface in slice_data['VirtualInterfaces']:
                 try:
