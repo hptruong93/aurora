@@ -128,19 +128,19 @@ class SliceAgent:
                             self.delete_slice(slice)
                             raise exception.SliceCreationFailed("Aborting.\nError applying setting " + setting + " to port " + port + " on bridge " + bridge_name + '\n' + e.message)
 
-        
-        for traffic_control in config['TrafficAttributes']:
-            try:
-                #find up if
-                print "vif_up,vif_down",vif_up, vif_down
-                traffic_control["attributes"]["if_up"] = vif_up
-                traffic_control["attributes"]["if_down"] = vif_down
-                self.tc.create(traffic_control["flavor"], traffic_control["attributes"])
-            except Exception as e:
-                print " [v] Exception: %s" %e.message
-                # Abort, delete
-                self.delete_slice(slice)
-                raise exception.SliceCreationFailed("Aborting.\nQoS creation failed\n" + e.message)
+        if "TrafficAttributes" in config.keys():
+            for traffic_control in config['TrafficAttributes']:
+                try:
+                    #find up if
+                    print "vif_up,vif_down",vif_up, vif_down
+                    traffic_control["attributes"]["if_up"] = vif_up
+                    traffic_control["attributes"]["if_down"] = vif_down
+                    self.tc.create(traffic_control["flavor"], traffic_control["attributes"])
+                except Exception as e:
+                    print " [v] Exception: %s" %e.message
+                    # Abort, delete
+                    self.delete_slice(slice)
+                    raise exception.SliceCreationFailed("Aborting.\nQoS creation failed\n" + e.message)
         
         self.database.reset_active_slice()
 
@@ -164,12 +164,12 @@ class SliceAgent:
                     self.v_bridges.delete_bridge(bridge['attributes']['name'])
                 except:
                     print("Error: Unable to delete bridge " + bridge['attributes']['name'])
-            
-            for traffic_control in slice_data['TrafficAttributes']:
-                try:
-                    self.tc.delete(traffic_control['attributes']['name'])
-                except:
-                    print("Error: Unable to remove Qos " + traffic_control['attributes']['name'])
+            if "TrafficAttributes" in config.keys():
+                for traffic_control in slice_data['TrafficAttributes']:
+                    try:
+                        self.tc.delete(traffic_control['attributes']['name'])
+                    except:
+                        print("Error: Unable to remove Qos " + traffic_control['attributes']['name'])
 
             # Delete all virtual interfaces
             for interface in slice_data['VirtualInterfaces']:
