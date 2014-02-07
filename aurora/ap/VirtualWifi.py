@@ -32,7 +32,7 @@ class VirtualWifi:
         
         # Cast to string - some issues with unicode?  Also, append Wifi to name
         flavour = str(flavour) + "Wifi"
-
+        
         module_file = __import__(self.MODULES_FOLDER,globals(),locals(),
                 [flavour]).__dict__[flavour]
         module_class_name = metadata[flavour]['class']

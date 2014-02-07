@@ -235,7 +235,7 @@ class SliceAgent:
         """The main entry point for any command coming from a remote
         server.  The command is analyzed and forwaded to the relevant
         class/method as appropriate."""
-
+        
         # determine if create, delete or modify
         if command == "create_slice":
             self.create_slice(slice, user, config)
