@@ -1,4 +1,4 @@
 {
-    "message": "-->> Error 2006: MySQL server has gone away\n\n", 
-    "status": false
+    "message": "Adding slice 1: 423dce24-7696-43ac-b756-4c95d7dfd1ba\n", 
+    "status": true
 }

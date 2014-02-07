@@ -372,12 +372,16 @@ class Manager():
             response = {"status":False, "message":err_msg}
             return response
 
+        if 'TrafficAttributes' not in arg_file.keys():
+            arg_file['TrafficAttributes'] = {}
+
         #Initialize json_list structure (We do NOT yet have a plugin for
         #VirtualWIFI/RadioInterfaces, just load and send for now)
         for i in range(len(aplist)):
             json_list.append({'VirtualInterfaces':[],
                               'VirtualBridges':[],
-                              'RadioInterfaces':arg_file['VirtualWIFI']})
+                              'RadioInterfaces':arg_file['VirtualWIFI'],
+                              'TrafficAttributes':arg_file['TrafficAttributes']})
 
         #Send to plugin for parsing
         try:

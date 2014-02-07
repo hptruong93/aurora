@@ -171,6 +171,8 @@ class Database:
             self.get_entry(section, info["name"])
         except exception.EntryNotFound:
             # OK, does not exist
+            if section not in self.database[self.active_slice].keys():
+                self.database[self.active_slice][section] = []
             self.database[self.active_slice][section].append({ "flavor" : flavour, "attributes" : info })
         else:
             # Error
@@ -194,9 +196,10 @@ class Database:
     def get_entry(self, section, name):
         """Returns the entry identified by section and name
         if it exists.  Raises exception.EntryNotFound if it does not."""
-        for entry in self.database[self.active_slice][section]:
-            if entry["attributes"]["name"] == name:
-                return entry
+        if section in self.database[self.active_slice].keys():
+            for entry in self.database[self.active_slice][section]:
+                if entry["attributes"]["name"] == name:
+                    return entry
         raise exception.EntryNotFound(name)
     
     def get_entry_search(self, name):
