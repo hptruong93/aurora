@@ -5,7 +5,7 @@
             "attributes" : 
                 {
                     "name" : "radio0",
-                    "channel" : "1",
+                    "channel" : "2",
                     "txpower" : "20",
                     "disabled" : "0",
                     "country" : "CA",
@@ -16,7 +16,7 @@
             "flavor" : "wifi_bss",
             "attributes" : 
                 {
-                    "name" : "usable_slice",
+                    "name" : "USE",
                     "radio" : "radio0",
                     "if_name" : "wlan0",
                     "encryption_type":"wep-open",
@@ -56,16 +56,5 @@
                     "mac":"00:00:00:00:00:21"
                 }
         }
-    ],
-    "TrafficAttributes": [
-        {
-            "flavor":"tc",
-            "attributes":
-                {
-                    "rate_up":"2mbit",
-                    "rate_down":"1mbit"
-                }
-        }
-
     ]
 }

@@ -164,7 +164,7 @@ class SliceAgent:
                     self.v_bridges.delete_bridge(bridge['attributes']['name'])
                 except:
                     print("Error: Unable to delete bridge " + bridge['attributes']['name'])
-            if "TrafficAttributes" in config.keys():
+            if "TrafficAttributes" in slice_data.keys():
                 for traffic_control in slice_data['TrafficAttributes']:
                     try:
                         self.tc.delete(traffic_control['attributes']['name'])

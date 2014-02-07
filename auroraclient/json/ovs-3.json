@@ -17,7 +17,7 @@
             "flavor":"ovs",
             "attributes":   
                 {
-                    "name":"vswitch-br-1",
+                    "name":"vswitch-br-2",
                     "interfaces":
                         ["vwlan0-2","veth2"],
                     "bridge_settings":
