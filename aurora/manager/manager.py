@@ -44,6 +44,7 @@ class Manager():
                                               password,
                                               self.mysql_username,
                                               self.mysql_password)
+        provision.init()
         provision.run()
 
     def __del__(self):

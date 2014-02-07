@@ -37,12 +37,13 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         self.send_header( "Content-length", str(len(body)) )
         self.end_headers()
         self.wfile.write( body )
-        
-# Outside of class - code to start/stop server
 
-handler_class = MyHandler
-server_address = ('', 5555)
-server = BaseHTTPServer.HTTPServer(server_address, handler_class)
+def init():        #Call once
+    # Outside of class - code to start/stop server
+    handler_class = MyHandler
+    server_address = ('', 5555)
+    server = BaseHTTPServer.HTTPServer(server_address, handler_class)
+
 def get_json_files():
     provision_dir = "provision_server"
     paths = os.listdir(provision_dir)

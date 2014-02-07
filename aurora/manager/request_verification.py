@@ -8,7 +8,7 @@ import os
 import glob
 import exception
 import MySQLdb as mdb
-#import manager
+import manager
 
 #This module is called by manager before acting on any AP.
 #This will detect inconsistency/ invalid request/operation of the manager requested by the client.
@@ -73,6 +73,7 @@ class APSliceNumberVerification(RequestVerification):
                                       FROM (SELECT physical_ap, COUNT(physical_ap) AS used_slice 
                                             FROM ap_slice 
                                             WHERE status <> "DELETED"
+                                              AND status <> "FAILED"
                                             GROUP BY physical_ap) AS 
                                       A LEFT JOIN ap ON A.physical_ap = ap.name
                                       WHERE name IS NOT NULL""")
@@ -88,6 +89,7 @@ class APSliceNumberVerification(RequestVerification):
                                       FROM (SELECT physical_ap, COUNT(physical_ap) AS used_slice 
                                             FROM ap_slice 
                                             WHERE status <> "DELETED"
+                                              AND status <> "FAILED"
                                             GROUP BY physical_ap) AS 
                                       A LEFT JOIN ap ON A.physical_ap = ap.name
                                       WHERE name = %s """, (request['physical_ap']))
@@ -272,7 +274,6 @@ class RequestVerifier():
             try:
                 verifier._verify(command, request)
             except VerificationException as ex:
-                print ex._handle_exception()
                 return ex._handle_exception()
         return None
 
