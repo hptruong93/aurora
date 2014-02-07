@@ -168,7 +168,7 @@ class SliceAgent:
             for traffic_control in slice_data['TrafficAttributes']:
                 try:
                     self.tc.delete(traffic_control['attributes']['name'])
-                except Exception as e:
+                except:
                     print("Error: Unable to remove Qos " + traffic_control['attributes']['name'])
 
             # Delete all virtual interfaces

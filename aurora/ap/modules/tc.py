@@ -31,7 +31,7 @@ class Tc:
                 subprocess.check_call(command)
             except:
                 pass
-                
+
             command = ["tc", "qdisc", "add", "dev", qos_rule[1], "root", 
                        "handle", "1:", "htb"]
             print "\n  $ "," ".join(command)
@@ -54,7 +54,8 @@ class Tc:
                 subprocess.check_call(command)
             except:
                 pass
-            command = ["tc", "qdisc", "add", "dev", qos_rule[1], "parent", "1:1", "handle", "10:", "sfq", "perturb", "10"]
+            command = ["tc", "qdisc", "add", "dev", qos_rule[1], "parent", "1:1",
+                       "handle", "10:", "sfq", "perturb", "10"]
             print "\n  $ "," ".join(command)
             try:
                 subprocess.check_call(command)
