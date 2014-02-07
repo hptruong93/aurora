@@ -414,7 +414,7 @@ class Manager():
             #Generate unique slice_id and add entry to database
             slice_uuid = uuid.uuid4()
             json_entry['slice'] = str(slice_uuid)
-            #json_entry['physical_ap'] = ap_list[index]
+            json_entry['physical_ap'] = ap_list[index]
 
             #Verify adding process. See request_verification for more information
             #error = Verify.verifyOK('create_slice', json_entry)
