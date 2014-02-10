@@ -44,7 +44,7 @@ class Manager():
                                               password,
                                               self.mysql_username,
                                               self.mysql_password)
-        provision.init()
+        #provision.init()
         provision.run()
 
     def __del__(self):
@@ -415,7 +415,7 @@ class Manager():
             #Generate unique slice_id and add entry to database
             slice_uuid = uuid.uuid4()
             json_entry['slice'] = str(slice_uuid)
-            json_entry['physical_ap'] = ap_list[index]
+            json_entry['physical_ap'] = aplist[index]
 
             #Verify adding process. See request_verification for more information
             #error = Verify.verifyOK('create_slice', json_entry)

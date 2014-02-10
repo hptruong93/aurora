@@ -6,6 +6,11 @@ from pprint import pprint
 class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
     server_version= "Aurora/0.2"
     
+    def __init__(self, *args):
+
+        print "\nConstructing provision MyHandler"
+        BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, *args)
+
     def do_GET( self ):
         # Verify request type
         if self.path.startswith("/initial_ap_config_request/"):
@@ -37,12 +42,6 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         self.send_header( "Content-length", str(len(body)) )
         self.end_headers()
         self.wfile.write( body )
-
-def init():        #Call once
-    # Outside of class - code to start/stop server
-    handler_class = MyHandler
-    server_address = ('', 5555)
-    server = BaseHTTPServer.HTTPServer(server_address, handler_class)
 
 def get_json_files():
     provision_dir = "provision_server"
@@ -84,14 +83,22 @@ def update_last_known_config(ap, config):
         json.dump(config, F, indent=4)
         print F.name + " updated for " + ap
     
-    
-                
-    
+# Globals definition for starting Provision Server
+           
+running = False    
+handler_class = MyHandler
+server_address = ('', 5555)
+server = BaseHTTPServer.HTTPServer(server_address, handler_class)
 
 def run():
-    print "Starting provision server..."
-    server_thread = threading.Thread(target=server.serve_forever)
-    server_thread.start()
+    global running
+    if not running:
+        print "Starting provision server..."
+        server_thread = threading.Thread(target=server.serve_forever)
+        server_thread.start()
+        running = True
+    else:
+        print "Provision server already running"
 
 def stop():
     print "Shutting down provision server..."
