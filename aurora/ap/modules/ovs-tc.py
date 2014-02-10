@@ -2,14 +2,17 @@
 import subprocess
 import psutil
 import copy
-class Tc:    
-    """The tc class configures and runs the tc program"""
+class OvsTC:    
+    """The ovs-tc class sets up ovs queues on bridge interfaces"""
     def __init__(self):
         # Keep track of all created instances
         self.process_list = {}
 
-    def start(self, rate_up = None, rate_down = None, if_up = None, if_down = None):
-        """Sets up qdiscs and classes using TC to limit rates to specified limits."""
+    def start(self, rate_up = None, rate_down = None, if_up = None, if_down = None, ovs_db_sock = None):
+        """Sets up queues and using ovs-vsctl to limit rates to specified limits."""
+
+        if ovs_db_sock is None:
+            raise Exception("TC Error: no ovs sock specified")
 
         # Check that for supplied rates, if is specified
         if (rate_up and not if_up) or (rate_down and not if_down):
@@ -22,50 +25,29 @@ class Tc:
         if rate_down:
             qos_list.append((rate_down, if_down))
         for qos_rule in qos_list:
-            command = ["tc", "qdisc", "del", "dev", qos_rule[1], "root"]
+            command = ["ovs-vsctl", "--db=unix:%s" % ovs_db_sock,"clear", "Port", qos_rule[1], "qos"]
             print "\n  $ "," ".join(command)
             try:
                 subprocess.check_call(command)
             except:
                 pass
 
-            command = ["tc", "qdisc", "add", "dev", qos_rule[1], "root", 
-                       "handle", "1:", "htb"]
-            print "\n  $ "," ".join(command)
-            try:
-                subprocess.check_call(command)
-            except:
-                pass
-            command = ["tc", "class", "add", "dev", qos_rule[1], "parent", "1:",
-                       "classid", "1:1", "htb", "rate", qos_rule[0]]
-            print "\n  $ "," ".join(command)
-            try:
-                subprocess.check_call(command)
-            except:
-                pass
-            command = ["tc", "filter", "add", "dev", qos_rule[1], "parent", "1:0",
-                       "protocol", "ip", "prio", "1", "u32","match",
-                       "ip", "dst", "0.0.0.0/0", "flowid", "1:1"]
-            print "\n  $ "," ".join(command)
-            try:
-                subprocess.check_call(command)
-            except:
-                pass
-            command = ["tc", "qdisc", "add", "dev", qos_rule[1], "parent", "1:1",
-                       "handle", "10:", "sfq", "perturb", "10"]
+            command = ["ovs-vsctl", "--db=unix:%s" % ovs_db_sock, "--", "set", "port", qos_rule[1], "qos=@rate_limit_qos", 
+                       "--", "--id=@rate_limit_qos", "create", "qos", "type=linux-htb", "other-config:max-rate=%s" % qos_rule[0],
+                       "queues:0=@q0", "--", "--id=@q0", "create", "queue", "other-config:max-rate=%s" % qos_rule[0]]
             print "\n  $ "," ".join(command)
             try:
                 subprocess.check_call(command)
             except:
                 pass
 
-    def stop(self, if_up = None, if_down = None):
-        if if_up is not None:
+    def stop(self, if_up = None, if_down = None, ovs_db_sock = None):
+        if if_up:
             qos_list.append(if_up)
-        if if_down is not None:
+        if if_down:
             qos_list.append(if_down)
         for qos_rule in qos_list:
-            command = ["tc", "qdisc", "del", "dev", qos_rule, "root"]
+            command = ["ovs-vsctl", "--db=unix:%s" % ovs_db_sock,"clear", "Port", qos_rule, "qos"]
             print "\n  $ "," ".join(command)
             try:
                 subprocess.check_call(command)

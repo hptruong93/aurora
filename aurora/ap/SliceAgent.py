@@ -30,9 +30,9 @@ class SliceAgent:
         atexit.register(self.__reset)
 
     def find_main_slice(self, config):
-        return self.__find_main_slice(config)    
+        return self._find_main_slice(config)    
     
-    def __find_main_slice(self, config):
+    def _find_main_slice(self, config):
         for slice, attributes in config.iteritems():
             for item in attributes["RadioInterfaces"]:
                 if item["flavor"] == "wifi_radio":
@@ -135,6 +135,11 @@ class SliceAgent:
                     print "vif_up,vif_down",vif_up, vif_down
                     traffic_control["attributes"]["if_up"] = vif_up
                     traffic_control["attributes"]["if_down"] = vif_down
+                    if traffic_control["flavor"] == "ovs-tc"
+                        if "ovs" in self.v_bridges.module_list.keys():
+                            traffic_control["attributes"]["ovs_db_sock"] = self.v_bridges.module_list["ovs"].socket_file.name
+                        else:
+                            raise Exception("No ovs module previously loaded")
                     self.tc.create(traffic_control["flavor"], traffic_control["attributes"])
                 except Exception as e:
                     print " [v] Exception: %s" %e.message

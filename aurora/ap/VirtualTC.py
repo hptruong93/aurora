@@ -77,6 +77,8 @@ class VirtualTC:
         # Load flavour data
         running_flavour = self.__load_module(flavour)
         
+
+
         # Everything loaded; now create the interface
         # (Python unpacks arguments with **)
         running_flavour.start(**args)
@@ -99,12 +101,15 @@ class VirtualTC:
         """Delete a given interface."""
         
         entry = self.__get_entry(name)
+        args = {}
         flavour = entry["flavor"]
-        vif_up = entry["if_up"]
-        vif_down = entry["if_down"]
+        args["if_up"] = entry["if_up"]
+        args["if_down"] = entry["if_down"]
+        if flavour == "ovs-tc":
+            args["ovs_db_sock"] = entry["ovs_db_sock"]
         # Module should already be loaded
         manager = self.__get_module(flavour)
-        manager.stop(vif_up, vif_down)
+        manager.stop(**args)
         self.__del_entry(name)
         
     def get_status(self, name):

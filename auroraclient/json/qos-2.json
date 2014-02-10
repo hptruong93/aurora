@@ -47,7 +47,7 @@
     ],
     "TrafficAttributes": [
         {
-            "flavor":"tc",
+            "flavor":"ovs-tc",
             "attributes":
                 {
                     "rate_up":"0.5mbit",

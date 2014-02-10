@@ -27,6 +27,9 @@
   {
       "tc" : {
           "class" : "Tc"
+      },
+      "ovs-tc" : {
+          "class" : "OvsTC"
       }
   }
 }
