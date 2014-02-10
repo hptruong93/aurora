@@ -415,7 +415,11 @@ class Manager():
             #Generate unique slice_id and add entry to database
             slice_uuid = uuid.uuid4()
             json_entry['slice'] = str(slice_uuid)
-            json_entry['physical_ap'] = aplist[index]
+            
+            # There is no handling for key 'physical_ap' on the access point
+            # side of the amqp link, perhaps similar functionality can be
+            # achieved in another way?
+            #json_entry['physical_ap'] = aplist[index]
 
             #Verify adding process. See request_verification for more information
             #error = Verify.verifyOK('create_slice', json_entry)

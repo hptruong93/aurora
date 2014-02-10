@@ -14,13 +14,16 @@
     ], 
     "VirtualBridges": [
         {
-            "flavor":"linux_bridge",
+            "flavor":"ovs",
             "attributes":   
                 {
-                    "name":"linux-br-1",
+                    "name":"vswitch-br-2",
                     "interfaces":
                         ["vwlan0-1","veth1"],
-                    "bridge_settings":{},
+                    "bridge_settings":
+                        {
+                            "controller":["tcp:10.5.8.3"]
+                        },
                     "port_settings":{}
                 }
         }
@@ -50,8 +53,8 @@
             "flavor":"ovs-tc",
             "attributes":
                 {
-                    "rate_up":"0.5mbit",
-                    "rate_down":"0.5mbit"
+                    "rate_up":"500000",
+                    "rate_down":"500000"
                 }
         }
 

@@ -32,14 +32,32 @@ class OvsTC:
             except:
                 pass
 
-            command = ["ovs-vsctl", "--db=unix:%s" % ovs_db_sock, "--", "set", "port", qos_rule[1], "qos=@rate_limit_qos", 
-                       "--", "--id=@rate_limit_qos", "create", "qos", "type=linux-htb", "other-config:max-rate=%s" % qos_rule[0],
-                       "queues:0=@q0", "--", "--id=@q0", "create", "queue", "other-config:max-rate=%s" % qos_rule[0]]
+            command = [
+                "ovs-vsctl", "--db=unix:%s" % ovs_db_sock, 
+                   "--", "set", "port", qos_rule[1], "qos=@rate_limit_qos", 
+                   "--", "--id=@rate_limit_qos", "create", "qos", "type=linux-htb",
+                         "other-config:max-rate=%s" % qos_rule[0], "queues:0=@q0", 
+                   "--", "--id=@q0", "create", "queue", "other-config:max-rate=%s" % qos_rule[0]
+                ]
             print "\n  $ "," ".join(command)
             try:
                 subprocess.check_call(command)
             except:
                 pass
+
+            # Add rules to flow table 
+            #command = [
+            #    "ovs-ofctl", "--db=unix:%s" % ovs_db_sock, 
+            #       "--", "set", "port", qos_rule[1], "qos=@rate_limit_qos", 
+            #       "--", "--id=@rate_limit_qos", "create", "qos", "type=linux-htb",
+            #             "other-config:max-rate=%s" % qos_rule[0], "queues:0=@q0", 
+            #       "--", "--id=@q0", "create", "queue", "other-config:max-rate=%s" % qos_rule[0]
+            #    ]
+            #print "\n  $ "," ".join(command)
+            #try:
+            #    subprocess.check_call(command)
+            #except:
+            #    pass
 
     def stop(self, if_up = None, if_down = None, ovs_db_sock = None):
         if if_up:
