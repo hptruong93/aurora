@@ -26,7 +26,7 @@ class RequestVerification():
         return mdb.connect('localhost',
                                    'root',
                                    'supersecret',
-                                   'aurora_latest')
+                                   'aurora')
 
     @abstractmethod
     def _verify(self, command, request):
