@@ -26,7 +26,7 @@ class RequestVerification():
         return mdb.connect('localhost',
                                    'root',
                                    'supersecret',
-                                   'aurora')
+                                   'aurora_latest')
 
     @abstractmethod
     def _verify(self, command, request):
@@ -84,7 +84,10 @@ class APSliceNumberVerification(RequestVerification):
                             #Else return None later
                     #print result #For testing only
                 else:
-                    cursor.execute("""SELECT name, used_slice, number_radio, number_radio_free 
+					if not self._ap_name_exists(cursor, request['physical_ap']):
+						raise NoSuchAPExists(str(request['physical_ap']))
+
+					cursor.execute("""SELECT name, used_slice, number_radio, number_radio_free 
                                       FROM (SELECT physical_ap, COUNT(physical_ap) AS used_slice 
                                             FROM ap_slice 
                                             WHERE status <> "DELETED"
@@ -92,106 +95,110 @@ class APSliceNumberVerification(RequestVerification):
                                             GROUP BY physical_ap) AS 
                                       A LEFT JOIN ap ON A.physical_ap = ap.name
                                       WHERE name = %s """, (request['physical_ap']))
-                    result = cursor.fetchall()
+					result = cursor.fetchall()
 
-                    if len(result) == 0:
-                        return 'No such physical ap named \'' + str(request['physical_ap']) + '\' exists!'
+					if len(result) == 0:
+						return None #No slice has been created yet on the interested ap
 
-                    ap = result[0]
-                    if ap[used_slice] + _ADDITIONAL_SLICE[command] > 4 * ap[number_radio]: #We create new slice
-                        return 'The AP \'' + str(ap[name]) + '\' has no space left to execute command \'' + command + '\'.'
+					ap = result[0]
+					if ap[used_slice] + _ADDITIONAL_SLICE[command] > 4 * ap[number_radio]: #We create new slice
+						return 'The AP \'' + str(ap[name]) + '\' has no space left to execute command \'' + command + '\'.'
                         #Else return None later
 
         except mdb.Error, e:
                 traceback.print_exc(file=sys.stdout)
                 sys.exit(1)
         except KeyError, e:
-                return 'Key ' + str(e.args[0]) + ' could not be found. Please check request'
-        except Exception:
-                traceback.print_exc(file=sys.stdout)
-                sys.exit(1)
-        return None 
+            	raise MissingKeyInRequest(str(e.args[0]))
+        return None
+
+    def _ap_name_exists(self, mysqlCursor, physical_ap):
+    	mysqlCursor.execute("SELECT name FROM ap")
+    	ap_names = mysqlCursor.fetchall()
+    	for ap_name in ap_names:
+    		if ap_name[0] == physical_ap:
+    			return True
+    	return False
         
 #See RadioConfigInvalid exception for what this class is verifying
 class RadioConfigExistedVerification(RequestVerification):
-    def _verify(self, command, request):
-        check_result = self._check_radio_config_existed(command, request)
-        if check_result:
-            raise RadioConfigInvalid(check_result)
+	def _verify(self, command, request):
+		check_result = self._check_radio_config_existed(command, request)
+		if check_result:
+			raise RadioConfigInvalid(check_result)
 
-    def _check_radio_config_existed(self, command, request):
-        if request is None:
-            return None
-        else:
-            #Check for invalid configuration on ap radio using the request
-            try:
-                configuring_radio = self._get_radio_configuring(request['config']['RadioInterfaces'])
-                request_has_config = configuring_radio is not None
+	def _get_number_slice_on_radio(self, physical_ap, radio_name):
+		ap_info = self._get_physical_ap_info(physical_ap)
+		if ap_info is None:
+			raise NoSuchAPExists(str(physical_ap))
 
-                if configuring_radio is None:
-                    requested_radio = self._get_radio_requested(request['config']['RadioInterfaces'])
-                    number_slices = self._get_number_slice_on_radio(request['physical_ap'], requested_radio)
-                else:
-                    number_slices = self._get_number_slice_on_radio(request['physical_ap'], configuring_radio)
-
-                config_existed = number_slices != 0
-
-                if config_existed and request_has_config:
-                    return "Radio for the ap " + request['physical_ap'] + " has already been configured. Cannot change the radio's configurations."
-                elif (not config_existed) and (not request_has_config):
-                    return "Radio for the ap " + request['physical_ap'] + " has not been configured. An initial configuration is required."
-
-            except KeyError, e:
-                    return 'Key ' + str(e.args[0]) + ' could not be found. Please check request'
-            except Exception:
-                    traceback.print_exc(file=sys.stdout)
-                    sys.exit(1)
-        return None
+		#For some reason, the ap_config file stores radio0 information with key "1"??? That is why we have + 1 below
+		#Below is the number of slices existing on that radio
+		slices = ap_info['last_known_config']['init_user_id_database']
+		if str(self._get_radio_number(radio_name) + 1) in slices:
+			return len(slices[str(self._get_radio_number(radio_name) + 1)])    
+		return 0
 
     #Get the radio that the request is trying to configure
     #KeyError exception should already be caught by caller
-    def _get_radio_configuring(self, radio_interface):
-        if len(radio_interface) == 0:
-            return None
-        else:
-            for item in radio_interface:
-                if item['flavor'] == 'wifi_radio':
-                    return item['attributes']['name']
-        return None
+	def _get_radio_configuring(self, radio_interface):
+		if len(radio_interface) == 0:
+			return None
+		else:
+			for item in radio_interface:
+				if item['flavor'] == 'wifi_radio':
+					return item['attributes']['name']
+		return None
 
     #Get the radio that the request is trying to setup the slice on
     #KeyError exception should already be caught by caller
-    def _get_radio_requested(self, radio_interface):
-        if len(radio_interface) == 0:
-            return None
-        else:
-            for item in radio_interface:
-                if item['flavor'] == 'wifi_bss':
-                    return item['attributes']['radio']
-        return None
+	def _get_radio_requested(self, radio_interface):
+		if len(radio_interface) == 0:
+			return None
+		else:
+			for item in radio_interface:
+				if item['flavor'] == 'wifi_bss':
+					return item['attributes']['radio']
+		return None
 
-    def _get_number_slice_on_radio(self, physical_ap, radio_name):
-        ap_info = self._get_physical_ap_info(physical_ap)
-        #For some reason, the ap_config file stores radio0 information with key "1"??? That is why we have + 1 below
-        #Below is the number of slices existing on that radio
-        slices = ap_info['last_known_config']['init_user_id_database']
-        if str(self._get_radio_number(radio_name) + 1) in slices:
-            return len(slices[str(self._get_radio_number(radio_name) + 1)])    
-        return 0
+	#Get json info file for an ap. Json file is located in manager/provision_server
+	def _get_physical_ap_info(self, physical_ap):
+		os.chdir("./provision_server")
+		for file in glob.glob("*.json"):
+			content = json.load(open(file))
+			if content['queue'] == physical_ap:
+				return content
+		return None
 
-    #Get json info file for an ap. Json file is located in manager/provision_server
-    def _get_physical_ap_info(self, physical_ap):
-        os.chdir("./provision_server")
-        for file in glob.glob("*.json"):
-            content = json.load(open(file))
-            if content['queue'] == physical_ap:
-                return content
-        return None
+	#Radio name: radio0, radio1, ... radio10, 
+	def _get_radio_number(self, radio_name):
+		return int(radio_name[len('radio')])
 
-    #Radio name: radio0, radio1, ... radio10, 
-    def _get_radio_number(self, radio_name):
-        return int(radio_name[len('radio')])
+	def _check_radio_config_existed(self, command, request):
+		if request is None:
+			return None
+		else:
+            #Check for invalid configuration on ap radio using the request
+			try:
+				configuring_radio = self._get_radio_configuring(request['config']['RadioInterfaces'])
+				request_has_config = configuring_radio is not None
 
+				if configuring_radio is None:
+					requested_radio = self._get_radio_requested(request['config']['RadioInterfaces'])
+					number_slices = self._get_number_slice_on_radio(request['physical_ap'], requested_radio)
+				else:
+					number_slices = self._get_number_slice_on_radio(request['physical_ap'], configuring_radio)
+
+				config_existed = number_slices != 0
+
+				if config_existed and request_has_config:
+					return "Radio for the ap " + request['physical_ap'] + " has already been configured. Cannot change the radio's configurations."
+				elif (not config_existed) and (not request_has_config):
+					return "Radio for the ap " + request['physical_ap'] + " has not been configured. An initial configuration is required."
+
+			except KeyError, e:
+				raise MissingKeyInRequest(str(e.args[0]))
+		return None
 
 class VirtualInterfaceVerification(RequestVerification):
     def _verify(self, command, request):
@@ -211,18 +218,33 @@ class VirtualInterfaceVerification(RequestVerification):
             return None
         except KeyError, e:
             return 'Key \'' + str(e.args[0]) + '\' could not be found. Please check request'
-        except Exception:
-            traceback.print_exc(file=sys.stdout)
-            sys.exit(1)
-
+        
 #Base abstract class for all exception raised (when conflict detected)
 class VerificationException(exception.AuroraException):
     __metaclass__ = ABCMeta
     
     @abstractmethod
     def _handle_exception(self):
-        #Tell the client of the problem here or resolve internally
+        #Tell the client about the problem here or resolve internally
         pass
+
+#This exception is raised when the verifier cannot find the ap mentioned in the request, either in the database or the
+#provision folder of manager
+class NoSuchAPExists(VerificationException):
+	def __init__(self, message = "not_provided"):
+		self.message = message
+		super(NoSuchAPExists, self).__init__(message)
+    
+	def _handle_exception(self):
+		return "Cannot find any AP named \'" + self.message + "\'"
+
+class MissingKeyInRequest(VerificationException):
+	def __init__(self, message = "not_provided"):
+		self.message = message
+		super(MissingKeyInRequest, self).__init__(message)
+    
+	def _handle_exception(self):
+		return 'Key \'' + self.message + '\' could not be found. Please check request!'
 
 #This exception is raised when an AP is having, or is requested to have more than 4n ap slices with n is the AP's number of radios
 class NoAvailableSpaceLeftInAP(VerificationException):
@@ -275,6 +297,9 @@ class RequestVerifier():
             except VerificationException as ex:
                 #print ex._handle_exception() #Testing only
                 return ex._handle_exception()
+            except Exception:
+            	traceback.print_exc(file=sys.stdout)
+            	sys.exit(1)
         return None
 
 
@@ -346,11 +371,11 @@ if __name__ == '__main__':
             
         ]
     }, 
-    "physical_ap": "openflow",
+    "physical_ap": "openflow1",
     "slice": "null", 
     "user": 1
 }
-    RequestVerifier.isVerifyOK('create_slice', request)
+    print RequestVerifier.isVerifyOK('create_slice', request)
 #     isVerifyOK(CREATE_SLICE, {
 #     "command": "create_slice", 
 #     "config": {

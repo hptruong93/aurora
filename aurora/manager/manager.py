@@ -422,7 +422,7 @@ class Manager():
             json_entry['physical_ap'] = aplist[index]
 
             #Verify adding process. See request_verification for more information
-            error = Verify.verifyOK('create_slice', json_entry)
+            error = Verify.verifyOK(json_entry)
             #An error message is retuned if there is any problem, else None is returned.
 
             #Now return the original json_entry
