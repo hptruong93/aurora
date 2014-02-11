@@ -8,7 +8,7 @@ class OvsTC:
         # Keep track of all created instances
         self.process_list = {}
 
-    def start(self, rate_up = None, rate_down = None, if_up = None, if_down = None, ovs_db_sock = None):
+    def start(self, rate_up = None, rate_down = None, if_up = None, if_down = None, ovs_db_sock = None, name = None):
         """Sets up queues and using ovs-vsctl to limit rates to specified limits."""
 
         if ovs_db_sock is None:

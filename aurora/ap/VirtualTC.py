@@ -77,8 +77,7 @@ class VirtualTC:
         # Load flavour data
         running_flavour = self.__load_module(flavour)
         
-
-
+        args["name"] = str(args["if_up"]) + str(args["if_down"])
         # Everything loaded; now create the interface
         # (Python unpacks arguments with **)
         running_flavour.start(**args)
@@ -118,7 +117,6 @@ class VirtualTC:
         return self.module_list[self.__get_entry(name)["flavor"]].status(name)
     
     def __add_entry(self, flavour, arguments):
-        arguments["name"] = str(arguments["if_up"]) + str(arguments["if_down"])
         self.database.add_entry("TrafficAttributes", flavour, arguments)
     
     def __get_entry(self, name):
