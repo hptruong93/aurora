@@ -18,7 +18,7 @@
     "rabbitmq_username": "access_point", 
     "rabbitmq_host": "10.5.8.3", 
     "queue": "openflow3", 
-    "rabbitmq_reply_queue": "amq.gen-bFoIfW0wYuTqV-Q7uXK1CA", 
+    "rabbitmq_reply_queue": "amq.gen-39sDN5Wwuik4STPL2zT47g", 
     "default_config": {
         "init_hardware_database": {
             "memory_mb": "256", 

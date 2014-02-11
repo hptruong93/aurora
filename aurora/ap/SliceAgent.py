@@ -135,7 +135,7 @@ class SliceAgent:
                     print "vif_up,vif_down",vif_up, vif_down
                     traffic_control["attributes"]["if_up"] = vif_up
                     traffic_control["attributes"]["if_down"] = vif_down
-                    if traffic_control["flavor"] == "ovs-tc"
+                    if traffic_control["flavor"] == "ovs-tc":
                         if "ovs" in self.v_bridges.module_list.keys():
                             traffic_control["attributes"]["ovs_db_sock"] = self.v_bridges.module_list["ovs"].socket_file.name
                         else:

@@ -423,6 +423,7 @@ class Manager():
 
             #Verify adding process. See request_verification for more information
             error = Verify.verifyOK(json_entry)
+            #error = None #For testing
             #An error message is retuned if there is any problem, else None is returned.
 
             #Now return the original json_entry
