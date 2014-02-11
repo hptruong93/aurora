@@ -8,6 +8,7 @@ from aurora_db import *
 import MySQLdb as mdb
 import dispatcher
 import provision_server.ap_provision as provision
+import request_verification as Verify
 
 import time
 
@@ -417,14 +418,15 @@ class Manager():
             json_entry['slice'] = str(slice_uuid)
             
             # There is no handling for key 'physical_ap' on the access point
-            # side of the amqp link, perhaps similar functionality can be
-            # achieved in another way?
-            #json_entry['physical_ap'] = aplist[index]
+            # side of the amqp link. So this entry would be removed once verification has been done.
+            json_entry['physical_ap'] = aplist[index]
 
             #Verify adding process. See request_verification for more information
-            #error = Verify.verifyOK('create_slice', json_entry)
-            error = None
+            error = Verify.verifyOK('create_slice', json_entry)
             #An error message is retuned if there is any problem, else None is returned.
+
+            #Now return the original json_entry
+            json_entry.pop('physical_ap', None)
 
             #Get SSID of slice to be created, only first is captured
             ap_slice_ssid = None
@@ -432,8 +434,6 @@ class Manager():
                 if d_entry['flavor'] == 'wifi_bss':
                     ap_slice_ssid = d_entry['attributes']['name']
                     break
-
-
 
             if error is None: #There is no error
                 error = self.auroraDB.wslice_add(slice_uuid, ap_slice_ssid, tenant_id, aplist[index], project_id)

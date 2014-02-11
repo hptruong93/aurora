@@ -8,7 +8,6 @@ Collection of methods for adding, updating, deleting, and querying the database
 import sys, json, os
 import MySQLdb as mdb
 import datetime
-import request_verification as Verify
 
 from pprint import pprint
 

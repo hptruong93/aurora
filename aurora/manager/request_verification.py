@@ -8,13 +8,12 @@ import os
 import glob
 import exception
 import MySQLdb as mdb
-import manager
 
 #This module is called by manager before acting on any AP.
 #This will detect inconsistency/ invalid request/operation of the manager requested by the client.
 
 GENERAL_CHECK = 'general_check'
-CREATE_SLICE = 'create_slice' #This is the command name appears in the request parsed by manger.py
+CREATE_SLICE = 'create_slice' #This is the command name appears in the request parsed by manager.py
 
 #Base abstract class for all verifications
 class RequestVerification():
@@ -24,10 +23,10 @@ class RequestVerification():
     #This method must be wrapped by a try catch block (catching mdb.Error)
     @staticmethod
     def database_connection():
-        return mdb.connect(manager._MYSQL_HOST,
-                                   manager._MYSQL_USERNAME,
-                                   manager._MYSQL_PASSWORD,
-                                   manager._MYSQL_DB)
+        return mdb.connect('localhost',
+                                   'root',
+                                   'supersecret',
+                                   'aurora')
 
     @abstractmethod
     def _verify(self, command, request):
@@ -104,7 +103,7 @@ class APSliceNumberVerification(RequestVerification):
                         #Else return None later
 
         except mdb.Error, e:
-                print "Error %d: %s" % (e.args[0], e.args[1])
+                traceback.print_exc(file=sys.stdout)
                 sys.exit(1)
         except KeyError, e:
                 return 'Key ' + str(e.args[0]) + ' could not be found. Please check request'
@@ -274,6 +273,7 @@ class RequestVerifier():
             try:
                 verifier._verify(command, request)
             except VerificationException as ex:
+                #print ex._handle_exception() #Testing only
                 return ex._handle_exception()
         return None
 
@@ -346,7 +346,7 @@ if __name__ == '__main__':
             
         ]
     }, 
-    "physical_ap": "openflow2",
+    "physical_ap": "openflow",
     "slice": "null", 
     "user": 1
 }
