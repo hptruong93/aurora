@@ -1,22 +1,10 @@
 {
     "VirtualWIFI": [
         {
-            "flavor" : "wifi_radio",
-            "attributes" : 
-                {
-                    "name" : "radio0",
-                    "channel" : "2",
-                    "txpower" : "20",
-                    "disabled" : "0",
-                    "country" : "CA",
-                    "hwmode" : "abg"   
-                }
-        },
-        {
             "flavor" : "wifi_bss",
             "attributes" : 
                 {
-                    "name" : "QoS v2",
+                    "name" : "OVS QoS v2",
                     "radio" : "radio0",
                     "if_name" : "wlan0-1",
                     "encryption_type":"wep-open",
@@ -26,13 +14,16 @@
     ], 
     "VirtualBridges": [
         {
-            "flavor":"linux_bridge",
+            "flavor":"ovs",
             "attributes":   
                 {
-                    "name":"linux-br-4",
+                    "name":"vswitch-br-2",
                     "interfaces":
                         ["vwlan0-1","veth1"],
-                    "bridge_settings":{},
+                    "bridge_settings":
+                        {
+                            "controller":["tcp:10.5.8.3"]
+                        },
                     "port_settings":{}
                 }
         }
@@ -44,26 +35,26 @@
                 {
                     "attach_to":"eth0",
                     "name":"veth1",
-                    "mac":"00:00:00:00:02:20"
+                    "mac":"00:00:00:00:00:70"
                 }
         },
         {
             "flavor":"veth",
             "attributes": 
                 {
-                    "attach_to":"wlan0",
+                    "attach_to":"wlan0-1",
                     "name":"vwlan0-1",
-                    "mac":"00:00:00:00:02:21"
+                    "mac":"00:00:00:00:00:71"
                 }
         }
     ],
     "TrafficAttributes": [
         {
-            "flavor":"tc",
+            "flavor":"ovs-tc",
             "attributes":
                 {
-                    "rate_up":"1000000",
-                    "rate_down":"1000000"
+                    "rate_up":"500000",
+                    "rate_down":"500000"
                 }
         }
 

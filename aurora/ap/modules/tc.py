@@ -8,7 +8,7 @@ class Tc:
         # Keep track of all created instances
         self.process_list = {}
 
-    def start(self, rate_up = None, rate_down = None, if_up = None, if_down = None):
+    def start(self, rate_up = None, rate_down = None, if_up = None, if_down = None, name = None):
         """Sets up qdiscs and classes using TC to limit rates to specified limits."""
 
         # Check that for supplied rates, if is specified
@@ -59,7 +59,7 @@ class Tc:
             except:
                 pass
 
-    def stop(self, if_up = None, if_down = None):
+    def stop(self, if_up = None, if_down = None, name = None):
         if if_up is not None:
             qos_list.append(if_up)
         if if_down is not None:

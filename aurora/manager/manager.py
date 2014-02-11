@@ -421,8 +421,10 @@ class Manager():
             # side of the amqp link. So this entry would be removed once verification has been done.
             json_entry['physical_ap'] = aplist[index]
 
-            #Verify adding process. See request_verification for more information
-            error = Verify.verifyOK('create_slice', json_entry)
+            # Verify adding process. See request_verification for more information
+            # TypeError: verifyOK() takes at most 1 argument (2 given) 
+            #error = Verify.verifyOK('create_slice', json_entry)
+            error = None
             #An error message is retuned if there is any problem, else None is returned.
 
             #Now return the original json_entry

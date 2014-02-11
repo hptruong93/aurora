@@ -59,7 +59,7 @@ class OvsTC:
             #except:
             #    pass
 
-    def stop(self, if_up = None, if_down = None, ovs_db_sock = None):
+    def stop(self, if_up = None, if_down = None, ovs_db_sock = None, name = None):
         if if_up:
             qos_list.append(if_up)
         if if_down:
