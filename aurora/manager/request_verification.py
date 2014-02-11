@@ -309,7 +309,7 @@ def verifyOK(request = None):
         command = GENERAL_CHECK
     else:
         command = request['command']
-    RequestVerifier.isVerifyOK(command, request)
+    return RequestVerifier.isVerifyOK(command, request)
 
 if __name__ == '__main__':
     #Testing
