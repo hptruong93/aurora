@@ -52,11 +52,11 @@ class AuroraDB():
                 max_available_slices = hw_database["wifi_radio"]["max_bss_per_radio"]*number_radio
                 current_slices = _count_db_slices(hw_database["wifi_radio"]["radio_list"])
                 number_slice_free = max_available_slices - current_slices
-                to_execute = """REPLACE INTO ap SET 
-                                    name='%s',firmware='%s',
-                                    version='%s', number_radio=%s,
-                                    memory_mb=%s, free_disk=%s, 
-                                    number_radio_free=%s, number_slice_free=%s""" %
+                to_execute = ("REPLACE INTO ap SET "
+                                    "name='%s', firmware='%s',"
+                                    "version='%s', number_radio=%s,"
+                                    "memory_mb=%s, free_disk=%s," 
+                                    "number_radio_free=%s, number_slice_free=%s") %
                                     (ap_name, firmware,
                                      firmware_version, number_radio,
                                      memory_mb, free_disk,
