@@ -417,17 +417,10 @@ class Manager():
             slice_uuid = uuid.uuid4()
             json_entry['slice'] = str(slice_uuid)
             
-            # There is no handling for key 'physical_ap' on the access point
-            # side of the amqp link. So this entry would be removed once verification has been done.
-            json_entry['physical_ap'] = aplist[index]
-
             #Verify adding process. See request_verification for more information
-            error = Verify.verifyOK(json_entry)
+            error = Verify.verifyOK(aplist[index], tenant_id, json_entry)
             #error = None #For testing
             #An error message is retuned if there is any problem, else None is returned.
-
-            #Now return the original json_entry
-            json_entry.pop('physical_ap', None)
 
             #Get SSID of slice to be created, only first is captured
             ap_slice_ssid = None
