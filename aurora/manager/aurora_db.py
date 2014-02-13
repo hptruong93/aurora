@@ -40,11 +40,10 @@ class AuroraDB():
             current_slices += len(radio["bss_list"])
         return current_slices
 
-    def ap_update_hw_info(self, hw_database, ap_name):
+    def ap_update_hw_info(self, hw_database, ap_name, region):
         try:
             with self.con:
                 cur = self.con.cursor()
-                region = hw_database["region"]
                 firmware = hw_database["firmware"]
                 firmware_version = hw_database["firmware_version"]
                 number_radio = hw_database["wifi_radio"]["number_radio"]

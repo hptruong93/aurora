@@ -139,7 +139,7 @@ class Dispatcher():
             slices_to_restart = decoded_response['slices_to_restart']
             self.resourceMonitor.restart_slices(ap_name, slices_to_restart)
             provision.update_last_known_config(ap_name, config)
-            self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name)
+            self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, config['region'])
             self.resourceMonitor.start_poller(ap_name)
             return
 
@@ -147,7 +147,7 @@ class Dispatcher():
             print ap_name + " is shutting down..."
             try:
                 self.resourceMonitor.set_status(None, None, False, ap_name)
-                self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name)
+                self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, config['region'])
                 print "Updating config files..."
                 provision.update_last_known_config(ap_name, config)
             except Exception as e:
@@ -170,7 +170,7 @@ class Dispatcher():
             #print "entry[2]:",entry[2]
             if entry[2] != 'admin':
                 self.resourceMonitor.set_status(entry[2], decoded_response['successful'])
-                self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name)
+                self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, config['region'])
                 print "Updating config files..."
                 provision.update_last_known_config(ap_name, config)
             else:
