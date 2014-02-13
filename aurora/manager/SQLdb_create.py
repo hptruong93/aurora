@@ -45,7 +45,7 @@ class SQLdbCreate():
                 #Create access_point table
                 ap = "CREATE TABLE ap (name VARCHAR(255) NOT NULL PRIMARY KEY,region VARCHAR(255),firmware VARCHAR(255),\
  version DOUBLE,number_radio INT(11),memory_mb INT(11),free_disk INT(11),supported_protocol VARCHAR(255),\
- number_radio_free INT(11))"
+ number_radio_free INT(11), number_slice_free INT(11))"
                 cur.execute(ap)
 
                 #Create ap_slice table

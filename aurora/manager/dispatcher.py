@@ -5,12 +5,13 @@ import resource_monitor
 import logging
 import provision_server.ap_provision as provision
 from pprint import pprint
+import aurora_db
 
 class Dispatcher():
     lock = None
     TIMEOUT = 30
 
-    def __init__(self, host, username, password, mysql_username, mysql_password):
+    def __init__(self, host, username, password, mysql_username, mysql_password, aurora_db):
         """Establishes the connection to RabbitMQ and sets up the queues"""
 
         print "Constructing Dispatcher..."
@@ -24,6 +25,7 @@ class Dispatcher():
         self.requests_sent = []
 
         self.resourceMonitor = resource_monitor.resourceMonitor(self, host, mysql_username, mysql_password)
+        self.aurora_db = aurora_db
 
         # Setup complete, now start listening and processing
         # This jumpstarts the connection, which in turn uses the callbacks
@@ -137,7 +139,7 @@ class Dispatcher():
             slices_to_restart = decoded_response['slices_to_restart']
             self.resourceMonitor.restart_slices(ap_name, slices_to_restart)
             provision.update_last_known_config(ap_name, config)
-
+            self.aurora_db.ap_update_hw_info(decoded_response['config']['init_hardware_database'], ap_name)
             self.resourceMonitor.start_poller(ap_name)
             return
 

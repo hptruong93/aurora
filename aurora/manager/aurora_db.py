@@ -34,6 +34,37 @@ class AuroraDB():
         else:
             print('Connection already closed!')
 
+    def _count_db_slices(self, radio_list):
+        current_slices = 0
+        for radio in radio_list:
+            current_slices += len(radio_list["bss_list"])
+
+    def ap_update_hw_info(self, hw_database, ap_name):
+        try:
+            with self.con:
+                cur = self.con.cursor()
+                firmware = hw_database["firmware"]
+                firmware_version = hw_database["firmware_version"]
+                number_radio = hw_database["wifi_radio"]["number_radio"]
+                memory_mb = hw_database["memory_mb"]
+                free_disk = "NULL"
+                number_radio_free = hw_database["number_radio_free"]
+                max_available_slices = hw_database["wifi_radio"]["max_bss_per_radio"]*number_radio
+                current_slices = _count_db_slices(hw_database["wifi_radio"]["radio_list"])
+                number_slice_free = max_available_slices - current_slices
+                cur.execute("""REPLACE INTO ap SET 
+                                    name='%s',firmware='%s',
+                                    version='%s', number_radio=%s,
+                                    memory_mb=%s, free_disk=%s, 
+                                    number_radio_free=%s, number_slice_free=%s""" %
+                                    (ap_name, firmware,
+                                     firmware_version, number_radio,
+                                     memory_mb, free_disk,
+                                     number_radio_free, number_slice_free))
+               
+
+"UPDATE ap_slice SET wnet_id='%s' WHERE "
+                                   "ap_slice_id='%s'"
     def wslice_belongs_to(self, tenant_id, project_id, ap_slice_id):
         if tenant_id == 0:
             return True
@@ -316,6 +347,8 @@ class AuroraDB():
 
     def wnet_join(self, tenant_id, name):
         pass #TODO AFTER SAVI INTEGRATION
+
+    def get_number_slices_
 
     def get_wslice_physical_ap(self, ap_slice_id):
         try:

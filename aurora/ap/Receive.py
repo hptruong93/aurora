@@ -169,6 +169,7 @@ class Receive():
         current_database = {}
         current_database['init_database'] = self.agent.database.database
         current_database['init_user_id_database'] = self.agent.database.user_id_data
+        current_database['init_hardware_database'] = self.agent.database.hw_database
         print "Sending current database..."
         print current_database
         data_for_sender = {'successful':True, 'message': 'FIN', 'config': current_database, 'ap': self.queue}
