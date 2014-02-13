@@ -136,10 +136,10 @@ class Receive():
             if not printed:
                 print "Waiting for channel"
                 printed = True
-        print "AP up",
+        print "AP up - alerting manager...",
+        slices_to_restart = []
         if 'init_database' in config['last_known_config']:
             if len(config['last_known_config']['init_database']) > 1:
-                print " - alerting manager",
                 slices_to_restart = []
                 last_db_config = config['last_known_config']['init_database']
                 main_slice = self.agent.find_main_slice(last_db_config)
@@ -151,19 +151,18 @@ class Receive():
                 for key in last_db_config.keys():
                     if key != "default_slice" and key != main_slice:
                         slices_to_restart.append(key)
-                data_for_sender = {"successful":True,
-                                   "message":"SYN",
-                                   "config":{},
-                                   "slices_to_restart":slices_to_restart,
-                                   "ap":self.queue}
-                data_for_sender['config']['init_database'] = self.agent.database.database
-                data_for_sender['config']['init_user_id_database'] = self.agent.database.user_id_data
-                data_for_sender['config']['init_hardware_database'] = self.agent.database.hw_database
-                data_for_sender = json.dumps(data_for_sender)
-                self.channel.basic_publish(exchange='', routing_key=self.manager_queue,
-                                           properties=pika.BasicProperties(content_type="application/json"),
-                                           body=data_for_sender)
-            print "..."
+        data_for_sender = {"successful":True,
+                           "message":"SYN",
+                           "config":{},
+                           "slices_to_restart":slices_to_restart,
+                           "ap":self.queue}
+        data_for_sender['config']['init_database'] = self.agent.database.database
+        data_for_sender['config']['init_user_id_database'] = self.agent.database.user_id_data
+        data_for_sender['config']['init_hardware_database'] = self.agent.database.hw_database
+        data_for_sender = json.dumps(data_for_sender)
+        self.channel.basic_publish(exchange='', routing_key=self.manager_queue,
+                                   properties=pika.BasicProperties(content_type="application/json"),
+                                   body=data_for_sender)
         return
 
     def shutdown_signal_received(self):
