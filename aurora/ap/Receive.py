@@ -33,7 +33,7 @@ class Receive():
     only this file need be executed on the machine - it will import
     the rest of Aurora and pass the commands along."""
     
-    def __init__(self, queue, config, rabbitmq_host, rabbitmq_username, rabbitmq_password, rabbitmq_reply_queue):
+    def __init__(self, region, queue, config, rabbitmq_host, rabbitmq_username, rabbitmq_password, rabbitmq_reply_queue):
         """Connects to RabbitMQ and initializes Aurora locally."""
         
         # Run Pika logger so that error messages get printed
@@ -42,6 +42,7 @@ class Receive():
         # Init AP code, pass along any initialization configuration
         self.agent = SliceAgent.SliceAgent(config)
         self.queue = queue
+        self.region = region
         self.manager_queue = rabbitmq_reply_queue
         self.channel_open = False
         # Connect to RabbitMQ (Step #1)
@@ -120,6 +121,7 @@ class Receive():
         data_for_sender['config']['init_database'] = self.agent.database.database
         data_for_sender['config']['init_user_id_database'] = self.agent.database.user_id_data
         data_for_sender['config']['init_hardware_database'] = self.agent.database.hw_database
+        data_for_sender['config']['region'] = self.region
         print data_for_sender
         data_for_sender = json.dumps(data_for_sender)
         # Send response
@@ -159,6 +161,7 @@ class Receive():
         data_for_sender['config']['init_database'] = self.agent.database.database
         data_for_sender['config']['init_user_id_database'] = self.agent.database.user_id_data
         data_for_sender['config']['init_hardware_database'] = self.agent.database.hw_database
+        data_for_sender['config']['region'] = self.region
         data_for_sender = json.dumps(data_for_sender)
         self.channel.basic_publish(exchange='', routing_key=self.manager_queue,
                                    properties=pika.BasicProperties(content_type="application/json"),
@@ -170,6 +173,7 @@ class Receive():
         current_database['init_database'] = self.agent.database.database
         current_database['init_user_id_database'] = self.agent.database.user_id_data
         current_database['init_hardware_database'] = self.agent.database.hw_database
+        current_database['region'] = self.region
         print "Sending current database..."
         print current_database
         data_for_sender = {'successful':True, 'message': 'FIN', 'config': current_database, 'ap': self.queue}
@@ -201,6 +205,10 @@ if __name__ == '__main__':
 
     config_full = request.json()
     queue = config_full['queue']
+    if 'region' in config_full.keys():
+        region = config_full['region']
+    else:
+        region = 'unknown'
     config = {}
     config['default_config'] = config_full['default_config']
     try:
@@ -219,7 +227,7 @@ if __name__ == '__main__':
 
     print("Joining queue %s" % queue)
     # Establish connection, start listening for commands
-    receiver = Receive(queue, config, rabbitmq_host, username, password, rabbitmq_reply_queue)
+    receiver = Receive(region, queue, config, rabbitmq_host, username, password, rabbitmq_reply_queue)
 
     listener = threading.Thread(target=receiver.connection.ioloop.start)
     listener.start()

@@ -44,6 +44,7 @@ class AuroraDB():
         try:
             with self.con:
                 cur = self.con.cursor()
+                region = hw_database["region"]
                 firmware = hw_database["firmware"]
                 firmware_version = hw_database["firmware_version"]
                 number_radio = hw_database["wifi_radio"]["number_radio"]
@@ -54,7 +55,7 @@ class AuroraDB():
                 current_slices = self._count_db_slices(hw_database["wifi_radio"]["radio_list"])
                 number_slice_free = int(max_available_slices) - current_slices
                 to_execute = ("REPLACE INTO ap SET "
-                                    "name='%s', firmware='%s', "
+                                    "name='%s', region='%s', firmware='%s', "
                                     "version='%s', number_radio=%s, "
                                     "memory_mb=%s, free_disk=%s, " 
                                     "number_radio_free=%s, number_slice_free=%s" %
