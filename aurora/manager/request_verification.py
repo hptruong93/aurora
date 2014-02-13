@@ -4,7 +4,6 @@ import sys, traceback
 sys.path.insert(0,'../ap/')
 
 import json
-import os
 import glob
 import exception
 import MySQLdb as mdb
@@ -22,7 +21,7 @@ class RequestVerification():
     #This method return a connection to mysql database
     #This method must be wrapped by a try catch block (catching mdb.Error)
     @staticmethod
-    def database_connection():
+    def _database_connection():
         return mdb.connect('localhost',
                                    'root',
                                    'supersecret',
@@ -67,9 +66,8 @@ class APSliceNumberVerification(RequestVerification):
             CREATE_SLICE : 1
         }
         
-        
         try:
-            con = RequestVerification.database_connection() 
+            con = RequestVerification._database_connection() 
             with con:
                 cursor = con.cursor()
 
@@ -263,7 +261,7 @@ class AccessConflictVerification(RequestVerification):
                 for interface in request['config']['VirtualInterfaces']:
                     requested_interfaces.add(interface['attributes']['attach_to'])
 
-                con = RequestVerification.database_connection() 
+                con = RequestVerification._database_connection() 
                 with con:
                     cursor = con.cursor()
                     physical_ap = request['physical_ap']                    
@@ -275,9 +273,8 @@ class AccessConflictVerification(RequestVerification):
                                        AND status <> "DELETED"
                                        """, (str(tenant_id), physical_ap))
                     
-                    #Check if the bridge is of his slice
-                    result = cursor.fetchall()
-                    result = [item for sublist in result for item in sublist]
+                    #Get the client's slices
+                    result = [item for sublist in cursor.fetchall() for item in sublist]
 
                     #At this point, we are sure that the ap exists since its existence has been previously checked by
                     #APSliceNumberVerification
@@ -413,9 +410,10 @@ class RequestVerifier():
 
 
 #Use this method as an interface for the verification. Internal structure above must not be accessed from outside of the file
-def verifyOK(physical_ap, tenant_id, request = None):
+def verifyOK(physical_ap = '', tenant_id = 0, request = None):
     if request is None:
         command = GENERAL_CHECK
+        return RequestVerifier.isVerifyOK(command, request)
     else:
         # There is no handling for key 'physical_ap' and 'tenant_id' on the access point
         # side of the amqp link. So these entries would be removed once verification has been done.
@@ -428,6 +426,8 @@ def verifyOK(physical_ap, tenant_id, request = None):
         #Now return the original json_entry
         request.pop('physical_ap', None)
         request.pop('tenant_id', None)
+
+        return result
 
 
 if __name__ == '__main__':
@@ -490,70 +490,7 @@ if __name__ == '__main__':
             
         ]
     }, 
-    "physical_ap": "openflow2",
-    "tenant_id" : 1,
     "slice": "null", 
     "user": 1
 }
-    print RequestVerifier.isVerifyOK('create_slice', request)
-#     isVerifyOK(CREATE_SLICE, {
-#     "command": "create_slice", 
-#     "config": {
-#         "RadioInterfaces": [
-#             {
-#                 "attributes": {
-#                     "channel": "1", 
-#                     "country": "CA", 
-#                     "disabled": "0", 
-#                     "hwmode": "abg", 
-#                     "name": "radio0", 
-#                     "txpower": "20"
-#                 }, 
-#                 "flavor": "wifi_radio"
-#             }, 
-#             {
-#                 "attributes": {
-#                     "encryption_type": "wep-open", 
-#                     "if_name": "wlan0", 
-#                     "key": "12345", 
-#                     "name": "MK", 
-#                     "radio": "radio0"
-#                 }, 
-#                 "flavor": "wifi_bss"
-#             }
-#         ], 
-#         "VirtualBridges": [
-#             {
-#                 "attributes": {
-#                     "bridge_settings": {}, 
-#                     "interfaces": [
-#                         "vwlan0", 
-#                         "veth0"
-#                     ], 
-#                     "name": "linux-br", 
-#                     "port_settings": {}
-#                 }, 
-#                 "flavor": "linux_bridge"
-#             }
-#         ], 
-#         "VirtualInterfaces": [
-#             {
-#                 "attributes": {
-#                     "attach_to": "eth0", 
-#                     "name": "veth0"
-#                 }, 
-#                 "flavor": "veth"
-#             }, 
-#             {
-#                 "attributes": {
-#                     "attach_to": "wlan0", 
-#                     "name": "vwlan0"
-#                 }, 
-#                 "flavor": "veth"
-#             }
-#         ]
-#     }, 
-#     "physical_ap": "openflow"
-#     "slice": null, 
-#     "user": 1
-# })
+    print verifyOK('openflow1', 1, request)
