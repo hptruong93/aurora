@@ -32,6 +32,7 @@
             }, 
             "aurora_version": "0.2"
         }, 
+        "default_active_slice": "default_slice", 
         "init_database": {
             "default_slice": {
                 "VirtualInterfaces": [], 
@@ -43,7 +44,6 @@
             "default_user": [
                 "default_slice"
             ]
-        }, 
-        "default_active_slice": "default_slice"
+        }
     }
 }

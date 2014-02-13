@@ -153,7 +153,7 @@ class Receive():
                         slices_to_restart.append(key)
                 data_for_sender = {"successful":True,
                                    "message":"SYN",
-                                   "config":{}
+                                   "config":{},
                                    "slices_to_restart":slices_to_restart,
                                    "ap":self.queue}
                 data_for_sender['config']['init_database'] = self.agent.database.database
