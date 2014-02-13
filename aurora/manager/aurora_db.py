@@ -40,6 +40,11 @@ class AuroraDB():
             current_slices += len(radio["bss_list"])
         return current_slices
 
+    def ap_status_up(self, ap_name):
+        try:
+            with self.con:
+                cur = self.con.cursor()
+                cur.execute(UPDATE)
     def ap_update_hw_info(self, hw_database, ap_name, region):
         try:
             with self.con:
@@ -50,18 +55,20 @@ class AuroraDB():
                 memory_mb = hw_database["memory_mb"]
                 free_disk = "NULL"
                 number_radio_free = hw_database["wifi_radio"]["number_radio_free"]
-                max_available_slices = hw_database["wifi_radio"]["max_bss_per_radio"]*number_radio
+                max_available_slices = int(hw_database["wifi_radio"]["max_bss_per_radio"])*int(number_radio)
                 current_slices = self._count_db_slices(hw_database["wifi_radio"]["radio_list"])
                 number_slice_free = int(max_available_slices) - current_slices
                 to_execute = ("REPLACE INTO ap SET "
                                     "name='%s', region='%s', firmware='%s', "
                                     "version='%s', number_radio=%s, "
                                     "memory_mb=%s, free_disk=%s, " 
-                                    "number_radio_free=%s, number_slice_free=%s" %
+                                    "number_radio_free=%s, number_slice_free=%s, "
+                                    "status=(SELECT status FROM ap WHERE name='%s')" %
                                     (ap_name, region, firmware,
                                      firmware_version, number_radio,
                                      memory_mb, free_disk,
-                                     number_radio_free, number_slice_free))
+                                     number_radio_free, number_slice_free,
+                                     ap_name))
                 print to_execute
                 cur.execute(to_execute)
         except mdb.Error, e:
