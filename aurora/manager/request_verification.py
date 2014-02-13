@@ -26,7 +26,7 @@ class RequestVerification():
         return mdb.connect('localhost',
                                    'root',
                                    'supersecret',
-                                   'aurora_latest')
+                                   'aurora')
 
     #Get json info file for an ap. Json file is located in manager/provision_server
     @staticmethod
@@ -418,16 +418,16 @@ def verifyOK(physical_ap, tenant_id, request = None):
         command = GENERAL_CHECK
     else:
         # There is no handling for key 'physical_ap' and 'tenant_id' on the access point
-        # side of the amqp link. So this entry would be removed once verification has been done.
-        json_entry['physical_ap'] = physical_ap
-        json_entry['tenant_id'] = tenant_id
+        # side of the amqp link. So these entries would be removed once verification has been done.
+        request['physical_ap'] = physical_ap
+        request['tenant_id'] = tenant_id
         
         command = request['command']
         result = RequestVerifier.isVerifyOK(command, request)
 
         #Now return the original json_entry
-        json_entry.pop('physical_ap', None)
-        json_entry.pop('tenant_id', None)
+        request.pop('physical_ap', None)
+        request.pop('tenant_id', None)
 
 
 if __name__ == '__main__':
