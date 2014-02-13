@@ -58,7 +58,7 @@ class AuroraDB():
                                     "version='%s', number_radio=%s, "
                                     "memory_mb=%s, free_disk=%s, " 
                                     "number_radio_free=%s, number_slice_free=%s" %
-                                    (ap_name, firmware,
+                                    (ap_name, region, firmware,
                                      firmware_version, number_radio,
                                      memory_mb, free_disk,
                                      number_radio_free, number_slice_free))
