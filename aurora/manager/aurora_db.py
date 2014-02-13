@@ -52,7 +52,7 @@ class AuroraDB():
                 max_available_slices = hw_database["wifi_radio"]["max_bss_per_radio"]*number_radio
                 current_slices = _count_db_slices(hw_database["wifi_radio"]["radio_list"])
                 number_slice_free = max_available_slices - current_slices
-                cur.execute("""REPLACE INTO ap SET 
+                to_execute = """REPLACE INTO ap SET 
                                     name='%s',firmware='%s',
                                     version='%s', number_radio=%s,
                                     memory_mb=%s, free_disk=%s, 
@@ -60,11 +60,13 @@ class AuroraDB():
                                     (ap_name, firmware,
                                      firmware_version, number_radio,
                                      memory_mb, free_disk,
-                                     number_radio_free, number_slice_free))
+                                     number_radio_free, number_slice_free)
+                print to_execute
+                cur.execute(to_execute)
+        except mdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            sys.exit(1)
                
-
-"UPDATE ap_slice SET wnet_id='%s' WHERE "
-                                   "ap_slice_id='%s'"
     def wslice_belongs_to(self, tenant_id, project_id, ap_slice_id):
         if tenant_id == 0:
             return True
@@ -347,8 +349,6 @@ class AuroraDB():
 
     def wnet_join(self, tenant_id, name):
         pass #TODO AFTER SAVI INTEGRATION
-
-    def get_number_slices_
 
     def get_wslice_physical_ap(self, ap_slice_id):
         try:
