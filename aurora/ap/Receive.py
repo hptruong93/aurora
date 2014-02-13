@@ -119,6 +119,7 @@ class Receive():
         data_for_sender['config'] = {}
         data_for_sender['config']['init_database'] = self.agent.database.database
         data_for_sender['config']['init_user_id_database'] = self.agent.database.user_id_data
+        data_for_sender['config']['init_hardware_database'] = self.agent.database.hw_database
         print data_for_sender
         data_for_sender = json.dumps(data_for_sender)
         # Send response
@@ -150,15 +151,18 @@ class Receive():
                 for key in last_db_config.keys():
                     if key != "default_slice" and key != main_slice:
                         slices_to_restart.append(key)
-                if len(slices_to_restart) > 0:
-                    data_for_sender = {"successful":True,
-                                       "message":"SYN",
-                                       "config":slices_to_restart,
-                                       "ap":self.queue}
-                    data_for_sender = json.dumps(data_for_sender)
-                    self.channel.basic_publish(exchange='', routing_key=self.manager_queue,
-                                               properties=pika.BasicProperties(content_type="application/json"),
-                                               body=data_for_sender)
+                data_for_sender = {"successful":True,
+                                   "message":"SYN",
+                                   "config":{}
+                                   "slices_to_restart":slices_to_restart,
+                                   "ap":self.queue}
+                data_for_sender['config']['init_database'] = self.agent.database.database
+                data_for_sender['config']['init_user_id_database'] = self.agent.database.user_id_data
+                data_for_sender['config']['init_hardware_database'] = self.agent.database.hw_database
+                data_for_sender = json.dumps(data_for_sender)
+                self.channel.basic_publish(exchange='', routing_key=self.manager_queue,
+                                           properties=pika.BasicProperties(content_type="application/json"),
+                                           body=data_for_sender)
             print "..."
         return
 

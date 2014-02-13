@@ -134,7 +134,10 @@ class Dispatcher():
             print ap_name + " has connected..."
             # Tell resource monitor, let it handle restart of slices
             #self.resourceMonitor.start_poller(ap_name)
-            self.resourceMonitor.restart_slices(ap_name, config)
+            self.resourceMonitor.restart_slices(ap_name, config['slices_to_restart'])
+            del config['slices_to_restart']
+            provision.update_last_known_config(ap_name, config)
+
             self.resourceMonitor.start_poller(ap_name)
             return
 
