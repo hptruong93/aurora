@@ -44,7 +44,8 @@ class Manager():
                                               username,
                                               password,
                                               self.mysql_username,
-                                              self.mysql_password)
+                                              self.mysql_password
+                                              self.auroraDB)
         #provision.init()
         provision.run()
 

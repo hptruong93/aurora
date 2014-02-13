@@ -163,8 +163,7 @@ class RadioConfigExistedVerification(RequestVerification):
 
 	#Get json info file for an ap. Json file is located in manager/provision_server
 	def _get_physical_ap_info(self, physical_ap):
-		os.chdir("./provision_server")
-		for file in glob.glob("*.json"):
+		for file in glob.glob("provision_server/*.json"):
 			content = json.load(open(file))
 			if content['queue'] == physical_ap:
 				return content
