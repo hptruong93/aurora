@@ -405,6 +405,19 @@ class AuroraDB():
     def wnet_join(self, tenant_id, name):
         pass #TODO AFTER SAVI INTEGRATION
 
+    def get_ap_list(self):
+        try:
+            with self.con:
+                cur = self.con.cursor()
+                cur.execute("SELECT name FROM ap")
+                ap_list = []
+                for ap_tuple in cur.fetchall():
+                    ap_list.append(ap_tuple[0])
+                return ap_list
+        except mdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            sys.exit(1)
+
     def get_wslice_physical_ap(self, ap_slice_id):
         try:
             with self.con:

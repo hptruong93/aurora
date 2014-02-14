@@ -5,6 +5,7 @@ import resource_monitor
 import logging
 import provision_server.ap_provision as provision
 from pprint import pprint
+import uuid
 
 class Dispatcher():
     lock = None
@@ -40,6 +41,9 @@ class Dispatcher():
     def __del__(self):
         print "Deconstructing Dispatcher..."
 
+    def on_connected(self, connection):
+        self.connection.channel(self.channel_open)
+
     def channel_open(self, new_channel):
         self.channel = new_channel
         response = self.channel.queue_declare(exclusive=True, durable=True, callback=self.on_queue_declared)
@@ -48,14 +52,20 @@ class Dispatcher():
         self.callback_queue = frame.method.queue
         provision.update_reply_queue(self.callback_queue)
         self.channel.basic_consume(self.process_response, queue=self.callback_queue)
+        self.send_manager_up_status()
 
-    def on_connected(self, connection):
-        self.connection.channel(self.channel_open)
+    def send_manager_up_status(self):
+        for ap in self.aurora_db.get_ap_list():
+            self.dispatch({'command':'SYN'}, ap)
 
-    def dispatch(self, config, ap, unique_id):
+    def dispatch(self, config, ap, unique_id=None):
         """Send data to the specified queue.
         Note that the caller is expected to set database
         properties such as status."""
+        # Create unique_id if none exists
+        if unique_id is None:
+            unique_id = str(uuid.uuid4())
+
         # Convert JSON to string
         message = json.dumps(config)
 
@@ -78,8 +88,11 @@ class Dispatcher():
             print e.message
 
         print("Message for %s dispatched" % ap)
-
-        ap_slice_id = config['slice']
+        ap_slice_id = 'NONE'
+        if config['command'] == 'SYN':
+            ap_slice_id = 'SYN'
+        else:
+            ap_slice_id = config['slice']
         # Start a timeout countdown
         print "ap_slice_id >>>",ap_slice_id
         time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=(ap_slice_id,ap,))

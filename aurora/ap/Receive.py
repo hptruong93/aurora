@@ -100,8 +100,8 @@ class Receive():
 
         # Execute the command specified
         try:
-            return_data = self.agent.execute(**message)
-
+            if message['command'] != 'SYN':
+                return_data = self.agent.execute(**message)
         # If there is an error, let the sender know    
         except Exception as e:
             # Finalize message and convert to JSON
@@ -109,9 +109,8 @@ class Receive():
 
             print(" [x] Error; command " + message["command"] + " failed\n" + e.message)
 
-        # No error, we (may) return data
         else:
-
+            # No error, we (may) return data.
             # Finalize message and convert to JSON
             data_for_sender['successful'] = True
             data_for_sender['message'] = return_data

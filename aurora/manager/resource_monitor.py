@@ -1,3 +1,4 @@
+import collections
 import MySQLdb as mdb
 import atexit
 import sys, uuid
@@ -19,6 +20,11 @@ class resourceMonitor():
         self.aurora_db = aurora_db
         self.accountingManager = accountingManager.accountingManager(host, username, password)
         self.poller_threads = {}
+
+        # To handle incoming status update requests, make a command queue
+        self.timeout_queue = collections.deque()
+        self._make_queue_daemon()
+
         #Connect to Aurora mySQL Database
         print "Connecting to SQLdb in resourceMonitor..."
         try:
@@ -30,9 +36,6 @@ class resourceMonitor():
 
         atexit.register(self._closeSQL)
 
-    def stop(self):
-        self._close_all_poller_threads()
-
     def _closeSQL(self):
         print "Closing SQL connection in resourceMonitor..."
         self.aurora_db.ap_status_unknown()
@@ -40,6 +43,26 @@ class resourceMonitor():
             self.con.close()
         else:
             print('Connection already closed!')
+
+    def _make_queue_daemon(self):
+        self.qd = StoppableThread(target=self._watch_queue)
+        self.qd.start()
+
+    def _watch_queue(self, stop_event=None):
+        while True:
+            while len(self.timeout_queue) < 1 and not stop_event.is_set():
+                time.sleep(1)
+            if stop_event.is_set():
+                break
+            (args, kwargs) = self.timeout_queue.popleft()
+            self.set_status(*args, **kwargs)
+
+    def _add_call_to_queue(self, *args, **kwargs):
+        self.timeout_queue.append((args, kwargs))
+
+    def stop(self):
+        self.qd.stop()
+        self._close_all_poller_threads()
 
     def _close_all_poller_threads(self):
         for ap_name in self.poller_threads.keys():
@@ -63,10 +86,10 @@ class resourceMonitor():
         # the AP's OS has crashed, or at least aurora is
         # no longer running.
         
-        if unique_id != 'admin':
-            self.set_status(unique_id, success=False, ap_up=False)
-        else:
-            self.set_status(unique_id, success=False, ap_up=False, ap_name=ap_name)
+        #if unique_id != 'admin':
+        #    self.set_status(unique_id, success=False, ap_up=False, )
+        #else:
+        self._add_call_to_queue(unique_id, success=False, ap_up=False, ap_name=ap_name)
         #remove thread from the thread pool
         
         self._close_poller_thread(ap_name, unique_id)
@@ -210,6 +233,8 @@ class resourceMonitor():
 
         self.accountingManager.update_status(unique_id, ap_up, ap_name)
 
+        return True
+
     def restart_slices(self, ap, slice_list):
         if resourceMonitor.sql_locked:
             print "SQL Access is locked, waiting..."
@@ -283,7 +308,7 @@ class resourceMonitor():
         # The unique ID is fixed to be all F's
         self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'update'}, ap , 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF')
 
-class TimerThread(threading.Thread):
+class StoppableThread(threading.Thread):
     """Thread class with a stop method to terminate timers
     that have been started"""
     def __init__(self, *args, **kwargs):
@@ -291,7 +316,7 @@ class TimerThread(threading.Thread):
         if 'kwargs' not in kwargs.keys():
             kwargs['kwargs'] = {}
         kwargs['kwargs']['stop_event'] = self._stop
-        super(TimerThread, self).__init__(*args, **kwargs)
+        super(StoppableThread, self).__init__(*args, **kwargs)
 
     def stop(self):
         self._stop.set()
@@ -299,6 +324,9 @@ class TimerThread(threading.Thread):
 
     def stopped():
         return self._stop.is_set()
+
+class TimerThread(StoppableThread):
+    pass
 
 #for test
 #if __name__ == '__main__':
