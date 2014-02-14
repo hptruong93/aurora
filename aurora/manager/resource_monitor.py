@@ -42,10 +42,14 @@ class resourceMonitor():
             print('Connection already closed!')
 
     def _close_all_poller_threads(self):
+        print "Closing all poller threads:"
+        print "Active threads:",self.poller_threads.items()
         for poller_thread_name, poller_thread in self.poller_threads.items():
             print "Removing thread",poller_thread
             poller_thread.stop()
+            print "Thread stopped"
             poller_thread.join()
+            print "Thread joined"
 
     def _close_poller_thread(self, ap_name, unique_id):
         if ap_name in self.poller_threads and unique_id == 'admin':
