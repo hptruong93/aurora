@@ -159,7 +159,7 @@ class Dispatcher():
         elif message == 'FIN':
             print ap_name + " is shutting down..."
             try:
-                self.resourceMonitor.set_status(None, None, False, ap_name)
+                self.resourceMonitor._set_status(None, None, False, ap_name)
                 self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
                 self.aurora_db.ap_status_down(ap_name)
                 print "Updating config files..."
@@ -183,7 +183,7 @@ class Dispatcher():
             # Set status, stop timer, delete record
             #print "entry[2]:",entry[2]
             if entry[2] != 'admin':
-                self.resourceMonitor.set_status(entry[2], decoded_response['successful'])
+                self.resourceMonitor._set_status(entry[2], decoded_response['successful'])
                 self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
 
                 print "Updating config files..."

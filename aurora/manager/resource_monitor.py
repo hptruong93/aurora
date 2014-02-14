@@ -55,7 +55,7 @@ class resourceMonitor():
             if stop_event.is_set():
                 break
             (args, kwargs) = self.timeout_queue.popleft()
-            self.set_status(*args, **kwargs)
+            self._set_status(*args, **kwargs)
 
     def _add_call_to_queue(self, *args, **kwargs):
         self.timeout_queue.append((args, kwargs))
@@ -107,7 +107,7 @@ class resourceMonitor():
         self.accountingManager.update_traffic(message)
 
     def set_status(self, unique_id, success, ap_up=True, ap_name=None):
-        _add_call_to_queue(unique_id, success, ap_up, ap_name)
+        self._add_call_to_queue(unique_id, success, ap_up, ap_name)
 
     def _set_status(self, unique_id, success, ap_up=True, ap_name=None):
         """Sets the status of the associated request in the
