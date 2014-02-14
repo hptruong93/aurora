@@ -53,7 +53,7 @@ class AuroraDB():
     def ap_status_down(self, ap_name):
         try:
             with self.con:
-                cur = self.con.cursr()
+                cur = self.con.cursor()
                 cur.execute("UPDATE ap SET status='DOWN' WHERE name='%s'" %
                                 (ap_name))
         except mdb.Error, e:
@@ -63,10 +63,10 @@ class AuroraDB():
     def ap_status_unknown(self, ap_name=None):
         try:
             with self.con:
-                cur = self.con.cursr()
+                cur = self.con.cursor()
                 if ap_name is None:
                     cur.execute("UPDATE ap SET status='UNKNOWN'")
-                else
+                else:
                     cur.execute("UPDATE ap SET status='UNKNOWN' WHERE name='%s'" %
                                     (ap_name))
 

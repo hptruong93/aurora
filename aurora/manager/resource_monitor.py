@@ -4,7 +4,6 @@ import sys, uuid
 import accountingManager
 import threading
 import time
-import aurora_db
 
 class resourceMonitor():
 
@@ -15,8 +14,9 @@ class resourceMonitor():
     sql_locked = None
     SLEEP_TIME = 45
 
-    def __init__(self, dispatcher, host, username, password):
+    def __init__(self, aurora_db, dispatcher, host, username, password):
         self.dispatcher = dispatcher
+        self.aurora_db = aurora_db
         self.accountingManager = accountingManager.accountingManager(host, username, password)
         self.poller_threads = {}
         #Connect to Aurora mySQL Database
@@ -68,8 +68,8 @@ class resourceMonitor():
         
         if unique_id != 'admin':
             self.set_status(unique_id, success=False, ap_up=False)
-        else 
-            self.set_status(unique_id, success=False, ap_up=False, ap_name)
+        else:
+            self.set_status(unique_id, success=False, ap_up=False, ap_name=ap_name)
         #remove thread from the thread pool
         
         self._close_poller_thread(ap_name, unique_id)
