@@ -42,7 +42,7 @@ class resourceMonitor():
             print('Connection already closed!')
 
     def _close_all_poller_threads(self):
-        for poller_thread in self.poller_threads:
+        for poller_thread_name, poller_thread in self.poller_threads.items():
             print "Removing thread",poller_thread
             poller_thread.join()
 
