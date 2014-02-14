@@ -44,10 +44,36 @@ class AuroraDB():
         try:
             with self.con:
                 cur = self.con.cursor()
-                cur.execute(UPDATE)
+                cur.execute("UPDATE ap SET status='UP' WHERE name='%s'" %
+                                (ap_name))
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)
+
+    def ap_status_down(self, ap_name):
+        try:
+            with self.con:
+                cur = self.con.cursr()
+                cur.execute("UPDATE ap SET status='DOWN' WHERE name='%s'" %
+                                (ap_name))
+        except mdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            sys.exit(1)
+
+    def ap_status_unknown(self, ap_name=None):
+        try:
+            with self.con:
+                cur = self.con.cursr()
+                if ap_name is None:
+                    cur.execute("UPDATE ap SET status='UNKNOWN'")
+                else
+                    cur.execute("UPDATE ap SET status='UNKNOWN' WHERE name='%s'" %
+                                    (ap_name))
+
+        except mdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            sys.exit(1)
+
     def ap_update_hw_info(self, hw_database, ap_name, region):
         try:
             with self.con:

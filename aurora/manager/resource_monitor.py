@@ -4,7 +4,7 @@ import sys, uuid
 import accountingManager
 import threading
 import time
-
+import aurora_db
 
 class resourceMonitor():
 
@@ -32,6 +32,7 @@ class resourceMonitor():
 
     def closeSQL(self):
         print "Closing SQL connection in resourceMonitor..."
+        self.aurora_db.ap_status_unknown()
         if self.con:
             self.con.close()
         else:
@@ -108,7 +109,7 @@ class resourceMonitor():
 
                 # Access point is up - we are receiving individual packets
                 if ap_up:
-
+                    self.aurora_db.ap_status_up(ap_name)
                     # Get status
                     cur.execute("SELECT status FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'")
                     status = cur.fetchone()
@@ -188,6 +189,8 @@ class resourceMonitor():
                             print "%s: %s >>> Updated to status: 'FAILED'" % (entry, status)
                         else:
                             print("%s: %s >>> Unknown Status, ignoring..." % (entry, status))
+
+                    self.aurora_db.ap_status_down(physical_ap)
 
         except Exception, e:
                 print "Database Error: " + str(e)
