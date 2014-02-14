@@ -44,6 +44,7 @@ class resourceMonitor():
     def _close_all_poller_threads(self):
         for poller_thread_name, poller_thread in self.poller_threads.items():
             print "Removing thread",poller_thread
+            poller_thread.stop()
             poller_thread.join()
 
     def _close_poller_thread(self, ap_name, unique_id):
@@ -51,6 +52,7 @@ class resourceMonitor():
             print "Removing thread for",ap_name
             poller_thread_to_kill = self.poller_threads[ap_name]
             self.poller_threads.pop(ap_name, None)
+            poller_thread_to_kill.stop()
             poller_thread_to_kill.join()
 
     def timeout(self, unique_id, ap_name):
@@ -247,18 +249,24 @@ class resourceMonitor():
     def start_poller(self, ap_name):
         print "Starting poller on thread ",
         #poller_thread = thread(ThreadClass, self)
-        poller_thread = threading.Thread(target=self.poll_AP, args=(ap_name,))
+        poller_thread = TimerThread(target=self.poll_AP, args=(ap_name,))
         print poller_thread
         self.poller_threads[ap_name] = poller_thread
         poller_thread.start()
 
-    def poll_AP(self, ap_name):
+    def poll_AP(self, ap_name, stop_event=None):
         print "Timeout from Dispatcher", self.dispatcher.TIMEOUT
         while ap_name in self.poller_threads:
             #time.sleep(resourceMonitor.SLEEP_TIME)
+            if stop_event.is_set():
+                "Poller thread for",ap_name,"is dying now!"
+                break
             print "Updating ap in poller thread",self.poller_threads[ap_name]
             self.update_AP(ap_name)
-            time.sleep(self.dispatcher.TIMEOUT + 5)
+            for i in range(self.dispatcher.TIMEOUT + 5):
+                if stop_event.is_set():
+                    break
+                time.sleep(1)
 
     def reset_AP(self, ap):
         """Reset the access point.  If there are serious issues, however,
@@ -278,6 +286,34 @@ class resourceMonitor():
 
         # The unique ID is fixed to be all F's
         self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'update'}, ap , 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF')
+
+class TimerThread(threading.Thread):
+    """Thread class with a stop method to terminate timers
+    that have been started"""
+    def __init__(self, *args, **kwargs):
+        self._stop = threading.Event()
+        if 'kwargs' not in kwargs.keys():
+            kwargs['kwargs'] = {}
+        kwargs['kwargs']['stop_event'] = self._stop
+        super(TimerThead, self).__init__(*args, **kwargs)
+
+    def stop(self):
+        self._stop.set()
+
+    def stopped():
+        return self._stop.is_set()
+
+class StoppableThread(threading.Thread):
+    def __init__(self, *args, **kwargs):
+        self._stop = threading.Event()
+        print "args",args
+        print "kwargs",kwargs
+        kwargs['args'] = (self._stop,)
+        print "args",args
+        print "kwargs",kwargs
+        super(StoppableThread, self).__init__(*args, **kwargs)
+    def stop(self):
+        self._stop.set()
 
 #for test
 #if __name__ == '__main__':
