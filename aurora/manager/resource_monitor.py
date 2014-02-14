@@ -42,18 +42,14 @@ class resourceMonitor():
             print('Connection already closed!')
 
     def _close_all_poller_threads(self):
-        for ap_name, poller_thread in self.poller_threads.items():
-            _close_poller_thread(ap_name, 'admin')
-            print "Stopping thread",poller_thread_name,poller_thread
-            poller_thread.stop()
+        for ap_name in self.poller_threads.keys():
+            self._close_poller_thread(ap_name, 'admin')
 
     def _close_poller_thread(self, ap_name, unique_id):
         if ap_name in self.poller_threads and unique_id == 'admin':
-            poller_thread = self.poller_threads[ap_name]
+            poller_thread = self.poller_threads.pop(ap_name)
             print "Stopping thread",ap_name,poller_thread
-            self.poller_threads.pop(ap_name)
             poller_thread.stop()
-            poller_thread.join()
 
     def timeout(self, unique_id, ap_name):
         """This code will execute when a response is not
