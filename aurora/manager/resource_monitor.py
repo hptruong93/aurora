@@ -115,7 +115,11 @@ class resourceMonitor():
         so *all* slices are marked as such (down, failed, etc.)."""
 
         # DEBUG
-        print("Updating ap status for ID " + str(unique_id) + ".\nRequest successful: " + str(success) + "\nAccess Point up: " + str(ap_up))
+        if unique_id != 'SYN':
+            print("Updating ap status for ID " + str(unique_id) + ".\nRequest successful: " + str(success) + "\nAccess Point up: " + str(ap_up))
+        else:
+            print("Updating ap status for ID " + str(ap_name) + ".\nRequest successful: " + str(success) + "\nAccess Point up: " + str(ap_up))
+
         if resourceMonitor.sql_locked:
             print "SQL Access is locked, waiting..."
             while resourceMonitor.sql_locked:
@@ -222,6 +226,7 @@ class resourceMonitor():
                             print "%s: %s >>> Updated to status: 'FAILED'" % (entry, status)
                         else:
                             print("%s: %s >>> Unknown Status, ignoring..." % (entry, status))
+
 
                     self.aurora_db.ap_status_down(physical_ap)
 

@@ -51,6 +51,7 @@ class AuroraDB():
             sys.exit(1)
 
     def ap_status_down(self, ap_name):
+        print "Setting %s status 'DOWN'" % ap_name
         try:
             with self.con:
                 cur = self.con.cursor()
