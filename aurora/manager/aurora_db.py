@@ -45,6 +45,9 @@ class AuroraDB():
             with self.con:
                 cur = self.con.cursor()
                 cur.execute(UPDATE)
+        except mdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            sys.exit(1)
     def ap_update_hw_info(self, hw_database, ap_name, region):
         try:
             with self.con:
@@ -58,17 +61,35 @@ class AuroraDB():
                 max_available_slices = int(hw_database["wifi_radio"]["max_bss_per_radio"])*int(number_radio)
                 current_slices = self._count_db_slices(hw_database["wifi_radio"]["radio_list"])
                 number_slice_free = int(max_available_slices) - current_slices
-                to_execute = ("REPLACE INTO ap SET "
-                                    "name='%s', region='%s', firmware='%s', "
-                                    "version='%s', number_radio=%s, "
-                                    "memory_mb=%s, free_disk=%s, " 
-                                    "number_radio_free=%s, number_slice_free=%s, "
-                                    "status=(SELECT status FROM ap WHERE name='%s')" %
+                #to_execute = ("REPLACE INTO ap SET "
+                #                    "name='%s', region='%s', firmware='%s', "
+                #                    "version='%s', number_radio=%s, "
+                #                    "memory_mb=%s, free_disk=%s, " 
+                #                    "number_radio_free=%s, number_slice_free=%s, "
+                #                    "status=(SELECT status FROM ap WHERE name='%s')" %
+                #                     (ap_name, region, firmware,
+                #                     firmware_version, number_radio,
+                #                     memory_mb, free_disk,
+                #                     number_radio_free, number_slice_free,
+                #                     ap_name))
+                to_execute = ("INSERT INTO ap SET "
+                                        "name='%s', region='%s', firmware='%s', "
+                                        "version='%s', number_radio=%s, "
+                                        "memory_mb=%s, free_disk=%s, " 
+                                        "number_radio_free=%s, number_slice_free=%s, status='UP'"
+                                    "ON DUPLICATE KEY UPDATE "
+                                        "name='%s', region='%s', firmware='%s', "
+                                        "version='%s', number_radio=%s, "
+                                        "memory_mb=%s, free_disk=%s, " 
+                                        "number_radio_free=%s, number_slice_free=%s" %
                                     (ap_name, region, firmware,
-                                     firmware_version, number_radio,
-                                     memory_mb, free_disk,
-                                     number_radio_free, number_slice_free,
-                                     ap_name))
+                                    firmware_version, number_radio,
+                                    memory_mb, free_disk,
+                                    number_radio_free, number_slice_free,
+                                    ap_name, region, firmware,
+                                    firmware_version, number_radio,
+                                    memory_mb, free_disk,
+                                    number_radio_free, number_slice_free))
                 print to_execute
                 cur.execute(to_execute)
         except mdb.Error, e:
