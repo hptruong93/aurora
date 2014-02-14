@@ -303,18 +303,6 @@ class TimerThread(threading.Thread):
     def stopped():
         return self._stop.is_set()
 
-class StoppableThread(threading.Thread):
-    def __init__(self, *args, **kwargs):
-        self._stop = threading.Event()
-        print "args",args
-        print "kwargs",kwargs
-        kwargs['args'] = (self._stop,)
-        print "args",args
-        print "kwargs",kwargs
-        super(StoppableThread, self).__init__(*args, **kwargs)
-    def stop(self):
-        self._stop.set()
-
 #for test
 #if __name__ == '__main__':
 #    host = 'localhost'
