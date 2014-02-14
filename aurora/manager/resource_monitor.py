@@ -190,6 +190,7 @@ class resourceMonitor():
                             raise Exception("Cannot fetch physical_ap for slice %s\n" % unique_id)
 
                     print "physical_ap:",physical_ap
+                    self.aurora_db.ap_status_down(physical_ap)
                     #Get all slices associated with this ap
                     cur.execute("SELECT ap_slice_id FROM ap_slice WHERE physical_ap=\'"+str(physical_ap)+"\' AND status<>'DELETED'")
 
@@ -226,9 +227,6 @@ class resourceMonitor():
                             print "%s: %s >>> Updated to status: 'FAILED'" % (entry, status)
                         else:
                             print("%s: %s >>> Unknown Status, ignoring..." % (entry, status))
-
-
-                    self.aurora_db.ap_status_down(physical_ap)
 
         except Exception, e:
                 print "Database Error: " + str(e)
