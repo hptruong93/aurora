@@ -201,6 +201,7 @@ class Dispatcher():
         # SelectConnection object close method cancels ioloop and cleanly
         # closes associated channels
         # Stop timers
+        self.resourceMonitor.stop()
         for entry in self.requests_sent:
             print " [x] Cancelling timer %s" % entry[1]
             entry[1].cancel()

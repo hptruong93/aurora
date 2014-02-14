@@ -28,11 +28,10 @@ class resourceMonitor():
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)
 
-        atexit.register(self._close)
+        atexit.register(self._closeSQL)
 
-    def _close(self):
+    def stop(self):
         self._close_all_poller_threads()
-        self._closeSQL()
 
     def _closeSQL(self):
         print "Closing SQL connection in resourceMonitor..."
