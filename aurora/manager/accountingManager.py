@@ -42,7 +42,7 @@ class accountingManager():
 
     def update_status(self, unique_id, ap_up=True, ap_name=None):
         #Access Point is up update the ap_slice
-        if ap_up:
+        if ap_up and unique_id != 'admin':
             self.update_apslice(unique_id)
         #Access Point down fetch all ap_slice and update them
         else:

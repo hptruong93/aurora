@@ -28,15 +28,31 @@ class resourceMonitor():
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)
 
-        atexit.register(self.closeSQL)
+        atexit.register(self._close)
 
-    def closeSQL(self):
+    def _close(self):
+        self._close_all_poller_threads()
+        self._closeSQL()
+
+    def _closeSQL(self):
         print "Closing SQL connection in resourceMonitor..."
         self.aurora_db.ap_status_unknown()
         if self.con:
             self.con.close()
         else:
             print('Connection already closed!')
+
+    def _close_all_poller_threads(self):
+        for poller_thread in self.poller_threads:
+            print "Removing thread",poller_thread
+            poller_thread.join()
+
+    def _close_poller_thread(self, ap_name, unique_id):
+        if ap_name in self.poller_threads and unique_id == 'admin':
+            print "Removing thread for",ap_name
+            poller_thread_to_kill = self.poller_threads[ap_name]
+            self.poller_threads.pop(ap_name, None)
+            poller_thread_to_kill.join()
 
     def timeout(self, unique_id, ap_name):
         """This code will execute when a response is not
@@ -52,14 +68,11 @@ class resourceMonitor():
         
         if unique_id != 'admin':
             self.set_status(unique_id, success=False, ap_up=False)
-
+        else 
+            self.set_status(unique_id, success=False, ap_up=False, ap_name)
         #remove thread from the thread pool
         
-        if ap_name in self.poller_threads and unique_id == 'admin':
-            print "Removing thread for",ap_name
-            poller_thread_to_kill = self.poller_threads[ap_name]
-            self.poller_threads.pop(ap_name, None)
-            poller_thread_to_kill.join()
+        self._close_poller_thread(ap_name, unique_id)
 
         # In the future we might do something more with the unique_id besides
         # identifying the AP, like log it to a list of commands that cause
@@ -197,6 +210,7 @@ class resourceMonitor():
         finally:
             resourceMonitor.sql_locked = False
 
+
         self.accountingManager.update_status(unique_id, ap_up, ap_name)
 
     def restart_slices(self, ap, slice_list):
@@ -235,7 +249,7 @@ class resourceMonitor():
         print "Starting poller on thread ",
         #poller_thread = thread(ThreadClass, self)
         poller_thread = threading.Thread(target=self.poll_AP, args=(ap_name,))
-	print poller_thread
+        print poller_thread
         self.poller_threads[ap_name] = poller_thread
         poller_thread.start()
 
