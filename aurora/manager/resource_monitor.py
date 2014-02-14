@@ -42,22 +42,18 @@ class resourceMonitor():
             print('Connection already closed!')
 
     def _close_all_poller_threads(self):
-        print "Closing all poller threads:"
-        print "Active threads:",self.poller_threads.items()
-        for poller_thread_name, poller_thread in self.poller_threads.items():
-            print "Removing thread",poller_thread
+        for ap_name, poller_thread in self.poller_threads.items():
+            _close_poller_thread(ap_name, 'admin')
+            print "Stopping thread",poller_thread_name,poller_thread
             poller_thread.stop()
-            print "Thread stopped"
-            poller_thread.join()
-            print "Thread joined"
 
     def _close_poller_thread(self, ap_name, unique_id):
         if ap_name in self.poller_threads and unique_id == 'admin':
-            print "Removing thread for",ap_name
-            poller_thread_to_kill = self.poller_threads[ap_name]
-            self.poller_threads.pop(ap_name, None)
-            poller_thread_to_kill.stop()
-            poller_thread_to_kill.join()
+            poller_thread = self.poller_threads[ap_name]
+            print "Stopping thread",ap_name,poller_thread
+            self.poller_threads.pop(ap_name)
+            poller_thread.stop()
+            poller_thread.join()
 
     def timeout(self, unique_id, ap_name):
         """This code will execute when a response is not
@@ -299,10 +295,11 @@ class TimerThread(threading.Thread):
         if 'kwargs' not in kwargs.keys():
             kwargs['kwargs'] = {}
         kwargs['kwargs']['stop_event'] = self._stop
-        super(TimerThead, self).__init__(*args, **kwargs)
+        super(TimerThread, self).__init__(*args, **kwargs)
 
     def stop(self):
         self._stop.set()
+        self.join()
 
     def stopped():
         return self._stop.is_set()
