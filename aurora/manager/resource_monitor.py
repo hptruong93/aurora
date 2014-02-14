@@ -106,7 +106,10 @@ class resourceMonitor():
         """Update the traffic information of ap_slice"""
         self.accountingManager.update_traffic(message)
 
-    def set_status(self, unique_id, success, ap_up=True, ap_name = None):
+    def set_status(self, unique_id, success, ap_up=True, ap_name=None):
+        _add_call_to_queue(unique_id, success, ap_up, ap_name)
+
+    def _set_status(self, unique_id, success, ap_up=True, ap_name=None):
         """Sets the status of the associated request in the
         database based on the previous status, i.e. pending -> active if
         create slice, deleting -> deleted if deleting a slice, etc.
