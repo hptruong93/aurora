@@ -54,6 +54,9 @@ class Manager():
         self.dispatch.stop()
         provision.stop()
 
+    def stop(self):
+        
+
     def parseargs(self, function, args, tenant_id, user_id, project_id):
         # args is a generic dictionary passed to all functions (each function is responsible for parsing
         # their own arguments

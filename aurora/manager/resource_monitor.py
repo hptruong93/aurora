@@ -75,14 +75,15 @@ class resourceMonitor():
             print "Stopping thread",ap_name,poller_thread
             poller_thread.stop()
 
-    def timeout(self, unique_id, ap_name):
+    def timeout(self, ap_slice_id, ap_name, message_uuid = None):
         """This code will execute when a response is not
         received for the command associated with the unique_id
         after a certain time period.  It modifies the database
         to reflect the current status of the AP."""
 
-
-        print type(unique_id), unique_id
+        if message_uuid is not None:
+            self.dispatcher.remove_request(message_uuid)
+        print type(ap_slice_id), ap_slice_id
         # A timeout is serious: it is likely that
         # the AP's OS has crashed, or at least aurora is
         # no longer running.
@@ -90,10 +91,10 @@ class resourceMonitor():
         #if unique_id != 'admin':
         #    self.set_status(unique_id, success=False, ap_up=False, )
         #else:
-        self._add_call_to_queue(unique_id, success=False, ap_up=False, ap_name=ap_name)
+        self._add_call_to_queue(ap_slice_id, success=False, ap_up=False, ap_name=ap_name)
         #remove thread from the thread pool
         
-        self._close_poller_thread(ap_name, unique_id)
+        self._close_poller_thread(ap_name, ap_slice_id)
 
         # In the future we might do something more with the unique_id besides
         # identifying the AP, like log it to a list of commands that cause
