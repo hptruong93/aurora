@@ -83,7 +83,7 @@ class resourceMonitor():
 
         if message_uuid is not None:
             self.dispatcher.remove_request(message_uuid)
-        print type(ap_slice_id), ap_slice_id
+        print "[resource_monitor.py]: %s %s" % (type(ap_slice_id), ap_slice_id)
         # A timeout is serious: it is likely that
         # the AP's OS has crashed, or at least aurora is
         # no longer running.
