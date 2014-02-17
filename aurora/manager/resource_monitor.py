@@ -263,11 +263,10 @@ class resourceMonitor():
                         raise Exception("No slice %s\n" % slice_id)
                     if status != 'DELETED' and status != 'DELETING':
                         # Restart slice as it wasn't deleted since AP went down
-                        self.dispatcher.dispatch( { 'slice': slice_id,
-                                                    'command': 'restart_slice',
-                                                    'user': user_id},
-                                                  ap,
-                                                  str(uuid.uuid4()) )
+                        self.dispatcher.dispatch({ 'slice': slice_id,
+                                                   'command': 'restart_slice',
+                                                   'user': user_id},
+                                                 ap)
         except Exception, e:
             print "Database Error: " + str(e)
         finally:
@@ -300,19 +299,19 @@ class resourceMonitor():
         a restart may be required."""
 
         # The unique ID is fixed to be all F's for resets/restarts.
-        self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'reset' } , ap, 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF')
+        self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'reset' } , ap)
 
     def restart_AP(self, ap):
         """Restart the access point, telling the OS to reboot."""
 
         # The unique ID is fixed to be all F's for resets/restarts.
-        self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'restart' } , ap, 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF')
+        self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'restart' } , ap)
 
     def update_AP(self, ap):
         """Update the access point """
 
         # The unique ID is fixed to be all F's
-        self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'update'}, ap , 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF')
+        self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'update'}, ap)
 
 class StoppableThread(threading.Thread):
     """Thread class with a stop method to terminate timers

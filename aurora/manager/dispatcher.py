@@ -169,6 +169,7 @@ class Dispatcher():
             self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
             self.aurora_db.ap_status_up(ap_name)
             self.resourceMonitor.start_poller(ap_name)
+            return
 
 
         elif message == 'FIN':

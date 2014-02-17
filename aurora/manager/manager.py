@@ -501,9 +501,8 @@ class Manager():
 
             #Dispatch
             #Generate unique message id
-            message_id = uuid.uuid4()
-            print "Launching dispatcher, message_id:",message_id
-            self.dispatch.dispatch(config, ap_name, str(message_id))
+            #print "Launching dispatcher"
+            self.dispatch.dispatch(config, ap_name)
 
         #Return response
         response = {"status":True, "message":message}
