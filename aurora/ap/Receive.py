@@ -208,7 +208,7 @@ if __name__ == '__main__':
     if 'region' in config_full.keys():
         region = config_full['region']
     else:
-        region = 'unknown'
+        region = None
     config = {}
     config['default_config'] = config_full['default_config']
     try:
