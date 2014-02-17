@@ -51,11 +51,11 @@ class Manager():
 
     def __del__(self):
         print("Destructing Manager...")
-        self.dispatch.stop()
-        provision.stop()
+
 
     def stop(self):
-        
+        self.dispatch.stop()
+        provision.stop()
 
     def parseargs(self, function, args, tenant_id, user_id, project_id):
         # args is a generic dictionary passed to all functions (each function is responsible for parsing

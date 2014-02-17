@@ -85,6 +85,7 @@ class ManagerServer(BaseHTTPServer.HTTPServer):
     
     def server_close(self):
         # Delete all references to manager so it destructs
+        self.manager.stop()
         del self.manager, self.RequestHandlerClass.manager
 
         BaseHTTPServer.HTTPServer.server_close(self) 
