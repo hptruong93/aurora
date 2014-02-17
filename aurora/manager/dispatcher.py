@@ -204,7 +204,7 @@ class Dispatcher():
             else:
                 if message != "RESTARTING" and message != "AP reset":
                     self.resourceMonitor.update_records(message["ap_slice_stats"])
-                    self.aurora_db.ap_update_memory_info(message["memory_stats"])
+                    self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
 
                 else:
                     #Probably a reset or restart command sent from resource_monitor
