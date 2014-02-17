@@ -101,7 +101,9 @@ class Receive():
         # Execute the command specified
         try:
             return_data = None
-            if message['command'] != 'SYN':
+            if message['command'] == 'SYN':
+                return_data = 'SYN/ACK'
+            else:
                 return_data = self.agent.execute(**message)
         # If there is an error, let the sender know    
         except Exception as e:

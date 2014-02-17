@@ -156,6 +156,21 @@ class Dispatcher():
             self.resourceMonitor.start_poller(ap_name)
             return
 
+        elif message == 'SYN/ACK':
+            print ap_name + " responded to 'SYN' request"
+            # Cancel timers corresponding to 'SYN' message
+            (have_request, entry) = self._have_request(props)
+            if have_request:
+                entry[1].cancel()
+                self.requests_sent.remove(entry)
+            else:
+                print "Warning: No request for received 'SYN/ACK' from %s" % ap_name
+            provision.update_last_known_config(ap_name, config)
+            self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
+            self.aurora_db.ap_status_up(ap_name)
+            self.resourceMonitor.start_poller(ap_name)
+
+
         elif message == 'FIN':
             print ap_name + " is shutting down..."
             try:
@@ -169,11 +184,8 @@ class Dispatcher():
             print "Last known config:"
             pprint(config)
             return
-        for request in self.requests_sent:
-            if request[0] == props.correlation_id:
-                have_request = True
-                entry = request
-                break
+
+        (have_request, entry) = self._have_request(props)    
 
         if have_request:
             # decoded_response = json.loads(body)
@@ -219,6 +231,13 @@ class Dispatcher():
             print " [x] Cancelling timer %s" % entry[1]
             entry[1].cancel()
         self.connection.close()
+
+    def _have_request(self, props):
+        for request in self.requests_sent:
+            if request[0] == props.correlation_id:
+                have_request = True
+                entry = request
+                return (have_request, entry)
 
 
 
