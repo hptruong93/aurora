@@ -133,7 +133,7 @@ class Dispatcher():
         print "method:", method
         print repr(props)
         print body
-        #print "\nrequests_sent:",self.requests_sent
+        print "\nrequests_sent:",self.requests_sent
 
         # Decode response
         decoded_response = json.loads(body)
@@ -160,7 +160,7 @@ class Dispatcher():
             print ap_name + " responded to 'SYN' request"
             # Cancel timers corresponding to 'SYN' message
             (have_request, entry) = self._have_request(props)
-            if have_request:
+            if  have_request is not None:
                 entry[1].cancel()
                 self.requests_sent.remove(entry)
             else:
@@ -187,7 +187,7 @@ class Dispatcher():
 
         (have_request, entry) = self._have_request(props)    
 
-        if have_request:
+        if have_request is not None:
             # decoded_response = json.loads(body)
             print(' [x] DEBUG: Printing received message')
             print(message)
@@ -238,6 +238,7 @@ class Dispatcher():
                 have_request = True
                 entry = request
                 return (have_request, entry)
+        return (False, None)
 
 
 
