@@ -17,9 +17,9 @@
     "rabbitmq_password": "let_me_in", 
     "rabbitmq_username": "access_point", 
     "rabbitmq_host": "10.5.8.3", 
-    "region": "mcgill", 
-    "queue": "openflow2", 
-    "rabbitmq_reply_queue": "amq.gen-NMFPSE0dt91Tc7d0PjmGJg", 
+    "queue": "openflow2",
+    "region": "mcgill",
+    "rabbitmq_reply_queue": "amq.gen-39sDN5Wwuik4STPL2zT47g", 
     "default_config": {
         "init_hardware_database": {
             "memory_mb": "256", 
