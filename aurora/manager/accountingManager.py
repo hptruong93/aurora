@@ -23,7 +23,7 @@ class accountingManager():
         atexit.register(self.closeSQL)
 
     def closeSQL(self):
-        print "Closing SQL connectiong in accountingManager..."
+        print "Closing SQL connection in accountingManager..."
         if self.con:
             self.con.close()
         else:

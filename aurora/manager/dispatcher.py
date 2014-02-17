@@ -16,11 +16,14 @@ class Dispatcher():
 
         print "Constructing Dispatcher..."
         # Run Pika logger so that error messages get printed
+        
+        self.host = host
+        self.username = username
+        self.password = password
+
         logging.basicConfig()
 
-        credentials = pika.PlainCredentials(username, password)
-        self.connection = pika.SelectConnection(pika.ConnectionParameters(host=host, credentials=credentials), self.on_connected)
-
+        self._start_connection()
         # Create dictionary for requests sent out
         self.requests_sent = []
 
@@ -33,13 +36,27 @@ class Dispatcher():
         #
         # self.connection.connect()
         Dispatcher.lock = False
+        self.restarting_connection = False
+        # Start ioloop, this will quit by itself when Dispatcher().stop() is run
+
+    def __del__(self):
+        print "Deconstructing Dispatcher..."
+
+    def _start_connection(self):
+        credentials = pika.PlainCredentials(self.username, self.password)
+        self.connection = pika.SelectConnection(pika.ConnectionParameters(host=self.host, credentials=credentials), self.on_connected)
         # Start ioloop, this will quit by itself when Dispatcher().stop() is run
         self.listener = threading.Thread(target=self.connection.ioloop.start)
         self.listener.start()
 
-
-    def __del__(self):
-        print "Deconstructing Dispatcher..."
+    def _restart_connection(self):
+        print "[dispatcher.py]: Channel has died, restarting..."
+        self.stop()
+        self.restarting_connection = True
+        self._start_connection()
+        while not self.connection.is_open and not self.channel.is_open:
+            pass
+        print "[dispatcher.py]: Channel back up, dispatching..."
 
     def on_connected(self, connection):
         self.connection.channel(self.channel_open)
@@ -52,9 +69,12 @@ class Dispatcher():
         self.callback_queue = frame.method.queue
         provision.update_reply_queue(self.callback_queue)
         self.channel.basic_consume(self.process_response, queue=self.callback_queue)
-        self.send_manager_up_status()
+        if self.restarting_connection:
+            self.restarting_connection = False
+        else:
+            self._send_manager_up_status()
 
-    def send_manager_up_status(self):
+    def _send_manager_up_status(self):
         for ap in self.aurora_db.get_ap_list():
             self.dispatch({'command':'SYN'}, ap)
 
@@ -82,6 +102,9 @@ class Dispatcher():
         Dispatcher.lock = True
 
         # Dispatch, catch if no channel exists
+        if not self.connection.is_open or not self.channel.is_open:
+            self._restart_connection()
+
         try:
             self.channel.basic_publish(exchange='', routing_key=ap, body=message, properties=pika.BasicProperties(reply_to = self.callback_queue, correlation_id = unique_id, content_type="application/json"))
         except Exception as e:
@@ -233,6 +256,10 @@ class Dispatcher():
             print " [x] Cancelling timer %s" % entry[1]
             entry[1].cancel()
         self.connection.close()
+        del self.connection
+        del self.channel
+        del self.listener
+
 
     def _have_request(self, correlation_id):
         for request in self.requests_sent:
