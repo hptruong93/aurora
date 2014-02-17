@@ -160,7 +160,7 @@ class Dispatcher():
             print ap_name + " responded to 'SYN' request"
             # Cancel timers corresponding to 'SYN' message
             (have_request, entry) = self._have_request(props)
-            if  have_request is not None:
+            if have_request:
                 entry[1].cancel()
                 self.requests_sent.remove(entry)
             else:
@@ -236,16 +236,14 @@ class Dispatcher():
     def _have_request(self, correlation_id):
         for request in self.requests_sent:
             if request[0] == correlation_id:
-                have_request = True
-                entry = request
-                return (have_request, entry)
+                return (True, request)
         return (False, None)
 
     def remove_request(self, message_uuid):
-        (have_request, entry) = _have_request(message_uuid)
-        if have_request is not None:
+        (have_request, entry) = self._have_request(message_uuid)
+        if have_request:
             self.requests_sent.remove(entry)
-            
+
 # Menu loop; thanks Kevin
 # Obviously this code will not be in a final version
 if __name__ == '__main__':
