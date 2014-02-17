@@ -45,6 +45,7 @@ class resourceMonitor():
             print('Connection already closed!')
 
     def _make_queue_daemon(self):
+        print "[resource_monitor.py]: Creating Queue Daemon"
         self.qd = StoppableThread(target=self._watch_queue)
         self.qd.start()
 
@@ -61,8 +62,8 @@ class resourceMonitor():
         self.timeout_queue.append((args, kwargs))
 
     def stop(self):
-        self.qd.stop()
         self._close_all_poller_threads()
+        self.qd.stop()
 
     def _close_all_poller_threads(self):
         for ap_name in self.poller_threads.keys():
