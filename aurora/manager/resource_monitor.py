@@ -290,7 +290,7 @@ class resourceMonitor():
                 "Poller thread for",ap_name,"is dying now!"
                 break
             print "Updating ap in poller thread",self.poller_threads[ap_name]
-            self.update_AP(ap_name)
+            self.get_stats(ap_name)
             for i in range(self.dispatcher.TIMEOUT + 5):
                 if stop_event.is_set():
                     break
@@ -309,11 +309,11 @@ class resourceMonitor():
         # The unique ID is fixed to be all F's for resets/restarts.
         self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'restart' } , ap)
 
-    def update_AP(self, ap):
+    def get_stats(self, ap):
         """Update the access point """
 
         # The unique ID is fixed to be all F's
-        self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'update'}, ap)
+        self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'get_stats'}, ap)
 
 class StoppableThread(threading.Thread):
     """Thread class with a stop method to terminate timers

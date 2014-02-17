@@ -95,7 +95,7 @@ class Dispatcher():
             ap_slice_id = config['slice']
         # Start a timeout countdown
         print "ap_slice_id >>>",ap_slice_id
-        time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=(ap_slice_id,ap,))
+        time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=(ap_slice_id,ap,unique_id))
 
         self.requests_sent.append((unique_id, time, ap_slice_id))
         time.start()
@@ -159,7 +159,7 @@ class Dispatcher():
         elif message == 'SYN/ACK':
             print ap_name + " responded to 'SYN' request"
             # Cancel timers corresponding to 'SYN' message
-            (have_request, entry) = self._have_request(props)
+            (have_request, entry) = self._have_request(props.correlation_id)
             if have_request:
                 entry[1].cancel()
                 self.requests_sent.remove(entry)
@@ -203,7 +203,8 @@ class Dispatcher():
                 provision.update_last_known_config(ap_name, config)
             else:
                 if message != "RESTARTING" and message != "AP reset":
-                    self.resourceMonitor.update_records(message)
+                    self.resourceMonitor.update_records(message["ap_slice_stats"])
+                    self.aurora_db.ap_update_memory_info(message["memory_stats"])
 
                 else:
                     #Probably a reset or restart command sent from resource_monitor

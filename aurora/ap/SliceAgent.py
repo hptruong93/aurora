@@ -286,8 +286,8 @@ class SliceAgent:
             return self.restart()
         elif command == "reset":
             return self.__reset()
-        elif command == "update":
-            return self.monitor.get_status()
+        elif command == "get_stats":
+            return self.monitor.get_stats()
         else:
             raise exception.CommandNotFound(command)
 

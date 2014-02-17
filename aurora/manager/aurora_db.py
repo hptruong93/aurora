@@ -83,7 +83,7 @@ class AuroraDB():
                 firmware_version = hw_database["firmware_version"]
                 number_radio = hw_database["wifi_radio"]["number_radio"]
                 memory_mb = hw_database["memory_mb"]
-                free_disk = "NULL"
+                free_disk = hw_database["free_disk"]
                 number_radio_free = hw_database["wifi_radio"]["number_radio_free"]
                 max_available_slices = int(hw_database["wifi_radio"]["max_bss_per_radio"])*int(number_radio)
                 current_slices = self._count_db_slices(hw_database["wifi_radio"]["radio_list"])
@@ -122,7 +122,7 @@ class AuroraDB():
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)
-               
+
     def wslice_belongs_to(self, tenant_id, project_id, ap_slice_id):
         if tenant_id == 0:
             return True

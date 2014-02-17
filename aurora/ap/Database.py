@@ -272,6 +272,15 @@ class Database:
     def hw_set_memory_mb(self, memory):
         """Sets the amount of the total RAM on the device."""
         self.hw_database["memory_mb"] = memory
+
+    def hw_get_free_disk(self):
+        """Returns the total RAM of the device."""
+        return self.hw_database["free_disk"]
+        
+    def hw_set_free_disk(self, memory):
+        """Sets the amount of the total RAM on the device."""
+        self.hw_database["free_disk"] = memory
+    
         
     def hw_get_num_radio(self):
         """Returns the total number of physical radios."""
