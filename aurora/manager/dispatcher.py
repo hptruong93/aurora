@@ -47,7 +47,9 @@ class Dispatcher():
         credentials = pika.PlainCredentials(self.username, self.password)
         self.connection = pika.SelectConnection(pika.ConnectionParameters(host=self.host, credentials=credentials), self.on_connected)
         # Start ioloop, this will quit by itself when Dispatcher().stop() is run
+        print "[Dispatcher]: Starting pika listener ",
         self.listener = threading.Thread(target=self.connection.ioloop.start)
+        print self.listener
         self.listener.start()
 
     def _stop_connection(self):

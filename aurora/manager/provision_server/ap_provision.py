@@ -93,9 +93,10 @@ server = BaseHTTPServer.HTTPServer(server_address, handler_class)
 def run():
     global running
     if not running:
-        print "Starting provision server..."
+        print "Starting provision server",
         server_thread = threading.Thread(target=server.serve_forever)
         server_thread.start()
+        print server_thread
         running = True
     else:
         print "Provision server already running"
