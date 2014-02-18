@@ -95,6 +95,8 @@ class Manager():
                         newList[i][1]['free_disk'] = tempList[i][6]
                         newList[i][1]['supported_protocol'] = tempList[i][7]
                         newList[i][1]['number_radio_free'] = tempList[i][8]
+                        newList[i][1]['number_slice_free'] = tempList[i][9]
+                        newList[i][1]['status'] = tempList[i][10]
                         #Get a list of tag
                         cur.execute("SELECT name FROM location_tags WHERE ap_name=\'"+str(tempList[i][0])+"\'")
                         tagList = cur.fetchall()
@@ -135,14 +137,19 @@ class Manager():
                     if (args_list[index].split('=')[0] == "name")           or \
                        (args_list[index].split('=')[0] == "firmware")       or \
                        (args_list[index].split('=')[0] == "region")         or \
-                       (args_list[index].split('=')[0] == "supported_protocol"):
+                       (args_list[index].split('=')[0] == "supported_protocol") or \
+                       (args_list[index].split('!')[0] == "status"):
                         args_list[index] = args_list[index].split('=')[0]+'=\'' + \
                                            args_list[index].split('=')[1]+'\''
+                    else:
+                        args_list[index] = args_list[index].split('!')[0]+'<>' + \
+                                           args_list[index].split('!')[1]
                 elif '!' in args_list[index]:
                     if (args_list[index].split('!')[0] == "name")           or \
                        (args_list[index].split('!')[0] == "firmware")       or \
                        (args_list[index].split('!')[0] == "region")         or \
-                       (args_list[index].split('!')[0] == "supported_protocol"):
+                       (args_list[index].split('!')[0] == "supported_protocol") or \
+                       (args_list[index].split('!')[0] == "status"):
                         args_list[index] = args_list[index].split('!')[0]+'<>\'' + \
                                            args_list[index].split('!')[1]+'\''
                     else:
@@ -195,6 +202,8 @@ class Manager():
                 newList[i][1]['free_disk'] = tempList[i][6]
                 newList[i][1]['supported_protocol'] = tempList[i][7]
                 newList[i][1]['number_radio_free'] = tempList[i][8]
+                newList[i][1]['number_slice_free'] = tempList[i][9]
+                newList[i][1]['status'] = tempList[i][10]
                 #Get a list of tags
                 cur.execute("SELECT name FROM location_tags WHERE ap_name=\'"+str(tempList[i][0])+"\'")
                 tagList = cur.fetchall()
@@ -215,11 +224,12 @@ class Manager():
         message = ""
         for entry in toPrint:
             if not arg_i:
-                message += "%5s: %s\n" % ("Name", entry[0])
+                message += "%5s: %s - %s\n" % ("Name", entry[0], entry[1]['status'])
             else: #Print extra data
-                message += "%19s: %s\n" % ("Name", entry[0])
+                message += "%19s: %s - %s\n" % ("Name", entry[0], entry[1]['status'])
                 for attr in entry[1]:
-                    message += "%19s: %s\n" % (attr, entry[1][attr])
+                    if attr != 'status':
+                        message += "%19s: %s\n" % (attr, entry[1][attr])
                 message += '\n'
 
         #return response
@@ -234,7 +244,8 @@ class Manager():
         for entry in toPrint:
             message += "%19s: %s\n" % ("Name", entry[0])
             for attr in entry[1]:
-                message += "%19s: %s\n" % (attr, entry[1][attr])
+                if attr != 'status':
+                    message += "%19s: %s\n" % (attr, entry[1][attr])
             message += '\n'
         #return response
         response = {"status":True, "message":message}
