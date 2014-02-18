@@ -90,7 +90,7 @@ class ManagerServer(BaseHTTPServer.HTTPServer):
 
         BaseHTTPServer.HTTPServer.server_close(self) 
 
-if __name__ == "__main__":
+def main():
     handler_class=MyHandler
     server_address = ('', 5554)
     try:
@@ -103,3 +103,6 @@ if __name__ == "__main__":
             print e
         print("Shutting down webserver...")
         srvr.server_close()
+
+if __name__ == "__main__":
+    main()

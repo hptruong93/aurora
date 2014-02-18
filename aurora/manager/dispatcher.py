@@ -288,7 +288,7 @@ class Dispatcher():
         if have_request:
             print "[dispatcher.py]: Cancelling timer %s" % request[1]
             request[1].cancel()
-            print "[dispatcher.py]: Removing request %s" % request
+            print "[dispatcher.py]: Removing request %s" % str(request)
             self.requests_sent.remove(request)
 
 # Menu loop; thanks Kevin
