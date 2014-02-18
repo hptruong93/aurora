@@ -270,7 +270,7 @@ class Dispatcher():
         del self.channel
         del self.listener
 
-    def _get_uuid_for_ap_syn(ap_syn):
+    def _get_uuid_for_ap_syn(self, ap_syn):
         for request in self.requests_sent:
             if request[0].startswith(ap_syn) and request[2] == 'SYN':
                 return request[0]
@@ -286,7 +286,9 @@ class Dispatcher():
             message_uuid = self._get_uuid_for_ap_syn(ap_syn)
         (have_request, request) = self._have_request(message_uuid)
         if have_request:
+            print "[dispatcher.py]: Cancelling timer %s" % request[1]
             request[1].cancel()
+            print "[dispatcher.py]: Removing request %s" % request
             self.requests_sent.remove(request)
 
 # Menu loop; thanks Kevin
