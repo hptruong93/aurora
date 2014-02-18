@@ -66,6 +66,8 @@ class resourceMonitor():
         self.qd.stop()
 
     def _close_all_poller_threads(self):
+        print "[ResourceMonitor]: Closing all threads"
+        print "[ResourceMonitor]: %s" % self.poller_threads
         for ap_name in self.poller_threads.keys():
             self._close_poller_thread(ap_name, 'admin')
 
@@ -287,9 +289,9 @@ class resourceMonitor():
         while ap_name in self.poller_threads:
             #time.sleep(resourceMonitor.SLEEP_TIME)
             if stop_event.is_set():
-                "Poller thread for",ap_name,"is dying now!"
+                "[ResourceMonitor]: Poller thread for %s is dying now" % ap_name
                 break
-            print "Updating ap in poller thread",self.poller_threads[ap_name]
+            print "[ResourceMonitor]: %s thread is %s" % (ap_name,self.poller_threads[ap_name])
             self.get_stats(ap_name)
             for i in range(self.dispatcher.TIMEOUT + 5):
                 if stop_event.is_set():
@@ -323,7 +325,9 @@ class StoppableThread(threading.Thread):
         if 'kwargs' not in kwargs.keys():
             kwargs['kwargs'] = {}
         kwargs['kwargs']['stop_event'] = self._stop
+        print "[StoppableThread]: __init__ parent thread", 
         super(StoppableThread, self).__init__(*args, **kwargs)
+        print self
 
     def stop(self):
         self._stop.set()

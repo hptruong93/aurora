@@ -6,6 +6,7 @@ import logging
 import provision_server.ap_provision as provision
 from pprint import pprint
 import uuid
+import time
 
 class Dispatcher():
     lock = None
@@ -40,7 +41,7 @@ class Dispatcher():
         # Start ioloop, this will quit by itself when Dispatcher().stop() is run
 
     def __del__(self):
-        print "Deconstructing Dispatcher..."
+        print "[dispatcher.py]: Deconstructing..."
 
     def _start_connection(self):
         credentials = pika.PlainCredentials(self.username, self.password)
@@ -49,14 +50,24 @@ class Dispatcher():
         self.listener = threading.Thread(target=self.connection.ioloop.start)
         self.listener.start()
 
+    def _stop_connection(self):
+        self._stop_all_request_sent_timers()
+        self.connection.close()
+
     def _restart_connection(self):
         print "[dispatcher.py]: Channel has died, restarting..."
         self.stop()
         self.restarting_connection = True
         self._start_connection()
         while not self.connection.is_open and not self.channel.is_open:
-            pass
+            time.sleep(0.1)
         print "[dispatcher.py]: Channel back up, dispatching..."
+
+    def _stop_all_request_sent_timers(self):
+        while self.requests_sent:
+            entry = self.requests_sent.pop()
+            print "[dispatcher.py]: Cancelling timer %s" % entry[1]
+            entry[1].cancel()
 
     def on_connected(self, connection):
         self.connection.channel(self.channel_open)
@@ -119,10 +130,11 @@ class Dispatcher():
         # Start a timeout countdown
         print "ap_slice_id >>>",ap_slice_id
         time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=(ap_slice_id,ap,unique_id))
-
+        print "[dispatcher.py]: Adding timer", time
         self.requests_sent.append((unique_id, time, ap_slice_id))
         time.start()
-        #print "Starting timer:",self.requests_sent[-1]
+        print "[dispatcher.py]: requests_sent",self.requests_sent
+        print "Starting timer:",self.requests_sent[-1]
 
         print " [x] Dispatch: Unlocking..."
         Dispatcher.lock = False
@@ -252,14 +264,10 @@ class Dispatcher():
         # closes associated channels
         # Stop timers
         self.resourceMonitor.stop()
-        for entry in self.requests_sent:
-            print " [x] Cancelling timer %s" % entry[1]
-            entry[1].cancel()
-        self.connection.close()
+        self._stop_connection()
         del self.connection
         del self.channel
         del self.listener
-
 
     def _have_request(self, correlation_id):
         for request in self.requests_sent:
