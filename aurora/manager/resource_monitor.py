@@ -289,15 +289,16 @@ class resourceMonitor():
         print "Timeout from Dispatcher", self.dispatcher.TIMEOUT
         while ap_name in self.poller_threads:
             #time.sleep(resourceMonitor.SLEEP_TIME)
-            if stop_event.is_set():
-                "[ResourceMonitor]: Poller thread for %s is dying now" % ap_name
-                break
             print "[ResourceMonitor]: %s thread is %s" % (ap_name,self.poller_threads[ap_name])
             self.get_stats(ap_name)
             for i in range(self.dispatcher.TIMEOUT + 5):
                 if stop_event.is_set():
+                    print "[ResourceMonitor]: Caught stop event for %s" % self
                     break
                 time.sleep(1)
+            if stop_event.is_set():
+                "[ResourceMonitor]: Poller thread for %s is dying now" % ap_name
+                break
 
     def reset_AP(self, ap):
         """Reset the access point.  If there are serious issues, however,
@@ -332,7 +333,7 @@ class StoppableThread(threading.Thread):
 
     def stop(self):
         self._stop.set()
-        self.join()
+        #self.join()
 
     def stopped():
         return self._stop.is_set()
