@@ -293,11 +293,11 @@ class resourceMonitor():
             self.get_stats(ap_name)
             for i in range(self.dispatcher.TIMEOUT + 5):
                 if stop_event.is_set():
-                    print "[ResourceMonitor]: Caught stop event for %s" % self
+                    print "[ResourceMonitor]: Caught stop event for %s" % self.poller_threads[ap_name]
                     break
                 time.sleep(1)
             if stop_event.is_set():
-                "[ResourceMonitor]: Poller thread for %s is dying now" % ap_name
+                print "[ResourceMonitor]: Poller thread for %s is dying now" % ap_name
                 break
 
     def reset_AP(self, ap):

@@ -23,15 +23,14 @@ class Dispatcher():
         self.password = password
         Dispatcher.lock = False
         self.restarting_connection = False
+        self.aurora_db = aurora_db
+        # Create list for requests sent out
+        self.requests_sent = []
 
         logging.basicConfig()
 
-        self._start_connection()
-        # Create dictionary for requests sent out
-        self.requests_sent = []
-
         self.resourceMonitor = resource_monitor.resourceMonitor(aurora_db, self, host, mysql_username, mysql_password)
-        self.aurora_db = aurora_db
+        self._start_connection()
 
         # Setup complete, now start listening and processing
         # This jumpstarts the connection, which in turn uses the callbacks
