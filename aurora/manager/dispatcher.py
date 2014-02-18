@@ -56,7 +56,7 @@ class Dispatcher():
 
     def _restart_connection(self):
         print "[dispatcher.py]: Channel has died, restarting..."
-        self.stop()
+        self._stop_connection()
         self.restarting_connection = True
         self._start_connection()
         while not self.connection.is_open and not self.channel.is_open:
@@ -245,6 +245,7 @@ class Dispatcher():
                     #Probably a reset or restart command sent from resource_monitor
                     #Just stop timer and remove entry
                     pass
+
 
             entry[1].cancel()
 
