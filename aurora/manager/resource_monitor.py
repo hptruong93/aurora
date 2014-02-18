@@ -237,7 +237,7 @@ class resourceMonitor():
                             print("%s: %s >>> Unknown Status, ignoring..." % (entry, status))
 
         except Exception, e:
-                print "Database Error: " + str(e)
+                print "[ResourceMonitor]: " + str(e)
         finally:
             resourceMonitor.sql_locked = False
 
