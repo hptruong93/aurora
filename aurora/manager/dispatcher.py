@@ -183,7 +183,7 @@ class Dispatcher():
             #      for a response, cancel the timer and/or send the command again
             # AP has started, check if we need to restart slices
             print ap_name + " has connected..."
-            remove_request(ap_syn=ap_name)
+            self.remove_request(ap_syn=ap_name)
             # Tell resource monitor, let it handle restart of slices
             #self.resourceMonitor.start_poller(ap_name)
             slices_to_restart = decoded_response['slices_to_restart']
@@ -249,10 +249,7 @@ class Dispatcher():
                     #Just stop timer and remove entry
                     pass
 
-
-            entry[1].cancel()
-
-            self.requests_sent.remove(entry)
+            self.remove_request(entry[0])
 
         else:
             print " [x] Sending reset to '%s'" % ap_name
@@ -289,6 +286,7 @@ class Dispatcher():
             message_uuid = self._get_uuid_for_ap_syn(ap_syn)
         (have_request, request) = self._have_request(message_uuid)
         if have_request:
+            request[1].cancel()
             self.requests_sent.remove(request)
 
 # Menu loop; thanks Kevin

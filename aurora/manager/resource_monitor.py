@@ -280,20 +280,20 @@ class resourceMonitor():
     def start_poller(self, ap_name):
         print "Starting poller on thread ",
         #poller_thread = thread(ThreadClass, self)
-        poller_thread = TimerThread(target=self.poll_AP, args=(ap_name,))
+        poller_thread = TimerThread(target=self.poll_AP, args=(ap_name,poller_thread))
         print poller_thread
         self.poller_threads[ap_name] = poller_thread
         poller_thread.start()
 
-    def poll_AP(self, ap_name, stop_event=None):
+    def poll_AP(self, ap_name, poller_thread, stop_event=None):
         print "Timeout from Dispatcher", self.dispatcher.TIMEOUT
         while ap_name in self.poller_threads:
             #time.sleep(resourceMonitor.SLEEP_TIME)
-            print "[ResourceMonitor]: %s thread is %s" % (ap_name,self.poller_threads[ap_name])
+            print "[ResourceMonitor]: %s thread is %s" % (ap_name, poller_thread)
             self.get_stats(ap_name)
             for i in range(self.dispatcher.TIMEOUT + 5):
                 if stop_event.is_set():
-                    print "[ResourceMonitor]: Caught stop event for %s" % self.poller_threads[ap_name]
+                    print "[ResourceMonitor]: Caught stop event for %s" % poller_thread
                     break
                 time.sleep(1)
             if stop_event.is_set():
