@@ -3,8 +3,6 @@
 # SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
 """
-NOTE: THIS VERSION IS FOR LOCAL TESTING ONLY
-
 Command-line interface to the Aurora API
 Uses a JSON file for commands
 Format:[
@@ -18,10 +16,13 @@ Format:[
 
 import argparse
 import json
-import sys, os
+import os
 from pprint import pprint
+import sys
+
 #from keystoneclient.v2_0 import client as ksclient #commented in order to compile locally
-from SendJSON import JSONSender
+
+import json_sender
 
 class AuroraArgumentParser(argparse.ArgumentParser):
     
@@ -85,17 +86,19 @@ class AuroraConsole():
             function = argv[1] #Used for attrs function call
             parser = AuroraArgumentParser()
             params = vars(parser.base_parser().parse_args(argv[1:]))
-            print "function: " + function
+            print 'function: %s' % function
             #For add-slice and modify, we need to load the JSON file
-            if function == "ap-slice-create" or function == "ap-slice-modify":
+            if function == 'ap-slice-create' or function == 'ap-slice-modify':
                 if not params['file']:
                     print 'Please Specify a file argument!'
                     return
                 else:
                     try:
+                        print "%s/%s" % (os.getcwd(), params['file'][0])
                         JFILE = open(params['file'][0], 'r')
-                        fileContent = json.load(JFILE)
-                        params['file'] = fileContent
+                        print JFILE
+                        file_content = json.load(JFILE)
+                        params['file'] = file_content
                         JFILE.close()
                     except:
                         print('Error loading json file!')
@@ -109,14 +112,13 @@ class AuroraConsole():
 #                sys.exit(-1)       
 
             #We will send in the following format: {function:"",parameters:""}
-            toSend = {"function":function,"parameters":params}
+            to_send = {'function':function,'parameters':params}
             ##FOR DEBUGGING PURPOSES
-            pprint(toSend)
+            pprint(to_send)
             ##END DEBUG
             
-            if toSend: #--help commands will not start the server
-                #JSONSender().sendJSON("http://132.206.206.133:5554", toSend)
-                JSONSender().sendJSON("http://localhost:5554", toSend)
+            if to_send: #--help commands will not start the server
+                json_sender.JSONSender().send_json('http://localhost:5554', to_send)
 
             
         

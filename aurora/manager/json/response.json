@@ -1,4 +1,4 @@
 {
-    "message": " Name: of1\n Name: of2\n Name: openflow\n Name: openflow3\n Name: openflowkevin\n", 
+    "message": " ap_slice_id: 391cff84-b295-4d05-b76d-35d702fa8a8a ('USE' on openflow) - FAILED\n ap_slice_id: 423dce24-7696-43ac-b756-4c95d7dfd1ba ('usable_slice' on openflow1) - FAILED\n", 
     "status": true
 }

@@ -14,27 +14,26 @@
             }
         }
     }, 
-    "rabbitmq_reply_queue": "amq.gen-LiLyZC36risiXALw20ZUAQ", 
+    "rabbitmq_password": "let_me_in", 
     "rabbitmq_username": "access_point", 
     "rabbitmq_host": "10.5.8.3", 
     "region": "mcgill", 
     "queue": "openflow3", 
-    "rabbitmq_password": "let_me_in", 
+    "rabbitmq_reply_queue": "amq.gen-wXak_3qephjz0JZmuDxlCg", 
     "default_config": {
         "init_hardware_database": {
-            "memory_mb": "256", 
-            "free_disk": "256",
-            "firmware_version": "r39154", 
-            "firmware": "OpenWRT", 
             "wifi_radio": {
                 "number_radio_free": "0", 
                 "max_bss_per_radio": "4", 
                 "radio_list": [], 
                 "number_radio": "0"
             }, 
-            "aurora_version": "0.2"
+            "aurora_version": "0.2", 
+            "firmware": "OpenWRT", 
+            "memory_mb": "256", 
+            "free_disk": "256", 
+            "firmware_version": "r39154"
         }, 
-        "default_active_slice": "default_slice", 
         "init_database": {
             "default_slice": {
                 "VirtualInterfaces": [], 
@@ -46,6 +45,7 @@
             "default_user": [
                 "default_slice"
             ]
-        }
+        }, 
+        "default_active_slice": "default_slice"
     }
 }
