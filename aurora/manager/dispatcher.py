@@ -21,6 +21,8 @@ class Dispatcher():
         self.host = host
         self.username = username
         self.password = password
+        Dispatcher.lock = False
+        self.restarting_connection = False
 
         logging.basicConfig()
 
@@ -36,8 +38,7 @@ class Dispatcher():
         # Note: connect() is called automatically in SelectConnection().__init__()
         #
         # self.connection.connect()
-        Dispatcher.lock = False
-        self.restarting_connection = False
+
         # Start ioloop, this will quit by itself when Dispatcher().stop() is run
 
     def __del__(self):
@@ -97,7 +98,7 @@ class Dispatcher():
         properties such as status."""
         # Create unique_id if none exists
         if unique_id is None:
-            unique_id = str(uuid.uuid4())
+            unique_id = ap + str(uuid.uuid4())
 
         # Convert JSON to string
         message = json.dumps(config)
@@ -183,6 +184,7 @@ class Dispatcher():
             #      for a response, cancel the timer and/or send the command again
             # AP has started, check if we need to restart slices
             print ap_name + " has connected..."
+            remove_request(ap_syn=ap_name)
             # Tell resource monitor, let it handle restart of slices
             #self.resourceMonitor.start_poller(ap_name)
             slices_to_restart = decoded_response['slices_to_restart']
@@ -272,16 +274,23 @@ class Dispatcher():
         del self.channel
         del self.listener
 
+    def _get_uuid_for_ap_syn(ap_syn):
+        for request in self.requests_sent:
+            if request[0].startswith(ap_syn) and request[2] == 'SYN':
+                return request[0]
+
     def _have_request(self, correlation_id):
         for request in self.requests_sent:
             if request[0] == correlation_id:
                 return (True, request)
         return (False, None)
 
-    def remove_request(self, message_uuid):
-        (have_request, entry) = self._have_request(message_uuid)
+    def remove_request(self, message_uuid=None, ap_syn=None):
+        if ap_syn:
+            message_uuid = self._get_uuid_for_ap_syn(ap_syn)
+        (have_request, request) = self._have_request(message_uuid)
         if have_request:
-            self.requests_sent.remove(entry)
+            self.requests_sent.remove(request)
 
 # Menu loop; thanks Kevin
 # Obviously this code will not be in a final version
