@@ -98,7 +98,7 @@ class Dispatcher():
         properties such as status."""
         # Create unique_id if none exists
         if unique_id is None:
-            unique_id = ap + str(uuid.uuid4())
+            unique_id = "%s-%s" % (ap, str(uuid.uuid4()))
 
         # Convert JSON to string
         message = json.dumps(config)
