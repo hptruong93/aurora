@@ -96,7 +96,7 @@ class resourceMonitor():
         self._add_call_to_queue(ap_slice_id, success=False, ap_up=False, ap_name=ap_name)
         #remove thread from the thread pool
         
-        self._close_poller_thread(ap_name, ap_slice_id)
+        #self._close_poller_thread(ap_name, ap_slice_id)
 
         # In the future we might do something more with the unique_id besides
         # identifying the AP, like log it to a list of commands that cause
@@ -198,6 +198,7 @@ class resourceMonitor():
 
                     print "physical_ap:",physical_ap
                     self.aurora_db.ap_status_down(physical_ap)
+                    self._close_poller_thread(physical_ap, 'admin')
                     #Get all slices associated with this ap
                     cur.execute("SELECT ap_slice_id FROM ap_slice WHERE physical_ap=\'"+str(physical_ap)+"\' AND status<>'DELETED'")
 
