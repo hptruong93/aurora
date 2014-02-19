@@ -11,7 +11,7 @@ class VirtualInterfacePlugin(object):
 
     def __init__(self, tenant_id):
         self.tenant_id = tenant_id
-        self.flavors = {'capsulator':'plugins.capsulator_plugin.CapsulatorPlugin', 'veth':'plugins.veth_plugin.VethPlugin'}
+        self.flavors = {'capsulator':'plugins.capsulator_plugin.CapsulatorPlugin', 'veth':'plugins.veth_plugin.VETHPlugin'}
         self.default = [{'flavor':'veth', 'attributes':{"attach_to":"wlan0", "name":"vwlan0"}}]
         
     def parse(self, data, numSlice, currentIndex):

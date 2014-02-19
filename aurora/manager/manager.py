@@ -16,10 +16,10 @@ import request_verification as Verify
 import slice_plugin
 
 #Dispatcher variables
-_MYSQL_HOST = 'localhost'
-_MYSQL_USERNAME = 'root'
-_MYSQL_PASSWORD = 'supersecret'
-_MYSQL_DB = 'aurora'
+MYSQL_HOST = 'localhost'
+MYSQL_USERNAME = 'root'
+MYSQL_PASSWORD = 'supersecret'
+MYSQL_DB = 'aurora'
 
 class Manager(object):
 
@@ -30,10 +30,10 @@ class Manager(object):
         host = 'localhost'
         username = 'outside_world'
         password = 'wireless_access'
-        self.mysql_host = _MYSQL_HOST #host
-        self.mysql_username = _MYSQL_USERNAME #'root'
-        self.mysql_password = _MYSQL_PASSWORD #'supersecret'
-        self.mysql_db = _MYSQL_DB #'aurora'
+        self.mysql_host = MYSQL_HOST #host
+        self.mysql_username = MYSQL_USERNAME #'root'
+        self.mysql_password = MYSQL_PASSWORD #'supersecret'
+        self.mysql_db = MYSQL_DB #'aurora'
 
         #Initialize AuroraDB Object
         self.auroraDB = AuroraDB(self.mysql_host,

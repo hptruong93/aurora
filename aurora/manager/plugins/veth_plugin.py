@@ -7,7 +7,7 @@ import os
 import sys
 
 
-class VethPlugin():
+class VETHPlugin(object):
 
     def __init__(self, tenant_id):
         self.attributes = {'attach_to':{'listable':False, 'default':None}, 'name':{'listable':False, 'default':None}}

@@ -7,7 +7,7 @@ import os
 import sys
 
 
-class CapsulatorPlugin():
+class CapsulatorPlugin(object):
 
     def __init__(self, tenant_id):
         self.tenant_id = tenant_id
