@@ -6,6 +6,7 @@ import sys
 import threading
 import time
 import uuid
+import weakref
 
 import pika
 
@@ -33,7 +34,7 @@ class Dispatcher(object):
 
         logging.basicConfig()
 
-        self.rm = resource_monitor.ResourceMonitor(aurora_db, self, host, mysql_username, mysql_password)
+        self.rm = resource_monitor.ResourceMonitor(self, aurora_db, host, mysql_username, mysql_password)
         self._start_connection()
 
         # Setup complete, now start listening and processing

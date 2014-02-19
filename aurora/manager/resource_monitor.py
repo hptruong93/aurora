@@ -4,6 +4,7 @@ import sys
 import threading
 import time
 import uuid
+import weakref
 
 import MySQLdb as mdb
 
@@ -18,8 +19,8 @@ class ResourceMonitor(object):
     sql_locked = None
     SLEEP_TIME = 45
 
-    def __init__(self, aurora_db, dispatcher, host, username, password):
-        self.dispatcher = dispatcher
+    def __init__(self, dispatcher, aurora_db, host, username, password):
+        self.dispatcher = weakref.ref(dispatcher)
         self.aurora_db = aurora_db
         self.am = accounting_manager.AccountingManager(host, username, password)
         self.poller_threads = {}

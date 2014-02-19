@@ -78,7 +78,7 @@ class ManagerServer(BaseHTTPServer.HTTPServer):
         # Manager is now in server instance's scope, will be deconstructed
         # upon interrupt
         self.manager = manager.Manager()
-
+        #objgraph.show_refs(self.manager)
         # When initialized, handler_class from main is stored in RequestHandlerClass
         self.RequestHandlerClass.MANAGER = self.manager
         #print self.RequestHandlerClass.MANAGER
@@ -87,8 +87,9 @@ class ManagerServer(BaseHTTPServer.HTTPServer):
     def server_close(self):
         # Delete all references to manager so it destructs
         self.manager.stop()
+        #objgraph.show_refs(self.manager)
         del self.manager, self.RequestHandlerClass.MANAGER
-
+        
         BaseHTTPServer.HTTPServer.server_close(self) 
 
 def main():

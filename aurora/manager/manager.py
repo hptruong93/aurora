@@ -50,6 +50,8 @@ class Manager(object):
         #provision.init()
         provision.run()
 
+
+
     def __del__(self):
         print("Destructing Manager...")
 
@@ -57,6 +59,7 @@ class Manager(object):
     def stop(self):
         self.dispatch.stop()
         provision.stop()
+        #objgraph.show_backrefs(self.dispatch)
 
     def parseargs(self, function, args, tenant_id, user_id, project_id):
         # args is a generic dictionary passed to all functions (each function is responsible for parsing
