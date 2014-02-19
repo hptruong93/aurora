@@ -2,26 +2,27 @@
 
 import BaseHTTPServer
 import json
-from manager import *
 from pprint import pprint
 
+import manager
 
-class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
+
+class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     server_version= "Aurora/0.2"
-    manager = None
+    MANAGER = None
     
     # Override __init__ to instantiate Manager, pass along parameters:
     # BaseHTTPServer.BaseHTTPRequestHandler(request, client_address, server)
     def __init__(self, *args):
-        if MyHandler.manager == None:
+        if NewConnectionHandler.MANAGER == None:
             print "Error: No manager to handle request."
             sys.exit(1)
-        #print "\nConstructing MyHandler using", MyHandler.manager
+        #print "\nConstructing NewConnectionHandler using", NewConnectionHandler.MANAGER
         BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, *args)
     
     # __del__ does not override anything
     def __del__(self):
-        #print "Destructing MyHandler"
+        #print "Destructing NewConnectionHandler"
         pass
         
     def do_GET(self):
@@ -55,7 +56,7 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         
         #Send to manager.py
         #Format of response: {"status":(true of false) ,"message":"string if necessary"}
-        response = MyHandler.manager.parseargs(JSONfile['function'], JSONfile['parameters'], 1,1,1)
+        response = NewConnectionHandler.MANAGER.parseargs(JSONfile['function'], JSONfile['parameters'], 1,1,1)
         print " [v]",response['message']
 
         #Save response to file
@@ -76,33 +77,33 @@ class ManagerServer(BaseHTTPServer.HTTPServer):
     def serve_forever(self):
         # Manager is now in server instance's scope, will be deconstructed
         # upon interrupt
-        self.manager = Manager()
+        self.manager = manager.Manager()
 
         # When initialized, handler_class from main is stored in RequestHandlerClass
-        self.RequestHandlerClass.manager = self.manager
-        #print self.RequestHandlerClass.manager
+        self.RequestHandlerClass.MANAGER = self.manager
+        #print self.RequestHandlerClass.MANAGER
         BaseHTTPServer.HTTPServer.serve_forever(self)
     
     def server_close(self):
         # Delete all references to manager so it destructs
         self.manager.stop()
-        del self.manager, self.RequestHandlerClass.manager
+        del self.manager, self.RequestHandlerClass.MANAGER
 
         BaseHTTPServer.HTTPServer.server_close(self) 
 
 def main():
-    handler_class=MyHandler
+    handler_class=NewConnectionHandler
     server_address = ('', 5554)
     try:
-        srvr = ManagerServer(server_address, handler_class)
+        msrvr = ManagerServer(server_address, handler_class)
         print("Starting webserver...")
-        srvr.serve_forever()
+        msrvr.serve_forever()
 
     except BaseException as e:
         if e:
             print e
         print("Shutting down webserver...")
-        srvr.server_close()
+        msrvr.server_close()
 
 if __name__ == "__main__":
     main()

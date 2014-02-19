@@ -1,7 +1,10 @@
 # Slice Plugins: For parsing VirtualInterfaces, VirtualBridges, and RadioInterfaces
 # SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
-
-import json, os, copy, importlib, sys
+import copy
+import importlib
+import json
+import os
+import sys
 
 class SlicePlugin():
     

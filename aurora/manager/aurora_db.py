@@ -4,12 +4,13 @@
 """
 Collection of methods for adding, updating, deleting, and querying the database
 """
-
-import sys, json, os
-import MySQLdb as mdb
 import datetime
-
+import json
+import os
 from pprint import pprint
+import sys
+
+import MySQLdb as mdb
 
 class AuroraDB():
     #Default values in __init__ should potentially be omitted

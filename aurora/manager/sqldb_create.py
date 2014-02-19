@@ -6,9 +6,10 @@ A Quick Script for creating the aurora database tables/schema
 """
 
 import sys
+
 import MySQLdb as mdb
 
-class SQLdbCreate():
+class SQLDBCreate(object):
 
     def __init__(self):
         #Connect to Aurora mySQL database
@@ -73,7 +74,7 @@ class SQLdbCreate():
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
 
-newDB = SQLdbCreate()
+newDB = SQLDBCreate()
 newDB.create_database()
 newDB.create_tables()
 newDB.close()

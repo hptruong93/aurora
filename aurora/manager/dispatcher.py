@@ -1,12 +1,16 @@
-import sys, pika, json
-import threading
-from threading import Timer
-import resource_monitor
+
+import json
 import logging
-import provision_server.ap_provision as provision
 from pprint import pprint
-import uuid
+import sys
+import threading
 import time
+import uuid
+
+import pika
+
+import provision_server.ap_provision as provision
+import resource_monitor
 
 class Dispatcher():
     lock = None
@@ -131,7 +135,7 @@ class Dispatcher():
             ap_slice_id = config['slice']
         # Start a timeout countdown
         print "ap_slice_id >>>",ap_slice_id
-        time = Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=(ap_slice_id,ap,unique_id))
+        time = threading.Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=(ap_slice_id,ap,unique_id))
         print "[dispatcher.py]: Adding timer", time
         self.requests_sent.append((unique_id, time, ap_slice_id))
         time.start()

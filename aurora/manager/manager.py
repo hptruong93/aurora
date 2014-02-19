@@ -2,17 +2,18 @@
 # SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
 import json
-import sys, uuid
-from slice_plugin import *
-from aurora_db import *
+from pprint import pprint
+import sys
+import time
+import uuid
+
 import MySQLdb as mdb
+
+from aurora_db import *
 import dispatcher
 import provision_server.ap_provision as provision
 import request_verification as Verify
-
-import time
-
-from pprint import pprint
+from slice_plugin import *
 
 #Dispatcher variables
 _MYSQL_HOST = 'localhost'

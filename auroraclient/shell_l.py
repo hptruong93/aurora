@@ -12,6 +12,9 @@ Format:[
           subargument:[[subarg1, {attributes}, [[osarg1, {attributes}], [osarg2, {attributes}]]], [subarg2, {attributes}]...]
          }
        ]
+
+NOTE: THIS VERSION IS FOR LOCAL TESTING ONLY
+
 """
 
 import argparse

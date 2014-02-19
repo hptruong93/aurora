@@ -1,10 +1,13 @@
-import collections
-import MySQLdb as mdb
 import atexit
-import sys, uuid
-import accountingManager
+import collections
+import sys
 import threading
 import time
+import uuid
+
+import MySQLdb as mdb
+
+import accounting_manager
 
 class resourceMonitor():
 
@@ -18,7 +21,7 @@ class resourceMonitor():
     def __init__(self, aurora_db, dispatcher, host, username, password):
         self.dispatcher = dispatcher
         self.aurora_db = aurora_db
-        self.accountingManager = accountingManager.accountingManager(host, username, password)
+        self.am = accounting_manager.AccountingManager(host, username, password)
         self.poller_threads = {}
 
         # To handle incoming status update requests, make a command queue
@@ -108,7 +111,7 @@ class resourceMonitor():
 
     def update_records(self, message):
         """Update the traffic information of ap_slice"""
-        self.accountingManager.update_traffic(message)
+        self.am.update_traffic(message)
 
     def set_status(self, unique_id, success, ap_up=True, ap_name=None):
         self._add_call_to_queue(unique_id, success, ap_up, ap_name)
@@ -242,7 +245,7 @@ class resourceMonitor():
             resourceMonitor.sql_locked = False
 
 
-        self.accountingManager.update_status(unique_id, ap_up, ap_name)
+        self.am.update_status(unique_id, ap_up, ap_name)
 
         return True
 

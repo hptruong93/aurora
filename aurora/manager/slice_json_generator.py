@@ -1,9 +1,9 @@
 # Aurora Slice JSON Generator (Generates a Json File)
 # SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
+import ast
 import json
 import sys
-import ast
 
 class SliceJsonGenerator():
     

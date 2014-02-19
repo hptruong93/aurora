@@ -1,14 +1,14 @@
 #
 #SAVI Group: Feier Chen
 
-
-import datetime
-import MySQLdb as mdb
 import atexit
+import datetime
 import sys
 
+import MySQLdb as mdb
 
-class accountingManager():
+
+class AccountingManager():
 
     def __init__(self, host, username, password):
 
