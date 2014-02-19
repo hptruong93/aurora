@@ -2,6 +2,7 @@
 # SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
 import json
+import logging
 from pprint import pprint
 import sys
 import time
@@ -15,6 +16,10 @@ import provision_server.ap_provision as provision
 import request_verification as Verify
 import slice_plugin
 
+LOGGER = logging.getLogger(__name__)
+#LOGGER.setLevel(logging.INFO)
+
+
 #Dispatcher variables
 MYSQL_HOST = 'localhost'
 MYSQL_USERNAME = 'root'
@@ -24,7 +29,7 @@ MYSQL_DB = 'aurora'
 class Manager(object):
 
     def __init__(self):
-        print("Constructing Manager...")
+        LOGGER.info("Constructing Manager...")
 
         ### Dispatcher variables
         host = 'localhost'
@@ -59,7 +64,6 @@ class Manager(object):
     def stop(self):
         self.dispatch.stop()
         provision.stop()
-        #objgraph.show_backrefs(self.dispatch)
 
     def parseargs(self, function, args, tenant_id, user_id, project_id):
         # args is a generic dictionary passed to all functions (each function is responsible for parsing

@@ -13,6 +13,9 @@ import pika
 import provision_server.ap_provision as provision
 import resource_monitor
 
+PIKA_LOGGER = logging.getLogger('pika')
+PIKA_LOGGER.setLevel(logging.WARNING)
+
 class Dispatcher(object):
     lock = None
     TIMEOUT = 30
@@ -32,9 +35,7 @@ class Dispatcher(object):
         # Create list for requests sent out
         self.requests_sent = []
 
-        logging.basicConfig()
-
-        self.rm = resource_monitor.ResourceMonitor(self, aurora_db, host, mysql_username, mysql_password)
+        self.rm = resource_monitor.ResourceMonitor(self, host, mysql_username, mysql_password)
         self._start_connection()
 
         # Setup complete, now start listening and processing

@@ -13,15 +13,16 @@ import accounting_manager
 class ResourceMonitor(object):
 
 
-    #TODO: Query SQL db for slices with status other than 'DELETED'
-    #and ping associated ap to determine whether they are still up
+    # Make function to determine if dispatcher still exists
 
     sql_locked = None
     SLEEP_TIME = 45
 
-    def __init__(self, dispatcher, aurora_db, host, username, password):
-        self.dispatcher = weakref.ref(dispatcher)
-        self.aurora_db = aurora_db
+    def __init__(self, dispatcher, host, username, password):
+        self.dispatcher_ref = weakref.ref(dispatcher)
+        print "[resource_monitor]: Made weak ref",self.dispatcher_ref, self.dispatcher_ref()
+
+        self.aurora_db = self.dispatcher_ref().aurora_db
         self.am = accounting_manager.AccountingManager(host, username, password)
         self.poller_threads = {}
 
@@ -58,6 +59,7 @@ class ResourceMonitor(object):
             while len(self.timeout_queue) < 1 and not stop_event.is_set():
                 time.sleep(1)
             if stop_event.is_set():
+                print "[resource_monitor.py]: Queue Daemon caught stop event"
                 break
             (args, kwargs) = self.timeout_queue.popleft()
             self._set_status(*args, **kwargs)
@@ -88,7 +90,11 @@ class ResourceMonitor(object):
         to reflect the current status of the AP."""
 
         if message_uuid is not None:
-            self.dispatcher.remove_request(message_uuid)
+            dispatcher = self.dispatcher_ref()
+            if dispatcher is None:
+                print "[resource_monitor]: Dispatcher has been deallocated"
+            else:
+                dispatcher.remove_request(message_uuid)
         print "[ResourceMonitor]: %s %s" % (type(ap_slice_id), ap_slice_id)
         # A timeout is serious: it is likely that
         # the AP's OS has crashed, or at least aurora is
@@ -272,7 +278,8 @@ class ResourceMonitor(object):
                         raise Exception("No slice %s\n" % slice_id)
                     if status != 'DELETED' and status != 'DELETING':
                         # Restart slice as it wasn't deleted since AP went down
-                        self.dispatcher.dispatch({ 'slice': slice_id,
+                        dispatcher = self.dispatcher_ref()
+                        dispatcher.dispatch({ 'slice': slice_id,
                                                    'command': 'restart_slice',
                                                    'user': user_id},
                                                  ap)
@@ -296,7 +303,8 @@ class ResourceMonitor(object):
             #time.sleep(ResourceMonitor.SLEEP_TIME)
             print "[ResourceMonitor]: %s thread is %s" % (ap_name, own_thread)
             self.get_stats(ap_name)
-            for i in range(self.dispatcher.TIMEOUT + 5):
+            dispatcher = self.dispatcher_ref()
+            for i in range(dispatcher.TIMEOUT + 5):
                 if stop_event.is_set():
                     print "[ResourceMonitor]: Caught stop event for %s" % own_thread
                     break
@@ -310,19 +318,19 @@ class ResourceMonitor(object):
         a restart may be required."""
 
         # The unique ID is fixed to be all F's for resets/restarts.
-        self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'reset' } , ap)
+        self.dispatcher_ref().dispatch( { 'slice' : 'admin', 'command' : 'reset' } , ap)
 
     def restart_AP(self, ap):
         """Restart the access point, telling the OS to reboot."""
 
         # The unique ID is fixed to be all F's for resets/restarts.
-        self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'restart' } , ap)
+        self.dispatcher_ref().dispatch( { 'slice' : 'admin', 'command' : 'restart' } , ap)
 
     def get_stats(self, ap):
         """Update the access point """
 
         # The unique ID is fixed to be all F's
-        self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'get_stats'}, ap)
+        self.dispatcher_ref().dispatch( { 'slice' : 'admin', 'command' : 'get_stats'}, ap)
 
 class StoppableThread(threading.Thread):
     """Thread class with a stop method to terminate timers

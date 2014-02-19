@@ -4,6 +4,7 @@
 """
 Collection of methods for adding, updating, deleting, and querying the database
 """
+
 import datetime
 import json
 import os
