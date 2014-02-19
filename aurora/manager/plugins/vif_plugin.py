@@ -1,13 +1,17 @@
 # VirtualInterfaces plugin for slice_plugin
 # SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
+import copy
+import importlib
+import json
+import os
+import sys
 
-import json, os, copy, importlib, sys
 
-class VirtualInterfaceManager():
+class VirtualInterfacePlugin(object):
 
     def __init__(self, tenant_id):
         self.tenant_id = tenant_id
-        self.flavors = {'capsulator':'plugins.CapsulatorPlugin.CapsulatorPlugin', 'veth':'plugins.VethPlugin.VethPlugin'}
+        self.flavors = {'capsulator':'plugins.capsulator_plugin.CapsulatorPlugin', 'veth':'plugins.veth_plugin.VethPlugin'}
         self.default = [{'flavor':'veth', 'attributes':{"attach_to":"wlan0", "name":"vwlan0"}}]
         
     def parse(self, data, numSlice, currentIndex):

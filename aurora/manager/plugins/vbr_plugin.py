@@ -1,14 +1,18 @@
 # VirtualBridges Plugin for slice_plugin
 # SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
+import copy
+import importlib
+import json
+import os
+import sys
 
-import json, os, copy, importlib, sys
 
-class VirtualBridgeManager():
+class VirtualBridgePlugin(object):
     
     def __init__(self, tenant_id):
         self.tenant_id = tenant_id
-        self.flavors = {'ovs':'plugins.OvsPlugin.OvsPlugin',
-                        'linux_bridge':'plugins.LinuxBridgePlugin.LinuxBridgePlugin'}
+        self.flavors = {'ovs':'plugins.ovs_plugin.OVSPlugin',
+                        'linux_bridge':'plugins.linux_bridge_plugin.LinuxBridgePlugin'}
         self.default = [{'flavor':'linux_bridge',
                          'attributes':{'name':'linux_bridge',
                                        'interfaces':[],

@@ -1,9 +1,13 @@
 # Open V Switch Flavor Plugin for slice_plugin
 # SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
+import copy
+import importlib
+import json
+import os
+import sys
 
-import json, os, copy, importlib, sys
 
-class OvsPlugin():
+class OVSPlugin(object):
 
     def __init__(self, tenant_id):
         self.tenant_id = tenant_id

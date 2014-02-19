@@ -12,7 +12,7 @@ import pika
 import provision_server.ap_provision as provision
 import resource_monitor
 
-class Dispatcher():
+class Dispatcher(object):
     lock = None
     TIMEOUT = 30
 
@@ -33,7 +33,7 @@ class Dispatcher():
 
         logging.basicConfig()
 
-        self.resourceMonitor = resource_monitor.resourceMonitor(aurora_db, self, host, mysql_username, mysql_password)
+        self.rm = resource_monitor.ResourceMonitor(aurora_db, self, host, mysql_username, mysql_password)
         self._start_connection()
 
         # Setup complete, now start listening and processing
@@ -135,7 +135,7 @@ class Dispatcher():
             ap_slice_id = config['slice']
         # Start a timeout countdown
         print "ap_slice_id >>>",ap_slice_id
-        time = threading.Timer(self.TIMEOUT, self.resourceMonitor.timeout, args=(ap_slice_id,ap,unique_id))
+        time = threading.Timer(self.TIMEOUT, self.rm.timeout, args=(ap_slice_id,ap,unique_id))
         print "[dispatcher.py]: Adding timer", time
         self.requests_sent.append((unique_id, time, ap_slice_id))
         time.start()
@@ -189,13 +189,13 @@ class Dispatcher():
             print ap_name + " has connected..."
             self.remove_request(ap_syn=ap_name)
             # Tell resource monitor, let it handle restart of slices
-            #self.resourceMonitor.start_poller(ap_name)
+            #self.rm.start_poller(ap_name)
             slices_to_restart = decoded_response['slices_to_restart']
-            self.resourceMonitor.restart_slices(ap_name, slices_to_restart)
+            self.rm.restart_slices(ap_name, slices_to_restart)
             provision.update_last_known_config(ap_name, config)
             self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
             self.aurora_db.ap_status_up(ap_name)
-            self.resourceMonitor.start_poller(ap_name)
+            self.rm.start_poller(ap_name)
             return
 
         elif message == 'SYN/ACK':
@@ -210,14 +210,14 @@ class Dispatcher():
             provision.update_last_known_config(ap_name, config)
             self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
             self.aurora_db.ap_status_up(ap_name)
-            self.resourceMonitor.start_poller(ap_name)
+            self.rm.start_poller(ap_name)
             return
 
 
         elif message == 'FIN':
             print ap_name + " is shutting down..."
             try:
-                self.resourceMonitor.set_status(None, None, False, ap_name)
+                self.rm.set_status(None, None, False, ap_name)
                 self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
                 self.aurora_db.ap_status_down(ap_name)
                 print "Updating config files..."
@@ -238,14 +238,14 @@ class Dispatcher():
             # Set status, stop timer, delete record
             #print "entry[2]:",entry[2]
             if entry[2] != 'admin':
-                self.resourceMonitor.set_status(entry[2], decoded_response['successful'], ap_name=ap_name)
+                self.rm.set_status(entry[2], decoded_response['successful'], ap_name=ap_name)
                 self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
 
                 print "Updating config files..."
                 provision.update_last_known_config(ap_name, config)
             else:
                 if message != "RESTARTING" and message != "AP reset":
-                    self.resourceMonitor.update_records(message["ap_slice_stats"])
+                    self.rm.update_records(message["ap_slice_stats"])
                     self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
 
                 else:
@@ -258,7 +258,7 @@ class Dispatcher():
         else:
             print " [x] Sending reset to '%s'" % ap_name
             # Reset the access point
-            self.resourceMonitor.reset_AP(ap_name)
+            self.rm.reset_AP(ap_name)
 
 
         # Regardless of content of message, acknowledge receipt of it
@@ -268,7 +268,7 @@ class Dispatcher():
         # SelectConnection object close method cancels ioloop and cleanly
         # closes associated channels
         # Stop timers
-        self.resourceMonitor.stop()
+        self.rm.stop()
         self._stop_connection()
         del self.connection
         del self.channel

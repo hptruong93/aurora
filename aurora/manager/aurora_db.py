@@ -12,17 +12,25 @@ import sys
 
 import MySQLdb as mdb
 
-class AuroraDB():
+
+class AuroraDB(object):
     #Default values in __init__ should potentially be omitted
+
+    DEFAULT_MYSQL_HOST = 'localhost'
+    DEFAULT_MYSQL_USERNAME = 'root'
+    DEFAULT_MYSQL_PASSWORD = 'supersecret'
+    DEFAULT_MYSQL_DB = 'aurora'
+
     def __init__(self,
-                 mysql_host = 'localhost',
-                 mysql_username = 'root',
-                 mysql_password = 'supersecret',
-                 mysql_db = 'aurora'):
+                 mysql_host = DEFAULT_MYSQL_HOST,
+                 mysql_username = DEFAULT_MYSQL_USERNAME,
+                 mysql_password = DEFAULT_MYSQL_PASSWORD,
+                 mysql_db = DEFAULT_MYSQL_DB):
+        """Create a new instance of AuroraDB object"""
         print "Constructing AuroraDB..."
         #Connect to Aurora mySQL database
         try:
-            self.con = mdb.connect(mysql_host, mysql_username,\
+            self.con = mdb.connect(mysql_host, mysql_username,
                                    mysql_password, mysql_db) #Change address
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])

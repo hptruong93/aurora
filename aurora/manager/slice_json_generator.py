@@ -5,7 +5,7 @@ import ast
 import json
 import sys
 
-class SliceJsonGenerator():
+class SliceJSONGenerator(object):
     
     def __init__(self, filename):
         #Initialize outside dictionary and populate
@@ -190,4 +190,4 @@ class SliceJsonGenerator():
     def printConfig(self):
         print(json.dumps(self.data, sort_keys=True, indent=4))
 
-SliceJsonGenerator('json/slicetemp.json')
+SliceJSONGenerator('json/slicetemp.json')

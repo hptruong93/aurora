@@ -1,7 +1,11 @@
 # Veth Flavor Plugin for slice_plugin
 # SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
+import copy
+import importlib
+import json
+import os
+import sys
 
-import json, os, copy, importlib, sys
 
 class VethPlugin():
 

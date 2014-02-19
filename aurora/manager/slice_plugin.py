@@ -6,12 +6,13 @@ import json
 import os
 import sys
 
-class SlicePlugin():
+
+class SlicePlugin(object):
     
     def __init__(self, tenant_id, user_id, tag=None):
         #To add later: RadioInterfaces
-        self.plugins = {'VirtualInterfaces':'plugins.VirtualInterfaceManager.VirtualInterfaceManager',
-                        'VirtualBridges':'plugins.VirtualBridgeManager.VirtualBridgeManager'}
+        self.plugins = {'VirtualInterfaces':'plugins.vif_plugin.VirtualInterfacePlugin',
+                        'VirtualBridges':'plugins.vbr_plugin.VirtualBridgePlugin'}
         
         self.tenant_id = tenant_id
         self.user_id = user_id
@@ -19,7 +20,7 @@ class SlicePlugin():
         if tag:
             self.tag = tag
         
-    def parseCreateSlice(self, data, numSlice, json_list):
+    def parse_create_slice(self, data, numSlice, json_list):
         #Loop through values in plugin
         for key in self.plugins:
             if key in data:
@@ -35,9 +36,9 @@ class SlicePlugin():
                 print(key+' not found. File might not parse correctly. Please check configuration and try again!')
                 
         #Add wrapper around json_list and return
-        return self.addCreateSliceWrapper(json_list, self.tag, self.user_id)
+        return self._add_create_slice_wrapper(json_list, self.tag, self.user_id)
                 
-    def addCreateSliceWrapper(self, json_list, tag, user_id):
+    def _add_create_slice_wrapper(self, json_list, tag, user_id):
         """This method takes a json_list and puts each entry in the correct format (i.e. user, slice, command, config)
         for sending to the APs"""
         newlist = []

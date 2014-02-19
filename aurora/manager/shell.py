@@ -72,7 +72,7 @@ class AuroraArgumentParser(argparse.ArgumentParser):
         return parser
         
 
-class AuroraConsole():
+class AuroraConsole(object):
     
     def main(self, argv):
         if(len(argv) < 2):

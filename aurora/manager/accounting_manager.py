@@ -8,7 +8,7 @@ import sys
 import MySQLdb as mdb
 
 
-class AccountingManager():
+class AccountingManager(object):
 
     def __init__(self, host, username, password):
 

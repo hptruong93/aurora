@@ -1,14 +1,16 @@
 import BaseHTTPServer
-import json, os
-import threading
+import json
+import os
 from pprint import pprint
+import threading
 
-class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
+
+class ProvisionHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
     server_version= "Aurora/0.2"
     
     def __init__(self, *args):
 
-        print "\nConstructing provision MyHandler"
+        print "\nConstructing provision ProvisionHandler"
         BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, *args)
 
     def do_GET( self ):
@@ -26,7 +28,7 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
                 self.send_response(404)
             else:
                 # File OK
-                self.sendPage("application/json", config_file)
+                self.send_page("application/json", config_file)
         # Bad request
         else:
             self.send_response( 400 )
@@ -36,7 +38,7 @@ class MyHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         self.send_response( 400 )
     
     # Sends a document
-    def sendPage( self, type, body ):
+    def send_page( self, type, body ):
         self.send_response( 200 )
         self.send_header( "Content-type", type )
         self.send_header( "Content-length", str(len(body)) )
@@ -85,19 +87,19 @@ def update_last_known_config(ap, config):
     
 # Globals definition for starting Provision Server
            
-running = False    
-handler_class = MyHandler
+provision_running = False    
+handler_class = ProvisionHandler
 server_address = ('', 5555)
 server = BaseHTTPServer.HTTPServer(server_address, handler_class)
 
 def run():
-    global running
-    if not running:
+    global provision_running
+    if not provision_running:
         print "Starting provision server",
         server_thread = threading.Thread(target=server.serve_forever)
         server_thread.start()
         print server_thread
-        running = True
+        provision_running = True
     else:
         print "Provision server already running"
 

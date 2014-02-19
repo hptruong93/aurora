@@ -9,7 +9,7 @@ import MySQLdb as mdb
 
 import accounting_manager
 
-class resourceMonitor():
+class ResourceMonitor(object):
 
 
     #TODO: Query SQL db for slices with status other than 'DELETED'
@@ -29,10 +29,10 @@ class resourceMonitor():
         self._make_queue_daemon()
 
         #Connect to Aurora mySQL Database
-        print "Connecting to SQLdb in resourceMonitor..."
+        print "Connecting to SQLdb in ResourceMonitor..."
         try:
             self.con = mdb.connect(host, username, password, 'aurora')
-            resourceMonitor.sql_locked = False
+            ResourceMonitor.sql_locked = False
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)
@@ -40,7 +40,7 @@ class resourceMonitor():
         atexit.register(self._closeSQL)
 
     def _closeSQL(self):
-        print "Closing SQL connection in resourceMonitor..."
+        print "Closing SQL connection in ResourceMonitor..."
         self.aurora_db.ap_status_unknown()
         if self.con:
             self.con.close()
@@ -88,7 +88,7 @@ class resourceMonitor():
 
         if message_uuid is not None:
             self.dispatcher.remove_request(message_uuid)
-        print "[resource_monitor.py]: %s %s" % (type(ap_slice_id), ap_slice_id)
+        print "[ResourceMonitor]: %s %s" % (type(ap_slice_id), ap_slice_id)
         # A timeout is serious: it is likely that
         # the AP's OS has crashed, or at least aurora is
         # no longer running.
@@ -130,9 +130,9 @@ class resourceMonitor():
         else:
             print("Updating ap status for ID " + str(ap_name) + ".\nRequest successful: " + str(success) + "\nAccess Point up: " + str(ap_up))
 
-        if resourceMonitor.sql_locked:
+        if ResourceMonitor.sql_locked:
             print "SQL Access is locked, waiting..."
-            while resourceMonitor.sql_locked:
+            while ResourceMonitor.sql_locked:
                 pass
         # Code:
         # Identify slice by unique_id
@@ -151,7 +151,7 @@ class resourceMonitor():
         #   else if slice is pending, mark failed
         try:
             with self.con:
-                resourceMonitor.sql_locked = True
+                ResourceMonitor.sql_locked = True
                 cur = self.con.cursor()
 
                 # Access point is up - we are receiving individual packets
@@ -242,7 +242,7 @@ class resourceMonitor():
         except Exception, e:
                 print "[ResourceMonitor]: " + str(e)
         finally:
-            resourceMonitor.sql_locked = False
+            ResourceMonitor.sql_locked = False
 
 
         self.am.update_status(unique_id, ap_up, ap_name)
@@ -250,13 +250,13 @@ class resourceMonitor():
         return True
 
     def restart_slices(self, ap, slice_list):
-        if resourceMonitor.sql_locked:
+        if ResourceMonitor.sql_locked:
             print "SQL Access is locked, waiting..."
-            while resourceMonitor.sql_locked:
+            while ResourceMonitor.sql_locked:
                 pass
         try:
             with self.con:
-                resourceMonitor.sql_locked = True
+                ResourceMonitor.sql_locked = True
                 cur = self.con.cursor()
                 for slice_id in slice_list:
                     print "Restarting", slice_id
@@ -278,7 +278,7 @@ class resourceMonitor():
         except Exception, e:
             print "Database Error: " + str(e)
         finally:
-            resourceMonitor.sql_locked = False
+            ResourceMonitor.sql_locked = False
 
     def start_poller(self, ap_name):
         print "Starting poller on thread ",
@@ -292,7 +292,7 @@ class resourceMonitor():
         #print "Timeout from Dispatcher", self.dispatcher.TIMEOUT
         own_thread = self.poller_threads[ap_name]
         while ap_name in self.poller_threads:
-            #time.sleep(resourceMonitor.SLEEP_TIME)
+            #time.sleep(ResourceMonitor.SLEEP_TIME)
             print "[ResourceMonitor]: %s thread is %s" % (ap_name, own_thread)
             self.get_stats(ap_name)
             for i in range(self.dispatcher.TIMEOUT + 5):
@@ -350,5 +350,5 @@ class TimerThread(StoppableThread):
 #    host = 'localhost'
 #    mysql_username = 'root'
 #    mysql_password = 'supersecret'
-#    manager = resourceMonitor(None, host , mysql_username, mysql_password)
+#    manager = ResourceMonitor(None, host , mysql_username, mysql_password)
 #    manager.set_status(12, True)

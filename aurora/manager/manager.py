@@ -13,7 +13,7 @@ from aurora_db import *
 import dispatcher
 import provision_server.ap_provision as provision
 import request_verification as Verify
-from slice_plugin import *
+import slice_plugin
 
 #Dispatcher variables
 _MYSQL_HOST = 'localhost'
@@ -21,7 +21,7 @@ _MYSQL_USERNAME = 'root'
 _MYSQL_PASSWORD = 'supersecret'
 _MYSQL_DB = 'aurora'
 
-class Manager():
+class Manager(object):
 
     def __init__(self):
         print("Constructing Manager...")
@@ -403,11 +403,11 @@ class Manager():
 
         #Send to plugin for parsing
         try:
-            json_list = SlicePlugin(tenant_id,
+            json_list = slice_plugin.SlicePlugin(tenant_id,
                                     user_id,
-                                    arg_tag).parseCreateSlice(arg_file,
-                                                              len(aplist),
-                                                              json_list)
+                                    arg_tag).parse_create_slice(arg_file,
+                                                                len(aplist),
+                                                                json_list)
 
         except Exception as e:
             print e.message
