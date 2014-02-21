@@ -9,7 +9,7 @@ class_loggers = []
 
 class CustomFormatter(logging.Formatter):
     """Extends logging.Formatter class with a custom formatting method"""
-    
+
     max_width = MAX_WIDTH
     max_width_limit = MAX_WIDTH_LIMIT
 
@@ -32,7 +32,11 @@ class CustomFormatter(logging.Formatter):
     def format(self, record):
         """Formats the logged message to include a tag with the calling module
         and class name with the tag length no longer than specified 
-        self.max_width_limit.
+        self.max_width_limit.  Also tracks which classes are calling the
+        format function, if it is a new class the class name is added to 
+        class_loggers list.
+        Note: 'core.' is removed from all module names if it exists
+
         [module_name----ClassName] Logged Message
 
         :param LogRecord record: LogRecord with log information
