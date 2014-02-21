@@ -84,12 +84,12 @@ if __name__ == "__main__":
     
     if len(args) > 0:
         if args[0] == '-n':
-            python_execute = "python manager_http_server.py " + ' '.join(args[1:])
+            python_execute = "python shell.py " + ' '.join(args[1:])
             to_execute = "gnome-terminal --tab -e \\\"/bin/bash -c '" + python_execute + "; exec /bin/bash'\\\""
         else:
-            to_execute = "python manager_http_server.py " + ' '.join(args)
+            to_execute = "python shell.py " + ' '.join(args)
     else:
-        to_execute = "python manager_http_server.py"
+        to_execute = "python shell.py"
     
     os.chdir(auroraDirectory + '/aurora/manager')
     
@@ -100,7 +100,9 @@ if __name__ == "__main__":
         server_proc = subprocess.Popen(execute_args)
         server_proc.wait()
     except KeyboardInterrupt:
-        time.sleep(2)
+        pass
+    finally:
+        server_proc.wait()
 ''')
 
         print "Creating aurora..."

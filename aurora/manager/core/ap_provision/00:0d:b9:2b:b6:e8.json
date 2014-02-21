@@ -14,12 +14,12 @@
             }
         }
     }, 
-    "rabbitmq_reply_queue": "amq.gen-HbFR9JJoi6p9KinojYbEqg", 
+    "rabbitmq_password": "let_me_in", 
     "rabbitmq_username": "access_point", 
     "rabbitmq_host": "10.5.8.3", 
     "region": "mcgill", 
-    "queue": "openflow3", 
-    "rabbitmq_password": "let_me_in", 
+    "queue": "openflow2", 
+    "rabbitmq_reply_queue": "amq.gen-Zuwz1tikxN4GxhjcR0Njpg", 
     "default_config": {
         "init_hardware_database": {
             "wifi_radio": {

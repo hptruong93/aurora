@@ -7,27 +7,27 @@ MAX_WIDTH = 0
 class_loggers = []
 
 class CustomFormatter(logging.Formatter):
+
     max_width = MAX_WIDTH
+
     def format(self, record):
-        #print "class_loggers",class_loggers
+        record.message = record.getMessage()
         try:
             CustomFormatter.max_width = max(map(lambda mod_cls_name: len(mod_cls_name), class_loggers))
         except ValueError:
             pass
-        mod_width = len(record.name)
-        cls_width = 0
+        (mod_width, cls_width) = (len(record.name), 0)
+        (mod_name, cls_name) = (None, None)
 
         try:
             (mod_name, cls_name) = record.name.rsplit('.', 1)
-            mod_width = len(mod_name)
         except ValueError:
             (mod_name, cls_name) = (record.name, '')
+        mod_width = len(mod_name)
         if self.max_width > 0 and self.max_width > mod_width:
             cls_width = self.max_width - mod_width
-        # if mod_name == 'manager_http_server':
-        #     print ("%s, %s, %s, %s, %s" % (mod_name, cls_name, mod_width, cls_width, self.max_width))
 
-        return '[{0:-<{mod_width}}{1:->{cls_width}}]  {2}'.format(mod_name, cls_name, record.msg,
+        return '[{0:-<{mod_width}}{1:->{cls_width}}]  {2}'.format(mod_name, cls_name, record.message,
                                                                 mod_width=mod_width, 
                                                                 cls_width=cls_width)
 
@@ -36,6 +36,11 @@ def setup_handler():
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     return handler
+
+def set_up_root_logger():
+    stream_handler = setup_handler()
+    logging.root.handlers.append(stream_handler)
+    logging.root.setLevel(logging.INFO)
 
 def get_cls_logger(cls):
     """Assign a logger to a class only if no prior logger has been assigned

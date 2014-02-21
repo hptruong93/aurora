@@ -97,13 +97,8 @@ class ManagerServer(BaseHTTPServer.HTTPServer):
         
         BaseHTTPServer.HTTPServer.server_close(self) 
 
-def set_up_root_logger():
-    stream_handler = cls_logger.setup_handler()
-    logging.root.handlers.append(stream_handler)
-    logging.root.setLevel(logging.INFO)
-
 def main():
-    set_up_root_logger()
+    cls_logger.set_up_root_logger()
     
     handler_class=NewConnectionHandler
     server_address = ('', 5554)

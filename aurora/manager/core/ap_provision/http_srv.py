@@ -5,7 +5,7 @@ import os
 from pprint import pprint, pformat
 import threading
 
-from cls_logger import get_cls_logger
+from ..cls_logger import get_cls_logger
 
 LOGGER = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ class ProvisionHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         self.wfile.write( body )
 
 def get_json_files():
-    provision_dir = "ap_provision"
+    provision_dir = os.getcwd() + "/core/ap_provision"
     paths = os.listdir(provision_dir)
     result = []
     for fname in paths:

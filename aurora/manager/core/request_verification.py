@@ -27,10 +27,10 @@ class RequestVerification():
                                    'supersecret',
                                    'aurora')
 
-    #Get json info file for an ap. Json file is located in manager/provision_server
+    #Get json info file for an ap. Json file is located in manager/core/ap_provision
     @staticmethod
     def _get_physical_ap_info(physical_ap):
-        provision_dir = "provision_server/"
+        provision_dir = "core/ap_provision/"
         for file in glob.glob(provision_dir + "*.json"):
             content = json.load(open(file))
             if content['queue'] == physical_ap:
