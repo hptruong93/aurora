@@ -36,8 +36,8 @@ class Dispatcher(object):
         Dispatcher.lock = False
         self.restarting_connection = False
         self.aurora_db = aurora_db
-        #self.timeout_callback = timeout_callback
-        #self.response_callback = response_callback
+        self.timeout_callback = None
+        self.response_callback = None
         # Create list for requests sent out
         self.requests_sent = []
 
@@ -177,6 +177,8 @@ class Dispatcher(object):
         del self.connection
         del self.channel
         del self.listener
+        del self.timeout_callback
+        del self.response_callback
 
     def _get_uuid_for_ap_syn(self, ap_syn):
         for request in self.requests_sent:
