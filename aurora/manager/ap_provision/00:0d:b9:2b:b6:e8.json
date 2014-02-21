@@ -1,6 +1,7 @@
 {
     "last_known_config": {
         "init_user_id_database": {
+            "1": [], 
             "default_user": [
                 "default_slice"
             ]
@@ -8,18 +9,17 @@
         "init_database": {
             "default_slice": {
                 "VirtualInterfaces": [], 
-                "TrafficAttributes": [], 
                 "RadioInterfaces": [], 
                 "VirtualBridges": []
             }
         }
     }, 
-    "rabbitmq_password": "let_me_in", 
+    "rabbitmq_reply_queue": "amq.gen-HbFR9JJoi6p9KinojYbEqg", 
     "rabbitmq_username": "access_point", 
     "rabbitmq_host": "10.5.8.3", 
     "region": "mcgill", 
-    "queue": "openflow1", 
-    "rabbitmq_reply_queue": "amq.gen-wXak_3qephjz0JZmuDxlCg", 
+    "queue": "openflow2", 
+    "rabbitmq_password": "let_me_in", 
     "default_config": {
         "init_hardware_database": {
             "wifi_radio": {
@@ -34,7 +34,6 @@
             "free_disk": "256", 
             "firmware_version": "r39154"
         }, 
-        "default_active_slice": "default_slice", 
         "init_database": {
             "default_slice": {
                 "VirtualInterfaces": [], 
@@ -46,6 +45,7 @@
             "default_user": [
                 "default_slice"
             ]
-        }
+        }, 
+        "default_active_slice": "default_slice"
     }
 }

@@ -3,14 +3,20 @@
 import copy
 import importlib
 import json
+import logging
 import os
 import sys
 
+from cls_logger import get_cls_logger
+
+LOGGER = logging.getLogger(__name__)
+
 
 class SlicePlugin(object):
-    
+
     def __init__(self, tenant_id, user_id, tag=None):
         #To add later: RadioInterfaces
+        self.LOGGER = get_cls_logger(self)
         self.plugins = {'VirtualInterfaces':'plugins.vif_plugin.VirtualInterfacePlugin',
                         'VirtualBridges':'plugins.vbr_plugin.VirtualBridgePlugin'}
         
@@ -33,7 +39,7 @@ class SlicePlugin(object):
                     except Exception as e:
                         raise Exception(e.message)
             else: #Make default
-                print(key+' not found. File might not parse correctly. Please check configuration and try again!')
+                self.LOGGER.warning(key+' not found. File might not parse correctly. Please check configuration and try again!')
                 
         #Add wrapper around json_list and return
         return self._add_create_slice_wrapper(json_list, self.tag, self.user_id)

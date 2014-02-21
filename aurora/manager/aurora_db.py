@@ -7,11 +7,16 @@ Collection of methods for adding, updating, deleting, and querying the database
 
 import datetime
 import json
+import logging
 import os
 from pprint import pprint
 import sys
 
 import MySQLdb as mdb
+
+from cls_logger import get_cls_logger
+
+LOGGER = logging.getLogger(__name__)
 
 
 class AuroraDB(object):
@@ -28,21 +33,23 @@ class AuroraDB(object):
                  mysql_password = DEFAULT_MYSQL_PASSWORD,
                  mysql_db = DEFAULT_MYSQL_DB):
         """Create a new instance of AuroraDB object"""
-        print "Constructing AuroraDB..."
+        self.LOGGER = get_cls_logger(self)
+
+        self.LOGGER.info("Constructing AuroraDB...")
         #Connect to Aurora mySQL database
         try:
             self.con = mdb.connect(mysql_host, mysql_username,
                                    mysql_password, mysql_db) #Change address
         except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
 
     def __del__(self):
-        print "Destructing AuroraDB..."
+        self.LOGGER.info("Destructing AuroraDB...")
         if self.con:
             self.con.close()
         else:
-            print('Connection already closed!')
+            self.LOGGER.warning('Connection already closed!')
 
     def _count_db_slices(self, radio_list):
         current_slices = 0
@@ -51,25 +58,25 @@ class AuroraDB(object):
         return current_slices
 
     def ap_status_up(self, ap_name):
-        print "[AuroraDB] Setting %s status 'UP'" % ap_name
+        self.LOGGER.info("Setting %s status 'UP'", ap_name)
         try:
             with self.con:
                 cur = self.con.cursor()
                 cur.execute("UPDATE ap SET status='UP' WHERE name='%s'" %
                                 (ap_name))
         except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
 
     def ap_status_down(self, ap_name):
-        print "[AuroraDB] Setting %s status 'DOWN'" % ap_name
+        self.LOGGER.info("Setting %s status 'DOWN'", ap_name)
         try:
             with self.con:
                 cur = self.con.cursor()
                 cur.execute("UPDATE ap SET status='DOWN' WHERE name='%s'" %
                                 (ap_name))
         except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
 
     def ap_status_unknown(self, ap_name=None):
@@ -83,7 +90,7 @@ class AuroraDB(object):
                                     (ap_name))
 
         except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
 
     def ap_update_hw_info(self, hw_database, ap_name, region):
@@ -128,10 +135,10 @@ class AuroraDB(object):
                                     firmware_version, number_radio,
                                     memory_mb, free_disk,
                                     number_radio_free, number_slice_free))
-                print to_execute
+                self.LOGGER.debug(to_execute)
                 cur.execute(to_execute)
         except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
 
     def wslice_belongs_to(self, tenant_id, project_id, ap_slice_id):
@@ -153,7 +160,7 @@ class AuroraDB(object):
                         return True
 
             except mdb.Error, e:
-                print "Error %d: %s" % (e.args[0], e.args[1])
+                self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
                 sys.exit(1)
         return False
 
@@ -177,7 +184,7 @@ class AuroraDB(object):
                     if wnet_name in tenant_wnets:
                         return True
             except mdb.Error, e:
-                    print "Error %d: %s" % (e.args[0], e.args[1])
+                    self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
                     sys.exit(1)
         return False
 
@@ -192,7 +199,7 @@ class AuroraDB(object):
                 if status[0] == 'DELETED':
                     return True
         except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
         return False
 
@@ -210,7 +217,7 @@ class AuroraDB(object):
                 if tag in ap_slice_tags:
                     return True
         except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
         return False
 
@@ -245,7 +252,7 @@ class AuroraDB(object):
 
         except mdb.Error, e:
             err_msg = "Error %d: %s" % (e.args[0], e.args[1])
-            print err_msg
+            self.LOGGER.error(err_msg)
             return err_msg + '\n'
 
     def wnet_remove_wslice(self, tenant_id, slice_id, name):
@@ -273,7 +280,7 @@ class AuroraDB(object):
                 #TODO: Add messaging
         except mdb.Error, e:
             err_msg = "Error %d: %s" % (e.args[0], e.args[1])
-            print err_msg
+            self.LOGGER.error(err_msg)
             return err_msg + '\n'
 
     def wnet_add(self, wnet_id, name, tenant_id, project_id):
@@ -296,7 +303,7 @@ class AuroraDB(object):
                     return "Created '%s'.\n" % name
         except mdb.Error, e:
             err_msg = "Error %d: %s" % (e.args[0], e.args[1])
-            print err_msg
+            self.LOGGER.error(err_msg)
             return err_msg + '\n'
 
     def wnet_remove(self, wnet_arg, tenant_id):
@@ -341,7 +348,7 @@ class AuroraDB(object):
 
         except mdb.Error, e:
             err_msg = "Error %d: %s" % (e.args[0], e.args[1])
-            print err_msg
+            self.LOGGER.error(err_msg)
             return err_msg + '\n'
         return message
 
@@ -360,8 +367,8 @@ class AuroraDB(object):
                 #can be used for testing purposes.
                 #Return None when there is no problem instead.
         except mdb.Error, e:
-            err_msg = "-->> Error %d: %s" % (e.args[0], e.args[1])
-            print err_msg
+            err_msg = "Error %d: %s" % (e.args[0], e.args[1])
+            self.LOGGER.error(err_msg)
             return err_msg + '\n'
 
     def wslice_delete(self, slice_id):
@@ -379,7 +386,7 @@ class AuroraDB(object):
                 return "Deleting slice %s.\n" % slice_id
         except mdb.Error, e:
             err_msg = "Error %d: %s" % (e.args[0], e.args[1])
-            print err_msg
+            self.LOGGER.error(err_msg)
             return err_msg + '\n'
 
     def wslice_add_tag(self, ap_slice_id, tag):
@@ -394,7 +401,7 @@ class AuroraDB(object):
                     return "Added tag '%s' to ap_slice '%s'.\n" % (tag, ap_slice_id)
             except mdb.Error, e:
                 err_msg = "Error %d: %s\n" % (e.args[0], e.args[1])
-                print err_msg
+                self.LOGGER.error(err_msg)
                 return err_msg + '\n'
 
     def wslice_remove_tag(self, ap_slice_id, tag):
@@ -409,7 +416,7 @@ class AuroraDB(object):
                     return "Deleted tag '%s' from ap_slice '%s'\n" % (tag, ap_slice_id)
             except mdb.Error, e:
                 err_msg = "Error %d: %s\n" % (e.args[0], e.args[1])
-                print err_msg
+                self.LOGGER.error(err_msg)
                 return err_msg + '\n'
         else:
             return "Tag '%s' not found.\n" % (tag)
@@ -427,7 +434,7 @@ class AuroraDB(object):
                     ap_list.append(ap_tuple[0])
                 return ap_list
         except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
 
     def get_wslice_physical_ap(self, ap_slice_id):
@@ -443,7 +450,7 @@ class AuroraDB(object):
                 else:
                     raise Exception("No slice '%s'\n" % ap_slice_id)
         except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
 
     def get_wslice_status(self, ap_slice_id):
@@ -465,7 +472,7 @@ class AuroraDB(object):
                 else:
                     raise Exception("No slice '%s'\n" % ap_slice_id)
         except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
 
     def get_wnet_list(self, tenant_id, wnet_arg = None):
@@ -498,7 +505,7 @@ class AuroraDB(object):
                     wnet_list[i]['tenant_id'] = wnet_t[2]
                     wnet_list[i]['project_id'] = wnet_t[3]
         except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
         return wnet_list
 
@@ -525,7 +532,7 @@ class AuroraDB(object):
                     slice_list[i]['wnet_id'] = slice_t[5]
                     slice_list[i]['status'] = slice_t[6]
         except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
         return slice_list
 
@@ -556,6 +563,8 @@ class AuroraDB(object):
                     wnet_info['name'] = wnet_info_tt[0][1]
 
         except mdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
         return wnet_info
+
+

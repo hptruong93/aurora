@@ -1,16 +1,21 @@
 import BaseHTTPServer
 import json
+import logging
 import os
-from pprint import pprint
+from pprint import pprint, pformat
 import threading
+
+from cls_logger import get_cls_logger
+
+LOGGER = logging.getLogger(__name__)
 
 
 class ProvisionHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
     server_version= "Aurora/0.2"
     
     def __init__(self, *args):
-
-        print "\nConstructing provision ProvisionHandler"
+        self.LOGGER = get_cls_logger(self)
+        self.LOGGER.info("Constructing...")
         BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, *args)
 
     def do_GET( self ):
@@ -21,7 +26,7 @@ class ProvisionHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
                 file_name = self.path[27:]
                 if ".." in file_name:
                     raise Exception("File names outside directory not permitted.")
-                config_file = json.dumps(json.load(open('provision_server/' + file_name + '.json','r')))
+                config_file = json.dumps(json.load(open('ap_provision/' + file_name + '.json','r')))
                 
             except:
                 # File does not exist/ not permitted/ not json
@@ -46,7 +51,7 @@ class ProvisionHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
         self.wfile.write( body )
 
 def get_json_files():
-    provision_dir = "provision_server"
+    provision_dir = "ap_provision"
     paths = os.listdir(provision_dir)
     result = []
     for fname in paths:
@@ -72,21 +77,21 @@ def update_last_known_config(ap, config):
         if prev_config['queue'] == ap:
             ap_config_name = F.name
             break
-    print F
+    LOGGER.debug(F)
     F.close()
     del F
     prev_config['last_known_config'] = config
     #prev_config['last_known_config']['init_database'] = config['init_database']
     #prev_config['last_known_config']['init_user_id_database'] = config['init_user_id_database']
     config = prev_config
-    pprint(config)
+    LOGGER.debug(pformat(config))
     with open(ap_config_name, 'w') as F:
-        print "Dumping config to ", F.name
+        LOGGER.debug("Dumping config to %s", F.name)
         json.dump(config, F, indent=4)
-        print F.name + " updated for " + ap
+        LOGGER.info("%s updated for %s", F.name, ap)
     
 # Globals definition for starting Provision Server
-           
+
 provision_running = False    
 handler_class = ProvisionHandler
 server_address = ('', 5555)
@@ -95,15 +100,15 @@ server = BaseHTTPServer.HTTPServer(server_address, handler_class)
 def run():
     global provision_running
     if not provision_running:
-        print "Starting provision server",
+
         server_thread = threading.Thread(target=server.serve_forever)
         server_thread.start()
-        print server_thread
+        LOGGER.info("Starting provision server %s", server_thread)
         provision_running = True
     else:
-        print "Provision server already running"
+        LOGGER.warning("Provision server already running")
 
 def stop():
-    print "Shutting down provision server..."
+    LOGGER.info("Shutting down provision server...")
     server.shutdown()
 

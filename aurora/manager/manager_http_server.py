@@ -5,6 +5,7 @@ import json
 import logging
 from pprint import pprint
 
+import cls_logger
 import manager
 
 LOGGER = logging.getLogger(__name__)
@@ -13,12 +14,13 @@ LOGGER = logging.getLogger(__name__)
 class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     server_version= "Aurora/0.2"
     MANAGER = None
-    
+
     # Override __init__ to instantiate Manager, pass along parameters:
     # BaseHTTPServer.BaseHTTPRequestHandler(request, client_address, server)
     def __init__(self, *args):
+        self.LOGGER = cls_logger.get_cls_logger(self)
         if NewConnectionHandler.MANAGER == None:
-            print "Error: No manager to handle request."
+            self.LOGGER.info("Error: No manager to handle request.")
             sys.exit(1)
         #print "\nConstructing NewConnectionHandler using", NewConnectionHandler.MANAGER
         BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, *args)
@@ -44,14 +46,14 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         default_response = {}
         default_response['status'] = False
         default_response['message'] = ""
-        RESPONSEFILE = open('json/response.json', 'w')
-        json.dump(default_response, RESPONSEFILE, sort_keys=True, indent=4)
-        RESPONSEFILE.close()
+        RESPONSE_FILE = open('json/response.json', 'w')
+        json.dump(default_response, RESPONSE_FILE, sort_keys=True, indent=4)
+        RESPONSE_FILE.close()
         
         # Parse the form data posted
         data_string = self.rfile.read(int(self.headers['Content-Length']))
         JSONfile = json.loads(data_string)
-        print " [x]",JSONfile['function']
+        self.LOGGER.debug(JSONfile['function'])
 
         # Begin the response
         self.send_response(200)
@@ -60,7 +62,7 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         #Send to manager.py
         #Format of response: {"status":(true of false) ,"message":"string if necessary"}
         response = NewConnectionHandler.MANAGER.parseargs(JSONfile['function'], JSONfile['parameters'], 1,1,1)
-        print " [v]",response['message']
+        self.LOGGER.debug(response['message'])
 
         #Save response to file
         RESPONSEFILE = open('json/response.json', 'w')
@@ -78,12 +80,14 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 class ManagerServer(BaseHTTPServer.HTTPServer):
     """Builds upon HTTPServer and also sets up and tears down single Manager() instance"""
     def serve_forever(self):
+        self.LOGGER = cls_logger.get_cls_logger(self)
+
         # Manager is now in server instance's scope, will be deconstructed
         # upon interrupt
         self.manager = manager.Manager()
         # When initialized, handler_class from main is stored in RequestHandlerClass
         self.RequestHandlerClass.MANAGER = self.manager
-        #print self.RequestHandlerClass.MANAGER
+        #self.LOGGER.debug(self.RequestHandlerClass.MANAGER)
         BaseHTTPServer.HTTPServer.serve_forever(self)
     
     def server_close(self):
@@ -93,10 +97,14 @@ class ManagerServer(BaseHTTPServer.HTTPServer):
         
         BaseHTTPServer.HTTPServer.server_close(self) 
 
-def main():
-    
-    logging.basicConfig(level=logging.INFO, format="[%(name)s]: %(message)s")
+def set_up_root_logger():
+    stream_handler = cls_logger.setup_handler()
+    logging.root.handlers.append(stream_handler)
+    logging.root.setLevel(logging.INFO)
 
+def main():
+    set_up_root_logger()
+    
     handler_class=NewConnectionHandler
     server_address = ('', 5554)
     try:

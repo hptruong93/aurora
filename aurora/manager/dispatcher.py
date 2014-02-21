@@ -1,7 +1,7 @@
 
 import json
 import logging
-from pprint import pprint
+from pprint import pprint, pformat
 import sys
 import threading
 import time
@@ -10,20 +10,24 @@ import weakref
 
 import pika
 
-import provision_server.ap_provision as provision
-import resource_monitor
+from cls_logger import get_cls_logger
+import ap_provision.http_srv as provision
+import ap_monitor
 
 PIKA_LOGGER = logging.getLogger('pika')
 PIKA_LOGGER.setLevel(logging.WARNING)
+LOGGER = logging.getLogger(__name__)
+
 
 class Dispatcher(object):
+
     lock = None
     TIMEOUT = 30
 
     def __init__(self, host, username, password, mysql_username, mysql_password, aurora_db):
         """Establishes the connection to RabbitMQ and sets up the queues"""
-
-        print "Constructing Dispatcher..."
+        self.LOGGER = get_cls_logger(self)
+        self.LOGGER.info("Constructing Dispatcher...")
         # Run Pika logger so that error messages get printed
         
         self.host = host
@@ -35,7 +39,7 @@ class Dispatcher(object):
         # Create list for requests sent out
         self.requests_sent = []
 
-        self.rm = resource_monitor.ResourceMonitor(self, host, mysql_username, mysql_password)
+        self.apm = ap_monitor.APMonitor(self, host, mysql_username, mysql_password)
         self._start_connection()
 
         # Setup complete, now start listening and processing
@@ -47,15 +51,15 @@ class Dispatcher(object):
         # Start ioloop, this will quit by itself when Dispatcher().stop() is run
 
     def __del__(self):
-        print "[dispatcher.py]: Deconstructing..."
+        self.LOGGER.info("Deconstructing...")
 
     def _start_connection(self):
         credentials = pika.PlainCredentials(self.username, self.password)
         self.connection = pika.SelectConnection(pika.ConnectionParameters(host=self.host, credentials=credentials), self.on_connected)
         # Start ioloop, this will quit by itself when Dispatcher().stop() is run
-        print "[Dispatcher]: Starting pika listener ",
+        
         self.listener = threading.Thread(target=self.connection.ioloop.start)
-        print self.listener
+        self.LOGGER.info("Starting pika listener %s", self.listener)
         self.listener.start()
 
     def _stop_connection(self):
@@ -63,18 +67,18 @@ class Dispatcher(object):
         self.connection.close()
 
     def _restart_connection(self):
-        print "[dispatcher.py]: Channel has died, restarting..."
+        self.LOGGER.info("Channel has died, restarting...")
         self._stop_connection()
         self.restarting_connection = True
         self._start_connection()
         while not self.connection.is_open and not self.channel.is_open:
             time.sleep(0.1)
-        print "[dispatcher.py]: Channel back up, dispatching..."
+        self.LOGGER.info("Channel back up, dispatching...")
 
     def _stop_all_request_sent_timers(self):
         while self.requests_sent:
             entry = self.requests_sent.pop()
-            print "[dispatcher.py]: Cancelling timer %s" % entry[1]
+            self.LOGGER.info("Cancelling timer %s", entry[1])
             entry[1].cancel()
 
     def on_connected(self, connection):
@@ -114,10 +118,11 @@ class Dispatcher(object):
         # we can see if our request executed successfully or not
         # See http://www.rabbitmq.com/tutorials/tutorial-six-python.html for more info
         if Dispatcher.lock:
-            print " [x] Dispatch: Dispatcher locked, waiting..."
+            self.LOGGER.info("Locked, waiting...")
             while Dispatcher.lock:
+                time.sleep(0.1)
                 pass
-        print " [x] Dispatch: Locking..."
+        self.LOGGER.debug("Locking...")
         Dispatcher.lock = True
 
         # Dispatch, catch if no channel exists
@@ -127,26 +132,25 @@ class Dispatcher(object):
         try:
             self.channel.basic_publish(exchange='', routing_key=ap, body=message, properties=pika.BasicProperties(reply_to = self.callback_queue, correlation_id = unique_id, content_type="application/json"))
         except Exception as e:
-            print e.message
+            self.LOGGER.error(e.message)
 
-        print("Message for %s dispatched" % ap)
+        self.LOGGER.info("Message for %s dispatched", ap)
         ap_slice_id = 'NONE'
         if config['command'] == 'SYN':
             ap_slice_id = 'SYN'
         else:
             ap_slice_id = config['slice']
         # Start a timeout countdown
-        print "ap_slice_id >>>",ap_slice_id
-        time = threading.Timer(self.TIMEOUT, self.rm.timeout, args=(ap_slice_id,ap,unique_id))
-        print "[dispatcher.py]: Adding timer", time
+        self.LOGGER.debug("ap_slice_id ",ap_slice_id)
+        time = threading.Timer(self.TIMEOUT, self.apm.timeout, args=(ap_slice_id,ap,unique_id))
+        self.LOGGER.debug("Adding timer", time)
         self.requests_sent.append((unique_id, time, ap_slice_id))
         time.start()
-        print "[dispatcher.py]: requests_sent",self.requests_sent
-        print "Starting timer:",self.requests_sent[-1]
+        self.LOGGER.debug("requests_sent",self.requests_sent)
+        self.LOGGER.debug("Starting timer:",self.requests_sent[-1])
 
-        print " [x] Dispatch: Unlocking..."
+        self.LOGGER.debug("Unlocking...")
         Dispatcher.lock = False
-
 
     def process_response(self, channel, method, props, body):
         """Processes any responses it sees, checking to see if the
@@ -168,15 +172,16 @@ class Dispatcher(object):
         entry = None
 
         if Dispatcher.lock:
-            print " [x] Response: Dispatcher locked, waiting..."
+            self.LOGGER.info("Response: Locked, waiting...")
             while Dispatcher.lock:
+                time.sleep(0.1)
                 pass
 
-        print "channel:",channel
-        print "method:", method
-        print repr(props)
-        print body
-        print "\nrequests_sent:",self.requests_sent
+        self.LOGGER.debug("channel:",channel)
+        self.LOGGER.debug("method:", method)
+        self.LOGGER.debug(repr(props))
+        self.LOGGER.debug(body)
+        self.LOGGER.debug("\nrequests_sent:",self.requests_sent)
 
         # Decode response
         decoded_response = json.loads(body)
@@ -188,79 +193,79 @@ class Dispatcher(object):
             #TODO: If previous message has been dispatched and we are waiting 
             #      for a response, cancel the timer and/or send the command again
             # AP has started, check if we need to restart slices
-            print ap_name + " has connected..."
+            self.LOGGER.info("%s has connected...", ap_name)
             self.remove_request(ap_syn=ap_name)
-            # Tell resource monitor, let it handle restart of slices
-            #self.rm.start_poller(ap_name)
+            # Tell ap monitor, let it handle restart of slices
+            #self.apm.start_poller(ap_name)
             slices_to_restart = decoded_response['slices_to_restart']
-            self.rm.restart_slices(ap_name, slices_to_restart)
+            self.apm.restart_slices(ap_name, slices_to_restart)
             provision.update_last_known_config(ap_name, config)
             self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
             self.aurora_db.ap_status_up(ap_name)
-            self.rm.start_poller(ap_name)
+            self.apm.start_poller(ap_name)
             return
 
         elif message == 'SYN/ACK':
-            print ap_name + " responded to 'SYN' request"
+            self.LOGGER.info("%s responded to 'SYN' request", ap_name)
             # Cancel timers corresponding to 'SYN' message
             (have_request, entry) = self._have_request(props.correlation_id)
             if have_request:
                 entry[1].cancel()
                 self.requests_sent.remove(entry)
             else:
-                print "Warning: No request for received 'SYN/ACK' from %s" % ap_name
+                self.LOGGER.warning("Warning: No request for received 'SYN/ACK' from %s", ap_name)
             provision.update_last_known_config(ap_name, config)
             self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
             self.aurora_db.ap_status_up(ap_name)
-            self.rm.start_poller(ap_name)
+            self.apm.start_poller(ap_name)
             return
 
 
         elif message == 'FIN':
-            print ap_name + " is shutting down..."
+            self.LOGGER.info("%s is shutting down...", ap_name)
             try:
-                self.rm.set_status(None, None, False, ap_name)
+                self.apm.set_status(None, None, False, ap_name)
                 self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
                 self.aurora_db.ap_status_down(ap_name)
-                print "Updating config files..."
+                self.LOGGER.info("Updating config files...")
                 provision.update_last_known_config(ap_name, config)
             except Exception as e:
-                print e.message
-            print "Last known config:"
-            pprint(config)
+                self.LOGGER.error(e.message)
+            self.LOGGER.debug("Last known config:")
+            self.LOGGER.debug(pformat(config))
             return
 
         (have_request, entry) = self._have_request(props.correlation_id)
 
         if have_request is not None:
             # decoded_response = json.loads(body)
-            print(' [x] DEBUG: Printing received message')
-            print(message)
+            self.LOGGER.debug('Printing received message')
+            self.LOGGER.debug(message)
 
             # Set status, stop timer, delete record
             #print "entry[2]:",entry[2]
             if entry[2] != 'admin':
-                self.rm.set_status(entry[2], decoded_response['successful'], ap_name=ap_name)
+                self.apm.set_status(entry[2], decoded_response['successful'], ap_name=ap_name)
                 self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
 
-                print "Updating config files..."
+                self.LOGGER.info("Updating config files...")
                 provision.update_last_known_config(ap_name, config)
             else:
                 if message != "RESTARTING" and message != "AP reset":
-                    self.rm.update_records(message["ap_slice_stats"])
+                    self.apm.update_records(message["ap_slice_stats"])
                     self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
 
                 else:
-                    #Probably a reset or restart command sent from resource_monitor
+                    #Probably a reset or restart command sent from ap_monitor
                     #Just stop timer and remove entry
                     pass
 
             self.remove_request(entry[0])
 
         else:
-            print " [x] Sending reset to '%s'" % ap_name
+            self.LOGGER.info("Sending reset to '%s'", ap_name)
             # Reset the access point
-            self.rm.reset_AP(ap_name)
+            self.apm.reset_AP(ap_name)
 
 
         # Regardless of content of message, acknowledge receipt of it
@@ -270,7 +275,7 @@ class Dispatcher(object):
         # SelectConnection object close method cancels ioloop and cleanly
         # closes associated channels
         # Stop timers
-        self.rm.stop()
+        self.apm.stop()
         self._stop_connection()
         del self.connection
         del self.channel
@@ -292,9 +297,9 @@ class Dispatcher(object):
             message_uuid = self._get_uuid_for_ap_syn(ap_syn)
         (have_request, request) = self._have_request(message_uuid)
         if have_request:
-            print "[dispatcher.py]: Cancelling timer %s" % request[1]
+            self.LOGGER.debug("Cancelling timer %s", request[1])
             request[1].cancel()
-            print "[dispatcher.py]: Removing request %s" % str(request)
+            self.LOGGER.debug("Removing request %s", str(request))
             self.requests_sent.remove(request)
 
 # Menu loop; thanks Kevin
