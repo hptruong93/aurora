@@ -10,6 +10,8 @@ import weakref
 import MySQLdb as mdb
 
 from cls_logger import get_cls_logger
+import ap_provision.http_srv as provision
+#import dispatcher
 
 LOGGER = logging.getLogger(__name__)
 
@@ -19,12 +21,18 @@ class APMonitor(object):
     sql_locked = None
     SLEEP_TIME = 45
     # TODO: Make function to determine if dispatcher still exists
-    def __init__(self, dispatcher, host, username, password):
+    def __init__(self, dispatcher, aurora_db, host, username, password):
         self.LOGGER = get_cls_logger(self)
-        self.dispatcher_ref = weakref.ref(dispatcher)
-        self.LOGGER.debug("Made weak ref %s %s",self.dispatcher_ref, self.dispatcher_ref())
+        # Configure dispatcher
+        self.dispatcher = dispatcher
+        self.dispatcher.set_timeout_callback(self.timeout)
+        self.dispatcher.set_response_callback(self.process_response)
+        self.dispatcher.start_connection()
 
-        self.aurora_db = self.dispatcher_ref().aurora_db
+        #self.dispatcher_ref = weakref.ref(dispatcher)
+        #self.LOGGER.debug("Made weak ref %s %s",self.dispatcher_ref, self.dispatcher_ref())
+
+        self.aurora_db = aurora_db
         self.ut = UptimeTracker(host, username, password)
         self.poller_threads = {}
 
@@ -84,6 +92,125 @@ class APMonitor(object):
             self.LOGGER.debug("Stopping thread %s %s", ap_name, poller_thread)
             poller_thread.stop()
 
+    def process_response(self, channel, method, props, body):
+        """Processes any responses it sees, checking to see if the
+        correlation ID matches one sent.  If it does, the response
+        is displayed along with the request originally sent."""
+
+        # Basic Proof-of-Concept Implementation
+        # 1. We dispatch (see method above)
+        # 2. Response received: if related to a request we sent out, OK
+        # ACK it
+        # Update database to reflect content (i.e. success or error)
+
+        # If we don't have a record, that means that we already
+        # handled a timeout previously and something strange happened to the AP
+        # to cause it to wait so long. Reset it.
+
+        # Check if we have a record of this ID
+        have_request = False
+        entry = None
+
+        if self.dispatcher.lock:
+            self.LOGGER.info("Response: Locked, waiting...")
+            while self.dispatcher.lock:
+                time.sleep(0.1)
+                pass
+
+        self.LOGGER.debug("channel:",channel)
+        self.LOGGER.debug("method:", method)
+        self.LOGGER.debug(repr(props))
+        self.LOGGER.debug(body)
+        self.LOGGER.debug("\nrequests_sent:",self.requests_sent)
+
+        # Decode response
+        decoded_response = json.loads(body)
+        message = decoded_response['message']
+        ap_name = decoded_response['ap']
+        config = decoded_response['config']
+        region = config['region']
+        if message == 'SYN':
+            #TODO: If previous message has been dispatched and we are waiting 
+            #      for a response, cancel the timer and/or send the command again
+            # AP has started, check if we need to restart slices
+            self.LOGGER.info("%s has connected...", ap_name)
+            self.remove_request(ap_syn=ap_name)
+            # Tell ap monitor, let it handle restart of slices
+            #self.apm.start_poller(ap_name)
+            slices_to_restart = decoded_response['slices_to_restart']
+            self.apm.restart_slices(ap_name, slices_to_restart)
+            provision.update_last_known_config(ap_name, config)
+            self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
+            self.aurora_db.ap_status_up(ap_name)
+            self.apm.start_poller(ap_name)
+            return
+
+        elif message == 'SYN/ACK':
+            self.LOGGER.info("%s responded to 'SYN' request", ap_name)
+            # Cancel timers corresponding to 'SYN' message
+            (have_request, entry) = self._have_request(props.correlation_id)
+            if have_request:
+                entry[1].cancel()
+                self.requests_sent.remove(entry)
+            else:
+                self.LOGGER.warning("Warning: No request for received 'SYN/ACK' from %s", ap_name)
+            provision.update_last_known_config(ap_name, config)
+            self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
+            self.aurora_db.ap_status_up(ap_name)
+            self.apm.start_poller(ap_name)
+            return
+
+
+        elif message == 'FIN':
+            self.LOGGER.info("%s is shutting down...", ap_name)
+            try:
+                self.apm.set_status(None, None, False, ap_name)
+                self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
+                self.aurora_db.ap_status_down(ap_name)
+                self.LOGGER.info("Updating config files...")
+                provision.update_last_known_config(ap_name, config)
+            except Exception as e:
+                self.LOGGER.error(e.message)
+            self.LOGGER.debug("Last known config:")
+            self.LOGGER.debug(pformat(config))
+            return
+
+        (have_request, entry) = self._have_request(props.correlation_id)
+
+        if have_request is not None:
+            # decoded_response = json.loads(body)
+            self.LOGGER.debug('Printing received message')
+            self.LOGGER.debug(message)
+
+            # Set status, stop timer, delete record
+            #print "entry[2]:",entry[2]
+            if entry[2] != 'admin':
+                self.apm.set_status(entry[2], decoded_response['successful'], ap_name=ap_name)
+                self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
+
+                self.LOGGER.info("Updating config files...")
+                provision.update_last_known_config(ap_name, config)
+            else:
+                if message != "RESTARTING" and message != "AP reset":
+                    self.apm.update_records(message["ap_slice_stats"])
+                    self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
+
+                else:
+                    #Probably a reset or restart command sent from ap_monitor
+                    #Just stop timer and remove entry
+                    pass
+
+            self.remove_request(entry[0])
+
+        else:
+            self.LOGGER.info("Sending reset to '%s'", ap_name)
+            # Reset the access point
+            self.apm.reset_AP(ap_name)
+
+
+        # Regardless of content of message, acknowledge receipt of it
+        channel.basic_ack(delivery_tag = method.delivery_tag)
+
     def timeout(self, ap_slice_id, ap_name, message_uuid = None):
         """This code will execute when a response is not
         received for the command associated with the unique_id
@@ -91,11 +218,12 @@ class APMonitor(object):
         to reflect the current status of the AP."""
 
         if message_uuid is not None:
-            dispatcher = self.dispatcher_ref()
-            if dispatcher is None:
-                self.LOGGER.warning("Dispatcher has been deallocated")
-            else:
-                dispatcher.remove_request(message_uuid)
+            # dispatcher = self.dispatcher_ref()
+            # if dispatcher is None:
+            #     self.LOGGER.warning("Dispatcher has been deallocated")
+            # else:
+                # dispatcher.remove_request(message_uuid)
+            self.dispatcher.remove_request(message_uuid)
         self.LOGGER.debug("%s %s", type(ap_slice_id), ap_slice_id)
         # A timeout is serious: it is likely that
         # the AP's OS has crashed, or at least aurora is
@@ -280,8 +408,8 @@ class APMonitor(object):
                         raise Exception("No slice %s\n" % slice_id)
                     if status != 'DELETED' and status != 'DELETING':
                         # Restart slice as it wasn't deleted since AP went down
-                        dispatcher = self.dispatcher_ref()
-                        dispatcher.dispatch({'slice': slice_id,
+                        # dispatcher = self.dispatcher_ref()
+                        self.dispatcher.dispatch({'slice': slice_id,
                                              'command': 'restart_slice',
                                              'user': user_id},
                                              ap)
@@ -305,8 +433,8 @@ class APMonitor(object):
             #time.sleep(APMonitor.SLEEP_TIME)
             self.LOGGER.debug("%s thread is %s", ap_name, own_thread)
             self.get_stats(ap_name)
-            dispatcher = self.dispatcher_ref()
-            for i in range(dispatcher.TIMEOUT + 5):
+            # dispatcher = self.dispatcher_ref()
+            for i in range(self.dispatcher.TIMEOUT + 5):
                 if stop_event.is_set():
                     self.LOGGER.debug("Caught stop event for %s", own_thread)
                     break
@@ -320,19 +448,19 @@ class APMonitor(object):
         a restart may be required."""
 
         # The unique ID is fixed to be all F's for resets/restarts.
-        self.dispatcher_ref().dispatch( { 'slice' : 'admin', 'command' : 'reset' } , ap)
+        self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'reset' } , ap)
 
     def restart_AP(self, ap):
         """Restart the access point, telling the OS to reboot."""
 
         # The unique ID is fixed to be all F's for resets/restarts.
-        self.dispatcher_ref().dispatch( { 'slice' : 'admin', 'command' : 'restart' } , ap)
+        self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'restart' } , ap)
 
     def get_stats(self, ap):
         """Update the access point """
 
         # The unique ID is fixed to be all F's
-        self.dispatcher_ref().dispatch( { 'slice' : 'admin', 'command' : 'get_stats'}, ap)
+        self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'get_stats'}, ap)
 
 class UptimeTracker(object):
     def __init__(self, host, username, password):

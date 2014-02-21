@@ -11,6 +11,7 @@ import uuid
 import MySQLdb as mdb
 
 from aurora_db import *
+import ap_monitor
 from cls_logger import get_cls_logger
 import dispatcher
 import ap_provision.http_srv as provision
@@ -53,7 +54,9 @@ class Manager(object):
                                               self.mysql_username,
                                               self.mysql_password,
                                               self.auroraDB)
-        #provision.init()
+
+        self.apm = ap_monitor.APMonitor(self.dispatch, self.auroraDB, self.mysql_host, self.mysql_username, self.mysql_password)
+
         provision.run()
 
     def __del__(self):
@@ -61,6 +64,7 @@ class Manager(object):
 
 
     def stop(self):
+        self.apm.stop()
         self.dispatch.stop()
         provision.stop()
 
