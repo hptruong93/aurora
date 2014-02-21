@@ -121,7 +121,7 @@ class APMonitor(object):
         self.LOGGER.debug("method:", method)
         self.LOGGER.debug(repr(props))
         self.LOGGER.debug(body)
-        self.LOGGER.debug("\nrequests_sent:",self.requests_sent)
+        self.LOGGER.debug("\nrequests_sent:",self.dispatcher.requests_sent)
 
         # Decode response
         decoded_response = json.loads(body)
@@ -134,37 +134,37 @@ class APMonitor(object):
             #      for a response, cancel the timer and/or send the command again
             # AP has started, check if we need to restart slices
             self.LOGGER.info("%s has connected...", ap_name)
-            self.remove_request(ap_syn=ap_name)
+            self.dispatcher.remove_request(ap_syn=ap_name)
             # Tell ap monitor, let it handle restart of slices
-            #self.apm.start_poller(ap_name)
+            #self.start_poller(ap_name)
             slices_to_restart = decoded_response['slices_to_restart']
-            self.apm.restart_slices(ap_name, slices_to_restart)
+            self.restart_slices(ap_name, slices_to_restart)
             provision.update_last_known_config(ap_name, config)
             self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
             self.aurora_db.ap_status_up(ap_name)
-            self.apm.start_poller(ap_name)
+            self.start_poller(ap_name)
             return
 
         elif message == 'SYN/ACK':
             self.LOGGER.info("%s responded to 'SYN' request", ap_name)
             # Cancel timers corresponding to 'SYN' message
-            (have_request, entry) = self._have_request(props.correlation_id)
+            (have_request, entry) = self.dispatcher._have_request(props.correlation_id)
             if have_request:
                 entry[1].cancel()
-                self.requests_sent.remove(entry)
+                self.dispatcher.requests_sent.remove(entry)
             else:
                 self.LOGGER.warning("Warning: No request for received 'SYN/ACK' from %s", ap_name)
             provision.update_last_known_config(ap_name, config)
             self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
             self.aurora_db.ap_status_up(ap_name)
-            self.apm.start_poller(ap_name)
+            self.start_poller(ap_name)
             return
 
 
         elif message == 'FIN':
             self.LOGGER.info("%s is shutting down...", ap_name)
             try:
-                self.apm.set_status(None, None, False, ap_name)
+                self.set_status(None, None, False, ap_name)
                 self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
                 self.aurora_db.ap_status_down(ap_name)
                 self.LOGGER.info("Updating config files...")
@@ -175,7 +175,7 @@ class APMonitor(object):
             self.LOGGER.debug(pformat(config))
             return
 
-        (have_request, entry) = self._have_request(props.correlation_id)
+        (have_request, entry) = self.dispatcher._have_request(props.correlation_id)
 
         if have_request is not None:
             # decoded_response = json.loads(body)
@@ -185,14 +185,14 @@ class APMonitor(object):
             # Set status, stop timer, delete record
             #print "entry[2]:",entry[2]
             if entry[2] != 'admin':
-                self.apm.set_status(entry[2], decoded_response['successful'], ap_name=ap_name)
+                self.set_status(entry[2], decoded_response['successful'], ap_name=ap_name)
                 self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
 
                 self.LOGGER.info("Updating config files...")
                 provision.update_last_known_config(ap_name, config)
             else:
                 if message != "RESTARTING" and message != "AP reset":
-                    self.apm.update_records(message["ap_slice_stats"])
+                    self.update_records(message["ap_slice_stats"])
                     self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
 
                 else:
@@ -200,12 +200,12 @@ class APMonitor(object):
                     #Just stop timer and remove entry
                     pass
 
-            self.remove_request(entry[0])
+            self.dispatcher.remove_request(entry[0])
 
         else:
             self.LOGGER.info("Sending reset to '%s'", ap_name)
             # Reset the access point
-            self.apm.reset_AP(ap_name)
+            self.reset_AP(ap_name)
 
 
         # Regardless of content of message, acknowledge receipt of it
