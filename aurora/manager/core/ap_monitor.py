@@ -269,11 +269,11 @@ class APMonitor(object):
                 if last_active_time is not None:
                     time_diff = datetime.datetime.now() - last_active_time
                 else:
-                    time_diff = datetime.time(second=0)
+                    time_diff = datetime.timedelta(seconds=0)
                 if time_active is not None:
                     time_active = time_active + time_diff
                 else:
-                    time_active = datetime.time(second=0)
+                    time_active = datetime.timedelta(seconds=0)
                 cur.execute("UPDATE ap_slice SET time_active=%s, last_active_time=Now() WHERE ap_slice_id='%s'" %
                             (self.get_time_format(time_active), str(unique_id)))
         except Exception:
