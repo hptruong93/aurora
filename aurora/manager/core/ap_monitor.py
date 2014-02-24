@@ -249,7 +249,15 @@ class APMonitor(object):
 
     def update_records(self, message):
         """Update the traffic information of ap_slice"""
-        self.ut.update_traffic(message)
+        try:
+            with self.con:
+                cur = self.con.cursor()
+                for ap_slice in message.keys():
+                    cur.execute("UPDATE ap_slice SET\
+                                bytes_sent=%s WHERE ap_slice_id='%s'"
+                                % (str(message.get(ap_slice)), ap_slice))
+        except Exception, e:
+            self.LOGGER.error("Error: %s", str(e))
 
     def set_status(self, unique_id, success, ap_up=True, ap_name=None):
         self._add_call_to_queue(unique_id, success, ap_up, ap_name)
@@ -299,32 +307,36 @@ class APMonitor(object):
                 if ap_up:
                     self.aurora_db.ap_status_up(ap_name)
                     # Get status
-                    cur.execute("SELECT status FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'")
+                    cur.execute("SELECT status, time_active FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'")
                     status = cur.fetchone()
+                    LOGGER.warn("status %s",str(status))
                     if status:
-                        status = status[0]
+                        (status = status[0]
                     else:
                         raise Exception("No status for ap_slice_id %s\n" % unique_id)
                     # Update status
-                    if status == 'PENDING':
-                        if success:
-                            cur.execute("UPDATE ap_slice SET status='ACTIVE' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-                        else:
-                            cur.execute("UPDATE ap_slice SET status='FAILED' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
+                    if success:
+                        if status == 'PENDING':
+                            cur.execute("UPDATE ap_slice SET status='ACTIVE', last_active_time=Now(), time_active=0 WHERE ap_slice_id=\'"+str(unique_id)+"\'")
 
-                    elif status == 'DELETING':
-                        if success:
+                        elif status == 'DELETING':
                             cur.execute("UPDATE ap_slice SET status='DELETED' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-                        else:
-                            cur.execute("UPDATE ap_slice SET status='FAILED' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
 
-                    elif status == 'DOWN':
-                        if success:
+                        elif status == 'DOWN':
                             cur.execute("UPDATE ap_slice SET status='ACTIVE' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-                        else:
-                            cur.execute("UPDATE ap_slice SET status='FAILED' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
+
+                        elif status == 'ACTIVE':
+                            cur.execute("UPDATE ap_slice SET ")
+                    else:
+                        cur.execute("UPDATE ap_slice SET status='FAILED' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
+                    elif status == 'ACTIVE':
+                        if
                     else:
                         self.LOGGER.info("Unknown Status, ignoring...")
+                        
+                        cur.execute("UPDATE ap_slice_status SET "\
+                                    "status='ACTIVE', last_active_time=Now() "\
+                                    "WHERE ap_slice_id=%s", (str(unique_id)))
 
                 # Access point down, mark all slices and failed/down
                 else:
@@ -495,7 +507,7 @@ class UptimeTracker(object):
         except Exception, e:
             self.LOGGER.error("Error: %s", str(e))
 
-    def update_status(self, unique_id, ap_up=True, ap_name=None):
+    def update_time_and_status(self, unique_id, ap_up=True, ap_name=None):
         #Access Point is up update the ap_slice
         if ap_up and unique_id != 'admin':
             self.update_apslice(unique_id)
