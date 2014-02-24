@@ -260,29 +260,10 @@ class APMonitor(object):
         try:
             with self.con:
                 cur = self.con.cursor()
-                # cur.execute("SELECT time_active, last_active_time FROM ap_slice "
-                #             "WHERE ap_slice_id='%s'" % ap_slice_id)
-                # time_stats = cur.fetchone()
-                # if time_stats:
-                #     time_active = time_stats[0]
-                #     last_active_time = time_stats[1]
-                # if last_active_time is not None:
-                #     time_diff = datetime.datetime.now() - last_active_time
-                # else:
-                #     time_diff = datetime.timedelta(seconds=0)
-                # if time_active is not None:
-                #     time_active = time_active + time_diff
-                # else:
-                #     time_active = datetime.timedelta(seconds=0)
-                # cur.execute("UPDATE ap_slice SET time_active='%s', last_active_time=Now() WHERE ap_slice_id='%s'" %
-                #             (self.get_time_format(time_active), ap_slice_id))
-
-                # cur.execute("UPDATE ap_slice SET time_active=time_active+(Now()-last_active_time) "
-                #             "WHERE ap_slice_id='%s'" % ap_slice_id)
-
-                cur.execute("UPDATE ap_slice SET time_active=time_active+(Now()-last_active_time), last_active_time=Now() "
-                            "WHERE ap_slice_id='%s'" % ap_slice_id)
-                #cur.execute("UPDATE ap_slice SET last_active_time=Now() WHERE ap_slice_id='%s'" % ap_slice_id)
+                cur.execute("UPDATE ap_slice SET "
+                                    "time_active=time_active+(Now()-last_active_time), "
+                                    "last_active_time=Now() "
+                                "WHERE ap_slice_id='%s' AND status='ACTIVE'" % ap_slice_id)
         except Exception:
             traceback.print_exc(file=sys.stdout)
             #self.LOGGER.error("Error: %s", str(e))
@@ -292,7 +273,7 @@ class APMonitor(object):
             with self.con:
                 cur = self.con.cursor()
                 cur.execute("UPDATE ap_slice SET bytes_sent=%s " 
-                            "WHERE ap_slice_id='%s'" %
+                                "WHERE ap_slice_id='%s'" %
                             (bytes_sent, ap_slice_id))
         except Exception, e:
             self.LOGGER.error("Error: %s", str(e))
@@ -362,7 +343,7 @@ class APMonitor(object):
 
                         elif status == 'DOWN':
                             cur.execute("UPDATE ap_slice SET status='ACTIVE', last_active_time=Now() WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-                            self._update_time_active(unique_id)
+                            #self._update_time_active(unique_id)
                         else:
                             self.LOGGER.info("Unknown Status, ignoring...")
                     else:
