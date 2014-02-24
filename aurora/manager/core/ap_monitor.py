@@ -275,7 +275,7 @@ class APMonitor(object):
                 else:
                     time_active = datetime.timedelta(seconds=0)
                 self.LOGGER.info("%s",ap_slice_id)
-                cur.execute("UPDATE ap_slice SET (time_active='%s', last_active_time=Now()) WHERE ap_slice_id='%s'" %
+                cur.execute("UPDATE ap_slice SET time_active='%s', last_active_time=Now() WHERE ap_slice_id='%s'" %
                             (self.get_time_format(time_active), ap_slice_id))
         except Exception:
             traceback.print_exc(file=sys.stdout)
