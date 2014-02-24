@@ -81,7 +81,7 @@ class AuroraDB(object):
     def ap_status_down(self, ap_name):
         self.LOGGER.info("Setting %s status 'DOWN'", ap_name)
         try:
-            with self._database_connect() as db:
+            with self._database_connection() as db:
                 db.execute("UPDATE ap SET status='DOWN' WHERE name='%s'" %
                                 (ap_name))
         except mdb.Error, e:
