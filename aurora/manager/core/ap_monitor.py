@@ -7,6 +7,7 @@ from pprint import pformat
 import sys
 import threading
 import time
+import traceback
 import uuid
 import weakref
 
@@ -275,8 +276,9 @@ class APMonitor(object):
                     time_active = 0
                 cur.execute("UPDATE ap_slice SET time_active=%s, last_active_time=Now() WHERE ap_slice_id='%s'" %
                             (self.get_time_format(time_active), str(unique_id)))
-        except Exception, e:
-            self.LOGGER.error("Error: %s", str(e))
+        except Exception:
+            traceback.print_exc(file=sys.stdout)
+            #self.LOGGER.error("Error: %s", str(e))
 
     def _update_bytes_sent(self, ap_slice_id, bytes_sent):
         try:
