@@ -2,6 +2,7 @@ import atexit
 import collections
 import logging
 import json
+from pprint import pformat
 import sys
 import threading
 import time

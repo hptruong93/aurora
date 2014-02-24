@@ -36,6 +36,13 @@ class AuroraDB(object):
         self.LOGGER = get_cls_logger(self)
 
         self.LOGGER.info("Constructing AuroraDB...")
+
+        self.mysql_host = mysql_host
+        self.mysql_username = mysql_username
+        self.mysql_password = mysql_password
+        self.mysql_db = mysql_db
+
+
         #Connect to Aurora mySQL database
         try:
             self.con = mdb.connect(mysql_host, mysql_username,
@@ -51,6 +58,10 @@ class AuroraDB(object):
         else:
             self.LOGGER.warning('Connection already closed!')
 
+    def _database_connection(self):
+        return mdb.connect(self.mysql_host, self.mysql_username
+                           self.mysql_password, self.mysql_db)
+
     def _count_db_slices(self, radio_list):
         current_slices = 0
         for radio in radio_list:
@@ -60,9 +71,8 @@ class AuroraDB(object):
     def ap_status_up(self, ap_name):
         self.LOGGER.info("Setting %s status 'UP'", ap_name)
         try:
-            with self.con:
-                cur = self.con.cursor()
-                cur.execute("UPDATE ap SET status='UP' WHERE name='%s'" %
+            with _database_connection() as db:
+                db.execute("UPDATE ap SET status='UP' WHERE name='%s'" %
                                 (ap_name))
         except mdb.Error, e:
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
