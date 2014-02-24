@@ -17,8 +17,8 @@ class SlicePlugin(object):
     def __init__(self, tenant_id, user_id, tag=None):
         #To add later: RadioInterfaces
         self.LOGGER = get_cls_logger(self)
-        self.plugins = {'VirtualInterfaces':'plugins.vif_plugin.VirtualInterfacePlugin',
-                        'VirtualBridges':'plugins.vbr_plugin.VirtualBridgePlugin'}
+        self.plugins = {'VirtualInterfaces':'core.plugins.vif_plugin.VirtualInterfacePlugin',
+                        'VirtualBridges':'core.plugins.vbr_plugin.VirtualBridgePlugin'}
         
         self.tenant_id = tenant_id
         self.user_id = user_id

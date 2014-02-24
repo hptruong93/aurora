@@ -67,7 +67,7 @@ class CustomFormatter(logging.Formatter):
             (mod_name, cls_name) = record.name.rsplit('.', 1)
         except ValueError:
             (mod_name, cls_name) = (record.name, '')
-        mod_width = len(mod_name)
+        mod_width = len(mod_name) + 1
         if self.max_width > 0 and self.max_width > mod_width:
             cls_width = self.max_width - mod_width
 
