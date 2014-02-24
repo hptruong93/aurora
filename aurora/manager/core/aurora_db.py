@@ -354,9 +354,10 @@ class AuroraDB(object):
     def wslice_add(self, slice_uuid, slice_ssid, tenant_id, physAP, project_id):
         try:
             with self._database_connection() as db:
-                to_execute = ( "INSERT INTO ap_slice VALUES ('%s', '%s', %s, '%s', %s, %s, '%s')" %
+                to_execute = ( "INSERT INTO ap_slice VALUES ('%s', '%s', %s, '%s', %s, %s, '%s', %s, %s, %s)" %
                                (slice_uuid, slice_ssid, tenant_id, physAP,
-                                project_id, "NULL", "PENDING") )
+                                project_id, "NULL", "PENDING",
+                                'DEFAULT', 'DEFAULT', 'DEFAULT') )
                 db.execute(to_execute)
                 #return "Adding slice %s on %s.\n" % (slice_uuid, physAP)
                 return None
