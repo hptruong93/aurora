@@ -1,5 +1,6 @@
 import atexit
 import collections
+import datetime
 import logging
 import json
 from pprint import pformat
@@ -251,7 +252,7 @@ class APMonitor(object):
         """Update the traffic information of ap_slice"""
         for ap_slice_id in message.keys():
             self._update_time_active(ap_slice_id)
-            self._update_bytes_sent(ap_slice_id, message.get(ap_slice))
+            self._update_bytes_sent(ap_slice_id, message.get(ap_slice_id))
 
 
     def _update_time_active(self, ap_slice_id):
@@ -264,11 +265,14 @@ class APMonitor(object):
                 if time_stats:
                     time_active = time_stats[0]
                     last_active_time = time_stats[1]
-                time_diff = datetime.datetime.now() - last_active_time
-
-                time_active = time_active + time_diff
-
-
+                if last_active_time is not None:
+                    time_diff = datetime.datetime.now() - last_active_time
+                else:
+                    time_diff = 0
+                if time_active is not None:
+                    time_active = time_active + time_diff
+                else:
+                    time_active = 0
                 cur.execute("UPDATE ap_slice SET time_active=%s, last_active_time=Now() WHERE ap_slice_id='%s'" %
                             (self.get_time_format(time_active), str(unique_id)))
         except Exception, e:
