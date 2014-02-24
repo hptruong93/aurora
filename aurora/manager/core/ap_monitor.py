@@ -35,7 +35,7 @@ class APMonitor(object):
         #self.LOGGER.debug("Made weak ref %s %s",self.dispatcher_ref, self.dispatcher_ref())
 
         self.aurora_db = aurora_db
-        self.ut = UptimeTracker(host, username, password)
+        # self.ut = UptimeTracker(host, username, password)
         self.poller_threads = {}
 
         # To handle incoming status update requests, make a command queue
@@ -112,9 +112,9 @@ class APMonitor(object):
         # Check if we have a record of this ID
         have_request = False
         entry = None
-
+        self.LOGGER.info("Receiving...")
         if self.dispatcher.lock:
-            self.LOGGER.info("Response: Locked, waiting...")
+            self.LOGGER.info("Locked, waiting...")
             while self.dispatcher.lock:
                 time.sleep(0.1)
                 pass
@@ -249,13 +249,38 @@ class APMonitor(object):
 
     def update_records(self, message):
         """Update the traffic information of ap_slice"""
+        for ap_slice_id in message.keys():
+            self._update_time_active(ap_slice_id)
+            self._update_bytes_sent(ap_slice_id, message.get(ap_slice))
+
+
+    def _update_time_active(self, ap_slice_id):
         try:
             with self.con:
                 cur = self.con.cursor()
-                for ap_slice in message.keys():
-                    cur.execute("UPDATE ap_slice SET\
-                                bytes_sent=%s WHERE ap_slice_id='%s'"
-                                % (str(message.get(ap_slice)), ap_slice))
+                cur.execute("SELECT time_active, last_active_time FROM ap_slice "
+                            "WHERE ap_slice_id='%s'" % ap_slice_id)
+                time_stats = cur.fetchone()
+                if time_stats:
+                    time_active = time_stats[0]
+                    last_active_time = time_stats[1]
+                time_diff = datetime.datetime.now() - last_active_time
+
+                time_active = time_active + time_diff
+
+
+                cur.execute("UPDATE ap_slice SET time_active=%s, last_active_time=Now() WHERE ap_slice_id='%s'" %
+                            (self.get_time_format(time_active), str(unique_id)))
+        except Exception, e:
+            self.LOGGER.error("Error: %s", str(e))
+
+    def _update_bytes_sent(self, ap_slice_id, bytes_sent):
+        try:
+            with self.con:
+                cur = self.con.cursor()
+                cur.execute("UPDATE ap_slice SET bytes_sent=%s " 
+                            "WHERE ap_slice_id='%s'" %
+                            (bytes_sent, ap_slice_id))
         except Exception, e:
             self.LOGGER.error("Error: %s", str(e))
 
@@ -309,7 +334,7 @@ class APMonitor(object):
                     # Get status
                     cur.execute("SELECT status, time_active FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'")
                     status = cur.fetchone()
-                    LOGGER.warn("status %s",str(status))
+                    self.LOGGER.warn("status %s",str(status))
                     if status:
                         status = status[0]
                     else:
@@ -324,10 +349,7 @@ class APMonitor(object):
 
                         elif status == 'DOWN':
                             cur.execute("UPDATE ap_slice SET status='ACTIVE' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-
-                        elif status == 'ACTIVE':
-                            cur.execute("UPDATE ap_slice SET ")
-
+                            self._update_time_active(unique_id)
                         else:
                             self.LOGGER.info("Unknown Status, ignoring...")
                     else:
@@ -390,13 +412,13 @@ class APMonitor(object):
                             cur.execute("UPDATE ap_slice SET status='FAILED' WHERE ap_slice_id=\'"+str(entry)+"\'")
                             self.LOGGER.info("%s: %s - Updated to status: 'FAILED'", entry, status)
                         else:
+                            self._update_time_active(entry)
                             self.LOGGER.info("%s: %s - Unknown Status, ignoring...", entry, status)
 
         except Exception, e:
             self.LOGGER.error(str(e))
         finally:
             APMonitor.sql_locked = False
-        self.ut.update_status(unique_id, ap_up, ap_name)
         return True
 
     def restart_slices(self, ap, slice_list):
@@ -417,7 +439,7 @@ class APMonitor(object):
                     if items:
                         status = items[0]
                         user_id = items[1]
-                        self.LOGGER.info("%s %s for tenant %s", (slice_id, status, user_id))
+                        self.LOGGER.info("%s %s for tenant %s", slice_id, status, user_id)
                     else:
                         raise Exception("No slice %s\n" % slice_id)
                     if status != 'DELETED' and status != 'DELETING':
@@ -476,121 +498,14 @@ class APMonitor(object):
         # The unique ID is fixed to be all F's
         self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'get_stats'}, ap)
 
-class UptimeTracker(object):
-    def __init__(self, host, username, password):
-        self.LOGGER = get_cls_logger(self)
-        #Connect to Aurora mySQL Database
-        self.LOGGER.info("Connecting to SQLdb...")
-        try:
-            self.con = mdb.connect(host, username, password, 'aurora')
-        except mdb.Error, e:
-            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
-            sys.exit(1)
-
-        atexit.register(self.closeSQL)
-
-    def closeSQL(self):
-        self.LOGGER.info("Closing SQL connection...")
-        if self.con:
-            self.con.close()
-        else:
-            self.LOGGER.warning('Connection already closed!')
-
-    def update_traffic(self, message):
-        try:
-            with self.con:
-                cur = self.con.cursor()
-                for ap_slice in message.keys():
-                    cur.execute("UPDATE ap_slice_status SET\
-                                bytes_sent=%s WHERE ap_slice_id='%s'"
-                                % (str(message.get(ap_slice)), ap_slice))
-        except Exception, e:
-            self.LOGGER.error("Error: %s", str(e))
-
-    def update_time_and_status(self, unique_id, ap_up=True, ap_name=None):
-        #Access Point is up update the ap_slice
-        if ap_up and unique_id != 'admin':
-            self.update_apslice(unique_id)
-        #Access Point down fetch all ap_slice and update them
-        else:
-            try:
-                with self.con:
-                    cur = self.con.cursor()
-                    if ap_name:
-                        physical_ap = ap_name
-                    else:
-                        cur.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=%s", str(unique_id))
-                        physical_ap = cur.fetchone()
-                        if physical_ap:
-                            physical_ap = physical_ap[0]
-                        else:
-                            raise Exception("Cannot fetch physical_ap for slice=%s\n" % unique_id)
-                    #Get all slices associated with this ap
-                    cur.execute("SELECT ap_slice_id FROM ap_slice WHERE physical_ap=%s", str(physical_ap))
-                    raw_list = cur.fetchall()
-                    if raw_list:
-                        slice_list = []
-                        for entry in raw_list:
-                            slice_list.append(entry[0])
-                    else:
-                        raise Exception("No slices on physical_ap '%s'\n" % physical_ap)
-                    for entry in slice_list:
-                        self.update_apslice(entry)
-            except Exception, e:
-                self.LOGGER.error("Error: %s", str(e))
-
-    def update_apslice(self, unique_id):
-        #TODO: Add checking so this doesn't execute for
-        #archived slices with "DELETED" status
-        #print "update status"
-        try:
-            with self.con:
-                cur = self.con.cursor()
-
-                #Check ap slice status in ap_slice table
-                cur.execute("SELECT status FROM ap_slice WHERE ap_slice_id=%s", str(unique_id))
-                cur_status = cur.fetchone()[0]
-
-                #Check ap slice status in ap_slice_status table
-                row_count = cur.execute("SELECT * FROM ap_slice_status WHERE " \
-                                        "ap_slice_id=%s", str(unique_id))
-                if row_count > 0:
-                    ap_slice_info = cur.fetchone()
-                    pre_status = ap_slice_info[1]
-                    time_active = ap_slice_info[2]
-                    last_active_time = ap_slice_info[3]
-
-                #Update ap_slice_status table
-                if cur_status == 'ACTIVE':
-                    if row_count == 0:
-                        cur.execute("INSERT INTO ap_slice_status VALUES " \
-                                    "(%s,%s,'0000',Now(),0)",
-                                    (str(unique_id), 'ACTIVE'))
-                    else:
-                        cur.execute("UPDATE ap_slice_status SET "\
-                                    "status='ACTIVE', last_active_time=Now() "\
-                                    "WHERE ap_slice_id=%s", (str(unique_id)))
-                else:
-                    if row_count > 0 and pre_status == 'ACTIVE':
-                        time_diff = datetime.datetime.now() - last_active_time
-                        time_active = time_active + time_diff
-                        cur.execute("UPDATE ap_slice_status SET status=%s, "\
-                                    "time_active=%s WHERE ap_slice_id=%s",
-                                    (cur_status, self.get_time_format(time_active), str(unique_id)))
-                    else:
-                        cur.execute("UPDATE ap_slice_status SET status=%s "\
-                                    "WHERE ap_slice_id=%s", (cur_status, str(unique_id)))
-        except Exception, e:
-            self.LOGGER.error("Error: %s", str(e))
-
     def get_time_format(self, time):
         time = time.total_seconds()
         hours = int(time // 3600)
         time = time - hours * 3600
-        miniutes = int(time // 60)
-        time = time - miniutes * 60
+        minutes = int(time // 60)
+        time = time - minutes * 60
         seconds = int(time)
-        time_format = str(hours) + ':' + str(miniutes) + ':' + str(seconds)
+        time_format = str(hours) + ':' + str(minutes) + ':' + str(seconds)
         return time_format
 
 class StoppableThread(threading.Thread):
