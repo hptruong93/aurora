@@ -36,7 +36,7 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.end_headers()
         
         #Open response file
-        RESPONSEFILE = open('json/response.json', 'r')
+        RESPONSEFILE = open('core/json/response.json', 'r')
         response = json.load(RESPONSEFILE)
         
         self.wfile.write(response)
@@ -46,7 +46,7 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         default_response = {}
         default_response['status'] = False
         default_response['message'] = ""
-        RESPONSE_FILE = open('json/response.json', 'w')
+        RESPONSE_FILE = open('core/json/response.json', 'w')
         json.dump(default_response, RESPONSE_FILE, sort_keys=True, indent=4)
         RESPONSE_FILE.close()
         
@@ -65,7 +65,7 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.LOGGER.debug(response['message'])
 
         #Save response to file
-        RESPONSEFILE = open('json/response.json', 'w')
+        RESPONSEFILE = open('core/json/response.json', 'w')
         json.dump(response, RESPONSEFILE, sort_keys=True, indent=4)
         RESPONSEFILE.close()
     

@@ -429,7 +429,7 @@ class Manager(object):
             #print '\n'
             self.LOGGER.debug(json.dumps(entry, indent=4, sort_keys=True))
             #print '\n'
-    #        with open("json/wifi__%s.json" % i,"w") as f:
+    #        with open("core/json/wifi__%s.json" % i,"w") as f:
     #            print "Writing file json/wifi__%s.json\n" % i
     #            json.dump(entry, f, indent=4)
     #            f.flush()

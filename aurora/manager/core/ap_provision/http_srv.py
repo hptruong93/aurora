@@ -26,7 +26,7 @@ class ProvisionHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
                 file_name = self.path[27:]
                 if ".." in file_name:
                     raise Exception("File names outside directory not permitted.")
-                config_file = json.dumps(json.load(open('ap_provision/' + file_name + '.json','r')))
+                config_file = json.dumps(json.load(open('core/ap_provision/' + file_name + '.json','r')))
                 
             except:
                 # File does not exist/ not permitted/ not json

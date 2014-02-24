@@ -190,4 +190,4 @@ class SliceJSONGenerator(object):
     def printConfig(self):
         print(json.dumps(self.data, sort_keys=True, indent=4))
 
-SliceJSONGenerator('json/slicetemp.json')
+SliceJSONGenerator('core/json/slicetemp.json')
