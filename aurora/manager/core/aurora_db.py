@@ -158,7 +158,7 @@ class AuroraDB(object):
                                    "tenant_id = '%s' AND "
                                    "project_id = '%s'" % (tenant_id, project_id) )
                     db.execute(to_execute)
-                    tenant_ap_slices_tt = cur.fetchall()
+                    tenant_ap_slices_tt = db.fetchall()
                     tenant_ap_slices = []
                     for tenant_t in tenant_ap_slices_tt:
                         tenant_ap_slices.append(tenant_t[0])
@@ -180,7 +180,7 @@ class AuroraDB(object):
                                    "tenant_id = '%s' AND "
                                    "project_id = '%s'" % (tenant_id, project_id) )
                     db.execute(to_execute)
-                    tenant_wnets_tt = cur.fetchall()
+                    tenant_wnets_tt = db.fetchall()
 
                     tenant_wnets = []
                     for t in tenant_wnets_tt:
@@ -199,7 +199,7 @@ class AuroraDB(object):
                 to_execute = ( "SELECT status FROM ap_slice WHERE "
                                "ap_slice_id = '%s'" % (ap_slice_id) )
                 db.execute(to_execute)
-                status = cur.fetchone()
+                status = db.fetchone()
                 if status[0] == 'DELETED':
                     return True
         except mdb.Error, e:
@@ -213,7 +213,7 @@ class AuroraDB(object):
                 to_execute = ( "SELECT name FROM tenant_tags WHERE "
                                "ap_slice_id = '%s'" % ap_slice_id )
                 db.execute(to_execute)
-                ap_slice_tags_tt = cur.fetchall()
+                ap_slice_tags_tt = db.fetchall()
                 ap_slice_tags = []
                 for tag_t in ap_slice_tags_tt:
                     ap_slice_tags.append(tag_t[0])
@@ -233,13 +233,13 @@ class AuroraDB(object):
                                "wnet_id='%s' AND tenant_id = '%s' OR "
                                "name='%s' AND tenant_id = '%s'" % (name, tenant_id, name, tenant_id) )
                 db.execute(to_execute)
-                wnetID = cur.fetchone()[0]
+                wnetID = db.fetchone()[0]
 
                 #TODO: Check if already exists
                 to_execute = ( "SELECT ap_slice_id FROM ap_slice WHERE "
                                "wnet_id = '%s'" % wnetID )
                 db.execute(to_execute)
-                ap_slice_id_tt = cur.fetchall()
+                ap_slice_id_tt = db.fetchall()
                 ap_slice_id = []
                 for id_t in ap_slice_id_tt:
                     ap_slice_id.append(id_t[0])
@@ -292,7 +292,7 @@ class AuroraDB(object):
                 to_execute = ( "SELECT wnet_id FROM wnet WHERE "
                                "name = '%s' AND tenant_id = '%s'" % (name, tenant_id) )
                 db.execute(to_execute)
-                wnet_id_tt = cur.fetchall()
+                wnet_id_tt = db.fetchall()
                 if len(wnet_id_tt) > 0:
                     return "You already own '%s'.\n" % name
                 else:
@@ -335,13 +335,13 @@ class AuroraDB(object):
                     to_execute_wnet = ( "DELETE FROM wnet WHERE wnet_id = '%s'"
                                         "AND tenant_id = '%s'" % (wnet_id, tenant_id) )
                 db.execute(to_execute)
-                slice_id_tt = cur.fetchall()
+                slice_id_tt = db.fetchall()
                 if slice_id_tt:
              #       message += "\nRemoving slices from '%s':" % wnet_arg
                     for slice_id_t in slice_id_tt:
                         message += self.wnet_remove_wslice(tenant_id, slice_id_t[0], wnet_id)
                     message += '\n'
-           #     cur.execute(to_execute_slice)
+           #     db.execute(to_execute_slice)
                 message += "Deleting '%s'.\n" % wnet_arg
                 db.execute(to_execute_wnet)
 
@@ -424,7 +424,7 @@ class AuroraDB(object):
             with self._database_connection() as db:
                 db.execute("SELECT name FROM ap")
                 ap_list = []
-                for ap_tuple in cur.fetchall():
+                for ap_tuple in db.fetchall():
                     ap_list.append(ap_tuple[0])
                 return ap_list
         except mdb.Error, e:
@@ -437,7 +437,7 @@ class AuroraDB(object):
                 to_execute = ( "SELECT physical_ap FROM ap_slice WHERE "
                                "ap_slice_id='%s'" % ap_slice_id )
                 db.execute(to_execute)
-                physical_ap = cur.fetchone()
+                physical_ap = db.fetchone()
                 if physical_ap:
                     return physical_ap[0]
                 else:
@@ -452,7 +452,7 @@ class AuroraDB(object):
             with self._database_connection() as db:
                 db.execute("SELECT * FROM ap_slice_status WHERE \
                             ap_slice_id = '%s'" % ap_slice_id)
-                ap_info = cur.fetchone()
+                ap_info = db.fetchone()
                 if ap_info:
                     status = ap_info[1]
                     time_active = ap_info[2]
@@ -480,7 +480,7 @@ class AuroraDB(object):
                 else:
                     to_execute = "SELECT * FROM wnet WHERE tenant_id = '%s'" % tenant_id
                 db.execute(to_execute)
-                wnet_tt = cur.fetchall()
+                wnet_tt = db.fetchall()
                 if not wnet_tt:
                     err_msg = "AuroraDB Error: No wnets available"
                     if wnet_arg:
@@ -508,7 +508,7 @@ class AuroraDB(object):
                 #Get slices associated with this wnet
                 db.execute( "SELECT * FROM ap_slice WHERE "
                              "wnet_id = '%s'" % wnet_id )
-                slice_info_tt = cur.fetchall()
+                slice_info_tt = db.fetchall()
 
                 #Prune through list
                 slice_list = []
@@ -539,7 +539,7 @@ class AuroraDB(object):
                                    "wnet_id='%s' AND tenant_id = '%s'" %
                                    (wnet_arg, tenant_id, wnet_arg, tenant_id) )
                 db.execute(to_execute)
-                wnet_info_tt = cur.fetchall()
+                wnet_info_tt = db.fetchall()
                 if not wnet_info_tt:
                     raise Exception("AuroraDB Error: No wnet '%s'.\n" % wnet_arg)
                 elif tenant_id == 0 and len(wnet_info_tt) > 1:
