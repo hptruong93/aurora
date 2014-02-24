@@ -59,7 +59,7 @@ class AuroraDB(object):
             self.LOGGER.warning('Connection already closed!')
 
     def _database_connection(self):
-        return mdb.connect(self.mysql_host, self.mysql_username
+        return mdb.connect(self.mysql_host, self.mysql_username,
                            self.mysql_password, self.mysql_db)
 
     def _count_db_slices(self, radio_list):
@@ -71,7 +71,7 @@ class AuroraDB(object):
     def ap_status_up(self, ap_name):
         self.LOGGER.info("Setting %s status 'UP'", ap_name)
         try:
-            with _database_connection() as db:
+            with self._database_connection() as db:
                 db.execute("UPDATE ap SET status='UP' WHERE name='%s'" %
                                 (ap_name))
         except mdb.Error, e:
@@ -81,9 +81,8 @@ class AuroraDB(object):
     def ap_status_down(self, ap_name):
         self.LOGGER.info("Setting %s status 'DOWN'", ap_name)
         try:
-            with self.con:
-                cur = self.con.cursor()
-                cur.execute("UPDATE ap SET status='DOWN' WHERE name='%s'" %
+            with self._database_connect() as db:
+                db.execute("UPDATE ap SET status='DOWN' WHERE name='%s'" %
                                 (ap_name))
         except mdb.Error, e:
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
@@ -91,12 +90,11 @@ class AuroraDB(object):
 
     def ap_status_unknown(self, ap_name=None):
         try:
-            with self.con:
-                cur = self.con.cursor()
+            with self._database_connection() as db:
                 if ap_name is None:
-                    cur.execute("UPDATE ap SET status='UNKNOWN'")
+                    db.execute("UPDATE ap SET status='UNKNOWN'")
                 else:
-                    cur.execute("UPDATE ap SET status='UNKNOWN' WHERE name='%s'" %
+                    db.execute("UPDATE ap SET status='UNKNOWN' WHERE name='%s'" %
                                     (ap_name))
 
         except mdb.Error, e:
@@ -105,8 +103,7 @@ class AuroraDB(object):
 
     def ap_update_hw_info(self, hw_database, ap_name, region):
         try:
-            with self.con:
-                cur = self.con.cursor()
+            with self._database_connection() as db:
                 firmware = hw_database["firmware"]
                 firmware_version = hw_database["firmware_version"]
                 number_radio = hw_database["wifi_radio"]["number_radio"]
@@ -146,7 +143,7 @@ class AuroraDB(object):
                                     memory_mb, free_disk,
                                     number_radio_free, number_slice_free))
                 self.LOGGER.debug(to_execute)
-                cur.execute(to_execute)
+                db.execute(to_execute)
         except mdb.Error, e:
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
@@ -156,12 +153,11 @@ class AuroraDB(object):
             return True
         else:
             try:
-                with self.con:
-                    cur = self.con.cursor()
+                with self._database_connection() as db:
                     to_execute = ( "SELECT ap_slice_id FROM ap_slice WHERE "
                                    "tenant_id = '%s' AND "
                                    "project_id = '%s'" % (tenant_id, project_id) )
-                    cur.execute(to_execute)
+                    db.execute(to_execute)
                     tenant_ap_slices_tt = cur.fetchall()
                     tenant_ap_slices = []
                     for tenant_t in tenant_ap_slices_tt:
@@ -179,12 +175,11 @@ class AuroraDB(object):
             return True
         else:
             try:
-                with self.con:
-                    cur = self.con.cursor()
+                with self._database_connection() as db:
                     to_execute = ( "SELECT name, wnet_id FROM wnet WHERE "
                                    "tenant_id = '%s' AND "
                                    "project_id = '%s'" % (tenant_id, project_id) )
-                    cur.execute(to_execute)
+                    db.execute(to_execute)
                     tenant_wnets_tt = cur.fetchall()
 
                     tenant_wnets = []
@@ -200,11 +195,10 @@ class AuroraDB(object):
 
     def wslice_is_deleted(self, ap_slice_id):
         try:
-            with self.con:
-                cur = self.con.cursor()
+           with self._database_connection() as db:
                 to_execute = ( "SELECT status FROM ap_slice WHERE "
                                "ap_slice_id = '%s'" % (ap_slice_id) )
-                cur.execute(to_execute)
+                db.execute(to_execute)
                 status = cur.fetchone()
                 if status[0] == 'DELETED':
                     return True
@@ -215,11 +209,10 @@ class AuroraDB(object):
 
     def wslice_has_tag(self, ap_slice_id, tag):
         try:
-            with self.con:
-                cur = self.con.cursor()
+            with self._database_connection() as db:
                 to_execute = ( "SELECT name FROM tenant_tags WHERE "
                                "ap_slice_id = '%s'" % ap_slice_id )
-                cur.execute(to_execute)
+                db.execute(to_execute)
                 ap_slice_tags_tt = cur.fetchall()
                 ap_slice_tags = []
                 for tag_t in ap_slice_tags_tt:
@@ -233,20 +226,19 @@ class AuroraDB(object):
 
     def wnet_add_wslice(self, tenant_id, slice_id, name):
         try:
-            with self.con:
+            with self._database_connection() as db:
                 #First get wnet-id
-                cur = self.con.cursor()
                 #TODO: Catch tenant 0 call, ambiguous with multiple wnets of same name
                 to_execute = ( "SELECT wnet_id FROM wnet WHERE "
                                "wnet_id='%s' AND tenant_id = '%s' OR "
                                "name='%s' AND tenant_id = '%s'" % (name, tenant_id, name, tenant_id) )
-                cur.execute(to_execute)
+                db.execute(to_execute)
                 wnetID = cur.fetchone()[0]
 
                 #TODO: Check if already exists
                 to_execute = ( "SELECT ap_slice_id FROM ap_slice WHERE "
                                "wnet_id = '%s'" % wnetID )
-                cur.execute(to_execute)
+                db.execute(to_execute)
                 ap_slice_id_tt = cur.fetchall()
                 ap_slice_id = []
                 for id_t in ap_slice_id_tt:
@@ -257,7 +249,7 @@ class AuroraDB(object):
                     #Update to SQL database
                     to_execute = ( "UPDATE ap_slice SET wnet_id='%s' WHERE "
                                    "ap_slice_id='%s'" % (wnetID, slice_id) )
-                    cur.execute(to_execute)
+                    db.execute(to_execute)
                     return "Added '%s' to '%s'.\n" % (slice_id, name)
 
         except mdb.Error, e:
@@ -268,9 +260,8 @@ class AuroraDB(object):
     def wnet_remove_wslice(self, tenant_id, slice_id, name):
         #Update to SQL database
         try:
-            with self.con:
+            with self._database_connection() as db:
                 #First get wnet-id
-                cur = self.con.cursor()
 
                 try:
                     wnet_info = self.get_wnet_name_id(name, tenant_id)
@@ -285,7 +276,7 @@ class AuroraDB(object):
                 to_execute = ( "UPDATE ap_slice SET wnet_id=NULL WHERE "
                                "ap_slice_id='%s' AND "
                                "wnet_id='%s' AND tenant_id = '%s'" % (slice_id, wnet_id, tenant_id) )
-                cur.execute(to_execute)
+                db.execute(to_execute)
                 return "%s: %s removed\n" % (wnet_name, slice_id)
                 #TODO: Add messaging
         except mdb.Error, e:
@@ -297,11 +288,10 @@ class AuroraDB(object):
 
         #Update the SQL database
         try:
-            with self.con:
-                cur = self.con.cursor()
+            with self._database_connection() as db:
                 to_execute = ( "SELECT wnet_id FROM wnet WHERE "
                                "name = '%s' AND tenant_id = '%s'" % (name, tenant_id) )
-                cur.execute(to_execute)
+                db.execute(to_execute)
                 wnet_id_tt = cur.fetchall()
                 if len(wnet_id_tt) > 0:
                     return "You already own '%s'.\n" % name
@@ -309,7 +299,7 @@ class AuroraDB(object):
 
                     to_execute = ( "INSERT INTO wnet VALUES ('%s', '%s', %s, %s)" %
                                    (wnet_id, name, tenant_id, project_id) )
-                    cur.execute(to_execute)
+                    db.execute(to_execute)
                     return "Created '%s'.\n" % name
         except mdb.Error, e:
             err_msg = "Error %d: %s" % (e.args[0], e.args[1])
@@ -320,9 +310,8 @@ class AuroraDB(object):
         #Update the SQL database, at this point we know the wnet exists under the specified tenant
         #TODO: remove association from ap_slices
         try:
-            with self.con:
+            with self._database_connection() as db:
                 message = ""
-                cur = self.con.cursor()
                 try:
                     wnet_info = self.get_wnet_name_id(wnet_arg, tenant_id)
                 except Exception as e:
@@ -345,7 +334,7 @@ class AuroraDB(object):
            #                            (wnet_id, tenant_id) )
                     to_execute_wnet = ( "DELETE FROM wnet WHERE wnet_id = '%s'"
                                         "AND tenant_id = '%s'" % (wnet_id, tenant_id) )
-                cur.execute(to_execute)
+                db.execute(to_execute)
                 slice_id_tt = cur.fetchall()
                 if slice_id_tt:
              #       message += "\nRemoving slices from '%s':" % wnet_arg
@@ -354,7 +343,7 @@ class AuroraDB(object):
                     message += '\n'
            #     cur.execute(to_execute_slice)
                 message += "Deleting '%s'.\n" % wnet_arg
-                cur.execute(to_execute_wnet)
+                db.execute(to_execute_wnet)
 
         except mdb.Error, e:
             err_msg = "Error %d: %s" % (e.args[0], e.args[1])
@@ -364,12 +353,11 @@ class AuroraDB(object):
 
     def wslice_add(self, slice_uuid, slice_ssid, tenant_id, physAP, project_id):
         try:
-            with self.con:
-                cur = self.con.cursor()
+            with self._database_connection() as db:
                 to_execute = ( "INSERT INTO ap_slice VALUES ('%s', '%s', %s, '%s', %s, %s, '%s')" %
                                (slice_uuid, slice_ssid, tenant_id, physAP,
                                 project_id, "NULL", "PENDING") )
-                cur.execute(to_execute)
+                db.execute(to_execute)
                 #return "Adding slice %s on %s.\n" % (slice_uuid, physAP)
                 return None
                 #We the manager calling this method will generate this message after calling.
@@ -385,14 +373,13 @@ class AuroraDB(object):
         #Update SQL database and JSON file
         #Remove tags
         try:
-            with self.con:
-                cur = self.con.cursor()
+            with self._database_connection() as db:
                 to_execute = ( "UPDATE ap_slice SET status='DELETING' WHERE "
                                "ap_slice_id='%s'" % slice_id )
-                cur.execute(to_execute)
+                db.execute(to_execute)
                 to_execute = ( "DELETE FROM tenant_tags WHERE "
                                "ap_slice_id='%s'" % slice_id )
-                cur.execute(to_execute)
+                db.execute(to_execute)
                 return "Deleting slice %s.\n" % slice_id
         except mdb.Error, e:
             err_msg = "Error %d: %s" % (e.args[0], e.args[1])
@@ -404,10 +391,9 @@ class AuroraDB(object):
             return "Tag '%s' already exists for ap_slice '%s'\n" % (tag, ap_slice_id)
         else:
             try:
-                with self.con:
-                    cur = self.con.cursor()
+                with self._database_connection() as db:
                     to_execute = "INSERT INTO tenant_tags VALUES (%s, '%s')" % (tag, ap_slice_id)
-                    cur.execute(to_execute)
+                    db.execute(to_execute)
                     return "Added tag '%s' to ap_slice '%s'.\n" % (tag, ap_slice_id)
             except mdb.Error, e:
                 err_msg = "Error %d: %s\n" % (e.args[0], e.args[1])
@@ -417,12 +403,11 @@ class AuroraDB(object):
     def wslice_remove_tag(self, ap_slice_id, tag):
         if self.wslice_has_tag(ap_slice_id, tag):
             try:
-                with self.con:
-                    cur = self.con.cursor()
+                with self._database_connection() as db:
                     to_execute = ( "DELETE FROM tenant_tags WHERE "
                                    "name='%s' AND ap_slice_id='%s'" %
                                    (tag, ap_slice_id) )
-                    cur.execute(to_execute)
+                    db.execute(to_execute)
                     return "Deleted tag '%s' from ap_slice '%s'\n" % (tag, ap_slice_id)
             except mdb.Error, e:
                 err_msg = "Error %d: %s\n" % (e.args[0], e.args[1])
@@ -436,9 +421,8 @@ class AuroraDB(object):
 
     def get_ap_list(self):
         try:
-            with self.con:
-                cur = self.con.cursor()
-                cur.execute("SELECT name FROM ap")
+            with self._database_connection() as db:
+                db.execute("SELECT name FROM ap")
                 ap_list = []
                 for ap_tuple in cur.fetchall():
                     ap_list.append(ap_tuple[0])
@@ -449,11 +433,10 @@ class AuroraDB(object):
 
     def get_wslice_physical_ap(self, ap_slice_id):
         try:
-            with self.con:
-                cur = self.con.cursor()
+            with self._database_connection() as db:
                 to_execute = ( "SELECT physical_ap FROM ap_slice WHERE "
                                "ap_slice_id='%s'" % ap_slice_id )
-                cur.execute(to_execute)
+                db.execute(to_execute)
                 physical_ap = cur.fetchone()
                 if physical_ap:
                     return physical_ap[0]
@@ -466,9 +449,8 @@ class AuroraDB(object):
     def get_wslice_status(self, ap_slice_id):
         #get ap slice active time and bytes_sent
         try:
-            with self.con:
-                cur = self.con.cursor()
-                cur.execute("SELECT * FROM ap_slice_status WHERE \
+            with self._database_connection() as db:
+                db.execute("SELECT * FROM ap_slice_status WHERE \
                             ap_slice_id = '%s'" % ap_slice_id)
                 ap_info = cur.fetchone()
                 if ap_info:
@@ -487,8 +469,7 @@ class AuroraDB(object):
 
     def get_wnet_list(self, tenant_id, wnet_arg = None):
         try:
-            with self.con:
-                cur = self.con.cursor()
+            with self._database_connection() as db:
                 if tenant_id == 0:
                     to_execute = "SELECT * FROM wnet"
                 elif wnet_arg:
@@ -498,7 +479,7 @@ class AuroraDB(object):
                                    (tenant_id, wnet_arg, tenant_id, wnet_arg) )
                 else:
                     to_execute = "SELECT * FROM wnet WHERE tenant_id = '%s'" % tenant_id
-                cur.execute(to_execute)
+                db.execute(to_execute)
                 wnet_tt = cur.fetchall()
                 if not wnet_tt:
                     err_msg = "AuroraDB Error: No wnets available"
@@ -521,12 +502,11 @@ class AuroraDB(object):
 
     def get_wnet_slices(self, wnet_arg, tenant_id):
         try:
-            with self.con:
-                cur = self.con.cursor()
+            with self._database_connection() as db:
                 wnet_id = self.get_wnet_name_id(wnet_arg, tenant_id)['wnet_id']
 
                 #Get slices associated with this wnet
-                cur.execute( "SELECT * FROM ap_slice WHERE "
+                db.execute( "SELECT * FROM ap_slice WHERE "
                              "wnet_id = '%s'" % wnet_id )
                 slice_info_tt = cur.fetchall()
 
@@ -548,8 +528,7 @@ class AuroraDB(object):
 
     def get_wnet_name_id(self, wnet_arg, tenant_id):
         try:
-            with self.con:
-                cur = self.con.cursor()
+            with self._database_connection() as db:
                 wnet_info = {}
                 if tenant_id == 0:
                     to_execute = ( "SELECT wnet_id, name FROM wnet WHERE "
@@ -559,7 +538,7 @@ class AuroraDB(object):
                                    "name='%s' AND tenant_id = '%s' OR "
                                    "wnet_id='%s' AND tenant_id = '%s'" %
                                    (wnet_arg, tenant_id, wnet_arg, tenant_id) )
-                cur.execute(to_execute)
+                db.execute(to_execute)
                 wnet_info_tt = cur.fetchall()
                 if not wnet_info_tt:
                     raise Exception("AuroraDB Error: No wnet '%s'.\n" % wnet_arg)
