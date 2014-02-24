@@ -311,7 +311,7 @@ class APMonitor(object):
                     status = cur.fetchone()
                     LOGGER.warn("status %s",str(status))
                     if status:
-                        (status = status[0]
+                        status = status[0]
                     else:
                         raise Exception("No status for ap_slice_id %s\n" % unique_id)
                     # Update status
@@ -327,16 +327,16 @@ class APMonitor(object):
 
                         elif status == 'ACTIVE':
                             cur.execute("UPDATE ap_slice SET ")
+
+                        else:
+                            self.LOGGER.info("Unknown Status, ignoring...")
                     else:
                         cur.execute("UPDATE ap_slice SET status='FAILED' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-                    elif status == 'ACTIVE':
-                        if
-                    else:
-                        self.LOGGER.info("Unknown Status, ignoring...")
                         
-                        cur.execute("UPDATE ap_slice_status SET "\
-                                    "status='ACTIVE', last_active_time=Now() "\
-                                    "WHERE ap_slice_id=%s", (str(unique_id)))
+                        
+                        # cur.execute("UPDATE ap_slice_status SET "\
+                        #             "status='ACTIVE', last_active_time=Now() "\
+                        #             "WHERE ap_slice_id=%s", (str(unique_id)))
 
                 # Access point down, mark all slices and failed/down
                 else:
