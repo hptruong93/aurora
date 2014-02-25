@@ -109,8 +109,6 @@ def main():
         msrvr.serve_forever()
 
     except KeyboardInterrupt:
-        if e:
-            print e
         LOGGER.info("Shutting down webserver...")
         msrvr.server_close()
     except Exception:

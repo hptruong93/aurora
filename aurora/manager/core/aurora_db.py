@@ -148,6 +148,19 @@ class AuroraDB(object):
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
 
+    def ap_slice_status_up(self, ap_slice_id):
+        try:
+            with self._database_connection() as db:
+                self.LOGGER.info("Setting status 'UP' for %s", ap_slice_id)
+                to_execute = ("UPDATE ap_slice SET "
+                                      "status='ACTIVE' "
+                                  "WHERE ap_slice_id='%s'" % ap_slice_id)
+                self.LOGGER.debug(to_execute)
+                db.execute(to_execute)
+        except mdb.Error, e:
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
+            sys.exit(1)
+
     def wslice_belongs_to(self, tenant_id, project_id, ap_slice_id):
         if tenant_id == 0:
             return True

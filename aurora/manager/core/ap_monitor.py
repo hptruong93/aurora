@@ -159,8 +159,13 @@ class APMonitor(object):
             else:
                 self.LOGGER.warning("Warning: No request for received 'SYN/ACK' from %s", ap_name)
             provision.update_last_known_config(ap_name, config)
-            self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
             self.aurora_db.ap_status_up(ap_name)
+            self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
+
+            #ap_slice_list = map(lambda slice_: slice_ in config['init_database'].keys() if slice_ != 'default_slice')
+            self.LOGGER.debug("Test map %s", test_map)
+            for ap_slice_id in (ap_slice_id for ap_slice_id in config['init_database'].keys() if ap_slice_id != 'default_slice'):
+                self.aurora_db.ap_slice_status_up(ap_slice_id)
             self.start_poller(ap_name)
             return
 
@@ -262,7 +267,11 @@ class APMonitor(object):
             with self.con:
                 cur = self.con.cursor()
                 to_execute = ("UPDATE ap_slice SET "
-                                    "time_active=time_active+(Now()-last_active_time), "
+                                    "time_active=time_active+(Now()-last_active_time) "
+                                "WHERE ap_slice_id='%s' AND status='ACTIVE'" % ap_slice_id)
+                self.LOGGER.debug(to_execute)
+                cur.execute(to_execute)
+                to_execute = ("UPDATE ap_slice SET "
                                     "last_active_time=Now() "
                                 "WHERE ap_slice_id='%s' AND status='ACTIVE'" % ap_slice_id)
                 self.LOGGER.debug(to_execute)
