@@ -109,7 +109,6 @@ class AuroraDB(object):
                 last_active_time = db.fetchone()
                 time_active = None
                 now = datetime.datetime.now()
-                self.LOGGER.debug("Last active time %s", last_active_time)
                 if last_active_time is not None:
                     last_active_time = last_active_time[0]
                     if last_active_time is not None:
@@ -210,19 +209,19 @@ class AuroraDB(object):
             with self._database_connection() as db:
                 if success:
                     to_execute = ("""UPDATE ap_slice SET 
+                                         last_active_time=
+                                             CASE status
+                                                 WHEN 'PENDING' THEN '%s'
+                                                 WHEN 'DOWN' THEN '%s'
+                                             ELSE last_active_time END,
                                          status= 
                                              CASE status 
                                                  WHEN 'PENDING' THEN 'ACTIVE' 
                                                  WHEN 'DELETING' THEN 'DELETED' 
                                                  WHEN 'DOWN' THEN 'ACTIVE' 
-                                             ELSE status END,
-                                         last_active_time=
-                                             CASE status
-                                                 WHEN 'PENDING' OR 'DOWN' 
-                                                     THEN '%s'
-                                             ELSE last_active_time END
+                                             ELSE status END
                                          WHERE ap_slice_id='%s'""" % 
-                                         (datetime.datetime.now(), ap_slice_id)
+                                         (datetime.datetime.now(), datetime.datetime.now(), ap_slice_id)
                                  )
                 else:
                     to_execute = ("""UPDATE ap_slice SET 
