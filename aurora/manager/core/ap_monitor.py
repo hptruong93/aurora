@@ -277,9 +277,11 @@ class APMonitor(object):
                 now = datetime.datetime.now()
                 if last_active_time is not None:
                     time_diff = now - last_active_time
+                    self.LOGGER.debug("TIME DIFF %s", time_diff)
                 if time_active is not None:
+                    self.LOGGER.debug("TIME ACTIVE %s", time_active)
                     time_active = time_active + time_diff
-                self.LOGGER.debug("TIME ACTIVE %s", time_active)
+                self.LOGGER.debug("NEW TIME ACTIVE %s", time_active)
                 to_execute = ("UPDATE ap_slice SET "
                                     "time_active='%s' "
                                 "WHERE ap_slice_id='%s' AND status='ACTIVE'" % (time_active, ap_slice_id))
