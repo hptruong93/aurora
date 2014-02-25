@@ -350,18 +350,26 @@ class APMonitor(object):
                     # Update status
                     if success:
                         if status == 'PENDING':
-                            cur.execute("UPDATE ap_slice SET status='ACTIVE', last_active_time=Now(), time_active='0:0:0' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
+                            to_execute = ("UPDATE ap_slice SET status='ACTIVE', last_active_time=Now(), time_active='0:0:0' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
+                            self.LOGGER.debug(to_execute)
+                            cur.execute(to_execute)
 
                         elif status == 'DELETING':
-                            cur.execute("UPDATE ap_slice SET status='DELETED' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-
+                            to_execute = ("UPDATE ap_slice SET status='DELETED' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
+                            self.LOGGER.debug(to_execute)
+                            cur.execute(to_execute)
                         elif status == 'DOWN':
-                            cur.execute("UPDATE ap_slice SET status='ACTIVE', last_active_time=Now(), time_active='0:0:0' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
+                            to_execute = ("UPDATE ap_slice SET status='ACTIVE', last_active_time=Now(), time_active='0:0:0' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
+                            self.LOGGER.debug(to_execute)
+                            cur.execute(to_execute)
                             #self._update_time_active(unique_id)
                         else:
                             self.LOGGER.info("Unknown Status, ignoring...")
                     else:
-                        cur.execute("UPDATE ap_slice SET status='FAILED' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
+                        to_execute = ("UPDATE ap_slice SET status='FAILED' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
+                        self.LOGGER.debug(to_execute)
+                        cur.execute(to_execute)
+                        
                         
                         
                         # cur.execute("UPDATE ap_slice_status SET "\
