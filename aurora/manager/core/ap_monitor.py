@@ -163,7 +163,7 @@ class APMonitor(object):
             self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
 
             #ap_slice_list = map(lambda slice_: slice_ in config['init_database'].keys() if slice_ != 'default_slice')
-            self.LOGGER.debug("Test map %s", test_map)
+            # self.LOGGER.debug("Test map %s", test_map)
             for ap_slice_id in (ap_slice_id for ap_slice_id in config['init_database'].keys() if ap_slice_id != 'default_slice'):
                 self.aurora_db.ap_slice_status_up(ap_slice_id)
             self.start_poller(ap_name)
@@ -350,13 +350,13 @@ class APMonitor(object):
                     # Update status
                     if success:
                         if status == 'PENDING':
-                            cur.execute("UPDATE ap_slice SET status='ACTIVE', last_active_time=Now(), time_active=0 WHERE ap_slice_id=\'"+str(unique_id)+"\'")
+                            cur.execute("UPDATE ap_slice SET status='ACTIVE', last_active_time=Now(), time_active='0:0:0' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
 
                         elif status == 'DELETING':
                             cur.execute("UPDATE ap_slice SET status='DELETED' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
 
                         elif status == 'DOWN':
-                            cur.execute("UPDATE ap_slice SET status='ACTIVE', last_active_time=Now() WHERE ap_slice_id=\'"+str(unique_id)+"\'")
+                            cur.execute("UPDATE ap_slice SET status='ACTIVE', last_active_time=Now(), time_active='0:0:0' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
                             #self._update_time_active(unique_id)
                         else:
                             self.LOGGER.info("Unknown Status, ignoring...")

@@ -151,7 +151,7 @@ class AuroraDB(object):
     def ap_slice_status_up(self, ap_slice_id):
         try:
             with self._database_connection() as db:
-                self.LOGGER.info("Setting status 'UP' for %s", ap_slice_id)
+                self.LOGGER.info("Setting status 'ACTIVE' for %s", ap_slice_id)
                 to_execute = ("UPDATE ap_slice SET "
                                       "status='ACTIVE' "
                                   "WHERE ap_slice_id='%s'" % ap_slice_id)
