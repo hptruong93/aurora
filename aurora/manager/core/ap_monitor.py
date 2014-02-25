@@ -266,14 +266,28 @@ class APMonitor(object):
         try:
             with self.con:
                 cur = self.con.cursor()
+                cur.execute("SELECT time_active, last_active_time FROM ap_slice WHERE ap_slice_id='%s'" % ap_slice_id)
+                time_stats = cur.fetchone()
+                (time_active, last_active_time) = (None, None)
+                if time_stats:
+                    time_active = time_stats[0]
+                    last_active_time = time_stats[1]
+                self.LOGGER.debug("LAST ACTIVE TIME %s", last_active_time)
+                time_diff = None
+                now = datetime.datetime.now()
+                if last_active_time is not None:
+                    time_diff = now - last_active_time
+                if time_active is not None:
+                    time_active = time_active + time_diff
+                self.LOGGER.debug("TIME ACTIVE %s", time_active)
                 to_execute = ("UPDATE ap_slice SET "
-                                    "time_active=time_active+(Now()-last_active_time) "
-                                "WHERE ap_slice_id='%s' AND status='ACTIVE'" % ap_slice_id)
+                                    "time_active='%s' "
+                                "WHERE ap_slice_id='%s' AND status='ACTIVE'" % (time_active, ap_slice_id))
                 self.LOGGER.debug(to_execute)
                 cur.execute(to_execute)
                 to_execute = ("UPDATE ap_slice SET "
-                                    "last_active_time=Now() "
-                                "WHERE ap_slice_id='%s' AND status='ACTIVE'" % ap_slice_id)
+                                    "last_active_time='%s' "
+                                "WHERE ap_slice_id='%s' AND status='ACTIVE'" % (now, ap_slice_id))
                 self.LOGGER.debug(to_execute)
                 cur.execute(to_execute)
         except Exception:
