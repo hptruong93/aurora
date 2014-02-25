@@ -4,6 +4,7 @@ import BaseHTTPServer
 import json
 import logging
 from pprint import pprint
+import sys
 
 import cls_logger
 import manager
@@ -107,11 +108,13 @@ def main():
         LOGGER.info("Starting webserver...")
         msrvr.serve_forever()
 
-    except BaseException as e:
+    except KeyboardInterrupt:
         if e:
             print e
         LOGGER.info("Shutting down webserver...")
         msrvr.server_close()
+    except Exception:
+        traceback.print_exc(file=sys.stdout)
 
 if __name__ == "__main__":
     LOGGER = logging.getLogger('manager_http_server')

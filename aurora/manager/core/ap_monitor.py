@@ -138,6 +138,7 @@ class APMonitor(object):
             #      for a response, cancel the timer and/or send the command again
             # AP has started, check if we need to restart slices
             self.LOGGER.info("%s has connected...", ap_name)
+            self.aurora_db.ap_status_up(ap_name)
             self.dispatcher.remove_request(ap_syn=ap_name)
             # Tell ap monitor, let it handle restart of slices
             #self.start_poller(ap_name)
@@ -145,7 +146,6 @@ class APMonitor(object):
             self.restart_slices(ap_name, slices_to_restart)
             provision.update_last_known_config(ap_name, config)
             self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
-            self.aurora_db.ap_status_up(ap_name)
             self.start_poller(ap_name)
             return
 
@@ -251,6 +251,7 @@ class APMonitor(object):
 
     def update_records(self, message):
         """Update the traffic information of ap_slice"""
+        self.LOGGER.debug("Updating records...")
         for ap_slice_id in message.keys():
             self._update_time_active(ap_slice_id)
             self._update_bytes_sent(ap_slice_id, message.get(ap_slice_id))
@@ -260,10 +261,12 @@ class APMonitor(object):
         try:
             with self.con:
                 cur = self.con.cursor()
-                cur.execute("UPDATE ap_slice SET "
+                to_execute = ("UPDATE ap_slice SET "
                                     "time_active=time_active+(Now()-last_active_time), "
                                     "last_active_time=Now() "
                                 "WHERE ap_slice_id='%s' AND status='ACTIVE'" % ap_slice_id)
+                self.LOGGER.debug(to_execute)
+                cur.execute(to_execute)
         except Exception:
             traceback.print_exc(file=sys.stdout)
             #self.LOGGER.error("Error: %s", str(e))
@@ -272,9 +275,11 @@ class APMonitor(object):
         try:
             with self.con:
                 cur = self.con.cursor()
-                cur.execute("UPDATE ap_slice SET bytes_sent=%s " 
+                to_execute = ("UPDATE ap_slice SET bytes_sent=%s " 
                                 "WHERE ap_slice_id='%s'" %
                             (bytes_sent, ap_slice_id))
+                self.LOGGER.debug(to_execute)
+                cur.execute(to_execute)
         except Exception, e:
             self.LOGGER.error("Error: %s", str(e))
 
@@ -326,7 +331,7 @@ class APMonitor(object):
                 if ap_up:
                     self.aurora_db.ap_status_up(ap_name)
                     # Get status
-                    cur.execute("SELECT status, time_active FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'")
+                    cur.execute("SELECT status FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'")
                     status = cur.fetchone()
                     self.LOGGER.warn("status %s",str(status))
                     if status:
