@@ -11,6 +11,7 @@ import logging
 import os
 from pprint import pprint
 import sys
+import traceback
 
 import MySQLdb as mdb
 
@@ -105,15 +106,17 @@ class AuroraDB(object):
         try:
             with self._database_connection() as db:
                 db.execute("SELECT last_active_time FROM ap_slice WHERE ap_slice_id='%s'" % ap_slice_id)
-                last_active_time = cur.fetchone()
+                last_active_time = db.fetchone()
                 time_active = None
                 now = datetime.datetime.now()
                 if last_active_time:
                     last_active_time = last_active_time[0]
                     time_active = now - last_active_time
-                    to_execute = ("UPDATE ap_slice SET "
-                                        "time_active='%s' "
-                                    "WHERE ap_slice_id='%s' AND status='ACTIVE'" % (time_active, ap_slice_id))
+                    to_execute = ("""UPDATE ap_slice SET 
+                                         time_active='%s' 
+                                         WHERE ap_slice_id='%s' AND status='ACTIVE'""" % 
+                                         (time_active, ap_slice_id)
+                                 )
                     self.LOGGER.debug(to_execute)
                     db.execute(to_execute)
                 else:
@@ -203,8 +206,14 @@ class AuroraDB(object):
                                                  WHEN 'PENDING' THEN 'ACTIVE' 
                                                  WHEN 'DELETING' THEN 'DELETED' 
                                                  WHEN 'DOWN' THEN 'ACTIVE' 
-                                             ELSE status END
-                                         WHERE ap_slice_id='%s'""" % ap_slice_id
+                                             ELSE status END,
+                                         last_active_time=
+                                             CASE status
+                                                 WHEN 'PENDING' OR 'DOWN' 
+                                                     THEN '%s'
+                                             ELSE last_active_time END
+                                         WHERE ap_slice_id='%s'""" % 
+                                         (datetime.datetime.now(), ap_slice_id)
                                  )
                 else:
                     to_execute = ("""UPDATE ap_slice SET 
@@ -226,7 +235,7 @@ class AuroraDB(object):
                                              WHEN 'ACTIVE' THEN 'DOWN'
                                              WHEN 'DELETING' THEN 'DELETED'
                                              WHEN 'PENDING' THEN 'FAILED'
-                                         ELSE status END
+                                         ELSE status END,
                                      WHERE physical_ap='%s'""" % ap_name
                              )
                 self.LOGGER.debug(to_execute)
