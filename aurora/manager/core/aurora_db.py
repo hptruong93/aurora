@@ -109,15 +109,17 @@ class AuroraDB(object):
                 last_active_time = db.fetchone()
                 time_active = None
                 now = datetime.datetime.now()
+                self.LOGGER.debug("Last active time %s", last_active_time)
                 if last_active_time is not None:
                     last_active_time = last_active_time[0]
-                    time_active = now - last_active_time
-                    to_execute = ("""UPDATE ap_slice SET 
-                                         time_active='%s' 
-                                         WHERE ap_slice_id='%s' AND status='ACTIVE'""" % 
-                                         (time_active, ap_slice_id)
-                                 )
-                else:
+                    if last_active_time is not None:
+                        time_active = now - last_active_time
+                        to_execute = ("""UPDATE ap_slice SET 
+                                             time_active='%s' 
+                                             WHERE ap_slice_id='%s' AND status='ACTIVE'""" % 
+                                             (time_active, ap_slice_id)
+                                     )
+                if last_active_time is None:
                     self.LOGGER.warn("No value for last active time for slice %s", ap_slice_id)
                     self.LOGGER.info("Setting last active time %s", now)
                     to_execute = ("""UPDATE ap_slice SET
@@ -127,6 +129,7 @@ class AuroraDB(object):
                                  )
                 self.LOGGER.debug(to_execute)
                 db.execute(to_execute)
+
         except Exception:
             traceback.print_exc(file=sys.stdout)
             #self.LOGGER.error("Error: %s", str(e))
