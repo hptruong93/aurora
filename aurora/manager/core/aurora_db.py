@@ -109,7 +109,7 @@ class AuroraDB(object):
                 last_active_time = db.fetchone()
                 time_active = None
                 now = datetime.datetime.now()
-                if last_active_time:
+                if last_active_time is not None:
                     last_active_time = last_active_time[0]
                     time_active = now - last_active_time
                     to_execute = ("""UPDATE ap_slice SET 
@@ -241,7 +241,7 @@ class AuroraDB(object):
                                              WHEN 'ACTIVE' THEN 'DOWN'
                                              WHEN 'DELETING' THEN 'DELETED'
                                              WHEN 'PENDING' THEN 'FAILED'
-                                         ELSE status END,
+                                         ELSE status END
                                      WHERE physical_ap='%s'""" % ap_name
                              )
                 self.LOGGER.debug(to_execute)
