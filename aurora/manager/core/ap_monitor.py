@@ -121,11 +121,11 @@ class APMonitor(object):
                 time.sleep(0.1)
                 pass
 
-        self.LOGGER.debug("channel:",channel)
-        self.LOGGER.debug("method:", method)
+        self.LOGGER.debug("channel: %s",channel)
+        self.LOGGER.debug("method: %s", method)
         self.LOGGER.debug(repr(props))
         self.LOGGER.debug(body)
-        self.LOGGER.debug("\nrequests_sent:",self.dispatcher.requests_sent)
+        self.LOGGER.debug("\nrequests_sent: %s",self.dispatcher.requests_sent)
 
         # Decode response
         decoded_response = json.loads(body)

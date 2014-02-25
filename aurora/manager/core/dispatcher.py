@@ -152,13 +152,13 @@ class Dispatcher(object):
         else:
             ap_slice_id = config['slice']
         # Start a timeout countdown
-        self.LOGGER.debug("ap_slice_id ",ap_slice_id)
+        self.LOGGER.debug("ap_slice_id %s",ap_slice_id)
         timer = threading.Timer(self.TIMEOUT, self.timeout_callback, args=(ap_slice_id,ap,unique_id))
-        self.LOGGER.debug("Adding timer", timer)
+        self.LOGGER.debug("Adding timer %s", timer)
         self.requests_sent.append((unique_id, timer, ap_slice_id))
         timer.start()
-        self.LOGGER.debug("requests_sent",self.requests_sent)
-        self.LOGGER.debug("Starting timer:",self.requests_sent[-1])
+        self.LOGGER.debug("requests_sent %s",self.requests_sent)
+        self.LOGGER.debug("Starting timer: %s",self.requests_sent[-1])
 
         self.LOGGER.debug("Unlocking...")
         Dispatcher.lock = False

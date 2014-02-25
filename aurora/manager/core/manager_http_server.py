@@ -99,7 +99,7 @@ class ManagerServer(BaseHTTPServer.HTTPServer):
         BaseHTTPServer.HTTPServer.server_close(self) 
 
 def main():
-    cls_logger.set_up_root_logger()
+    cls_logger.set_up_root_logger(level=logging.DEBUG)
     
     handler_class=NewConnectionHandler
     server_address = ('', 5554)

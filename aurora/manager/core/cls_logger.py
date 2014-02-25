@@ -99,6 +99,8 @@ def set_up_root_logger(level=None):
     stream_handler = setup_handler()
     logging.root.handlers.append(stream_handler)
     logging.root.setLevel(logging.INFO)
+    if level is not None:
+        logging.root.setLevel(level)
 
 def get_cls_logger(cls):
     """Assign a logger to a class only if no prior logger has been assigned
