@@ -535,9 +535,10 @@ class AuroraDB(object):
         except mdb.Error, e:
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
+
     def get_user_for_active_ap_slice(self, ap_slice_id):
         try:
-            with self._database_connectioN() as db:
+            with self._database_connection() as db:
                 to_execute = ("""SELECT tenant_id 
                                  FROM ap_slice 
                                  WHERE 
@@ -547,7 +548,7 @@ class AuroraDB(object):
                 self.LOGGER.debug(to_execute)
                 num_lines = db.execute(to_execute)
                 if num_lines > 0:
-                    return db.fetchone()[0]
+                    return int(db.fetchone()[0])
         except mdb.Error, e:
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)

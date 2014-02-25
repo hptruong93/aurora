@@ -332,7 +332,7 @@ class APMonitor(object):
                 user_id = self.aurora_db.get_user_for_active_ap_slice(ap_slice_id)
                 self.LOGGER.debug("Returned user id %s", user_id)
                 if user_id is not None:
-                    assert type(user_id) is IntType
+                    assert type(user_id) is IntType,"Need user_id to be IntType"
                     self.LOGGER.info("%s %s for tenant %s", ap_slice_id, status, user_id)
                     self.LOGGER.info("Restarting %s", ap_slice_id)
                     self.dispatcher.dispatch({'slice': ap_slice_id,
@@ -341,7 +341,7 @@ class APMonitor(object):
                                              },
                                              ap)
                 else:
-                    raise Exception("No active slice %s" % slice_id)
+                    self.LOGGER.warn("No active slice %s", slice_id)
         except Exception, e:
             self.LOGGER.error("Error %s", e)
         finally:
