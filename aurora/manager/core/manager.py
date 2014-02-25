@@ -651,7 +651,7 @@ class Manager(object):
                         expression = expression+' AND '+ entry
                     else:
                         expression = entry
-            self.LOGGER.debug("SQL Filter:",expression)
+            self.LOGGER.debug("SQL Filter: %s",expression)
 
             #Execute Query
             try:
