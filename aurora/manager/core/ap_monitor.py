@@ -266,29 +266,20 @@ class APMonitor(object):
         try:
             with self.con:
                 cur = self.con.cursor()
-                cur.execute("SELECT time_active, last_active_time FROM ap_slice WHERE ap_slice_id='%s'" % ap_slice_id)
+                cur.execute("SELECT last_active_time FROM ap_slice WHERE ap_slice_id='%s'" % ap_slice_id)
                 time_stats = cur.fetchone()
-                (time_active, last_active_time) = (None, None)
-                if time_stats:
-                    time_active = time_stats[0]
-                    last_active_time = time_stats[1]
-                self.LOGGER.debug("LAST ACTIVE TIME %s", last_active_time)
-                time_diff = None
+                time_active = None
                 now = datetime.datetime.now()
-                self.LOGGER.debug("NOW %s", now)
-                if last_active_time is not None:
-                    time_diff = now - last_active_time
-                    self.LOGGER.debug("TIME DIFF %s", time_diff)
-                if time_active is not None:
-                    self.LOGGER.debug("TIME ACTIVE %s", time_active)
-                    # time_active = time_active + time_diff
-                    time_active = time_diff
-                self.LOGGER.debug("NEW TIME ACTIVE %s", time_active)
-                to_execute = ("UPDATE ap_slice SET "
-                                    "time_active='%s' "
-                                "WHERE ap_slice_id='%s' AND status='ACTIVE'" % (time_active, now, ap_slice_id))
-                self.LOGGER.debug(to_execute)
-                cur.execute(to_execute)
+                if last_time_active:
+                    last_active_time = last_active_time[0]
+                    time_active = now - last_active_time
+                    to_execute = ("UPDATE ap_slice SET "
+                                        "time_active='%s' "
+                                    "WHERE ap_slice_id='%s' AND status='ACTIVE'" % (time_active, ap_slice_id))
+                    self.LOGGER.debug(to_execute)
+                    cur.execute(to_execute)
+                else:
+                    self.LOGGER.warn("No value for last active time for slice %s", ap_slice_id)
         except Exception:
             traceback.print_exc(file=sys.stdout)
             #self.LOGGER.error("Error: %s", str(e))
