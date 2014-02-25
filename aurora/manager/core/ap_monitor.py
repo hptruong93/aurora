@@ -333,7 +333,7 @@ class APMonitor(object):
                 self.LOGGER.debug("Returned user id %s", user_id)
                 if user_id is not None:
                     assert type(user_id) is IntType,"Need user_id to be IntType"
-                    self.LOGGER.info("%s %s for tenant %s", ap_slice_id, status, user_id)
+                    self.LOGGER.info("%s for tenant %s", ap_slice_id, user_id)
                     self.LOGGER.info("Restarting %s", ap_slice_id)
                     self.dispatcher.dispatch({'slice': ap_slice_id,
                                               'command': 'restart_slice',
