@@ -309,9 +309,11 @@ class APMonitor(object):
 
             # Access point down, mark all slices and failed/down
             else:
-                self.aurora_db.ap_status_down(physical_ap)
-                self._close_poller_thread(physical_ap, 'admin')
-                self.aurora_db.ap_down_slice_status_update(ap_name=ap_name, ap_slice_id=unique_id)
+                if ap_name is None:
+                    ap_name = self.aurora_db.get_wslice_physical_ap(ap_slice_id)
+                self.aurora_db.ap_status_down(ap_name)
+                self._close_poller_thread(ap_name, 'admin')
+                self.aurora_db.ap_down_slice_status_update(ap_name)
         except Exception, e:
             self.LOGGER.error(str(e))
         finally:
