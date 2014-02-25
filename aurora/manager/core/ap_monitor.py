@@ -8,6 +8,7 @@ import sys
 import threading
 import time
 import traceback
+from types import *
 import uuid
 import weakref
 
@@ -258,43 +259,8 @@ class APMonitor(object):
         """Update the traffic information of ap_slice"""
         self.LOGGER.debug("Updating records...")
         for ap_slice_id in message.keys():
-            self._update_time_active(ap_slice_id)
-            self._update_bytes_sent(ap_slice_id, message.get(ap_slice_id))
-
-
-    def _update_time_active(self, ap_slice_id):
-        try:
-            with self.con:
-                cur = self.con.cursor()
-                cur.execute("SELECT last_active_time FROM ap_slice WHERE ap_slice_id='%s'" % ap_slice_id)
-                time_stats = cur.fetchone()
-                time_active = None
-                now = datetime.datetime.now()
-                if last_time_active:
-                    last_active_time = last_active_time[0]
-                    time_active = now - last_active_time
-                    to_execute = ("UPDATE ap_slice SET "
-                                        "time_active='%s' "
-                                    "WHERE ap_slice_id='%s' AND status='ACTIVE'" % (time_active, ap_slice_id))
-                    self.LOGGER.debug(to_execute)
-                    cur.execute(to_execute)
-                else:
-                    self.LOGGER.warn("No value for last active time for slice %s", ap_slice_id)
-        except Exception:
-            traceback.print_exc(file=sys.stdout)
-            #self.LOGGER.error("Error: %s", str(e))
-
-    def _update_bytes_sent(self, ap_slice_id, bytes_sent):
-        try:
-            with self.con:
-                cur = self.con.cursor()
-                to_execute = ("UPDATE ap_slice SET bytes_sent=%s " 
-                                "WHERE ap_slice_id='%s'" %
-                            (bytes_sent, ap_slice_id))
-                self.LOGGER.debug(to_execute)
-                cur.execute(to_execute)
-        except Exception, e:
-            self.LOGGER.error("Error: %s", str(e))
+            self.aurora_db.ap_slice_update_time_active(ap_slice_id)
+            self.aurora_db.ap_slice_update_bytes_sent(ap_slice_id, message.get(ap_slice_id))
 
     def set_status(self, unique_id, success, ap_up=True, ap_name=None):
         self._add_call_to_queue(unique_id, success, ap_up, ap_name)
@@ -336,105 +302,16 @@ class APMonitor(object):
         #   else if slice is deleting, mark deleted (will be when we reinitialize)
         #   else if slice is pending, mark failed
         try:
-            with self.con:
-                APMonitor.sql_locked = True
-                cur = self.con.cursor()
+            # Access point is up - we are receiving individual packets
+            if ap_up:
+                self.aurora_db.ap_status_up(ap_name)
+                self.aurora_db.ap_up_slice_status_update(unique_id, success)
 
-                # Access point is up - we are receiving individual packets
-                if ap_up:
-                    self.aurora_db.ap_status_up(ap_name)
-                    # Get status
-                    cur.execute("SELECT status FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-                    status = cur.fetchone()
-                    self.LOGGER.warn("status %s",str(status))
-                    if status:
-                        status = status[0]
-                    else:
-                        raise Exception("No status for ap_slice_id %s\n" % unique_id)
-                    # Update status
-                    if success:
-                        if status == 'PENDING':
-                            to_execute = ("UPDATE ap_slice SET status='ACTIVE', last_active_time=Now(), time_active='0:0:0' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-                            self.LOGGER.debug(to_execute)
-                            cur.execute(to_execute)
-
-                        elif status == 'DELETING':
-                            to_execute = ("UPDATE ap_slice SET status='DELETED' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-                            self.LOGGER.debug(to_execute)
-                            cur.execute(to_execute)
-                        elif status == 'DOWN':
-                            to_execute = ("UPDATE ap_slice SET status='ACTIVE', last_active_time=Now(), time_active='0:0:0' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-                            self.LOGGER.debug(to_execute)
-                            cur.execute(to_execute)
-                            #self._update_time_active(unique_id)
-                        else:
-                            self.LOGGER.info("Unknown Status, ignoring...")
-                    else:
-                        to_execute = ("UPDATE ap_slice SET status='FAILED' WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-                        self.LOGGER.debug(to_execute)
-                        cur.execute(to_execute)
-                        
-                        
-                        
-                        # cur.execute("UPDATE ap_slice_status SET "\
-                        #             "status='ACTIVE', last_active_time=Now() "\
-                        #             "WHERE ap_slice_id=%s", (str(unique_id)))
-
-                # Access point down, mark all slices and failed/down
-                else:
-                    if ap_name:
-                        physical_ap = ap_name
-                    else:
-                        to_execute = "SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'"
-                        self.LOGGER.debug(to_execute)
-                        cur.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id=\'"+str(unique_id)+"\'")
-                        physical_ap = cur.fetchone()
-                        if physical_ap:
-                            physical_ap = physical_ap[0]
-                        else:
-                            raise Exception("Cannot fetch physical_ap for slice %s\n" % unique_id)
-
-                    self.LOGGER.debug("physical_ap: %s", physical_ap)
-                    self.aurora_db.ap_status_down(physical_ap)
-                    self._close_poller_thread(physical_ap, 'admin')
-                    #Get all slices associated with this ap
-                    cur.execute("SELECT ap_slice_id FROM ap_slice WHERE physical_ap=\'"+str(physical_ap)+"\' AND status<>'DELETED'")
-
-                    #Prune List of ap_slice_id
-                    raw_list = cur.fetchall()
-                    if raw_list:
-                        slice_list = []
-                        for entry in raw_list:
-                            slice_list.append(entry[0])
-                    else:
-                        raise Exception("No slices on physical_ap '%s'\n" % physical_ap)
-
-                    self.LOGGER.debug("raw_list: %s",raw_list)
-                    self.LOGGER.debug("slice_list: %s",slice_list)
-
-                    for entry in slice_list:
-                        #Get status
-                        cur.execute("SELECT status FROM ap_slice WHERE ap_slice_id=\'"+str(entry)+"\'")
-                        status = cur.fetchone()
-                        if status:
-                            status = status[0]
-                        else:
-                            raise Exception("No status for ap_slice_id %s\n" % unique_id)
-
-                        # Update status
-                        if status == 'ACTIVE':
-                            cur.execute("UPDATE ap_slice SET status='DOWN' WHERE ap_slice_id=\'"+str(entry)+"\'")
-                            self.LOGGER.info("%s: %s - Updated to status: 'DOWN'", entry, status)
-                        elif status == 'DELETING':
-                            cur.execute("UPDATE ap_slice SET status='DELETED' WHERE ap_slice_id=\'"+str(entry)+"\'")
-                            self.LOGGER.info("%s: %s - Updated to status: 'DELETED'", entry, status)
-                        elif status == 'PENDING':
-                            cur.execute("UPDATE ap_slice SET status='FAILED' WHERE ap_slice_id=\'"+str(entry)+"\'")
-                            self.LOGGER.info("%s: %s - Updated to status: 'FAILED'", entry, status)
-                        else:
-                            self._update_time_active(entry)
-                            self.LOGGER.info("%s: %s - Unknown Status, ignoring...", entry, status)
-
+            # Access point down, mark all slices and failed/down
+            else:
+                self.aurora_db.ap_status_down(physical_ap)
+                self._close_poller_thread(physical_ap, 'admin')
+                self.aurora_db.ap_down_slice_status_update(ap_name=ap_name, ap_slice_id=unique_id)
         except Exception, e:
             self.LOGGER.error(str(e))
         finally:
@@ -448,27 +325,21 @@ class APMonitor(object):
                 time.sleep(0.1)
                 pass
         try:
-            with self.con:
-                APMonitor.sql_locked = True
-                cur = self.con.cursor()
-                for slice_id in slice_list:
-                    self.LOGGER.info("Restarting %s", slice_id)
-                    cur.execute("SELECT status, tenant_id FROM ap_slice WHERE ap_slice_id = '%s'" %
-                                slice_id)
-                    items = cur.fetchone()
-                    if items:
-                        status = items[0]
-                        user_id = items[1]
-                        self.LOGGER.info("%s %s for tenant %s", slice_id, status, user_id)
-                    else:
-                        raise Exception("No slice %s\n" % slice_id)
-                    if status != 'DELETED' and status != 'DELETING':
-                        # Restart slice as it wasn't deleted since AP went down
-                        # dispatcher = self.dispatcher_ref()
-                        self.dispatcher.dispatch({'slice': slice_id,
-                                             'command': 'restart_slice',
-                                             'user': user_id},
+            APMonitor.sql_locked = True
+            for ap_slice_id in slice_list:
+                user_id = self.aurora_db.get_user_for_active_ap_slice(ap_slice_id)
+                self.LOGGER.debug("Returned user id %s", user_id)
+                if user_id is not None:
+                    assert type(user_id) is IntType
+                    self.LOGGER.info("%s %s for tenant %s", ap_slice_id, status, user_id)
+                    self.LOGGER.info("Restarting %s", ap_slice_id)
+                    self.dispatcher.dispatch({'slice': ap_slice_id,
+                                              'command': 'restart_slice',
+                                              'user': user_id
+                                             },
                                              ap)
+                else:
+                    raise Exception("No active slice %s" % slice_id)
         except Exception, e:
             self.LOGGER.error("Error %s", e)
         finally:

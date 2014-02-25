@@ -101,6 +101,40 @@ class AuroraDB(object):
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
 
+    def ap_slice_update_time_active(self, ap_slice_id):
+        try:
+            with self.con:
+                cur = self.con.cursor()
+                cur.execute("SELECT last_active_time FROM ap_slice WHERE ap_slice_id='%s'" % ap_slice_id)
+                last_active_time = cur.fetchone()
+                time_active = None
+                now = datetime.datetime.now()
+                if last_active_time:
+                    last_active_time = last_active_time[0]
+                    time_active = now - last_active_time
+                    to_execute = ("UPDATE ap_slice SET "
+                                        "time_active='%s' "
+                                    "WHERE ap_slice_id='%s' AND status='ACTIVE'" % (time_active, ap_slice_id))
+                    self.LOGGER.debug(to_execute)
+                    cur.execute(to_execute)
+                else:
+                    self.LOGGER.warn("No value for last active time for slice %s", ap_slice_id)
+        except Exception:
+            traceback.print_exc(file=sys.stdout)
+            #self.LOGGER.error("Error: %s", str(e))
+
+    def ap_slice_update_bytes_sent(self, ap_slice_id, bytes_sent):
+        try:
+            with self.con:
+                cur = self.con.cursor()
+                to_execute = ("UPDATE ap_slice SET bytes_sent=%s " 
+                                "WHERE ap_slice_id='%s'" %
+                            (bytes_sent, ap_slice_id))
+                self.LOGGER.debug(to_execute)
+                cur.execute(to_execute)
+        except Exception, e:
+            self.LOGGER.error("Error: %s", str(e))
+
     def ap_update_hw_info(self, hw_database, ap_name, region):
         try:
             with self._database_connection() as db:
@@ -160,6 +194,62 @@ class AuroraDB(object):
         except mdb.Error, e:
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
+
+    def ap_up_slice_status_update(self, ap_slice_id, success=False):
+        try:
+            with self._database_connection() as db:
+                if success:
+                    to_execute = ("""UPDATE ap_slice SET 
+                                         status= 
+                                             CASE status 
+                                                 WHEN 'PENDING' THEN 'ACTIVE' 
+                                                 WHEN 'DELETING' THEN 'DELETED' 
+                                                 WHEN 'DOWN' THEN 'ACTIVE' 
+                                             ELSE status END
+                                         WHERE ap_slice_id='%s'""" % ap_slice_id
+                                 )
+                else:
+                    to_execute = ("""UPDATE ap_slice SET 
+                                         status='FAILED' 
+                                         WHERE ap_slice_id='%s'""" % ap_slice_id
+                                 )
+                self.LOGGER.debug(to_execute)
+                db.execute(to_execute)
+        except mdb.Error, e:
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
+            sys.exit(1)
+
+    def ap_down_slice_status_update(self, ap_name=None, ap_slice_id=None):
+        if ap_name is None and ap_slice_id is None:
+            err_msg = "Need one of ap_name or ap_slice_id"
+            self.LOGGER.error(err_msg)
+            raise Exception(err_msg)
+        elif ap_name is not None:
+            to_execute = ("""UPDATE ap_slice SET 
+                                 status=
+                                     CASE status 
+                                         WHEN 'ACTIVE' THEN 'DOWN'
+                                         WHEN 'DELETING' THEN 'DELETED'
+                                         WHEN 'PENDING' THEN 'FAILED'
+                                     ELSE status END
+                                 WHERE physical_ap='%s'""" % ap_name
+                         )
+        else:
+            to_execute = ("""UPDATE ap_slice SET
+                                 status=
+                                     CASE status
+                                         WHEN 'ACTIVE' THEN 'DOWN'
+                                         WHEN 'DELETING' THEN 'DELETED'
+                                         WHEN 'PENDING' THEN 'FAILED'
+                                     ELSE status END
+                                 WHERE physical_ap=(
+                                     SELECT physical_ap 
+                                     FROM ap_slice
+                                     WHERE ap_slice_id='%s'
+                                     )""" % ap_slice_id
+                         )
+        self.LOGGER.debug(to_execute)
+        db.execute(to_execute)
 
     def wslice_belongs_to(self, tenant_id, project_id, ap_slice_id):
         if tenant_id == 0:
@@ -444,6 +534,23 @@ class AuroraDB(object):
         except mdb.Error, e:
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
+    def get_user_for_active_ap_slice(self, ap_slice_id):
+        try:
+            with self._database_connectioN() as db:
+                to_execute = ("""SELECT tenant_id 
+                                 FROM ap_slice 
+                                 WHERE 
+                                     ap_slice_id='%s' AND 
+                                     status<>'DELETED' AND 
+                                     status<>'DELETING'""" % ap_slice_id)
+                self.LOGGER.debug(to_execute)
+                num_lines = db.execute(to_execute)
+                if num_lines > 0:
+                    return db.fetchone()[0]
+        except mdb.Error, e:
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
+            sys.exit(1)
+        return
 
     def get_wslice_physical_ap(self, ap_slice_id):
         try:
