@@ -275,21 +275,18 @@ class APMonitor(object):
                 self.LOGGER.debug("LAST ACTIVE TIME %s", last_active_time)
                 time_diff = None
                 now = datetime.datetime.now()
+                self.LOGGER.debug("NOW %s", now)
                 if last_active_time is not None:
                     time_diff = now - last_active_time
                     self.LOGGER.debug("TIME DIFF %s", time_diff)
                 if time_active is not None:
                     self.LOGGER.debug("TIME ACTIVE %s", time_active)
-                    time_active = time_active + time_diff
+                    # time_active = time_active + time_diff
+                    time_active = time_diff
                 self.LOGGER.debug("NEW TIME ACTIVE %s", time_active)
                 to_execute = ("UPDATE ap_slice SET "
                                     "time_active='%s' "
-                                "WHERE ap_slice_id='%s' AND status='ACTIVE'" % (time_active, ap_slice_id))
-                self.LOGGER.debug(to_execute)
-                cur.execute(to_execute)
-                to_execute = ("UPDATE ap_slice SET "
-                                    "last_active_time='%s' "
-                                "WHERE ap_slice_id='%s' AND status='ACTIVE'" % (now, ap_slice_id))
+                                "WHERE ap_slice_id='%s' AND status='ACTIVE'" % (time_active, now, ap_slice_id))
                 self.LOGGER.debug(to_execute)
                 cur.execute(to_execute)
         except Exception:
