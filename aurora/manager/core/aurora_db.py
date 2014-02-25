@@ -117,10 +117,16 @@ class AuroraDB(object):
                                          WHERE ap_slice_id='%s' AND status='ACTIVE'""" % 
                                          (time_active, ap_slice_id)
                                  )
-                    self.LOGGER.debug(to_execute)
-                    db.execute(to_execute)
                 else:
                     self.LOGGER.warn("No value for last active time for slice %s", ap_slice_id)
+                    self.LOGGER.info("Setting last active time %s", now)
+                    to_execute = ("""UPDATE ap_slice SET
+                                         last_active_time='%s'
+                                         WHERE ap_slice_id='%s' AND status='ACTIVE'""" %
+                                         (now, ap_slice_id)
+                                 )
+                self.LOGGER.debug(to_execute)
+                db.execute(to_execute)
         except Exception:
             traceback.print_exc(file=sys.stdout)
             #self.LOGGER.error("Error: %s", str(e))
