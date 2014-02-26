@@ -191,7 +191,7 @@ class Dispatcher(object):
 
         self.dispatch_count += 1
         if self.dispatch_count == 5:
-            self.connection.stop()
+            self.connection.close()
             self.dispatch_count = 0
 
     def get_open_channel(self):
