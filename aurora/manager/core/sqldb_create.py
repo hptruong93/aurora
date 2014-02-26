@@ -68,7 +68,7 @@ class SQLDBCreate(object):
 
                 #Create location_tags table
                 LOGGER.warn("Creating table location_tags")
-                location_tags = "CREATE TABLE location_tags (name VARCHAR(255), ap_name VARCHAR(255), PRIMARY KEY(name, ap_slice_id))"
+                location_tags = "CREATE TABLE location_tags (name VARCHAR(255), ap_name VARCHAR(255), PRIMARY KEY(name, ap_name))"
                 cur.execute(location_tags)
 
                 #Create tenant_tags table
@@ -79,6 +79,7 @@ class SQLDBCreate(object):
         except mdb.Error, e:
             traceback.print_exc(file=sys.stdout)
 
+logging.basicConfig()
 newDB = SQLDBCreate()
 newDB.create_database()
 newDB.create_tables()
