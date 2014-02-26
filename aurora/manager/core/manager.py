@@ -239,8 +239,9 @@ class Manager(object):
             except Exception as e:
                 self.LOGGER.warn(e)
                 message += e.message
-            self.dispatcher.dispatch({'command':'SYN'}, ap_name)
-            message += "%s added" % ap_name
+            else:
+                self.dispatcher.dispatch({'command':'SYN'}, ap_name)
+                message += "%s added" % ap_name
         response = {"status":True, "message":message}
         return response
 
