@@ -23,6 +23,7 @@ class Dispatcher(object):
 
     lock = None
     TIMEOUT = 30
+    dispatch_count = 0
 
     def __init__(self, host, username, password, mysql_username, mysql_password, aurora_db):
         """Establishes the connection to RabbitMQ and sets up the queues"""
@@ -166,6 +167,10 @@ class Dispatcher(object):
         except Exception as e:
             self.LOGGER.error(e.message)
 
+        self.dispatch_count += 1
+        if self.dispatch_count == 5:
+            self.connection.stop()
+
         self.LOGGER.info("Message for %s dispatched", ap)
         ap_slice_id = 'NONE'
         if config['command'] == 'SYN':
@@ -183,6 +188,11 @@ class Dispatcher(object):
 
         self.LOGGER.debug("Unlocking...")
         Dispatcher.lock = False
+
+        self.dispatch_count += 1
+        if self.dispatch_count == 5:
+            self.connection.stop()
+            self.dispatch_count = 0
 
     def get_open_channel(self):
         if self.channel.is_open:
