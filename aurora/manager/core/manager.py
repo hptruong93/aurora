@@ -6,6 +6,7 @@ import logging
 from pprint import pprint, pformat
 import sys
 import time
+import traceback
 import uuid
 
 import MySQLdb as mdb
@@ -83,8 +84,9 @@ class Manager(object):
                                    self.mysql_password,
                                    self.mysql_db)
         except mdb.Error, e:
-            self.LOGGER.error("Error %d: %s" % (e.args[0], e.args[1]))
-            sys.exit(1)
+            # self.LOGGER.error("Error %d: %s" % (e.args[0], e.args[1]))
+            # sys.exit(1)
+            traceback.print_exc(file=sys.stdout)
 
         if len(args) == 0: #No filter or tags
             try:
@@ -117,7 +119,8 @@ class Manager(object):
                         newList[i][1]['tags'] = tagString
                     return newList
             except mdb.Error, e:
-                self.LOGGER.error("Error %d: %s" % (e.args[0], e.args[1]))
+                traceback.print_exc(file=sys.stdout)
+                # self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
         else: #Multiple arguments (name=openflow & firmware=openwrt & region=mcgill & number_radio>1)
             tag_compare = False #For tags, we need 2 queries and a quick result compare at the end
             tag_result = []
@@ -142,7 +145,8 @@ class Manager(object):
                                 tag_result.append(result[0])
 
                     except mdb.Error, e:
-                        self.LOGGER.error("Error %d: %s" % (e.args[0], e.args[1]))
+                        traceback.print_exc(file=sys.stdout)
+                        # self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
 
                 elif '=' in args_list[index]:
                     if (args_list[index].split('=')[0] == "name")           or \
@@ -190,7 +194,8 @@ class Manager(object):
                         cur.execute("SELECT * FROM ap")
                     tempList = list(cur.fetchall())
             except mdb.Error, e:
-                self.LOGGER.error("Error %d: %s" % (e.args[0], e.args[1]))
+                traceback.print_exc(file=sys.stdout)
+                # self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
 
             #Compare result with tag_list if necessary
             if tag_compare:
@@ -288,13 +293,14 @@ class Manager(object):
                     db.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id='%s'" % ap_slice_id )
                     ap_name = db.fetchone()[0]
             except mdb.Error, e:
-                self.LOGGER.error( "Error %d: %s" % (e.args[0], e.args[1]))
+                traceback.print_exc(file=sys.stdout)
+                # self.LOGGER.error( "Error %d: %s", e.args[0], e.args[1])
 
             #Note: This will remove all associated tenant_tags
-            self.LOGGER.info("Deleting Slice " + str(ap_slice_id) + "...")
+            self.LOGGER.info("Deleting Slice %s", ap_slice_id)
             self.ap_slice_delete({"ap-slice-delete":str(ap_slice_id)})
 
-            self.LOGGER.info("Recreating Slice " + str(ap_slice_id) + "...")
+            self.LOGGER.info("Recreating Slice %s", ap_slice_id)
             self.ap_slice_create({"ap":str(ap_name)})
 
             #return response
@@ -422,6 +428,7 @@ class Manager(object):
         except Exception as e:
             self.LOGGER.error(e.message)
             response = {"status":False, "message":e.message}
+            traceback.print_exc(file=sys.stdout)
             return response
 
         # Print json_list (for debugging)
@@ -495,7 +502,7 @@ class Manager(object):
         else:
             ap_slice_list = args['ap-slice-delete']
 
-      #  self.LOGGER.debug("ap_slice_list:",ap_slice_list)
+      #  self.LOGGER.debug("ap_slice_list: %s",ap_slice_list)
 
         if not ap_slice_list:
             message += " None to delete\n"
@@ -521,6 +528,7 @@ class Manager(object):
                     ap_name = self.auroraDB.get_wslice_physical_ap(ap_slice_id)
             except Exception as e:
                 response = {"status":False, "message":message + e.message}
+                traceback.print_exc(file=sys.stdout)
                 return response
             message += self.auroraDB.wslice_delete(ap_slice_id)
 
@@ -544,8 +552,9 @@ class Manager(object):
                                    self.mysql_password,
                                    self.mysql_db) #Change address
         except mdb.Error, e:
-            self.LOGGER.error("Error %d: %s" % (e.args[0], e.args[1]))
-            sys.exit(1)
+            traceback.print_exc(file=sys.stdout)
+            # self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
+            # sys.exit(1)
         newList = [] #Result list
         if len(arg_filter) == 0: #No filter or tags
             try:
@@ -583,7 +592,8 @@ class Manager(object):
                         newList[i]['tags'] = tagString
 
             except mdb.Error, e:
-                self.LOGGER.error("Error %d: %s" % (e.args[0], e.args[1]))
+                traceback.print_exc(file=sys.stdout)
+                # self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
         else: #Multiple arguments
             tag_compare = False #For tags, we need 2 queries and a quick result compare at the end
             tag_result = []
@@ -612,7 +622,7 @@ class Manager(object):
                                              "name = '%s'" % args_list[index].split('=')[1] )
                                 ap_locations = cur.fetchall()
                                 for (i, location) in enumerate(ap_locations):
-                                    self.LOGGER.debug("Looking for location info:", location)
+                                    self.LOGGER.debug("Looking for location info: %s", location)
                                     if tenant_id == 0:
                                         cur.execute( "SELECT ap_slice_id FROM ap_slice WHERE "
                                                      "physical_ap = '%s'" % location[0] )
@@ -621,7 +631,7 @@ class Manager(object):
                                                      "tenant_id = '%s' AND "
                                                      "physical_ap = '%s'" % (tenant_id, location[0]) )
                                     phys_ap = cur.fetchall()
-                                    self.LOGGER.debug("phys_ap:", phys_ap)
+                                    self.LOGGER.debug("phys_ap: %s", phys_ap)
                                     for result in phys_ap:
                                         if result[0] not in tag_result:
                                             tag_result.append(result[0])
@@ -631,7 +641,8 @@ class Manager(object):
 
 
                     except mdb.Error, e:
-                        self.LOGGER.error("Error %d: %s" % (e.args[0], e.args[1]))
+                        traceback.print_exc(file=sys.stdout)
+                        # self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
 
                 elif '=' in args_list[index]:
                     args_list[index] = "%s='%s'" % (args_list[index].split('=')[0],
@@ -651,7 +662,7 @@ class Manager(object):
                         expression = expression+' AND '+ entry
                     else:
                         expression = entry
-            self.LOGGER.debug("SQL Filter: %s",expression)
+            self.LOGGER.debug("SQL Filter: %s", expression)
 
             #Execute Query
             try:
@@ -692,7 +703,8 @@ class Manager(object):
                         newList[i]['tags'] = tagString
 
             except mdb.Error, e:
-                self.LOGGER.error("Error %d: %s" % (e.args[0], e.args[1]))
+                traceback.print_exc(file=sys.stdout)
+                # self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
 
         return newList
 
@@ -707,13 +719,14 @@ class Manager(object):
         arg_a = args['a']
         if not arg_a:
             arg_filter += "&status!DELETED"
-        self.LOGGER.debug("arg_filter: ", arg_filter)
+        self.LOGGER.debug("arg_filter: %s", arg_filter)
 
         try:
             newList = self.ap_slice_filter(arg_filter, tenant_id)
         except Exception as e:
             message += e.message
             self.LOGGER.error(e)
+            traceback.print_exc(file=sys.stdout)
             response = {"status":False, "message":message}
             return response
         if not newList:
@@ -766,8 +779,8 @@ class Manager(object):
 
         for arg_slice in args['slice']:
 
-            self.LOGGER.debug("arg_name:", arg_name)
-            self.LOGGER.debug("arg_slice:", arg_slice)
+            self.LOGGER.debug("arg_name: %s", arg_name)
+            self.LOGGER.debug("arg_slice: %s", arg_slice)
 
             my_slice = self.auroraDB.wslice_belongs_to(tenant_id, project_id, arg_slice)
             my_wnet = self.auroraDB.wnet_belongs_to(tenant_id, project_id, arg_name)
@@ -811,6 +824,7 @@ class Manager(object):
         try:
             message = self.auroraDB.wnet_remove(arg_name, tenant_id)
         except Exception as e:
+            traceback.print_exc(file=sys.stdout)
             response = {"status":False, "message":e.message}
             return response
         #Send Response
@@ -854,6 +868,7 @@ class Manager(object):
                     return response
 
             except Exception as e:
+                traceback.print_exc(file=sys.stdout)
                 response = {"status":False, "message":e.message}
                 return response
 
@@ -871,6 +886,7 @@ class Manager(object):
         try:
             wnet_to_print = self.auroraDB.get_wnet_list(tenant_id)
         except Exception as e:
+            traceback.print_exc(file=sys.stdout)
             response = {"status":False, "message":e.message}
             return response
 
@@ -897,6 +913,7 @@ class Manager(object):
 
             slices_to_print = self.auroraDB.get_wnet_slices(arg_wnet, tenant_id)
         except Exception as e:
+            traceback.print_exc(file=sys.stdout)
             self.LOGGER.error(e)
             response = {"status":False, "message":e.message}
             return response
@@ -935,7 +952,7 @@ class Manager(object):
         """
         return_dictionary = {}
         #DEBUG
-        self.LOGGER.debug("wnet_name: " + wnet_name)
+        self.LOGGER.debug("wnet_name: %s", wnet_name)
 
         try:
            with mdb.connect(self.mysql_host,
@@ -955,7 +972,7 @@ class Manager(object):
 
                 else:
                     wnet_id = wnet_id[0]
-                    self.LOGGER.debug("wnet_id: " + str(wnet_id))
+                    self.LOGGER.debug("wnet_id: %s" + str(wnet_id))
 
                     to_execute = "SELECT * FROM ap_slice WHERE tenant_id=\'" + \
                                   str(tenant_id) + "\' AND wnet_id=\'"+str(wnet_id)+"\'"
@@ -975,8 +992,9 @@ class Manager(object):
                         return_dictionary["ap_slices"] = None
 
         except mdb.Error, e:
-            self.LOGGER.error("Error %d: %s" % (e.args[0], e.args[1]))
-            sys.exit(1)
+            traceback.print_exc(file=sys.stdout)
+            # self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
+            # sys.exit(1)
 
         return return_dictionary
 
@@ -1076,8 +1094,9 @@ class Manager(object):
 
 
                     except mdb.Error, e:
-                        self.LOGGER.error("Error %d: %s" % (e.args[0], e.args[1]))
-                        sys.exit(1)
+                        traceback.print_exc(file=sys.stdout)
+                        # self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
+                        # sys.exit(1)
         response = {"status":True, "message":message}
         return response
 
@@ -1137,8 +1156,9 @@ class Manager(object):
                             message += '\' \''.join(args['tag'])
                             message += '\'.\n'
                     except mdb.Error, e:
-                        self.LOGGER.error("Error %d: %s" % (e.args[0], e.args[1]))
-                        sys.exit(1)
+                        traceback.print_exc(file=sys.stdout)
+                        # self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
+                        # sys.exit(1)
         response = {"status":True, "message":message}
         return response
 
