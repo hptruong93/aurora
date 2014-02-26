@@ -163,22 +163,23 @@ class Dispatcher(object):
         try:
             self.channel.basic_publish(exchange='', routing_key=ap, body=message, properties=pika.BasicProperties(reply_to = self.callback_queue, correlation_id = unique_id, content_type="application/json"))
         except Exception as e:
-            self.LOGGER.error(e.message)
-
-        self.LOGGER.info("Message for %s dispatched", ap)
-        ap_slice_id = 'NONE'
-        if config['command'] == 'SYN':
-            ap_slice_id = 'SYN'
+            traceback.print_exc(file=sys.stdout)
+            # self.LOGGER.error(e.message)
         else:
-            ap_slice_id = config['slice']
-        # Start a timeout countdown
-        self.LOGGER.debug("ap_slice_id %s",ap_slice_id)
-        timer = threading.Timer(self.TIMEOUT, self.timeout_callback, args=(ap_slice_id,ap,unique_id))
-        self.LOGGER.debug("Adding timer %s", timer)
-        self.requests_sent.append((unique_id, timer, ap_slice_id))
-        timer.start()
-        self.LOGGER.debug("requests_sent %s",self.requests_sent)
-        self.LOGGER.debug("Starting timer: %s",self.requests_sent[-1])
+            self.LOGGER.info("Message for %s dispatched", ap)
+            ap_slice_id = 'NONE'
+            if config['command'] == 'SYN':
+                ap_slice_id = 'SYN'
+            else:
+                ap_slice_id = config['slice']
+            # Start a timeout countdown
+            self.LOGGER.debug("ap_slice_id %s",ap_slice_id)
+            timer = threading.Timer(self.TIMEOUT, self.timeout_callback, args=(ap_slice_id,ap,unique_id))
+            self.LOGGER.debug("Adding timer %s", timer)
+            self.requests_sent.append((unique_id, timer, ap_slice_id))
+            timer.start()
+            self.LOGGER.debug("requests_sent %s",self.requests_sent)
+            self.LOGGER.debug("Starting timer: %s",self.requests_sent[-1])
 
         self.LOGGER.debug("Unlocking...")
         Dispatcher.lock = False
