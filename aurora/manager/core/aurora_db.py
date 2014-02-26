@@ -74,9 +74,10 @@ class AuroraDB(object):
     def ap_add(self, ap_name):
         self.LOGGER.info("Adding ap %s to database", ap_name)
         self.LOGGER.info("type(ap_name) %s", type(ap_name))
-        if ap_name is None or 
+        if (ap_name is None or 
                 (type(ap_name) is not StringType and
-                 type(ap_name) is not UnicodeType):
+                 type(ap_name) is not UnicodeType)
+           ):
             raise Exception("Please enter a valid ap_name")
         try:
             with self._database_connection() as db:

@@ -18,6 +18,20 @@
                 ]
             ],
             [
+                "ap-reset",
+                {
+                    "action":"store",
+                    "help":"Reset an access point",
+                    "nargs":1,
+                    "default":null,
+                    "choices":null,
+                    "metavar":"ap-name"
+                },
+                [
+
+                ]
+            ],
+            [
                 "ap-list",
                 {
                     "action":"store",

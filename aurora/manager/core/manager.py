@@ -245,6 +245,13 @@ class Manager(object):
         response = {"status":True, "message":message}
         return response
 
+    def ap_reset(self, args, tenant_id, user_id, project_id):
+        ap_name = args['ap-reset'][0]
+        message = "Resetting ap %s" % ap_name
+        self.apm.reset_AP(ap_name)
+        response = {"status":True, "message":message}
+        return response
+
     def ap_list(self, args, tenant_id, user_id, project_id):
         #TODO: Verify filter passes correctly
         if args['filter']:

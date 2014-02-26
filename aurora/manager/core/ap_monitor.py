@@ -204,14 +204,14 @@ class APMonitor(object):
                 self.LOGGER.info("Updating config files...")
                 provision.update_last_known_config(ap_name, config)
             else:
-                if message != "RESTARTING" and message != "AP reset":
+                if message == 'AP reset':
+                    self.set_status(None, None, False, ap_name)
+                    pass
+                elif message == 'RESTARTING':
+                    pass
+                else:
                     self.update_records(message["ap_slice_stats"])
                     self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
-
-                else:
-                    #Probably a reset or restart command sent from ap_monitor
-                    #Just stop timer and remove entry
-                    pass
 
             self.dispatcher.remove_request(entry[0])
 
