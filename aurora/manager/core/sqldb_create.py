@@ -35,6 +35,7 @@ class SQLDBCreate(object):
             with self.con:
                 cur = self.con.cursor()
                 LOGGER.warn("Creating database")
+                cur.execute("DROP DATABASE IF EXISTS aurora")
                 cur.execute("CREATE DATABASE aurora")
 
         except mdb.Error, e:
