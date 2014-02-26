@@ -17,6 +17,7 @@ import MySQLdb as mdb
 
 from cls_logger import get_cls_logger
 
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -135,12 +136,12 @@ class AuroraDB(object):
             traceback.print_exc(file=sys.stdout)
             #self.LOGGER.error("Error: %s", str(e))
 
-    def ap_slice_update_bytes_sent(self, ap_slice_id, bytes_sent):
+    def ap_slice_update_mb_sent(self, ap_slice_id, mb_sent):
         try:
             with self._database_connection() as db:
-                to_execute = ("UPDATE ap_slice SET bytes_sent=%s " 
+                to_execute = ("UPDATE ap_slice SET mb_sent=%s " 
                                 "WHERE ap_slice_id='%s'" %
-                            (bytes_sent, ap_slice_id))
+                            (mb_sent, ap_slice_id))
                 self.LOGGER.debug(to_execute)
                 db.execute(to_execute)
         except Exception, e:

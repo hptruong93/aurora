@@ -695,7 +695,7 @@ class Manager(object):
                         newList[i]['status'] = tempList[i][6]
                         newList[i]['time_active'] = tempList[i][7]
                         newList[i]['last_active_time'] = tempList[i][8]
-                        newList[i]['bytes_sent'] = tempList[i][9]
+                        newList[i]['mb_sent'] = tempList[i][9]
                         #Get a list of tags
                         cur.execute("SELECT name FROM tenant_tags WHERE ap_slice_id=\'" + \
                                     str(tempList[i][0])+"\'")

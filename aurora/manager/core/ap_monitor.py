@@ -19,6 +19,8 @@ import ap_provision.http_srv as provision
 from stop_thread import *
 #import dispatcher
 
+KB = 1024**1
+MB = 1024**2
 LOGGER = logging.getLogger(__name__)
 
 
@@ -261,7 +263,7 @@ class APMonitor(object):
         self.LOGGER.debug("Updating records...")
         for ap_slice_id in message.keys():
             self.aurora_db.ap_slice_update_time_active(ap_slice_id)
-            self.aurora_db.ap_slice_update_bytes_sent(ap_slice_id, message.get(ap_slice_id))
+            self.aurora_db.ap_slice_update_mb_sent(ap_slice_id, float(message.get(ap_slice_id))/MB)
 
     def set_status(self, unique_id, success, ap_up=True, ap_name=None):
         self._add_call_to_queue(unique_id, success, ap_up, ap_name)
