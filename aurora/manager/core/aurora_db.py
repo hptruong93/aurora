@@ -569,27 +569,6 @@ class AuroraDB(object):
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
 
-    def get_wslice_status(self, ap_slice_id):
-        #get ap slice active time and bytes_sent
-        try:
-            with self._database_connection() as db:
-                db.execute("SELECT * FROM ap_slice_status WHERE \
-                            ap_slice_id = '%s'" % ap_slice_id)
-                ap_info = db.fetchone()
-                if ap_info:
-                    status = ap_info[1]
-                    time_active = ap_info[2]
-                    last_active_time = ap_info[3]
-                    bytes_sent = ap_info[4]
-                    if status == 'ACTIVE':
-                        time_active += datetime.datetime.now() - last_active_time
-                    return (time_active, bytes_sent)
-                else:
-                    raise Exception("No slice '%s'\n" % ap_slice_id)
-        except mdb.Error, e:
-            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
-            sys.exit(1)
-
     def get_wnet_list(self, tenant_id, wnet_arg = None):
         try:
             with self._database_connection() as db:

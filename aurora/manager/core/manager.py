@@ -693,6 +693,9 @@ class Manager(object):
                         newList[i]['project_id'] = tempList[i][4]
                         newList[i]['wnet_id'] = tempList[i][5]
                         newList[i]['status'] = tempList[i][6]
+                        newList[i]['time_active'] = tempList[i][7]
+                        newList[i]['last_active_time'] = tempList[i][8]
+                        newList[i]['bytes_sent'] = tempList[i][9]
                         #Get a list of tags
                         cur.execute("SELECT name FROM tenant_tags WHERE ap_slice_id=\'" + \
                                     str(tempList[i][0])+"\'")
@@ -741,9 +744,6 @@ class Manager(object):
                 for key,value in entry.iteritems():
                     if key != 'ap_slice_id' and key != 'ap_slice_ssid':
                         message += "%12s: %s\n" % (key, value)
-                active_time, bytes_sent = self.auroraDB.get_wslice_status(entry['ap_slice_id'])
-                message += "(%12s): %s\n" % ("active_time", active_time)
-                message += "(%12s): %s\n" % ("bytes_sent", bytes_sent)
                 message += '\n'
 
         #Return response
