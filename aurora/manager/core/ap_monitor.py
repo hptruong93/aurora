@@ -16,6 +16,7 @@ import MySQLdb as mdb
 
 from cls_logger import get_cls_logger
 import ap_provision.http_srv as provision
+from stop_thread import *
 #import dispatcher
 
 LOGGER = logging.getLogger(__name__)
@@ -401,33 +402,7 @@ class APMonitor(object):
         time_format = str(hours) + ':' + str(minutes) + ':' + str(seconds)
         return time_format
 
-class StoppableThread(threading.Thread):
-    """Thread class with a stop method to terminate timers
-    that have been started"""
-    def __init__(self, *args, **kwargs):
-        kwargs = self.add_stop_argument(kwargs)
-        super(StoppableThread, self).__init__(*args, **kwargs)
 
-        self.LOGGER = get_cls_logger(self)
-        self.LOGGER.debug("__init__ parent thread")
-        self.LOGGER.debug(self)
-
-    def add_stop_argument(self, kwargs):
-        if 'kwargs' not in kwargs.keys():
-            kwargs['kwargs'] = {}
-        self._stop = threading.Event()
-        kwargs['kwargs']['stop_event'] = self._stop
-        return kwargs
-
-    def stop(self):
-        self._stop.set()
-        #self.join()
-
-    def stopped():
-        return self._stop.is_set()
-
-class TimerThread(StoppableThread):
-    pass
 
 #for test
 #if __name__ == '__main__':

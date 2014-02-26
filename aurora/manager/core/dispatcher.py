@@ -12,7 +12,7 @@ import pika
 
 from cls_logger import get_cls_logger
 import ap_provision.http_srv as provision
-import ap_monitor
+from stop_thread import *
 
 PIKA_LOGGER = logging.getLogger('pika')
 PIKA_LOGGER.setLevel(logging.WARNING)
@@ -106,11 +106,32 @@ class Dispatcher(object):
         if self.restarting_connection:
             self.restarting_connection = False
         else:
+            self._start_pika_channel_open_monitor()
             self._send_manager_up_status()
 
     def _send_manager_up_status(self):
         for ap in self.aurora_db.get_ap_list():
             self.dispatch({'command':'SYN'}, ap)
+
+    def _start_pika_channel_open_monitor(self):
+        self._pika_monitor_thread = StoppableThread(target=self._pika_monitor_loop)
+        self.LOGGER.info("Starting pika monitor thread %s", self._pika_monitor_thread)
+        self._pika_monitor_thread.start()
+
+    def _stop_pika_channel_open_monitor(self):
+        self.LOGGER.info("Stopping pika monitor thread %s", self._pika_monitor_thread)
+        self._pika_monitor_thread.stop()
+
+    def _pika_monitor_loop(self, stop_event=None):
+        while not stop_event.is_set():
+            if not self.connection.is_open or not self.channel.is_open:
+                self.LOGGER.warn("Pika connection down, restarting")
+                self._restart_connection()
+                self.LOGGER.warn("Sleeping, MAY NEED TO REMOVE!")
+                time.sleep(5)
+            else:
+                time.sleep(0.5)
+
 
     def dispatch(self, config, ap, unique_id=None):
         """Send data to the specified queue.
@@ -137,8 +158,8 @@ class Dispatcher(object):
         Dispatcher.lock = True
 
         # Dispatch, catch if no channel exists
-        if not self.connection.is_open or not self.channel.is_open:
-            self._restart_connection()
+        while not self.connection.is_open or not self.channel.is_open:
+            time.sleep(0.5)
 
         try:
             self.channel.basic_publish(exchange='', routing_key=ap, body=message, properties=pika.BasicProperties(reply_to = self.callback_queue, correlation_id = unique_id, content_type="application/json"))
@@ -174,6 +195,7 @@ class Dispatcher(object):
         # Stop timers
         #self.apm.stop()
         self._stop_connection()
+        self._stop_pika_channel_open_monitor()
         del self.connection
         del self.channel
         del self.listener
