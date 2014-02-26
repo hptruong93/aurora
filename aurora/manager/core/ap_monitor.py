@@ -210,7 +210,10 @@ class APMonitor(object):
                 elif message == 'RESTARTING':
                     pass
                 else:
-                    self.update_records(message["ap_slice_stats"])
+                    try:
+                        self.update_records(message["ap_slice_stats"])
+                    except:
+                        traceback.print_exc(file=sys.stdout)
                     self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
 
             self.dispatcher.remove_request(entry[0])
