@@ -232,13 +232,13 @@ class Manager(object):
     def ap_add(self, args, tenant_id, user_id, project_id):
         message = ""
         for ap_name in args['ap-add']:
-            ap_name = args['ap-add'][0]
+            self.LOGGER.info("Adding ap %s", ap_name)
             response = {"status":False, "message":None}
             try:
                 self.aurora_db.ap_add(ap_name)
             except Exception as e:
                 self.LOGGER.warn(e)
-                message += e.msg
+                message += e.message
             self.dispatcher.dispatch({'command':'SYN'}, ap_name)
             message += "%s added" % ap_name
         response = {"status":True, "message":message}
