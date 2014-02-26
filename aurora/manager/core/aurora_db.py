@@ -12,6 +12,7 @@ import os
 from pprint import pprint
 import sys
 import traceback
+from types import *
 
 import MySQLdb as mdb
 
@@ -69,6 +70,18 @@ class AuroraDB(object):
         for radio in radio_list:
             current_slices += len(radio["bss_list"])
         return current_slices
+
+    def ap_add(self, ap_name):
+        self.LOGGER.info("Adding ap %s to database", ap_name)
+        if ap_name is None or type(ap_name) is not StringType:
+            raise Exception("Please enter a valid ap_name")
+        try:
+            with self._database_connection() as db:
+                db.execute("""INSERT INTO ap SET name='%s'""" % ap_name)
+
+        except mdb.Error, e:
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
+            sys.exit(1)
 
     def ap_status_up(self, ap_name):
         self.LOGGER.info("Setting %s status 'UP'", ap_name)

@@ -4,6 +4,20 @@
         "positional":[],
         "subargument": [
             [
+                "ap-add",
+                {
+                    "action":"store",
+                    "help":"Add an access point",
+                    "nargs":"+",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"ap-name"
+                },
+                [
+
+                ]
+            ],
+            [
                 "ap-list",
                 {
                     "action":"store",

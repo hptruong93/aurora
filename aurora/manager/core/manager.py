@@ -44,19 +44,19 @@ class Manager(object):
         self.mysql_db = self.MYSQL_DB #'aurora'
 
         #Initialize AuroraDB Object
-        self.auroraDB = AuroraDB(self.mysql_host,
+        self.aurora_db = AuroraDB(self.mysql_host,
                                  self.mysql_username,
                                  self.mysql_password,
                                  self.mysql_db)
         #Comment for testing without AP
-        self.dispatch = dispatcher.Dispatcher(host,
+        self.dispatcher = dispatcher.Dispatcher(host,
                                               username,
                                               password,
                                               self.mysql_username,
                                               self.mysql_password,
-                                              self.auroraDB)
+                                              self.aurora_db)
 
-        self.apm = ap_monitor.APMonitor(self.dispatch, self.auroraDB, self.mysql_host, self.mysql_username, self.mysql_password)
+        self.apm = ap_monitor.APMonitor(self.dispatcher, self.aurora_db, self.mysql_host, self.mysql_username, self.mysql_password)
 
         provision.run()
 
@@ -66,7 +66,7 @@ class Manager(object):
 
     def stop(self):
         self.apm.stop()
-        self.dispatch.stop()
+        self.dispatcher.stop()
         provision.stop()
 
     def parseargs(self, function, args, tenant_id, user_id, project_id):
@@ -229,6 +229,21 @@ class Manager(object):
                 newList[i][1]['tags'] = tagString
             return newList
 
+    def ap_add(self, args, tenant_id, user_id, project_id):
+        message = ""
+        for ap_name in args['ap-add']:
+            ap_name = args['ap-add'][0]
+            response = {"status":False, "message":None}
+            try:
+                self.aurora_db.ap_add(ap_name)
+            except Exception as e:
+                self.LOGGER.warn(e)
+                message += e.msg
+            self.dispatcher.dispatch({'command':'SYN'}, ap_name)
+            message += "%s added" % ap_name
+        response = {"status":True, "message":message}
+        return response
+
     def ap_list(self, args, tenant_id, user_id, project_id):
         #TODO: Verify filter passes correctly
         if args['filter']:
@@ -329,9 +344,9 @@ class Manager(object):
 
         #Add tags
         for slice_id in slice_names:
-            if self.auroraDB.wslice_belongs_to(tenant_id, project_id, slice_id):
+            if self.aurora_db.wslice_belongs_to(tenant_id, project_id, slice_id):
                 for tag in tags:
-                    message += self.auroraDB.wslice_add_tag(slice_id, tag)
+                    message += self.aurora_db.wslice_add_tag(slice_id, tag)
             else:
                 err_msg = "Error: You have no slice '%s'." % slice_id
                 message += err_msg + '\n'
@@ -362,9 +377,9 @@ class Manager(object):
 
         #Remove tags
         for slice_id in slice_names:
-            if self.auroraDB.wslice_belongs_to(tenant_id, project_id, slice_id):
+            if self.aurora_db.wslice_belongs_to(tenant_id, project_id, slice_id):
                 for tag in tags:
-                    message += self.auroraDB.wslice_remove_tag(slice_id, tag)
+                    message += self.aurora_db.wslice_remove_tag(slice_id, tag)
             else:
                 err_msg = "Error: You have no slice '%s'." % slice_id
                 message += err_msg + '\n'
@@ -463,7 +478,7 @@ class Manager(object):
                     break
 
             if error is None: #There is no error
-                error = self.auroraDB.wslice_add(slice_uuid, ap_slice_ssid, tenant_id, aplist[index], project_id)
+                error = self.aurora_db.wslice_add(slice_uuid, ap_slice_ssid, tenant_id, aplist[index], project_id)
             
                 if error is not None: #There is an error
                     message += error + "\n"
@@ -478,7 +493,7 @@ class Manager(object):
                                         'filter':""},
                                         tenant_id, user_id, project_id)
                     #Dispatch (use slice_uuid as a message identifier)
-                    self.dispatch.dispatch(json_entry, aplist[index], str(slice_uuid))
+                    self.dispatcher.dispatch(json_entry, aplist[index], str(slice_uuid))
             else:
                 message += error + "\n"
                 add_success = False
@@ -510,7 +525,7 @@ class Manager(object):
         for ap_slice_id in ap_slice_list:
             config = {"slice":ap_slice_id, "command":"delete_slice", "user":user_id}
 
-            my_slice = self.auroraDB.wslice_belongs_to(tenant_id, project_id, ap_slice_id)
+            my_slice = self.aurora_db.wslice_belongs_to(tenant_id, project_id, ap_slice_id)
             if not my_slice:
                 message += "No slice '%s'\n" % ap_slice_id
                 if ap_slice_id == ap_slice_list[-1]:
@@ -525,17 +540,17 @@ class Manager(object):
                     message += "Slice already deleted: '%s'\n" % ap_slice_id
                     continue
                 else:
-                    ap_name = self.auroraDB.get_wslice_physical_ap(ap_slice_id)
+                    ap_name = self.aurora_db.get_wslice_physical_ap(ap_slice_id)
             except Exception as e:
                 response = {"status":False, "message":message + e.message}
                 traceback.print_exc(file=sys.stdout)
                 return response
-            message += self.auroraDB.wslice_delete(ap_slice_id)
+            message += self.aurora_db.wslice_delete(ap_slice_id)
 
             #Dispatch
             #Generate unique message id
             self.LOGGER.debug("Launching dispatcher")
-            self.dispatch.dispatch(config, ap_name)
+            self.dispatcher.dispatch(config, ap_name)
 
         #Return response
         response = {"status":True, "message":message}
@@ -753,7 +768,7 @@ class Manager(object):
     def ap_slice_show(self, args, tenant_id, user_id, project_id):
         message = ""
         for arg_id in args['ap-slice-show']:
-            if self.auroraDB.wslice_belongs_to(tenant_id, project_id, arg_id):
+            if self.aurora_db.wslice_belongs_to(tenant_id, project_id, arg_id):
                 message += self.ap_slice_list({'filter':['ap_slice_id=%s' % arg_id,],
                                            'i':True,
                                            'a':True},
@@ -782,13 +797,13 @@ class Manager(object):
             self.LOGGER.debug("arg_name: %s", arg_name)
             self.LOGGER.debug("arg_slice: %s", arg_slice)
 
-            my_slice = self.auroraDB.wslice_belongs_to(tenant_id, project_id, arg_slice)
-            my_wnet = self.auroraDB.wnet_belongs_to(tenant_id, project_id, arg_name)
+            my_slice = self.aurora_db.wslice_belongs_to(tenant_id, project_id, arg_slice)
+            my_wnet = self.aurora_db.wnet_belongs_to(tenant_id, project_id, arg_name)
 
             #Send to database
             if my_slice and my_wnet:
-                if not self.auroraDB.wslice_is_deleted(arg_slice):
-                    message += self.auroraDB.wnet_add_wslice(tenant_id, arg_slice, arg_name)
+                if not self.aurora_db.wslice_is_deleted(arg_slice):
+                    message += self.aurora_db.wnet_add_wslice(tenant_id, arg_slice, arg_name)
                 else:
                     message += "Error: Cannot add deleted slice '%s'" % arg_slice
             else:
@@ -811,7 +826,7 @@ class Manager(object):
         arg_uuid = uuid.uuid4()
 
         #Send to database
-        message += self.auroraDB.wnet_add(arg_uuid, arg_name, tenant_id, project_id)
+        message += self.aurora_db.wnet_add(arg_uuid, arg_name, tenant_id, project_id)
 
         #Send Response
         response = {"status":True, "message":message}
@@ -822,7 +837,7 @@ class Manager(object):
 
         #Send to database
         try:
-            message = self.auroraDB.wnet_remove(arg_name, tenant_id)
+            message = self.aurora_db.wnet_remove(arg_name, tenant_id)
         except Exception as e:
             traceback.print_exc(file=sys.stdout)
             response = {"status":False, "message":e.message}
@@ -850,12 +865,12 @@ class Manager(object):
 
         for arg_slice in args['slice']:
             try:
-                my_slice = self.auroraDB.wslice_belongs_to(tenant_id, project_id, arg_slice)
-                my_wnet = self.auroraDB.wnet_belongs_to(tenant_id, project_id, arg_name)
+                my_slice = self.aurora_db.wslice_belongs_to(tenant_id, project_id, arg_slice)
+                my_wnet = self.aurora_db.wnet_belongs_to(tenant_id, project_id, arg_name)
 
                 if my_slice and my_wnet:
-                    if not self.auroraDB.wslice_is_deleted(arg_slice):
-                        message += self.auroraDB.wnet_remove_wslice(tenant_id, arg_slice, arg_name)
+                    if not self.aurora_db.wslice_is_deleted(arg_slice):
+                        message += self.aurora_db.wnet_remove_wslice(tenant_id, arg_slice, arg_name)
                     else:
                         message += "Error: Cannot add deleted slice '%s'" % arg_slice
 
@@ -873,7 +888,7 @@ class Manager(object):
                 return response
 
             #Send to database
-          #  message += self.auroraDB.wnet_remove_wslice(tenant_id, arg_slice, arg_name)
+          #  message += self.aurora_db.wnet_remove_wslice(tenant_id, arg_slice, arg_name)
           #  message = "Slice '%s' removed from '%s'.\n" % (arg_slice, arg_name)
 
         #Send Response
@@ -884,7 +899,7 @@ class Manager(object):
         """Lists the wnets available to tenant"""
         arg_i = args['i']
         try:
-            wnet_to_print = self.auroraDB.get_wnet_list(tenant_id)
+            wnet_to_print = self.aurora_db.get_wnet_list(tenant_id)
         except Exception as e:
             traceback.print_exc(file=sys.stdout)
             response = {"status":False, "message":e.message}
@@ -909,9 +924,9 @@ class Manager(object):
         arg_wnet = args['wnet-show'][0]
 
         try:
-            wnet_to_print = self.auroraDB.get_wnet_list(tenant_id, arg_wnet)
+            wnet_to_print = self.aurora_db.get_wnet_list(tenant_id, arg_wnet)
 
-            slices_to_print = self.auroraDB.get_wnet_slices(arg_wnet, tenant_id)
+            slices_to_print = self.aurora_db.get_wnet_slices(arg_wnet, tenant_id)
         except Exception as e:
             traceback.print_exc(file=sys.stdout)
             self.LOGGER.error(e)
@@ -1042,7 +1057,7 @@ class Manager(object):
                 # Disassociate slice from wnet in database (assign its wnet Null)
                 for slice_tuple in wslices_dict["ap_slices"]:
                     slice_id = slice_tuple[0]
-                    self.auroraDB.wnet_remove_slice(tenant_id, slice_id, wnet_name)
+                    self.aurora_db.wnet_remove_slice(tenant_id, slice_id, wnet_name)
                     message += 'Slice with ap_slice_id \'' + slice_id + \
                                '\' removed from wnet \'' + wnet_name + '\'\n'
 
@@ -1100,7 +1115,7 @@ class Manager(object):
         response = {"status":True, "message":message}
         return response
 
-    #Can move some of this functionality to auroraDB
+    #Can move some of this functionality to aurora_db
     def wnet_remove_tag(self, args, tenant_id, user_id, project_id):
         """Removes user-defined tags from a wnet"""
         message = ""
