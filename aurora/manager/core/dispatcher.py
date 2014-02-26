@@ -167,10 +167,6 @@ class Dispatcher(object):
         except Exception as e:
             self.LOGGER.error(e.message)
 
-        self.dispatch_count += 1
-        if self.dispatch_count == 5:
-            self.connection.stop()
-
         self.LOGGER.info("Message for %s dispatched", ap)
         ap_slice_id = 'NONE'
         if config['command'] == 'SYN':
