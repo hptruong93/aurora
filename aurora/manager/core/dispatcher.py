@@ -128,8 +128,6 @@ class Dispatcher(object):
             if not self.connection.is_open or not self.channel.is_open:
                 self.LOGGER.warn("Pika connection down, restarting")
                 self._restart_connection()
-                self.LOGGER.warn("Sleeping, MAY NEED TO REMOVE!")
-                time.sleep(5)
             else:
                 time.sleep(0.5)
 

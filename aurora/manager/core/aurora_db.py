@@ -114,16 +114,18 @@ class AuroraDB(object):
                     if last_active_time is not None:
                         time_active = now - last_active_time
                         to_execute = ("""UPDATE ap_slice SET 
-                                             time_active='%s' 
-                                             WHERE ap_slice_id='%s' AND status='ACTIVE'""" % 
+                                             time_active='%s', 
+                                             status='ACTIVE' 
+                                             WHERE ap_slice_id='%s'""" % 
                                              (time_active, ap_slice_id)
                                      )
                 if last_active_time is None:
                     self.LOGGER.warn("No value for last active time for slice %s", ap_slice_id)
                     self.LOGGER.info("Setting last active time %s", now)
                     to_execute = ("""UPDATE ap_slice SET
-                                         last_active_time='%s'
-                                         WHERE ap_slice_id='%s' AND status='ACTIVE'""" %
+                                         last_active_time='%s', 
+                                         status='ACTIVE' 
+                                         WHERE ap_slice_id='%s'""" %
                                          (now, ap_slice_id)
                                  )
                 self.LOGGER.debug(to_execute)
