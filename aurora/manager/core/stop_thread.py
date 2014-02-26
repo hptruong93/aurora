@@ -5,6 +5,13 @@ it periodically eg.
     if stop_event.is_set(): break
 
 """
+import threading
+import logging
+
+from cls_logger import get_cls_logger
+
+LOGGER = logging.getLogger(__name__)
+
 class StoppableThread(threading.Thread):
     """Thread class with a stop method to terminate timers
     that have been started"""
