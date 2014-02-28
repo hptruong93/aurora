@@ -16,7 +16,8 @@ import ap_monitor
 from cls_logger import get_cls_logger
 import dispatcher
 import ap_provision.http_srv as provision
-import request_verification as Verify
+sys.path.insert(0,'./request_verification/')
+import request_verify_API as Verify
 import slice_plugin
 
 LOGGER = logging.getLogger(__name__)
