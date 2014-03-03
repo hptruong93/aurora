@@ -7,11 +7,11 @@ class RequestVerifier():
     #verification from aurora_db.py
     _commands = {
         verify_agent.GENERAL_CHECK : [verify_agent.APSliceNumberVerification()],
-        verify_agent.CREATE_SLICE : [#verify_agent.APSliceNumberVerification(), 
-                        #verify_agent.RadioConfigExistedVerification(),
-                        #verify_agent.BridgeNumberVerification(),
-                        #verify_agent.VirtualInterfaceNumberVerification(),
-                        #verify_agent.AccessConflictVerification(),
+        verify_agent.CREATE_SLICE : [verify_agent.APSliceNumberVerification(), 
+                        verify_agent.RadioConfigExistedVerification(),
+                        verify_agent.BridgeNumberVerification(),
+                        verify_agent.VirtualInterfaceNumberVerification(),
+                        verify_agent.AccessConflictVerification(),
                         verify_agent.BandwidthVerification()],
         verify_agent.DELETE_SLICE : [verify_agent.ValidDeleteVerification()]
     }
