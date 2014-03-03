@@ -174,7 +174,7 @@ class RadioConfigExistedVerification(RequestVerification):
                 request_has_config = configuring_radio is not None
 
                 if configuring_radio is None:
-                    requested_radio = provision_reader.get_radio_wifi_bss(request['config']['RadioInterfaces'])
+                    requested_radio = provision_reader.get_radio_wifi_bss(request['config'])
                     number_slices = provision_reader.get_number_slice_on_radio(request_ap_info, requested_radio)
                 else:
                     number_slices = provision_reader.get_number_slice_on_radio(request_ap_info, configuring_radio)
