@@ -12,6 +12,15 @@ class VerificationException(exception.AuroraException):
         #Tell the client about the problem here or resolve internally
         pass
 
+#This exception is raised when the verifier cannot find a key in the request. It would provide the client the name of the missing key
+class MissingKeyInRequest(VerificationException):
+    def __init__(self, message = "not_provided"):
+        self.message = message
+        super(MissingKeyInRequest, self).__init__(message)
+    
+    def _handle_exception(self):
+        return 'Key \'' + self.message + '\' could not be found. Please check request!'
+
 #This exception is raised when the verifier cannot find the ap mentioned in the request, either in the database or the
 #provision folder of manager
 class NoSuchAPExists(VerificationException):
@@ -22,13 +31,15 @@ class NoSuchAPExists(VerificationException):
     def _handle_exception(self):
         return "Cannot find any AP named \'" + self.message + "\'"
 
-class MissingKeyInRequest(VerificationException):
+#This exception is raised when the verifier cannot find the slice mentioned in the request, either in the database or the
+#provision folder of manager
+class NoSuchSliceExists(VerificationException):
     def __init__(self, message = "not_provided"):
         self.message = message
-        super(MissingKeyInRequest, self).__init__(message)
+        super(NoSuchSliceExists, self).__init__(message)
     
     def _handle_exception(self):
-        return 'Key \'' + self.message + '\' could not be found. Please check request!'
+        return "Cannot find any slice named \'" + self.message + "\'"
 
 #This exception is raised when an AP is having, or is requested to have more than 4n ap slices with n is the AP's number of radios
 class NoAvailableSpaceLeftInAP(VerificationException):
@@ -78,4 +89,14 @@ class AccessConflict(VerificationException):
         super(AccessConflict, self).__init__(message)
 
     def _handle_exception(self):
-        return self.message 
+        return self.message
+
+#This exception is raised when a client attempts to delete a slice while there are more than 1 slice in the ap, and that
+#the deleting slice is the main slice that contains radio configuration.
+class IllegalSliceDeletion(VerificationException):
+    def __init__(self, message = ""):
+        self.message = message
+        super(IllegalSliceDeletion, self).__init__(message)
+
+    def _handle_exception(self):
+        return self.message

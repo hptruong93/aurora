@@ -1,5 +1,6 @@
 import request_verification as verify_agent
 import verification_exception as exceptions
+import sys, traceback
 
 class RequestVerifier():
     #The command names must be identical to the method calling
@@ -10,7 +11,8 @@ class RequestVerifier():
                         verify_agent.RadioConfigExistedVerification(),
                         verify_agent.BridgeNumberVerification(),
                         verify_agent.VirtualInterfaceNumberVerification(),
-                        verify_agent.AccessConflictVerification()]
+                        verify_agent.AccessConflictVerification()],
+        verify_agent.DELETE_SLICE : [verify_agent.ValidDeleteVerification()]
     }
 
     #If there is any problem with the verification process, the function will return
@@ -38,7 +40,7 @@ def verifyOK(physical_ap = '', tenant_id = 0, request = None):
     else:
         # There is no handling for key 'physical_ap' and 'tenant_id' on the access point
         # side of the amqp link. So these entries would be removed once verification has been done.
-        request['physical_ap'] = physical_ap
+        request['physical_ap'] = physical_ap 
         request['tenant_id'] = tenant_id
         
         command = request['command']
@@ -54,64 +56,8 @@ def verifyOK(physical_ap = '', tenant_id = 0, request = None):
 if __name__ == '__main__':
     #Testing
     request = {
-    "command": "create_slice", 
-    "config": {
-        "RadioInterfaces": [
-            {
-                "attributes": {
-                    "channel": "1", 
-                    "country": "CA", 
-                    "disabled": "0", 
-                    "hwmode": "abg", 
-                    "name": "radio0", 
-                    "txpower": "20"
-                }, 
-                "flavor": "wifi_radio"
-            },
-            {
-                "attributes": {
-                    "encryption_type": "wep-open", 
-                    "if_name": "wlan0", 
-                    "key": "12345", 
-                    "name": "MK", 
-                    "radio": "radio0"
-                }, 
-                "flavor": "wifi_bss"
-            }
-        ], 
-        "VirtualBridges": [
-            {
-                "attributes": {
-                    "bridge_settings": {}, 
-                    "interfaces": [
-                        "vwlan0", 
-                        "veth0"
-                    ], 
-                    "name": "linux-br", 
-                    "port_settings": {}
-                }, 
-                "flavor": "linux_bridge"
-            }
-        ], 
-        "VirtualInterfaces": [
-            {
-                "attributes": {
-                    "attach_to": "wlan0", 
-                    "name": "vwlan0"
-                }, 
-                "flavor": "veth"
-            },
-            {
-                "attributes": {
-                    "attach_to": "eth0", 
-                    "name": "veth0"
-                }, 
-                "flavor": "veth"
-            }, 
-            
-        ]
-    }, 
-    "slice": "null", 
-    "user": 1
-}
-    print verifyOK('openflow1', 1, request)
+        "command": "delete_slice", 
+        "slice": "9e2a82e3-a19e-4be6-a158-9dc9ad0f9c2b", 
+        "user": 1,
+    }
+    print verifyOK(tenant_id = 1, request = request)

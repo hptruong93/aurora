@@ -1,6 +1,8 @@
 from abc import ABCMeta, abstractmethod
 
 import sys, traceback
+sys.path.insert(0,'../ap_provision/')
+import ap_provision_reader as provision_reader
 import json
 import glob
 import verification_exception as exceptions
@@ -11,6 +13,7 @@ import MySQLdb as mdb
 
 GENERAL_CHECK = 'general_check'
 CREATE_SLICE = 'create_slice' #This is the command name appears in the request parsed by manager.py
+DELETE_SLICE = 'delete_slice' #This is the command name appears in manager.py
 
 #Base abstract class for all verifications
 class RequestVerification():
@@ -34,6 +37,14 @@ class RequestVerification():
             if content['queue'] == physical_ap:
                 return content
         return None
+
+    @staticmethod
+    def _ap_name_exists(mysqlCursor, physical_ap):
+        mysqlCursor.execute("""SELECT name FROM ap WHERE name = %s""", physical_ap)
+        ap_names = mysqlCursor.fetchall()
+        if len(ap_names) != 0:
+            return True
+        return False
 
     @abstractmethod
     def _verify(self, command, request):
@@ -80,7 +91,7 @@ class APSliceNumberVerification(RequestVerification):
                             #Else return None later
                     #print result #For testing only
                 else:
-                    if not self._ap_name_exists(cursor, request['physical_ap']):
+                    if not RequestVerification._ap_name_exists(cursor, request['physical_ap']):
                         raise exceptions.NoSuchAPExists(str(request['physical_ap']))
 
                     cursor.execute("""SELECT name, used_slice, number_radio, number_radio_free 
@@ -108,13 +119,7 @@ class APSliceNumberVerification(RequestVerification):
                 raise exceptions.MissingKeyInRequest(str(e.args[0]))
         return None
 
-    def _ap_name_exists(self, mysqlCursor, physical_ap):
-        mysqlCursor.execute("SELECT name FROM ap")
-        ap_names = mysqlCursor.fetchall()
-        for ap_name in ap_names:
-            if ap_name[0] == physical_ap:
-                return True
-        return False
+    
         
 #See RadioConfigInvalid exception for what this class is verifying
 class RadioConfigExistedVerification(RequestVerification):
@@ -123,43 +128,40 @@ class RadioConfigExistedVerification(RequestVerification):
         if check_result:
             raise exceptions.RadioConfigInvalid(check_result)
 
-    def _get_number_slice_on_radio(self, physical_ap, radio_name):
-        ap_info = RequestVerification._get_physical_ap_info(physical_ap)
-        if ap_info is None:
-            raise exceptions.NoSuchAPExists(str(physical_ap))
+    # Three methods below are moved to ap_provision_reader...
+    # def _get_number_slice_on_radio(self, physical_ap, radio_name):
+    #     ap_info = RequestVerification._get_physical_ap_info(physical_ap)
+    #     if ap_info is None:
+    #         raise exceptions.NoSuchAPExists(str(physical_ap))
 
-        #For some reason, the ap_config file stores radio0 information with key "1"??? That is why we have + 1 below
-        #Below is the number of slices existing on that radio
-        slices = ap_info['last_known_config']['init_user_id_database']
-        if str(self._get_radio_number(radio_name) + 1) in slices:
-            return len(slices[str(self._get_radio_number(radio_name) + 1)])    
-        return 0
+    #     #For some reason, the ap_config file stores radio0 information with key "1"??? That is why we have + 1 below
+    #     #Below is the number of slices existing on that radio
+    #     slices = ap_info['last_known_config']['init_user_id_database']
+    #     if str(RequestVerification._get_radio_number(radio_name) + 1) in slices:
+    #         return len(slices[str(RequestVerification._get_radio_number(radio_name) + 1)])    
+    #     return 0
 
     #Get the radio that the request is trying to configure
     #KeyError exception should already be caught by caller
-    def _get_radio_configuring(self, radio_interface):
-        if len(radio_interface) == 0:
-            return None
-        else:
-            for item in radio_interface:
-                if item['flavor'] == 'wifi_radio':
-                    return item['attributes']['name']
-        return None
+    # def _get_radio_configuring(self, radio_interface):
+    #     if len(radio_interface) == 0:
+    #         return None
+    #     else:
+    #         for item in radio_interface:
+    #             if item['flavor'] == 'wifi_radio':
+    #                 return item['attributes']['name']
+    #     return None
 
     #Get the radio that the request is trying to setup the slice on
     #KeyError exception should already be caught by caller
-    def _get_radio_requested(self, radio_interface):
-        if len(radio_interface) == 0:
-            return None
-        else:
-            for item in radio_interface:
-                if item['flavor'] == 'wifi_bss':
-                    return item['attributes']['radio']
-        return None
-
-    #Radio name: radio0, radio1, ... radio10, 
-    def _get_radio_number(self, radio_name):
-        return int(radio_name[len('radio')])
+    # def _get_radio_requested(self, radio_interface):
+    #     if len(radio_interface) == 0:
+    #         return None
+    #     else:
+    #         for item in radio_interface:
+    #             if item['flavor'] == 'wifi_bss':
+    #                 return item['attributes']['radio']
+    #     return None
 
     def _check_radio_config_existed(self, command, request):
         if request is None:
@@ -167,14 +169,18 @@ class RadioConfigExistedVerification(RequestVerification):
         else:
             #Check for invalid configuration on ap radio using the request
             try:
-                configuring_radio = self._get_radio_configuring(request['config']['RadioInterfaces'])
+                request_ap_info = provision_reader.get_physical_ap_info(request['physical_ap'])
+                configuring_radio = provision_reader.get_radio_wifi_radio(request['config'])
                 request_has_config = configuring_radio is not None
 
                 if configuring_radio is None:
-                    requested_radio = self._get_radio_requested(request['config']['RadioInterfaces'])
-                    number_slices = self._get_number_slice_on_radio(request['physical_ap'], requested_radio)
+                    requested_radio = provision_reader.get_radio_wifi_bss(request['config']['RadioInterfaces'])
+                    number_slices = provision_reader.get_number_slice_on_radio(request_ap_info, requested_radio)
                 else:
-                    number_slices = self._get_number_slice_on_radio(request['physical_ap'], configuring_radio)
+                    number_slices = provision_reader.get_number_slice_on_radio(request_ap_info, configuring_radio)
+
+                if number_slices == -1:
+                    raise exceptions.NoSuchAPExists(str(request['physical_ap']))
 
                 config_existed = number_slices != 0
 
@@ -222,9 +228,6 @@ class VirtualInterfaceNumberVerification(RequestVerification):
                 if number_of_virtual_interface != 2:
                     return "Attempt to create slice with " + str(number_of_virtual_interface) + " interface(s). Exactly two VirtualInterface is required."
             return None
-        except mdb.Error, e:
-            traceback.print_exc(file=sys.stdout)
-            sys.exit(1)
         except KeyError, e:
             raise exceptions.MissingKeyInRequest(str(e.args[0]))
         
@@ -249,7 +252,7 @@ class AccessConflictVerification(RequestVerification):
                 for interface in request['config']['VirtualInterfaces']:
                     requested_interfaces.add(interface['attributes']['attach_to'])
 
-                con = RequestVerification._database_connection() 
+                con = RequestVerification._database_connection()
                 with con:
                     cursor = con.cursor()
                     physical_ap = request['physical_ap']                    
@@ -289,3 +292,46 @@ class AccessConflictVerification(RequestVerification):
             except KeyError, e:
                 raise exceptions.MissingKeyInRequest(str(e.args[0]))
             return None
+
+#See IllegalSliceDeletion exception for what this class is verifying
+class ValidDeleteVerification(RequestVerification):
+    def _verify(self, command, request):
+        check_result = self._check_slice_delete(command, request)
+        if check_result:
+            raise exceptions.IllegalSliceDeletion(check_result)
+
+    def _check_slice_delete(self, command, request):
+        try:
+            if request is None:
+                return None
+            else:
+                #Check for validity of deletion
+                con = RequestVerification._database_connection()
+                with con:
+                    cursor = con.cursor()
+                    #Get the ap that the slice is in
+                    cursor.execute("""SELECT physical_ap FROM ap_slice
+                                       WHERE tenant_id = %s
+                                       AND ap_slice_id = %s
+                                       AND status <> "DELETED"
+                                       """, (str(request['tenant_id']), request['slice'])) #Look for this key in ap_slice_delete in manager.py
+                    result = cursor.fetchall()
+                    if len(result) == 0:
+                        raise exceptions.NoSuchSliceExists(request['slice'])
+                    #There should be only one ap_name
+                    ap_name = [element for tupl in result for element in tupl][0]
+
+                    ap_name = 'openflow1'
+                    ap_info = provision_reader.get_physical_ap_info(ap_name)
+
+                    slice = provision_reader.get_slice(request['slice'], ap_name)
+
+                    current_radio = provision_reader.get_radio_wifi_bss(slice)
+                    slice_count = provision_reader.get_number_slice_on_radio(ap_info, current_radio)
+                    if slice_count != 1: #Have to check if this is the main slice
+                        if provision_reader.get_radio_interface(slice, 'wifi_radio') is not None:
+                            return "Cannot delete slice containing radio configurations!"
+            return None
+        except mdb.Error, e:
+            traceback.print_exc(file=sys.stdout)
+            sys.exit(1)
