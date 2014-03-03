@@ -44,10 +44,16 @@ def get_radio_interface(slice, flavor):
     return None
 
 def get_radio_wifi_bss(slice):
-    return get_radio_interface(slice, 'wifi_bss')['radio']
+    try:
+        return get_radio_interface(slice, 'wifi_bss')['radio']
+    except TypeError as e:
+        return None
 
 def get_radio_wifi_radio(slice):
-    return get_radio_interface(slice, 'wifi_radio')['name']
+    try:
+        return get_radio_interface(slice, 'wifi_radio')['name']
+    except TypeError as e:
+        return None
 
 #Radio name: radio0, radio1, ... radio10
 def _get_radio_number(radio_name):
