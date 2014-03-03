@@ -28,15 +28,16 @@ class RequestVerification():
                                    'supersecret',
                                    'aurora')
 
+    #Moved to ap_provision_reader
     #Get json info file for an ap. Json file is located in manager/core/ap_provision
-    @staticmethod
-    def _get_physical_ap_info(physical_ap):
-        provision_dir = "../ap_provision/"
-        for file in glob.glob(provision_dir + "*.json"):
-            content = json.load(open(file))
-            if content['queue'] == physical_ap:
-                return content
-        return None
+    # @staticmethod
+    # def _get_physical_ap_info(physical_ap):
+    #     provision_dir = "../ap_provision/"
+    #     for file in glob.glob(provision_dir + "*.json"):
+    #         content = json.load(open(file))
+    #         if content['queue'] == physical_ap:
+    #             return content
+    #     return None
 
     @staticmethod
     def _ap_name_exists(mysqlCursor, physical_ap):
@@ -269,7 +270,7 @@ class AccessConflictVerification(RequestVerification):
 
                     #At this point, we are sure that the ap exists since its existence has been previously checked by
                     #APSliceNumberVerification
-                    ap_info = RequestVerification._get_physical_ap_info(physical_ap)
+                    ap_info = provision_reader.get_physical_ap_info(physical_ap)
                     init_database = ap_info['last_known_config']['init_database']
 
                     for slice in init_database:
