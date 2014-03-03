@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0,'../../../ap/')
+sys.path.insert(0,'../ap/')
 import exception
 from abc import ABCMeta, abstractmethod
 
