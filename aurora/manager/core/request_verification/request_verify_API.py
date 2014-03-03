@@ -7,11 +7,12 @@ class RequestVerifier():
     #verification from aurora_db.py
     _commands = {
         verify_agent.GENERAL_CHECK : [verify_agent.APSliceNumberVerification()],
-        verify_agent.CREATE_SLICE : [verify_agent.APSliceNumberVerification(), 
-                        verify_agent.RadioConfigExistedVerification(),
-                        verify_agent.BridgeNumberVerification(),
-                        verify_agent.VirtualInterfaceNumberVerification(),
-                        verify_agent.AccessConflictVerification()],
+        verify_agent.CREATE_SLICE : [#verify_agent.APSliceNumberVerification(), 
+                        #verify_agent.RadioConfigExistedVerification(),
+                        #verify_agent.BridgeNumberVerification(),
+                        #verify_agent.VirtualInterfaceNumberVerification(),
+                        #verify_agent.AccessConflictVerification(),
+                        verify_agent.BandwidthVerification()],
         verify_agent.DELETE_SLICE : [verify_agent.ValidDeleteVerification()]
     }
 
@@ -22,7 +23,7 @@ class RequestVerifier():
     def isVerifyOK(command, request):
         for verifier in RequestVerifier._commands[command]:
             try:
-                verifier._verify(command, request)
+                verifier.verify(command, request)
             except exceptions.VerificationException as ex:
                 #print ex._handle_exception() #Testing only
                 return ex._handle_exception()
@@ -56,8 +57,67 @@ def verifyOK(physical_ap = '', tenant_id = 0, request = None):
 if __name__ == '__main__':
     #Testing
     request = {
-        "command": "delete_slice", 
+        "command": "create_slice", 
+        "config" : {
+                "VirtualInterfaces": [
+                    {       
+                        "attributes": {
+                            "attach_to": "eth0",
+                            "name": "veth2"
+                        },
+                        "flavor": "veth"
+                    },
+                    {   
+                        "attributes": {
+                            "attach_to": "wlan0-2",
+                            "name": "vwlan0-2"
+                        },  
+                        "flavor": "veth"
+                    }           
+                ],              
+                "TrafficAttributes": [
+                    {       
+                        "attributes": {
+                            "rate_down": "1000000",
+                            "rate_up": "1000000",
+                            "if_up": "veth2",
+                            "if_down": "vwlan0-2",
+                            "name": "veth2vwlan0-2"
+                        },
+                        "flavor": "tc"
+                    }
+                ],
+                "RadioInterfaces": [
+                    {
+                        "attributes": {
+                            "encryption_type": "wep-open",
+                            "radio": "radio0", 
+                            "name": "QoS v3",
+                            "key": "23456",
+                            "if_name": "wlan0-2"
+                        }, 
+                        "flavor": "wifi_bss"
+                    }
+                ], 
+                "VirtualBridges": [
+                    {
+                        "attributes": { 
+                            "interfaces": [
+                                "vwlan0-2",  
+                                "veth2"
+                            ],
+                            "bridge_settings": {}, 
+                            "name": "linux-br-4",
+                            "port_settings": {
+                                "vwlan0-2": {},
+                                "veth2": {}
+                            }
+                        },
+                        "flavor": "linux_bridge"
+                    }
+                ]
+            },
         "slice": "9e2a82e3-a19e-4be6-a158-9dc9ad0f9c2b", 
         "user": 1,
     }
-    print verifyOK(tenant_id = 1, request = request)
+    print verifyOK(physical_ap = 'openflow1', tenant_id = 1, request = request)

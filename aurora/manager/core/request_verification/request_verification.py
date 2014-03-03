@@ -1,4 +1,5 @@
-from abc import ABCMeta, abstractmethod
+from __future__ import division #This is not needed for python 3.x
+from abc import *
 
 import sys, traceback
 sys.path.insert(0,'core/ap_provision/')
@@ -28,17 +29,6 @@ class RequestVerification():
                                    'supersecret',
                                    'aurora')
 
-    #Moved to ap_provision_reader
-    #Get json info file for an ap. Json file is located in manager/core/ap_provision
-    # @staticmethod
-    # def _get_physical_ap_info(physical_ap):
-    #     provision_dir = "../ap_provision/"
-    #     for file in glob.glob(provision_dir + "*.json"):
-    #         content = json.load(open(file))
-    #         if content['queue'] == physical_ap:
-    #             return content
-    #     return None
-
     @staticmethod
     def _ap_name_exists(mysqlCursor, physical_ap):
         mysqlCursor.execute("""SELECT name FROM ap WHERE name = %s""", physical_ap)
@@ -47,20 +37,29 @@ class RequestVerification():
             return True
         return False
 
+    #Do not override this
+    def verify(self, command, request):
+        check_result = self._detail_verification(command, request)
+        if check_result:
+            raise self._get_exception()(check_result)
+
+    @classmethod
+    def _get_exception(cls):
+        raise NotImplemented
+
     @abstractmethod
-    def _verify(self, command, request):
+    def _detail_verification(self, command, request):
         pass
 
 class APSliceNumberVerification(RequestVerification):
-    def _verify(self, command, request):
-        check_result = self._check_number_of_ap_slice(command, request)
-        if check_result:
-            raise exceptions.NoAvailableSpaceLeftInAP(check_result)
+    @classmethod
+    def _get_exception(cls):
+        return exceptions.NoAvailableSpaceLeftInAP
 
     #If request = None, it checks for inconsistency in the database, namely an AP with n radios should not have more than 4n ap slices
     #If request != None, it checks for the ap requested for available space.
     #The method raises a NoAvailableSpaceLeftInAP exception if there is any conflict.
-    def _check_number_of_ap_slice(self, command, request):
+    def _detail_verification(self, command, request):
         _ADDITIONAL_SLICE = {#For each command, we will check for a certain adding constant
             GENERAL_CHECK : 0, 
             CREATE_SLICE : 1
@@ -89,8 +88,6 @@ class APSliceNumberVerification(RequestVerification):
                     for ap in result:
                         if ap[used_slice] > 4 * ap[number_radio]:
                             return 'The AP ' + str(ap[name]) + ' has no space left to create new slice.'
-                            #Else return None later
-                    #print result #For testing only
                 else:
                     if not RequestVerification._ap_name_exists(cursor, request['physical_ap']):
                         raise exceptions.NoSuchAPExists(str(request['physical_ap']))
@@ -120,51 +117,13 @@ class APSliceNumberVerification(RequestVerification):
                 raise exceptions.MissingKeyInRequest(str(e.args[0]))
         return None
 
-    
-        
 #See RadioConfigInvalid exception for what this class is verifying
 class RadioConfigExistedVerification(RequestVerification):
-    def _verify(self, command, request):
-        check_result = self._check_radio_config_existed(command, request)
-        if check_result:
-            raise exceptions.RadioConfigInvalid(check_result)
+    @classmethod
+    def _get_exception(cls):
+        return exceptions.RadioConfigInvalid
 
-    # Three methods below are moved to ap_provision_reader...
-    # def _get_number_slice_on_radio(self, physical_ap, radio_name):
-    #     ap_info = RequestVerification._get_physical_ap_info(physical_ap)
-    #     if ap_info is None:
-    #         raise exceptions.NoSuchAPExists(str(physical_ap))
-
-    #     #For some reason, the ap_config file stores radio0 information with key "1"??? That is why we have + 1 below
-    #     #Below is the number of slices existing on that radio
-    #     slices = ap_info['last_known_config']['init_user_id_database']
-    #     if str(RequestVerification._get_radio_number(radio_name) + 1) in slices:
-    #         return len(slices[str(RequestVerification._get_radio_number(radio_name) + 1)])    
-    #     return 0
-
-    #Get the radio that the request is trying to configure
-    #KeyError exception should already be caught by caller
-    # def _get_radio_configuring(self, radio_interface):
-    #     if len(radio_interface) == 0:
-    #         return None
-    #     else:
-    #         for item in radio_interface:
-    #             if item['flavor'] == 'wifi_radio':
-    #                 return item['attributes']['name']
-    #     return None
-
-    #Get the radio that the request is trying to setup the slice on
-    #KeyError exception should already be caught by caller
-    # def _get_radio_requested(self, radio_interface):
-    #     if len(radio_interface) == 0:
-    #         return None
-    #     else:
-    #         for item in radio_interface:
-    #             if item['flavor'] == 'wifi_bss':
-    #                 return item['attributes']['radio']
-    #     return None
-
-    def _check_radio_config_existed(self, command, request):
+    def _detail_verification(self, command, request):
         if request is None:
             return None
         else:
@@ -196,12 +155,11 @@ class RadioConfigExistedVerification(RequestVerification):
 
 #See BridgeNumberInvalid exception for what this class is verifying
 class BridgeNumberVerification(RequestVerification):
-    def _verify(self, command, request):
-        check_result = self._check_number_of_bridge(command, request)
-        if check_result:
-            raise exceptions.BridgeNumberInvalid(check_result)
+    @classmethod
+    def _get_exception(cls):
+        return exceptions.BridgeNumberInvalid
 
-    def _check_number_of_bridge(self, command, request):
+    def _detail_verification(self, command, request):
         if request is None:
             return None
         else:
@@ -214,12 +172,11 @@ class BridgeNumberVerification(RequestVerification):
 
 #See VirtualInterfaceNumberInvalid exception for what this class is verifying
 class VirtualInterfaceNumberVerification(RequestVerification):
-    def _verify(self, command, request):
-        check_result = self._check_number_of_virtual_interface(command, request)
-        if check_result:
-            raise exceptions.VirtualInterfaceNumberInvalid(check_result)
+    @classmethod
+    def _get_exception(cls):
+        return exceptions.VirtualInterfaceNumberInvalid
 
-    def _check_number_of_virtual_interface(self, command, request):
+    def _detail_verification(self, command, request):
         try:
             if request is None:
                 return None
@@ -236,12 +193,11 @@ class VirtualInterfaceNumberVerification(RequestVerification):
 #This class assumes the request has been checked with APSliceNumberVerification, BridgeNumberVerification and
 #VirtualInterfaceNumberVerification
 class AccessConflictVerification(RequestVerification):
-    def _verify(self, command, request):
-        check_result = self._check_access_conflict(command, request)
-        if check_result:
-            raise exceptions.AccessConflict(check_result)
+    @classmethod
+    def _get_exception(cls):
+        return exceptions.AccessConflict
 
-    def _check_access_conflict(self, command, request):
+    def _detail_verification(self, command, request):
         if request is None:
             return None
         else:
@@ -294,14 +250,68 @@ class AccessConflictVerification(RequestVerification):
                 raise exceptions.MissingKeyInRequest(str(e.args[0]))
             return None
 
+
+#See InsufficientBandwidth exception for what this class is verifying
+#This class assumes the request has been checked with APSliceNumberVerification, BridgeNumberVerification,
+#VirtualInterfaceNumberVerification and AccessConflictVerification
+class BandwidthVerification(RequestVerification):
+    @classmethod
+    def _get_exception(cls):
+        return exceptions.InsufficientBandwidth
+
+    def _check_band_width(self, requested, number_of_slice, sum_so_far):
+        MAX_BANDWIDTH = {1 : 20 * (1024 * 1024),         #20Mbps
+                         2 : 14 * (1024 * 1024),
+                         3 : 9 * (1024 * 1024),
+                         4 : 9 * (1024 * 1024),
+                         5 : 9 * (1024 * 1024),}
+
+        max_bandwidth = MAX_BANDWIDTH[number_of_slice + 1] #including this one as well
+        max_allowance = max_bandwidth / (number_of_slice + 1) #including this one as well
+
+        if (requested >= max_allowance) or (requested >= max_bandwidth - sum_so_far):
+            return False
+        return True
+
+    def _detail_verification(self, command, request):
+        try:
+            if request is None:
+                return None
+            else:
+                #Check bandwidth requested match with the supported bandwidth
+                request_up = provision_reader.get_rate_up(request['config']) #bps
+                request_down = provision_reader.get_rate_down(request['config']) #bps
+
+                ap_info = provision_reader.get_physical_ap_info(request['physical_ap'])
+                requested_radio = provision_reader.get_radio_wifi_bss(request['config'])
+                number_slices = provision_reader.get_number_slice_on_radio(ap_info, requested_radio)
+
+                rate_up = 0
+                rate_down = 0
+
+                slices = provision_reader.get_slices(ap_info)
+
+                for slice in slices:
+                    radio = provision_reader.get_radio_wifi_bss(slices[slice])
+                    if radio == requested_radio:
+                        rate_up += int(provision_reader.get_rate_up(slices[slice]))
+                        rate_down += int(provision_reader.get_rate_down(slices[slice]))
+
+                if not self._check_band_width(request_up, number_slices, rate_up):
+                    return "The request up rate " + str(request_up) + " is too high!"
+                elif not self._check_band_width(request_down, number_slices, rate_down):
+                    return "The request down rate " + str(request_down) + " is too high!"
+            return None
+        except KeyError, e:
+                raise exceptions.MissingKeyInRequest(str(e.args[0]))
+
 #See IllegalSliceDeletion exception for what this class is verifying
 class ValidDeleteVerification(RequestVerification):
-    def _verify(self, command, request):
-        check_result = self._check_slice_delete(command, request)
-        if check_result:
-            raise exceptions.IllegalSliceDeletion(check_result)
+    @classmethod
+    def _get_exception(cls):
+        return exceptions.IllegalSliceDeletion
 
-    def _check_slice_delete(self, command, request):
+    def _detail_verification(self, command, request):
         try:
             if request is None:
                 return None

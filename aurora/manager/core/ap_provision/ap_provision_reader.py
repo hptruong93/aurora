@@ -22,7 +22,7 @@ def get_physical_ap_info(physical_ap):
     except KeyError, e:
         return None
 
-#Return a dictionary containing all slice information, given what physical_ap the slice is in
+#Return a dictionary containing all information about a slice, given what physical_ap the slice is in
 #Return None if nothing is found
 def get_slice(slice_id, physical_ap):
     ap = get_physical_ap_info(physical_ap)
@@ -30,6 +30,13 @@ def get_slice(slice_id, physical_ap):
         if slice_id == slice:
             return ap['last_known_config']['init_database'][slice]
     return None
+
+#Return a dictionary containing all information about all slices in a certain ap
+def get_slices(ap_info):
+    output = ap_info['last_known_config']['init_database']
+    output.pop("default_slice", None)
+
+    return output
 
 #Get how many slice there are in the current ap
 def get_slice_count(physical_ap_info):
@@ -44,16 +51,28 @@ def get_radio_interface(slice, flavor):
     return None
 
 def get_radio_wifi_bss(slice):
-    try:
-        return get_radio_interface(slice, 'wifi_bss')['radio']
-    except TypeError as e:
-        return None
+    interface = get_radio_interface(slice, 'wifi_bss')
+    if interface is not None:
+        return interface['radio']
+    return None
 
 def get_radio_wifi_radio(slice):
-    try:
-        return get_radio_interface(slice, 'wifi_radio')['name']
-    except TypeError as e:
-        return None
+    interface = get_radio_interface(slice, 'wifi_radio')
+    if interface is not None:
+        return interface['name']
+    return None
+
+def get_rate_up(slice):
+    sum_up = 0
+    for item in slice['TrafficAttributes']:
+        sum_up += int(item['attributes']['rate_up'])
+    return sum_up
+
+def get_rate_down(slice):
+    sum_down = 0
+    for item in slice['TrafficAttributes']:
+        sum_down += int(item['attributes']['rate_down'])
+    return sum_down    
 
 #Radio name: radio0, radio1, ... radio10
 def _get_radio_number(radio_name):

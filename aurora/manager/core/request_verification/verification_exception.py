@@ -91,6 +91,15 @@ class AccessConflict(VerificationException):
     def _handle_exception(self):
         return self.message
 
+#This exception is raised when a client attempts to specify a bandwidth greater than the ap's capacity (this value is determined through practical observation. See other documents).
+class InsufficientBandwidth(VerificationException):
+    def __init__(self, message = ""):
+        self.message = message
+        super(InsufficientBandwidth, self).__init__(message)
+
+    def _handle_exception(self):
+        return self.message
+
 #This exception is raised when a client attempts to delete a slice while there are more than 1 slice in the ap, and that
 #the deleting slice is the main slice that contains radio configuration.
 class IllegalSliceDeletion(VerificationException):
