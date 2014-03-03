@@ -320,11 +320,10 @@ class ValidDeleteVerification(RequestVerification):
                         raise exceptions.NoSuchSliceExists(request['slice'])
                     #There should be only one ap_name
                     ap_name = [element for tupl in result for element in tupl][0]
-
-                    ap_name = 'openflow1'
                     ap_info = provision_reader.get_physical_ap_info(ap_name)
-
                     slice = provision_reader.get_slice(request['slice'], ap_name)
+                    if slice is None: #Slice is none means it has never been successfully created. The client is deleting a FAILED slice.
+                        return None
 
                     current_radio = provision_reader.get_radio_wifi_bss(slice)
                     slice_count = provision_reader.get_number_slice_on_radio(ap_info, current_radio)
