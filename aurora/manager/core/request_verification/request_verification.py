@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
 import sys, traceback
-sys.path.insert(0,'../ap_provision/')
+sys.path.insert(0,'core/ap_provision/')
 import ap_provision_reader as provision_reader
 import json
 import glob
