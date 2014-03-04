@@ -195,8 +195,8 @@ class Dispatcher(object):
         # closes associated channels
         # Stop timers
         #self.apm.stop()
-        self._stop_connection()
         self._stop_pika_channel_open_monitor()
+        self._stop_connection()
         del self.connection
         del self.channel
         del self.listener

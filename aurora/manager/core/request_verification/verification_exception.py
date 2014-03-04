@@ -1,6 +1,5 @@
 import sys
-sys.path.insert(0,'../ap/')
-import exception
+from .. import exc as exception
 from abc import ABCMeta, abstractmethod
 
 #Base abstract class for all exception raised (when conflict detected)

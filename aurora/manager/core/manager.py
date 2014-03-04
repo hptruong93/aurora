@@ -15,9 +15,8 @@ from aurora_db import *
 import ap_monitor
 from cls_logger import get_cls_logger
 import dispatcher
-import ap_provision.http_srv as provision
-sys.path.insert(0,'core/request_verification/')
-import request_verify_API as Verify
+import ap_provision.http_srv as provision_srv
+import request_verification.request_verify_API as Verify
 import slice_plugin
 
 LOGGER = logging.getLogger(__name__)
@@ -59,7 +58,7 @@ class Manager(object):
 
         self.apm = ap_monitor.APMonitor(self.dispatcher, self.aurora_db, self.mysql_host, self.mysql_username, self.mysql_password)
 
-        provision.run()
+        provision_srv.run()
 
     def __del__(self):
         self.LOGGER.info("Destructing Manager...")
@@ -68,7 +67,7 @@ class Manager(object):
     def stop(self):
         self.apm.stop()
         self.dispatcher.stop()
-        provision.stop()
+        provision_srv.stop()
 
     def parseargs(self, function, args, tenant_id, user_id, project_id):
         # args is a generic dictionary passed to all functions (each function is responsible for parsing

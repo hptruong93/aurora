@@ -15,7 +15,7 @@ import weakref
 import MySQLdb as mdb
 
 from cls_logger import get_cls_logger
-import ap_provision.http_srv as provision
+import ap_provision.writer as provision
 from stop_thread import *
 #import dispatcher
 

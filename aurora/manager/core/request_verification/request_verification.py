@@ -2,8 +2,10 @@ from __future__ import division #This is not needed for python 3.x
 from abc import *
 
 import sys, traceback
-sys.path.insert(0,'core/ap_provision/')
-import ap_provision_reader as provision_reader
+# Try and avoid adding to python path
+#sys.path.insert(0,'core/ap_provision/')
+#import ap_provision_reader as provision_reader
+from ..ap_provision import ap_provision_reader as provision_reader
 import json
 import glob
 import verification_exception as exceptions
