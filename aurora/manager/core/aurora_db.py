@@ -124,7 +124,7 @@ class AuroraDB(object):
             with self._database_connection() as db:
                 db.execute("SELECT last_time_activated, last_time_updated FROM metering WHERE ap_slice_id='%s'" % ap_slice_id)
                 previous_time_stats = db.fetchone()
-                self.LOGGER.debug("last_active_time: %s", last_active_time)
+                self.LOGGER.debug("previous_time_stats: %s", previous_time_stats)
                 time_active = None
                 now = datetime.datetime.now()
                 (last_time_activated, last_time_updated,
@@ -251,7 +251,7 @@ class AuroraDB(object):
 
                     self.LOGGER.info("Setting status 'ACTIVE' for %s", ap_slice_id)
                     to_execute = ("UPDATE ap_slice SET "
-                                          "status='ACTIVE'"
+                                          "status='ACTIVE' "
                                       "WHERE ap_slice_id='%s'" % ap_slice_id)
                     self.LOGGER.debug(to_execute)
                     db.execute(to_execute)
@@ -264,12 +264,12 @@ class AuroraDB(object):
             with self._database_connection() as db:
                 if success:
                     now = datetime.datetime.now()
-                    to_execute = ("""UPDATE metering SET 
-                                         last_time_activated=
+                    to_execute = ("""UPDATE metering, ap_slice SET 
+                                         metering.last_time_activated=
                                              CASE ap_slice.status
                                                  WHEN 'PENDING' THEN '%s'
                                                  WHEN 'DOWN' THEN '%s'
-                                             ELSE last_time_activated END
+                                             ELSE metering.last_time_activated END
                                          WHERE ap_slice_id='%s';
                                      UPDATE ap_slice SET
                                          status= 
@@ -516,7 +516,7 @@ class AuroraDB(object):
     def wslice_add(self, slice_uuid, slice_ssid, tenant_id, physAP, project_id):
         try:
             with self._database_connection() as db:
-                to_execute = ( "INSERT INTO ap_slice VALUES ('%s', '%s', %s, '%s', %s, %s, '%s', %s, %s, %s)" %
+                to_execute = ( "INSERT INTO ap_slice VALUES ('%s', '%s', %s, '%s', %s, %s, '%s')" %
                                (slice_uuid, slice_ssid, tenant_id, physAP,
                                 project_id, "NULL", "PENDING")
                              )
