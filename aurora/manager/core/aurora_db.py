@@ -658,7 +658,7 @@ class AuroraDB(object):
                 return slice_list
         except mdb.Error, e:
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
-            sys.exit(1):
+            sys.exit(1)
 
     def get_wnet_list(self, tenant_id, wnet_arg = None):
         try:
