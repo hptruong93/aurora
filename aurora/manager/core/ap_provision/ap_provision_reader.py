@@ -1,6 +1,9 @@
-import os, sys, glob, traceback
+import glob
 import json
 import logging
+import os
+import sys
+import traceback
 
 #This module provides an API to read ap_provision
 
