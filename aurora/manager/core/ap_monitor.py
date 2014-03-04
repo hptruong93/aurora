@@ -37,9 +37,6 @@ class APMonitor(object):
         self.dispatcher.set_response_callback(self.process_response)
         self.dispatcher.start_connection()
 
-        #self.dispatcher_ref = weakref.ref(dispatcher)
-        #self.LOGGER.debug("Made weak ref %s %s",self.dispatcher_ref, self.dispatcher_ref())
-
         self.aurora_db = aurora_db
         # self.ut = UptimeTracker(host, username, password)
         self.poller_threads = {}
@@ -265,9 +262,21 @@ class APMonitor(object):
         """Update the traffic information of ap_slice"""
         self.LOGGER.debug("Updating records...")
         for ap_slice_id in message.keys():
-            self.aurora_db.ap_slice_update_time_active(ap_slice_id)
-            self.aurora_db.ap_slice_update_mb_sent(ap_slice_id, float(message.get(ap_slice_id))/MB)
+            try:
+                self.aurora_db.ap_slice_status_up(ap_slice_id)
+            except Exception:
+                traceback.print_exc(file=sys.stdout)
 
+            try:
+                self.aurora_db.ap_slice_update_time_stats(ap_slice_id)
+            except Exception:
+                traceback.print_exc(file=sys.stdout)
+
+            try:
+                self.aurora_db.ap_slice_update_mb_sent(ap_slice_id, float(message.get(ap_slice_id))/MB)
+            except Exception:
+                traceback.print_exc(file=sys.stdout)
+            
     def set_status(self, unique_id, success, ap_up=True, ap_name=None):
         self._add_call_to_queue(unique_id, success, ap_up, ap_name)
 

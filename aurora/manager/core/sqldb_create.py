@@ -48,7 +48,7 @@ class SQLDBCreate(object):
                 #Switch to aurora database
                 cur.execute("USE aurora")
 
-                #Create access_point table
+                #Create ap table
                 LOGGER.warn("Creating table ap")
                 ap = "CREATE TABLE ap (name VARCHAR(255) NOT NULL PRIMARY KEY,region VARCHAR(255),firmware VARCHAR(255),\
  version VARCHAR(255),number_radio INT(11),memory_mb INT(11),free_disk INT(11),supported_protocol VARCHAR(255) DEFAULT 'a/b/g',\
@@ -58,13 +58,26 @@ class SQLDBCreate(object):
                 #Create ap_slice table
                 LOGGER.warn("Creating table ap_slice")
                 ap_slice = "CREATE TABLE ap_slice (ap_slice_id VARCHAR(40) NOT NULL PRIMARY KEY, ap_slice_ssid VARCHAR(255), tenant_id VARCHAR(255),\
- physical_ap VARCHAR(255), project_id VARCHAR(255), wnet_id VARCHAR(40), status ENUM('PENDING','ACTIVE','FAILED','DOWN','DELETING','DELETED'),\
- time_active TIME DEFAULT '00:00:00', last_active_time DATETIME, mb_sent FLOAT DEFAULT 0.0)"
+ physical_ap VARCHAR(255), project_id VARCHAR(255), wnet_id VARCHAR(40), status ENUM('PENDING','ACTIVE','FAILED','DOWN','DELETING','DELETED'))"
                 cur.execute(ap_slice)
+
+                #Create metering table
+                LOGGER.warn("Creating table metering")
+                metering = """CREATE TABLE metering(
+                                  ap_slice_id VARCHAR(40) NOT NULL PRIMARY KEY, 
+                                  current_mb_sent FLOAT DEFAULT 0.0, 
+                                  total_mb_sent FLOAT DEFAULT 0.0,
+                                  current_active_duration TIME DEFAULT '00:00:00',
+                                  total_active_duration TIME,
+                                  last_time_activated DATETIME,
+                                  last_time_updated DATETIME
+                                  )
+                                  """
+                cur.execute(metering)
 
                 #Create wnet table
                 LOGGER.warn("Creating table wnet")
-                wnet = "CREATE TABLE wnet( wnet_id VARCHAR(40) NOT NULL PRIMARY KEY, name VARCHAR(255) UNIQUE, tenant_id VARCHAR(255), project_id VARCHAR(40))"
+                wnet = "CREATE TABLE wnet (wnet_id VARCHAR(40) NOT NULL PRIMARY KEY, name VARCHAR(255) UNIQUE, tenant_id VARCHAR(255), project_id VARCHAR(40))"
                 cur.execute(wnet)
 
                 #Create location_tags table

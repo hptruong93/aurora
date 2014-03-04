@@ -2,7 +2,7 @@ import BaseHTTPServer
 import json
 import logging
 import os
-from pprint import pprint, pformat
+from pprint import pformat
 import threading
 
 from ..cls_logger import get_cls_logger

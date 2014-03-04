@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from pprint import pprint, pformat
+from pprint import pformat
 
 LOGGER = logging.getLogger(__name__)
 

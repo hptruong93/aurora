@@ -19,7 +19,7 @@
     "rabbitmq_host": "10.5.8.3", 
     "region": "mcgill", 
     "queue": "openflow1", 
-    "rabbitmq_reply_queue": "amq.gen-GRJHnWtimPqsUTv0DPIc0A", 
+    "rabbitmq_reply_queue": "amq.gen-hGxPC5OHwe5NVD6D8gM9bA", 
     "default_config": {
         "init_hardware_database": {
             "wifi_radio": {
