@@ -270,8 +270,12 @@ class AuroraDB(object):
                                                  WHEN 'PENDING' THEN '%s'
                                                  WHEN 'DOWN' THEN '%s'
                                              ELSE metering.last_time_activated END
-                                         WHERE metering.ap_slice_id='%s';
-                                     UPDATE ap_slice SET
+                                         WHERE metering.ap_slice_id='%s'""" %
+                                     (now, now, ap_slice_id)
+                                 )
+                    self.LOGGER.debug(to_execute)
+                    db.execute(to_execute)
+                    to_execute = ("""UPDATE ap_slice SET
                                          status= 
                                              CASE status 
                                                  WHEN 'PENDING' THEN 'ACTIVE' 
@@ -279,7 +283,7 @@ class AuroraDB(object):
                                                  WHEN 'DOWN' THEN 'ACTIVE' 
                                              ELSE status END
                                          WHERE ap_slice_id='%s'""" %
-                                     (now, now, ap_slice_id, ap_slice_id)
+                                     ap_slice_id
                                  )
                 else:
                     to_execute = ("""UPDATE ap_slice SET 
