@@ -26,7 +26,6 @@ LOGGER = logging.getLogger(__name__)
 
 class APMonitor(object):
 
-    sql_locked = None
     SLEEP_TIME = 45
     # TODO: Make function to determine if dispatcher still exists
     def __init__(self, dispatcher, aurora_db, host, username, password):
@@ -49,7 +48,6 @@ class APMonitor(object):
         self.LOGGER.info("Connecting to SQLdb...")
         try:
             self.con = mdb.connect(host, username, password, 'aurora')
-            APMonitor.sql_locked = False
         except mdb.Error, e:
             self.LOGGER.error("Error %d: %s" % (e.args[0], e.args[1]))
             sys.exit(1)
@@ -177,7 +175,7 @@ class APMonitor(object):
         elif message == 'FIN':
             self.LOGGER.info("%s is shutting down...", ap_name)
             try:
-                self.set_status(None, None, False, ap_name)
+                self.set_status(None, None, None, False, ap_name)
                 self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
                 self.aurora_db.ap_status_down(ap_name)
                 self.LOGGER.info("Updating config files...")
@@ -198,22 +196,19 @@ class APMonitor(object):
             # Set status, stop timer, delete record
             #print "entry[2]:",entry[2]
             if entry[2] != 'admin':
-                self.set_status(entry[2], decoded_response['successful'], ap_name=ap_name)
+                self.set_status(None, entry[2], decoded_response['successful'], ap_name=ap_name)
                 self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
 
                 self.LOGGER.info("Updating config files...")
                 provision.update_last_known_config(ap_name, config)
             else:
                 if message == 'AP reset':
-                    self.set_status(None, None, False, ap_name)
+                    self.set_status('AP reset', None, None, False, ap_name)
                     pass
                 elif message == 'RESTARTING':
                     pass
                 else:
-                    try:
-                        self.update_records(message["ap_slice_stats"])
-                    except:
-                        traceback.print_exc(file=sys.stdout)
+                    self.set_status('slice_stats', ap_slice_stats=message["ap_slice_stats"])
                     self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
 
             self.dispatcher.remove_request(entry[0])
@@ -280,18 +275,37 @@ class APMonitor(object):
             except Exception:
                 traceback.print_exc(file=sys.stdout)
             
-    def set_status(self, unique_id, success, ap_up=True, ap_name=None):
-        self.LOGGER.debug("Adding set_status call to queue for (%s, %s, %s, %s)", unique_id, success, ap_up, ap_name)
-        self._add_call_to_queue(unique_id, success, ap_up, ap_name)
+    def set_status(self, cmd_category, *args, **kwargs):
+        """This function's arguments used to look like 
+            unique_id, success, ap_up=True, ap_name=None
 
-    def _set_status(self, unique_id, success, ap_up=True, ap_name=None):
+        """
+        self.LOGGER.debug("Adding set_status call to queue for (%s, %s)", args, kwargs)
+        self._add_call_to_queue(cmd_category, *args, **kwargs)
+
+    def _set_status(self, cmd_category, *args, **kwargs):
         """Sets the status of the associated request in the
         database based on the previous status, i.e. pending -> active if
         create slice, deleting -> deleted if deleting a slice, etc.
         If the ap_up variable is false, the access point
         is considered to be offline and in an unknown state,
         so *all* slices are marked as such (down, failed, etc.)."""
+        if cmd_category is None:
+            self._set_status_standard(*args, **kwargs)
+        elif cmd_category is 'AP reset':
+            self._set_status_standard(*args, **kwargs)
+        elif cmd_category is 'slice_stats':
+            self._set_status_stats(*args, **kwargs)
 
+        return True
+
+    def _set_status_stats(self, ap_slice_stats=None):
+        try:
+            self.update_records(ap_slice_stats)
+        except:
+            traceback.print_exc(file=sys.stdout)
+
+    def _set_status_standard(self, unique_id, success, ap_up=True, ap_name=None):
         # DEBUG
         if unique_id != 'SYN':
             self.LOGGER.info("Updating ap status for ID %s.", str(unique_id))
@@ -299,12 +313,6 @@ class APMonitor(object):
             self.LOGGER.info("Updating ap status for ID %s.", str(ap_name))
         self.LOGGER.info("Request successful: %s", str(success))
         self.LOGGER.info("Access Point up: %s", str(ap_up))
-
-        if APMonitor.sql_locked:
-            self.LOGGER.info("SQL Access is locked, waiting...")
-            while APMonitor.sql_locked:
-                time.sleep(0.1)
-                pass
         # Code:
         # Identify slice by unique_id
         # if ap_up:
@@ -335,18 +343,9 @@ class APMonitor(object):
                 self.aurora_db.ap_down_slice_status_update(ap_name)
         except Exception, e:
             self.LOGGER.error(str(e))
-        finally:
-            APMonitor.sql_locked = False
-        return True
 
     def restart_slices(self, ap, slice_list):
-        if APMonitor.sql_locked:
-            self.LOGGER.info("SQL Access is locked, waiting...")
-            while APMonitor.sql_locked:
-                time.sleep(0.1)
-                pass
         try:
-            APMonitor.sql_locked = True
             for ap_slice_id in slice_list:
                 user_id = self.aurora_db.get_user_for_active_ap_slice(ap_slice_id)
                 self.LOGGER.debug("Returned user id %s", user_id)
@@ -362,9 +361,7 @@ class APMonitor(object):
                 else:
                     self.LOGGER.warn("No active slice %s", slice_id)
         except Exception, e:
-            self.LOGGER.error("Error %s", e)
-        finally:
-            APMonitor.sql_locked = False
+            traceback.print_exc(file=sys.stdout)
 
     def start_poller(self, ap_name):
         
