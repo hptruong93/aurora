@@ -241,7 +241,7 @@ class AuroraDB(object):
             with self._database_connection() as db:
                 num_results = db.execute("SELECT status FROM ap_slice WHERE ap_slice_id='%s'" % ap_slice_id)
                 status = None
-                if num_results == 0:
+                if num_results == 1:
                     status = db.fetchone()[0]
                 if (status != 'ACTIVE' and
                         status != 'PENDING' and
