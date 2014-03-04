@@ -521,6 +521,8 @@ class AuroraDB(object):
                                 project_id, "NULL", "PENDING")
                              )
                 db.execute(to_execute)
+                to_execute = ( "INSERT INTO metering SET ap_slice_id='%s'" % ap_slice_id)
+                db.execute(to_execute)
                 #return "Adding slice %s on %s.\n" % (slice_uuid, physAP)
                 return None
                 #We the manager calling this method will generate this message after calling.
