@@ -72,7 +72,7 @@ class APMonitor(object):
     def _watch_queue(self, stop_event=None):
         while True:
             while len(self.timeout_queue) < 1 and not stop_event.is_set():
-                time.sleep(1)
+                time.sleep(0.1)
             if stop_event.is_set():
                 self.LOGGER.info("Queue Daemon caught stop event")
                 break
