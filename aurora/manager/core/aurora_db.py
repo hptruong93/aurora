@@ -178,16 +178,16 @@ class AuroraDB(object):
                 to_execute = ("""UPDATE metering SET 
                                      total_mb_sent=
                                          (total_mb_sent-current_mb_sent)
-                                             + mb_sent,
+                                             + %s,
                                      current_mb_sent=
-                                         mb_sent
+                                         %s
                                      WHERE ap_slice_id='%s'""" %
-                                 (mb_sent, ap_slice_id)
+                                 (mb_sent, mb_sent, ap_slice_id)
                              )
                 self.LOGGER.debug(to_execute)
                 db.execute(to_execute)
         except Exception, e:
-            self.LOGGER.error("Error: %s", str(e))
+            traceback.print_exc(file=sys.stdout)
 
     def ap_update_hw_info(self, hw_database, ap_name, region):
         try:
