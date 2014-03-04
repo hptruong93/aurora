@@ -119,55 +119,60 @@ class AuroraDB(object):
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
 
-    def ap_slice_update_time_stats(self, ap_slice_id):
-        try:
-            with self._database_connection() as db:
-                db.execute("SELECT last_time_activated, last_time_updated, total_active_duration FROM metering WHERE ap_slice_id='%s'" % ap_slice_id)
-                previous_time_stats = db.fetchone()
-                self.LOGGER.debug("previous_time_stats: %s", previous_time_stats)
-                time_active = None
-                now = datetime.datetime.now()
-                (last_time_activated, last_time_updated,
-                 current_active_duration, total_active_duration) = (None, None, None, None)
-                if previous_time_stats is not None:
-                    (last_time_activated, last_time_updated, total_active_duration) = previous_time_stats
-                if last_time_activated is None:
-                    self.LOGGER.warn("No value for last time activated for slice %s", ap_slice_id)
-                    self.LOGGER.info("Setting last time activated %s", now)
-                    to_execute = ("""UPDATE metering SET
-                                         last_time_activated='%s'
-                                         WHERE ap_slice_id='%s'""" %
-                                     (now, ap_slice_id)
-                                 )
-                    last_time_activated = now
-                else:
-                    current_active_duration = now - last_time_activated
+    def ap_slice_update_time_stats(self, ap_slice_id=None, ap_name=None):
+        if ap_name is not None:
+            slice_list = self.get_physical_ap_slices(ap_name)
+        else
+            slice_list = [ap_slice_id]
+        for s_id in slice_list:
+            try:
+                with self._database_connection() as db:
+                    db.execute("SELECT last_time_activated, last_time_updated, total_active_duration FROM metering WHERE ap_slice_id='%s'" % s_id)
+                    previous_time_stats = db.fetchone()
+                    self.LOGGER.debug("previous_time_stats: %s", previous_time_stats)
+                    time_active = None
+                    now = datetime.datetime.now()
+                    (last_time_activated, last_time_updated,
+                     current_active_duration, total_active_duration) = (None, None, None, None)
+                    if previous_time_stats is not None:
+                        (last_time_activated, last_time_updated, total_active_duration) = previous_time_stats
+                    if last_time_activated is None:
+                        self.LOGGER.warn("No value for last time activated for slice %s", s_id)
+                        self.LOGGER.info("Setting last time activated %s", now)
+                        to_execute = ("""UPDATE metering SET
+                                             last_time_activated='%s'
+                                             WHERE ap_slice_id='%s'""" %
+                                         (now, s_id)
+                                     )
+                        last_time_activated = now
+                    else:
+                        current_active_duration = now - last_time_activated
+                        to_execute = ("""UPDATE metering SET 
+                                             current_active_duration='%s'
+                                             WHERE ap_slice_id='%s'""" % 
+                                             (current_active_duration, s_id)
+                                     )
+                    self.LOGGER.debug(to_execute)
+                    db.execute(to_execute)
+                    if last_time_updated is None:
+                        self.LOGGER.warn("No value for last time updated for slice %s", s_id)
+                        self.LOGGER.info("Using value for last time activated %s", last_time_activated)
+                        last_time_updated = last_time_activated
+
+                    time_diff = now - last_time_updated
+                    total_active_duration = total_active_duration + time_diff
                     to_execute = ("""UPDATE metering SET 
-                                         current_active_duration='%s'
+                                         total_active_duration='%s',
+                                         last_time_updated='%s'
                                          WHERE ap_slice_id='%s'""" % 
-                                         (current_active_duration, ap_slice_id)
+                                         (total_active_duration, now, s_id)
                                  )
-                self.LOGGER.debug(to_execute)
-                db.execute(to_execute)
-                if last_time_updated is None:
-                    self.LOGGER.warn("No value for last time updated for slice %s", ap_slice_id)
-                    self.LOGGER.info("Using value for last time activated %s", last_time_activated)
-                    last_time_updated = last_time_activated
+                    self.LOGGER.debug(to_execute)
+                    db.execute(to_execute)
 
-                time_diff = now - last_time_updated
-                total_active_duration = total_active_duration + time_diff
-                to_execute = ("""UPDATE metering SET 
-                                     total_active_duration='%s',
-                                     last_time_updated='%s'
-                                     WHERE ap_slice_id='%s'""" % 
-                                     (total_active_duration, now, ap_slice_id)
-                             )
-                self.LOGGER.debug(to_execute)
-                db.execute(to_execute)
-
-        except Exception:
-            traceback.print_exc(file=sys.stdout)
-            #self.LOGGER.error("Error: %s", str(e))
+            except Exception:
+                traceback.print_exc(file=sys.stdout)
+                #self.LOGGER.error("Error: %s", str(e))
 
     def ap_slice_update_mb_sent(self, ap_slice_id, mb_sent):
         try:
@@ -636,6 +641,24 @@ class AuroraDB(object):
         except mdb.Error, e:
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
+
+    def get_physical_ap_slices(self, ap_name):
+        try:
+            with self._database_connection() as db:
+                to_execute = ("""SELECT ap_slice_id
+                                     FROM ap_slice
+                                     WHERE physical_ap='%s'""" %
+                                 (ap_name)
+                             )
+                db.execute(to_execute)
+                result = db.fetchall()
+                slice_list = []
+                for ap_slice_id in slice_list:
+                    slice_list.append(ap_slice_id[0])
+                return slice_list
+        except mdb.Error, e:
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
+            sys.exit(1):
 
     def get_wnet_list(self, tenant_id, wnet_arg = None):
         try:
