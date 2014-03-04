@@ -139,6 +139,7 @@ class AuroraDB(object):
                                          WHERE ap_slice_id='%s'""" %
                                      (now, ap_slice_id)
                                  )
+                    last_time_activated = now
                 else:
                     current_active_duration = now - last_time_activated
                     to_execute = ("""UPDATE metering SET 
@@ -150,21 +151,17 @@ class AuroraDB(object):
                 db.execute(to_execute)
                 if last_time_updated is None:
                     self.LOGGER.warn("No value for last time updated for slice %s", ap_slice_id)
-                    self.LOGGER.info("Setting last time updated %s", now)
-                    to_execute = ("""UPDATE metering SET
-                                         last_time_updated='%s'
-                                         WHERE ap_slice_id='%s'""" %
-                                     (now, ap_slice_id)
-                                 )
-                else:
-                    time_diff = now - last_time_updated
-                    total_active_duration = total_active_duration + time_diff
-                    to_execute = ("""UPDATE metering SET 
-                                         total_active_duration='%s',
-                                         last_time_updated='%s'
-                                         WHERE ap_slice_id='%s'""" % 
-                                         (total_active_duration, now, ap_slice_id)
-                                 )
+                    self.LOGGER.info("Using value for last time activated %s", last_time_activated)
+                    last_time_updated = last_time_activated
+
+                time_diff = now - last_time_updated
+                total_active_duration = total_active_duration + time_diff
+                to_execute = ("""UPDATE metering SET 
+                                     total_active_duration='%s',
+                                     last_time_updated='%s'
+                                     WHERE ap_slice_id='%s'""" % 
+                                     (total_active_duration, now, ap_slice_id)
+                             )
                 self.LOGGER.debug(to_execute)
                 db.execute(to_execute)
 
