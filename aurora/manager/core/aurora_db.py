@@ -122,7 +122,7 @@ class AuroraDB(object):
     def ap_slice_update_time_stats(self, ap_slice_id=None, ap_name=None):
         if ap_name is not None:
             slice_list = self.get_physical_ap_slices(ap_name)
-        else
+        else:
             slice_list = [ap_slice_id]
         for s_id in slice_list:
             try:
