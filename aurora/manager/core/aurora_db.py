@@ -120,10 +120,12 @@ class AuroraDB(object):
             sys.exit(1)
 
     def ap_slice_update_time_stats(self, ap_slice_id=None, ap_name=None):
+        self.LOGGER.debug("Updating time stats for %s", (ap_slice_id or ap_name))
         if ap_name is not None:
             slice_list = self.get_physical_ap_slices(ap_name)
         else:
             slice_list = [ap_slice_id]
+        self.LOGGER.debug("slice list: %s", slice_list)
         for s_id in slice_list:
             try:
                 with self._database_connection() as db:

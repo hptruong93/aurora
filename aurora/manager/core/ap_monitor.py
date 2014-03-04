@@ -307,7 +307,7 @@ class APMonitor(object):
 
     def _set_status_standard(self, unique_id, success, ap_up=True, ap_name=None):
         # DEBUG
-        if unique_id != 'SYN':
+        if unique_id != 'SYN' and unique_id is not None:
             self.LOGGER.info("Updating ap status for ID %s.", str(unique_id))
         else:
             self.LOGGER.info("Updating ap status for ID %s.", str(ap_name))
