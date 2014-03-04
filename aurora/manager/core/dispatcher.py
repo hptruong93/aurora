@@ -4,6 +4,7 @@ import logging
 from pprint import pprint, pformat
 import sys
 import threading
+import traceback
 import time
 import uuid
 import weakref
@@ -11,7 +12,7 @@ import weakref
 import pika
 
 from cls_logger import get_cls_logger
-import ap_provision.http_srv as provision
+import ap_provision.writer as provision
 from stop_thread import *
 
 PIKA_LOGGER = logging.getLogger('pika')
@@ -236,7 +237,9 @@ if __name__ == '__main__':
     mysql_username = 'root'
     mysql_password = 'supersecret'
     sender = Dispatcher(host, username, password, mysql_username, mysql_password)
-    provision.run()
+
+    import ap_provision.http_srv as provision_srv
+    provision_srv.run()
 
     while not exitLoop:
         print('Choose an option: ')
@@ -264,4 +267,4 @@ if __name__ == '__main__':
                 unique_id = raw_input()
                 sender.dispatch( config, ap, unique_id)
 
-    provision.stop()
+    provision_srv.stop()
