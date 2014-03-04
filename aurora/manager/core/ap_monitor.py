@@ -243,7 +243,7 @@ class APMonitor(object):
         #if unique_id != 'admin':
         #    self.set_status(unique_id, success=False, ap_up=False, )
         #else:
-        self._add_call_to_queue(ap_slice_id, success=False, ap_up=False, ap_name=ap_name)
+        self.set_status(None, ap_slice_id, success=False, ap_up=False, ap_name=ap_name)
         #remove thread from the thread pool
         
         #self._close_poller_thread(ap_name, ap_slice_id)
@@ -333,7 +333,7 @@ class APMonitor(object):
             if ap_up:
                 self.aurora_db.ap_status_up(ap_name)
                 self.aurora_db.ap_up_slice_status_update(unique_id, success)
-                self.aurora_db.ap_slice_update_time_stats(ap_slice_id)
+                self.aurora_db.ap_slice_update_time_stats(unique_id)
             # Access point down, mark all slices and failed/down
             else:
                 if ap_name is None:
