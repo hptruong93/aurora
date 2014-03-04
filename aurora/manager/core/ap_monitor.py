@@ -77,6 +77,9 @@ class APMonitor(object):
                 self.LOGGER.info("Queue Daemon caught stop event")
                 break
             (args, kwargs) = self.timeout_queue.popleft()
+            self.LOGGER.debug("Queue Daemon is calling _set_status()")
+            self.LOGGER.debug("args  : %s", args)
+            self.LOGGER.debug("kwargs: %s", kwargs)
             self._set_status(*args, **kwargs)
 
     def _add_call_to_queue(self, *args, **kwargs):
@@ -278,6 +281,7 @@ class APMonitor(object):
                 traceback.print_exc(file=sys.stdout)
             
     def set_status(self, unique_id, success, ap_up=True, ap_name=None):
+        self.LOGGER.debug("Adding set_status call to queue for (%s, %s, %s, %s)", unique_id, success, ap_up, ap_name)
         self._add_call_to_queue(unique_id, success, ap_up, ap_name)
 
     def _set_status(self, unique_id, success, ap_up=True, ap_name=None):
