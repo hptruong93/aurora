@@ -122,7 +122,7 @@ class AuroraDB(object):
     def ap_slice_update_time_stats(self, ap_slice_id):
         try:
             with self._database_connection() as db:
-                db.execute("SELECT last_time_activated, last_time_updated FROM metering WHERE ap_slice_id='%s'" % ap_slice_id)
+                db.execute("SELECT last_time_activated, last_time_updated, total_active_duration FROM metering WHERE ap_slice_id='%s'" % ap_slice_id)
                 previous_time_stats = db.fetchone()
                 self.LOGGER.debug("previous_time_stats: %s", previous_time_stats)
                 time_active = None
@@ -130,7 +130,7 @@ class AuroraDB(object):
                 (last_time_activated, last_time_updated,
                  current_active_duration, total_active_duration) = (None, None, None, None)
                 if previous_time_stats is not None:
-                    (last_time_activated, last_time_updated) = previous_time_stats
+                    (last_time_activated, last_time_updated, total_active_duration) = previous_time_stats
                 if last_time_activated is None:
                     self.LOGGER.warn("No value for last time activated for slice %s", ap_slice_id)
                     self.LOGGER.info("Setting last time activated %s", now)
@@ -270,7 +270,7 @@ class AuroraDB(object):
                                                  WHEN 'PENDING' THEN '%s'
                                                  WHEN 'DOWN' THEN '%s'
                                              ELSE metering.last_time_activated END
-                                         WHERE ap_slice_id='%s';
+                                         WHERE metering.ap_slice_id='%s';
                                      UPDATE ap_slice SET
                                          status= 
                                              CASE status 
@@ -521,7 +521,7 @@ class AuroraDB(object):
                                 project_id, "NULL", "PENDING")
                              )
                 db.execute(to_execute)
-                to_execute = ( "INSERT INTO metering SET ap_slice_id='%s'" % ap_slice_id)
+                to_execute = ( "INSERT INTO metering SET ap_slice_id='%s'" % slice_uuid)
                 db.execute(to_execute)
                 #return "Adding slice %s on %s.\n" % (slice_uuid, physAP)
                 return None

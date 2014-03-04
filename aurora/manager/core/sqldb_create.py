@@ -68,7 +68,7 @@ class SQLDBCreate(object):
                                   current_mb_sent FLOAT DEFAULT 0.0, 
                                   total_mb_sent FLOAT DEFAULT 0.0,
                                   current_active_duration TIME DEFAULT '00:00:00',
-                                  total_active_duration TIME,
+                                  total_active_duration TIME DEFAULT '00:00:00',
                                   last_time_activated DATETIME,
                                   last_time_updated DATETIME
                                   )
