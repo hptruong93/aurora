@@ -652,8 +652,10 @@ class AuroraDB(object):
                                      WHERE physical_ap='%s'""" %
                                  (ap_name)
                              )
+                self.LOGGER.debug(to_execute)
                 db.execute(to_execute)
                 result = db.fetchall()
+                self.LOGGER.debug("RESULT: %s", result)
                 slice_list = []
                 for ap_slice_id in slice_list:
                     slice_list.append(ap_slice_id[0])
