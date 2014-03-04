@@ -266,7 +266,7 @@ class AuroraDB(object):
                                              CASE ap_slice.status
                                                  WHEN 'PENDING' THEN '%s'
                                                  WHEN 'DOWN' THEN '%s'
-                                             ELSE metering.last_time_activated END
+                                             ELSE metering.last_time_activated END,
                                          metering.last_time_updated=
                                              NULL
                                          WHERE metering.ap_slice_id='%s'""" %
