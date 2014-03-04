@@ -241,7 +241,7 @@ class AuroraDB(object):
             with self._database_connection() as db:
                 num_results = db.execute("SELECT status FROM ap_slice WHERE ap_slice_id='%s'" % ap_slice_id)
                 status = None
-                
+
                 if num_results == 1:
                     status = db.fetchone()[0]
                     if (status != 'ACTIVE' and
@@ -518,8 +518,8 @@ class AuroraDB(object):
             with self._database_connection() as db:
                 to_execute = ( "INSERT INTO ap_slice VALUES ('%s', '%s', %s, '%s', %s, %s, '%s', %s, %s, %s)" %
                                (slice_uuid, slice_ssid, tenant_id, physAP,
-                                project_id, "NULL", "PENDING",
-                                'DEFAULT', 'DEFAULT', 'DEFAULT') )
+                                project_id, "NULL", "PENDING")
+                             )
                 db.execute(to_execute)
                 #return "Adding slice %s on %s.\n" % (slice_uuid, physAP)
                 return None
