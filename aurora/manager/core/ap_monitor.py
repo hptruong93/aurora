@@ -340,6 +340,7 @@ class APMonitor(object):
                     ap_name = self.aurora_db.get_wslice_physical_ap(ap_slice_id)
                 self.aurora_db.ap_slice_update_time_stats(ap_name=ap_name)
                 self.aurora_db.ap_status_down(ap_name)
+                self.aurora_db.ap_down_slice_status_update(ap_name)
                 self._close_poller_thread(ap_name, 'admin')
 
         except Exception, e:
