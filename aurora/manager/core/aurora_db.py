@@ -657,8 +657,9 @@ class AuroraDB(object):
                 result = db.fetchall()
                 self.LOGGER.debug("RESULT: %s", result)
                 slice_list = []
-                for ap_slice_id in slice_list:
+                for ap_slice_id in result:
                     slice_list.append(ap_slice_id[0])
+                self.LOGGER.debug("SLICE_LIST: %s", slice_list)
                 return slice_list
         except mdb.Error, e:
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
