@@ -503,7 +503,11 @@ class Manager(object):
                                         tenant_id, user_id, project_id)
                     #Dispatch (use slice_uuid as a message identifier)
                     self.dispatcher.dispatch(json_entry, aplist[index], str(slice_uuid))
-                    config_db.save_config(json_entry, tenant_id)
+                    try:
+                        config_db.save_config(json_entry, tenant_id)
+                    except AuroraException, e:
+                        LOGGER.error(e.message)
+
             else:
                 message += error + "\n"
                 add_success = False
@@ -567,7 +571,10 @@ class Manager(object):
             #Generate unique message id
             self.LOGGER.debug("Launching dispatcher")
             self.dispatcher.dispatch(config, ap_name)
-            config_db.delete_config(ap_slice_id, tenant_id)
+            try:
+                config_db.delete_config(ap_slice_id, tenant_id)
+            except AuroraException, e:
+                LOGGER.error(e.message)
 
         #Return response
         response = {"status":True, "message":message}
