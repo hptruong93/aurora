@@ -38,8 +38,7 @@ def update_last_known_config(ap, config):
     del F
     prev_config['last_known_config'] = config
     config = prev_config
-    LOGGER.debug(pformat(config))
+    LOGGER.debug(json.dumps(config, indent=2))
     with open(ap_config_name, 'w') as F:
-        LOGGER.debug("Dumping config to %s", F.name)
         json.dump(config, F, indent=4)
         LOGGER.info("%s updated for %s", F.name, ap)
