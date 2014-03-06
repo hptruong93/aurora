@@ -127,7 +127,7 @@ class APMonitor(object):
         self.LOGGER.debug("method: %s", method)
         self.LOGGER.debug(repr(props))
         #self.LOGGER.debug(type(body))
-        self.LOGGER.debug(json.dumps(json.loads(body), indent=2))
+        self.LOGGER.debug(json.dumps(json.loads(body), indent=4))
         self.LOGGER.debug("\nrequests_sent: %s",self.dispatcher.requests_sent)
 
         # Decode response

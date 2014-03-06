@@ -29,3 +29,6 @@ class ModifyConfigNotImplemented(AuroraException):
 
 class NoConfigExistsError(AuroraException):
     message = "No file for slice:%(slice)s exists in the DB."
+
+class CannotCreateTenantConfigDir(AuroraException):
+    message = "Cannot create the config DB directory %(dir_path)s"

@@ -551,7 +551,7 @@ class Manager(object):
 
             error = Verify.verifyOK(tenant_id = tenant_id, request = config)
             if error is not None:
-                message += error
+                message += error + '\n'
                 if ap_slice_id == ap_slice_list[-1]:
                     response = {"status":False, "message":message}
                     return response
