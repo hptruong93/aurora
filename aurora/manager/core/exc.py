@@ -13,12 +13,13 @@ class AuroraException(Exception):
 
         if not message:
             try:
-                message = self.message % kwargs
+                self.message = self.message % kwargs
 
             except Exception:
-                message = self.message
+                self.message = AuroraException.message
+                # message = self.message
 
-        super(AuroraException, self).__init__(message)
+        super(AuroraException, self).__init__(self.message)
 
 class NoSliceIDInConfiguration(AuroraException):
     message = "No slice ID available in configuration."
