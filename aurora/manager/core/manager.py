@@ -551,9 +551,12 @@ class Manager(object):
 
             error = Verify.verifyOK(tenant_id = tenant_id, request = config)
             if error is not None:
-                response = {"status":False, "message":error}
-                return response
-
+                message += error
+                if ap_slice_id == ap_slice_list[-1]:
+                    response = {"status":False, "message":message}
+                    return response
+                else:
+                    continue
             try:
                 arg_filter = "ap_slice_id=%s&status=DELETED" % ap_slice_id
                 slice_list = self.ap_slice_filter(arg_filter, tenant_id)
