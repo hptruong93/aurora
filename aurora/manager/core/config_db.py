@@ -4,7 +4,7 @@ import logging
 import os
 import string
 import sys
-import types
+from types import *
 
 from exc import *
 
