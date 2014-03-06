@@ -47,9 +47,8 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         default_response = {}
         default_response['status'] = False
         default_response['message'] = ""
-        RESPONSE_FILE = open('core/json/response.json', 'w')
-        json.dump(default_response, RESPONSE_FILE, sort_keys=True, indent=4)
-        RESPONSE_FILE.close()
+        with open('core/json/response.json', 'w') as RESPONSE_FILE: 
+            json.dump(default_response, RESPONSE_FILE, sort_keys=True, indent=4)
         
         # Parse the form data posted
         data_string = self.rfile.read(int(self.headers['Content-Length']))
@@ -66,9 +65,8 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.LOGGER.debug(response['message'])
 
         #Save response to file
-        RESPONSEFILE = open('core/json/response.json', 'w')
-        json.dump(response, RESPONSEFILE, sort_keys=True, indent=4)
-        RESPONSEFILE.close()
+        with open('core/json/response.json', 'w') as RESPONSE_FILE: 
+            json.dump(response, RESPONSE_FILE, sort_keys=True, indent=4)
     
     # Sends a document, unused
     def sendPage( self, type, body ):
