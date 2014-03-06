@@ -4,6 +4,7 @@ import logging
 import os
 import string
 import sys
+import traceback
 from types import *
 
 from exc import *
@@ -27,9 +28,14 @@ def save_config(config, tenant_id):
         ap_slice_id=config['slice']
     except KeyError:
         raise NoSliceIDInConfiguration()
-    dir_path = get_file_path(tenant_id, dir_only=True)
+    dir_path = get_file_path(ap_slice_id, tenant_id, dir_only=True)
     if not os.path.exists(dir_path):
-        os.mkdir(dir_path)
+        self.LOGGER.debug("Path %s doesn't exist, creating...", dir_path)
+        try:
+            os.makedirs(dir_path)
+        except os.error:
+            traceback.print_exc(file=sys.stdout)
+            raise CannotCreateTenantConfigDir(dir_path=dir_path)
     file_path = get_file_path(ap_slice_id, tenant_id)
     with open(file_path, 'w') as CONFIG_FILE:
         LOGGER.debug("File: %s", CONFIG_FILE.name)
@@ -89,5 +95,5 @@ def get_file_path(ap_slice_id, tenant_id, dir_only=False):
 
     """
     if dir_only:
-        return DB_FOLDER + tenant_id
+        return DB_FOLDER + str(tenant_id)
     return DB_FOLDER + '{0}/{1}.json'.format(tenant_id, ap_slice_id)
