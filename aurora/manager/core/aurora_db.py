@@ -119,6 +119,17 @@ class AuroraDB(object):
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
 
+    def _get_time_format(self, time):
+        time = time.total_seconds()
+        hours = int(time // 3600)
+        time = time - hours * 3600
+        minutes = int(time // 60)
+        time = time - minutes * 60
+        seconds = int(time)
+        microseconds = time - seconds
+        time_format = '%s:%s:%s.%s' % (str(hours), str(miniutes), str(seconds), str(microseconds))
+        return time_format
+
     def ap_slice_update_time_stats(self, ap_slice_id=None, ap_name=None):
         self.LOGGER.debug("Updating time stats for %s", (ap_slice_id or ap_name))
         if ap_name is not None:
@@ -152,10 +163,11 @@ class AuroraDB(object):
                         # s = int(str(current_active_duration.total_seconds()).split('.')[0])
                         # ms = int(str(current_active_duration.total_seconds()).split('.')[1])
                         # current_active_duration = datetime.time(second=s, microsecond=ms).isoformat()
+                        current_active_duration = self._get_time_format(current_active_duration)
                         to_execute = ("""UPDATE metering SET 
-                                             current_active_duration=SEC_TO_TIME('%s')
+                                             current_active_duration='%s'
                                              WHERE ap_slice_id='%s'""" % 
-                                             (current_active_duration.total_seconds(), s_id)
+                                             (current_active_duration, s_id)
                                      )
                     self.LOGGER.debug(to_execute)
                     db.execute(to_execute)
@@ -166,14 +178,15 @@ class AuroraDB(object):
 
                     time_diff = now - last_time_updated
                     total_active_duration = total_active_duration + time_diff
+                    total_active_duration = self._get_time_format(total_active_duration)
                     # s = int(str(total_active_duration.total_seconds()).split('.')[0])
                     # ms = int(str(total_active_duration.total_seconds()).split('.')[1])
                     # total_active_duration = datetime.time(second=s, microsecond=ms).isoformat()
                     to_execute = ("""UPDATE metering SET 
-                                         total_active_duration=SEC_TO_TIME('%s'),
+                                         total_active_duration='%s'
                                          last_time_updated='%s'
                                          WHERE ap_slice_id='%s'""" % 
-                                         (total_active_duration.total_seconds(), now, s_id)
+                                         (total_active_duration, now, s_id)
                                  )
                     self.LOGGER.debug(to_execute)
                     db.execute(to_execute)
