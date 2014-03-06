@@ -27,6 +27,9 @@ def save_config(config, tenant_id):
         ap_slice_id=config['slice']
     except KeyError:
         raise NoSliceIDInConfiguration()
+    dir_path = get_file_path(tenant_id, dir_only=True)
+    if not os.path.exists(dir_path):
+        os.mkdir(dir_path)
     file_path = get_file_path(ap_slice_id, tenant_id)
     with open(file_path, 'w') as CONFIG_FILE:
         LOGGER.debug("File: %s", CONFIG_FILE.name)
@@ -76,7 +79,7 @@ def get_config(ap_slice_id, tenant_id):
     except IOError:
         raise NoConfigExistsError(slice=ap_slice_id)
 
-def get_file_path(ap_slice_id, tenant_id):
+def get_file_path(ap_slice_id, tenant_id, dir_only=False):
     """Returns a relative file path where config file for related
     ap_slice_id should be kept.
 
@@ -85,4 +88,6 @@ def get_file_path(ap_slice_id, tenant_id):
     :rtype: str
 
     """
+    if dir_only:
+        return DB_FOLDER + tenant_id
     return DB_FOLDER + '{0}/{1}.json'.format(tenant_id, ap_slice_id)
