@@ -149,7 +149,9 @@ class AuroraDB(object):
                         last_time_activated = now
                     else:
                         current_active_duration = now - last_time_activated
-                        current_active_duration = datetime.time(current_active_duration.total_seconds()).isoformat()
+                        s = int(str(current_active_duration.total_seconds()).split('.')[0])
+                        ms = int(str(current_active_duration.total_seconds()).split('.')[1])
+                        current_active_duration = datetime.time(second=s, microsecond=ms).isoformat()
                         to_execute = ("""UPDATE metering SET 
                                              current_active_duration='%s'
                                              WHERE ap_slice_id='%s'""" % 
@@ -164,7 +166,9 @@ class AuroraDB(object):
 
                     time_diff = now - last_time_updated
                     total_active_duration = total_active_duration + time_diff
-                    total_active_duration = datetime.time(total_active_duration.total_seconds()).isoformat()
+                    s = int(str(total_active_duration.total_seconds()).split('.')[0])
+                    ms = int(str(total_active_duration.total_seconds()).split('.')[1])
+                    total_active_duration = datetime.time(second=s, microsecond=ms).isoformat()
                     to_execute = ("""UPDATE metering SET 
                                          total_active_duration='%s',
                                          last_time_updated='%s'
