@@ -30,7 +30,7 @@ def save_config(config, tenant_id):
         raise NoSliceIDInConfiguration()
     dir_path = get_file_path(ap_slice_id, tenant_id, dir_only=True)
     if not os.path.exists(dir_path):
-        self.LOGGER.debug("Path %s doesn't exist, creating...", dir_path)
+        LOGGER.debug("Path %s doesn't exist, creating...", dir_path)
         try:
             os.makedirs(dir_path)
         except os.error:
