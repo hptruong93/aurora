@@ -166,9 +166,9 @@ class AuroraDB(object):
 
                     time_diff = now - last_time_updated
                     total_active_duration = total_active_duration + time_diff
-                    s = int(str(total_active_duration.total_seconds()).split('.')[0])
-                    ms = int(str(total_active_duration.total_seconds()).split('.')[1])
-                    total_active_duration = datetime.time(second=s, microsecond=ms).isoformat()
+                    # s = int(str(total_active_duration.total_seconds()).split('.')[0])
+                    # ms = int(str(total_active_duration.total_seconds()).split('.')[1])
+                    # total_active_duration = datetime.time(second=s, microsecond=ms).isoformat()
                     to_execute = ("""UPDATE metering SET 
                                          total_active_duration=SEC_TO_TIME('%s'),
                                          last_time_updated='%s'
