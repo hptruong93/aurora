@@ -788,6 +788,20 @@ class Manager(object):
         response = {"status":True, "message":message}
         return response
 
+    def ap_slice_move(self, args, tenant_id, user_id, project_id):
+        message = ""
+        new_ap = args['ap']
+        ap_slice_id = args['ap_slice_move']
+        if self.aurora_db.wslice_belongs_to(tenant_id, project_id, ap_slice_id):
+            config = {"slice":ap_slice_id, "command":"delete_slice", "user":user_id}
+            error = Verify.verifyOK(tenant_id = tenant_id, request = config)
+
+            config = config_db.get_config(ap_slice_id, tenant_id)
+            #body =
+
+        response = {"status":True, "message": message}
+        return response
+
     def ap_slice_show(self, args, tenant_id, user_id, project_id):
         message = ""
         for arg_id in args['ap-slice-show']:

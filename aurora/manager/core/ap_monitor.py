@@ -1,3 +1,4 @@
+"""AP Monitor module to track ap status and received message"""
 import atexit
 import collections
 import datetime
@@ -25,7 +26,9 @@ LOGGER = logging.getLogger(__name__)
 
 
 class APMonitor(object):
+    """Handles AMQP response messages from access points.
 
+    """
     SLEEP_TIME = 45
     # TODO: Make function to determine if dispatcher still exists
     def __init__(self, dispatcher, aurora_db, host, username, password):
@@ -84,6 +87,9 @@ class APMonitor(object):
         self.timeout_queue.append((args, kwargs))
 
     def stop(self):
+        """Stops threads created by AP Monitor
+
+        """
         self._close_all_poller_threads()
         self.qd.stop()
 
@@ -101,8 +107,9 @@ class APMonitor(object):
     def process_response(self, channel, method, props, body):
         """Processes any responses it sees, checking to see if the
         correlation ID matches one sent.  If it does, the response
-        is displayed along with the request originally sent."""
+        is displayed along with the request originally sent.
 
+        """
         # Basic Proof-of-Concept Implementation
         # 1. We dispatch (see method above)
         # 2. Response received: if related to a request we sent out, OK
@@ -227,8 +234,9 @@ class APMonitor(object):
         """This code will execute when a response is not
         received for the command associated with the unique_id
         after a certain time period.  It modifies the database
-        to reflect the current status of the AP."""
+        to reflect the current status of the AP.
 
+        """
         if message_uuid is not None:
             # dispatcher = self.dispatcher_ref()
             # if dispatcher is None:
@@ -258,7 +266,11 @@ class APMonitor(object):
         # as deleted, down or failed, so there will not be any issue
 
     def update_records(self, message):
-        """Update the traffic information of ap_slice"""
+        """Update the traffic information of ap_slice
+
+        :param dict message: Message containing reported slice stats
+
+        """
         self.LOGGER.debug("Updating records...")
         for ap_slice_id in message.keys():
             try:
@@ -290,7 +302,9 @@ class APMonitor(object):
         create slice, deleting -> deleted if deleting a slice, etc.
         If the ap_up variable is false, the access point
         is considered to be offline and in an unknown state,
-        so *all* slices are marked as such (down, failed, etc.)."""
+        so *all* slices are marked as such (down, failed, etc.).
+
+        """
         if cmd_category is None:
             self._set_status_standard(*args, **kwargs)
         elif cmd_category is 'AP reset':
@@ -348,6 +362,12 @@ class APMonitor(object):
             self.LOGGER.error(str(e))
 
     def restart_slices(self, ap, slice_list):
+        """Restarts the slices on their access point.
+
+        :param str ap: Name of the access point
+        :param list slice_list: List of slices to restart
+
+        """
         try:
             for ap_slice_id in slice_list:
                 user_id = self.aurora_db.get_user_for_active_ap_slice(ap_slice_id)
@@ -367,7 +387,11 @@ class APMonitor(object):
             traceback.print_exc(file=sys.stdout)
 
     def start_poller(self, ap_name):
-        
+        """Starts a poller to track the status of an access point.
+
+        :param str ap_name: Name of the access point
+
+        """
         #poller_thread = thread(ThreadClass, self)
         poller_thread = TimerThread(target=self.poll_AP, args=(ap_name,))
         self.LOGGER.debug("Starting poller on thread %s", poller_thread)
@@ -375,6 +399,12 @@ class APMonitor(object):
         poller_thread.start()
 
     def poll_AP(self, ap_name, stop_event=None):
+        """Poller thread target: sends the access point a message in a 
+        regular interval.
+
+        :param str ap_name: Name of the access point
+
+        """
         #print "Timeout from Dispatcher", self.dispatcher.TIMEOUT
         own_thread = self.poller_threads[ap_name]
         while ap_name in self.poller_threads:
@@ -393,33 +423,23 @@ class APMonitor(object):
 
     def reset_AP(self, ap):
         """Reset the access point.  If there are serious issues, however,
-        a restart may be required."""
+        a restart may be required.
 
+        """
         # The unique ID is fixed to be all F's for resets/restarts.
         self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'reset' } , ap)
 
     def restart_AP(self, ap):
-        """Restart the access point, telling the OS to reboot."""
+        """Restart the access point, telling the OS to reboot.
 
+        """
         # The unique ID is fixed to be all F's for resets/restarts.
         self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'restart' } , ap)
 
     def get_stats(self, ap):
-        """Update the access point """
-
+        """Query the access point for slice stats."""
         # The unique ID is fixed to be all F's
         self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'get_stats'}, ap)
-
-    def get_time_format(self, time):
-        time = time.total_seconds()
-        hours = int(time // 3600)
-        time = time - hours * 3600
-        minutes = int(time // 60)
-        time = time - minutes * 60
-        seconds = int(time)
-        time_format = str(hours) + ':' + str(minutes) + ':' + str(seconds)
-        return time_format
-
 
 
 #for test
