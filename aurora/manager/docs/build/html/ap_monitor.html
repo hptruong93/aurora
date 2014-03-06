@@ -1,0 +1,225 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>AP Monitor &mdash; Aurora 0.25 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.25',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Aurora 0.25 documentation" href="index.html" />
+    <link rel="prev" title="Welcome to Aurora’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Aurora’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Aurora 0.25 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-core.ap_monitor">
+<span id="ap-monitor"></span><h1>AP Monitor<a class="headerlink" href="#module-core.ap_monitor" title="Permalink to this headline">¶</a></h1>
+<p>AP Monitor module to track ap status and received message</p>
+<dl class="class">
+<dt id="core.ap_monitor.APMonitor">
+<em class="property">class </em><tt class="descclassname">core.ap_monitor.</tt><tt class="descname">APMonitor</tt><big>(</big><em>dispatcher</em>, <em>aurora_db</em>, <em>host</em>, <em>username</em>, <em>password</em><big>)</big><a class="headerlink" href="#core.ap_monitor.APMonitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles AMQP response messages from access points.</p>
+<dl class="method">
+<dt id="core.ap_monitor.APMonitor.get_stats">
+<tt class="descname">get_stats</tt><big>(</big><em>ap</em><big>)</big><a class="headerlink" href="#core.ap_monitor.APMonitor.get_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Query the access point for slice stats.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.ap_monitor.APMonitor.poll_AP">
+<tt class="descname">poll_AP</tt><big>(</big><em>ap_name</em>, <em>stop_event=None</em><big>)</big><a class="headerlink" href="#core.ap_monitor.APMonitor.poll_AP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Poller thread target: sends the access point a message in a 
+regular interval.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ap_name</strong> (<em>str</em>) &#8211; Name of the access point</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.ap_monitor.APMonitor.process_response">
+<tt class="descname">process_response</tt><big>(</big><em>channel</em>, <em>method</em>, <em>props</em>, <em>body</em><big>)</big><a class="headerlink" href="#core.ap_monitor.APMonitor.process_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>Processes any responses it sees, checking to see if the
+correlation ID matches one sent.  If it does, the response
+is displayed along with the request originally sent.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.ap_monitor.APMonitor.reset_AP">
+<tt class="descname">reset_AP</tt><big>(</big><em>ap</em><big>)</big><a class="headerlink" href="#core.ap_monitor.APMonitor.reset_AP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset the access point.  If there are serious issues, however,
+a restart may be required.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.ap_monitor.APMonitor.restart_AP">
+<tt class="descname">restart_AP</tt><big>(</big><em>ap</em><big>)</big><a class="headerlink" href="#core.ap_monitor.APMonitor.restart_AP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restart the access point, telling the OS to reboot.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.ap_monitor.APMonitor.restart_slices">
+<tt class="descname">restart_slices</tt><big>(</big><em>ap</em>, <em>slice_list</em><big>)</big><a class="headerlink" href="#core.ap_monitor.APMonitor.restart_slices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restarts the slices on their access point.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ap</strong> (<em>str</em>) &#8211; Name of the access point</li>
+<li><strong>slice_list</strong> (<em>list</em>) &#8211; List of slices to restart</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.ap_monitor.APMonitor.set_status">
+<tt class="descname">set_status</tt><big>(</big><em>cmd_category</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#core.ap_monitor.APMonitor.set_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function&#8217;s arguments used to look like 
+unique_id, success, ap_up=True, ap_name=None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.ap_monitor.APMonitor.start_poller">
+<tt class="descname">start_poller</tt><big>(</big><em>ap_name</em><big>)</big><a class="headerlink" href="#core.ap_monitor.APMonitor.start_poller" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts a poller to track the status of an access point.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ap_name</strong> (<em>str</em>) &#8211; Name of the access point</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.ap_monitor.APMonitor.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="headerlink" href="#core.ap_monitor.APMonitor.stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stops threads created by AP Monitor</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.ap_monitor.APMonitor.timeout">
+<tt class="descname">timeout</tt><big>(</big><em>ap_slice_id</em>, <em>ap_name</em>, <em>message_uuid=None</em><big>)</big><a class="headerlink" href="#core.ap_monitor.APMonitor.timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>This code will execute when a response is not
+received for the command associated with the unique_id
+after a certain time period.  It modifies the database
+to reflect the current status of the AP.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.ap_monitor.APMonitor.update_records">
+<tt class="descname">update_records</tt><big>(</big><em>message</em><big>)</big><a class="headerlink" href="#core.ap_monitor.APMonitor.update_records" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the traffic information of ap_slice</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>message</strong> (<em>dict</em>) &#8211; Message containing reported slice stats</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to Aurora&#8217;s documentation!</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/ap_monitor.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Aurora’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">Aurora 0.25 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Mike Kobierski.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
