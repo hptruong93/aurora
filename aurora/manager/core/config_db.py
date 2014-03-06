@@ -12,7 +12,7 @@ from exc import *
 LOGGER = logging.getLogger(__name__)
 DB_FOLDER = "core/config_db/"
 
-def save_config(config, tenant_id):
+def save_config(config, ap_slice_id, tenant_id):
     """Saves a given configuration file in the name of it's slice
     ID within the folder for a specific tenant.
 
@@ -24,10 +24,6 @@ def save_config(config, tenant_id):
     """
     LOGGER.debug("Saving config.")
     assert type(config) is DictType
-    try:
-        ap_slice_id=config['slice']
-    except KeyError:
-        raise NoSliceIDInConfiguration()
     dir_path = get_file_path(ap_slice_id, tenant_id, dir_only=True)
     if not os.path.exists(dir_path):
         LOGGER.debug("Path %s doesn't exist, creating...", dir_path)

@@ -34,9 +34,8 @@ class AuroraArgumentParser(argparse.ArgumentParser):
         
         # Load the JSON file
         try:
-            JFILE = open('json/shell.json', 'r')
-            commands = json.load(JFILE)[0]
-            JFILE.close()
+            with open('json/shell.json', 'r') as JFILE:
+                commands = json.load(JFILE)[0]
         except:
             print('Error loading json file!')
             sys.exit(-1)
@@ -114,7 +113,7 @@ class AuroraConsole():
             #We will send in the following format: {function:"",parameters:""}
             to_send = {'function':function,'parameters':params}
             ##FOR DEBUGGING PURPOSES
-            pprint(to_send)
+            print json.dumps(to_send, indent=4)
             ##END DEBUG
             
             if to_send: #--help commands will not start the server

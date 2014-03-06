@@ -12,8 +12,11 @@ class JSONSender():
     def send_json(self, url, payload):
         
         try:
-            r = requests.post(url, data=json.dumps(payload))
+            r = requests.post(url, data=json.dumps(payload), timeout=1)
         except KeyboardInterrupt:
+            return
+        except requests.Timeout, t:
+            print t.message[1]
             return
         except:
             traceback.print_exc()
@@ -28,8 +31,11 @@ class JSONSender():
         time.sleep(1)
 
         try:
-            r = requests.get(url)
+            r = requests.get(url, timeout=1)    
         except KeyboardInterrupt:
+            return
+        except requests.Timeout, t:
+            print t.message[1]
             return
         except:
             traceback.print_exc()

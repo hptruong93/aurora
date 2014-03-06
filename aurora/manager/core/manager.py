@@ -505,7 +505,7 @@ class Manager(object):
                     #Dispatch (use slice_uuid as a message identifier)
                     self.dispatcher.dispatch(json_entry, aplist[index], str(slice_uuid))
                     try:
-                        config_db.save_config(json_entry, tenant_id)
+                        config_db.save_config(json_entry['config'], json_entry['slice'], tenant_id)
                     except AuroraException, e:
                         LOGGER.error(e.message)
 
