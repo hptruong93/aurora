@@ -19,3 +19,12 @@ class AuroraException(Exception):
                 message = self.message
 
         super(AuroraException, self).__init__(message)
+
+class NoSliceIDInConfiguration(AuroraException):
+    message = "No slice ID available in configuration."
+
+class ModifyConfigNotImplemented(AuroraException):
+    message = "Modify config in DB isn't implemented."
+
+class NoConfigExistsError(AuroraException):
+    message = "No file for slice:%(slice)s exists in the DB."

@@ -14,12 +14,12 @@
             }
         }
     }, 
-    "rabbitmq_password": "let_me_in", 
+    "rabbitmq_reply_queue": "amq.gen-BFQCHaQ_zN9dgz-65wSSuQ", 
     "rabbitmq_username": "access_point", 
     "rabbitmq_host": "10.5.8.3", 
     "region": "mcgill", 
     "queue": "openflow3", 
-    "rabbitmq_reply_queue": "amq.gen-hGxPC5OHwe5NVD6D8gM9bA", 
+    "rabbitmq_password": "let_me_in", 
     "default_config": {
         "init_hardware_database": {
             "wifi_radio": {
@@ -34,6 +34,7 @@
             "free_disk": "256", 
             "firmware_version": "r39154"
         }, 
+        "default_active_slice": "default_slice", 
         "init_database": {
             "default_slice": {
                 "VirtualInterfaces": [], 
@@ -45,7 +46,6 @@
             "default_user": [
                 "default_slice"
             ]
-        }, 
-        "default_active_slice": "default_slice"
+        }
     }
 }

@@ -1,0 +1,48 @@
+{
+    "VirtualWIFI": [
+        {
+            "flavor" : "wifi_bss",
+            "attributes" : 
+                {
+                    "name" : "8",
+                    "radio" : "radio1",
+                    "if_name" : "wlan1-3",
+                    "encryption_type":"wep-open",
+                    "key":"55555"
+                }
+        }
+    ], 
+    "VirtualBridges": [
+        {
+            "flavor":"linux_bridge",
+            "attributes":   
+                {
+                    "name":"linux-br-8",
+                    "interfaces":
+                        ["vwlan1-3","veth7"],
+                    "bridge_settings":{},
+                    "port_settings":{}
+                }
+        }
+    ], 
+    "VirtualInterfaces": [
+        {
+            "flavor":"veth",
+            "attributes": 
+                {
+                    "attach_to":"eth0",
+                    "name":"veth7",
+                    "mac":"00:00:00:00:00:81"
+                }
+        },
+        {
+            "flavor":"veth",
+            "attributes": 
+                {
+                    "attach_to":"wlan1-3",
+                    "name":"vwlan1-3",
+                    "mac":"00:00:00:00:00:82"
+                }
+        }
+    ]
+}

@@ -13,6 +13,7 @@ import MySQLdb as mdb
 
 from aurora_db import *
 import ap_monitor
+import config_db
 from cls_logger import get_cls_logger
 import dispatcher
 import ap_provision.http_srv as provision_srv
@@ -487,13 +488,13 @@ class Manager(object):
 
             if error is None: #There is no error
                 error = self.aurora_db.wslice_add(slice_uuid, ap_slice_ssid, tenant_id, aplist[index], project_id)
-            
+
                 if error is not None: #There is an error
                     message += error + "\n"
                     add_success = False
                 else:
                     message += "Adding slice %s: %s\n" % (index + 1, slice_uuid)
-            
+
                     #Add tags if present
                     if args['tag']:
                         self.ap_slice_add_tag({'ap-slice-add-tag':[slice_uuid],
@@ -502,10 +503,11 @@ class Manager(object):
                                         tenant_id, user_id, project_id)
                     #Dispatch (use slice_uuid as a message identifier)
                     self.dispatcher.dispatch(json_entry, aplist[index], str(slice_uuid))
+                    config_db.save_config(json_entry, tenant_id)
             else:
                 message += error + "\n"
                 add_success = False
-        
+
         #Return response (message returns a list of uuids for created slices)
         response = {"status":add_success, "message":message}
         return response
@@ -565,6 +567,7 @@ class Manager(object):
             #Generate unique message id
             self.LOGGER.debug("Launching dispatcher")
             self.dispatcher.dispatch(config, ap_name)
+            config_db.delete_config(ap_slice_id, tenant_id)
 
         #Return response
         response = {"status":True, "message":message}
