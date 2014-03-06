@@ -127,7 +127,7 @@ class AuroraDB(object):
         time = time - minutes * 60
         seconds = int(time)
         microseconds = time - seconds
-        time_format = '%s:%s:%s.%s' % (str(hours), str(miniutes), str(seconds), str(microseconds))
+        time_format = '%s:%s:%s.%s' % (str(hours), str(minutes), str(seconds), str(microseconds))
         return time_format
 
     def ap_slice_update_time_stats(self, ap_slice_id=None, ap_name=None):
