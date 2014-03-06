@@ -183,7 +183,7 @@ class AuroraDB(object):
                     # ms = int(str(total_active_duration.total_seconds()).split('.')[1])
                     # total_active_duration = datetime.time(second=s, microsecond=ms).isoformat()
                     to_execute = ("""UPDATE metering SET 
-                                         total_active_duration='%s'
+                                         total_active_duration='%s',
                                          last_time_updated='%s'
                                          WHERE ap_slice_id='%s'""" % 
                                          (total_active_duration, now, s_id)
