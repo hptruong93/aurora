@@ -149,13 +149,13 @@ class AuroraDB(object):
                         last_time_activated = now
                     else:
                         current_active_duration = now - last_time_activated
-                        s = int(str(current_active_duration.total_seconds()).split('.')[0])
-                        ms = int(str(current_active_duration.total_seconds()).split('.')[1])
-                        current_active_duration = datetime.time(second=s, microsecond=ms).isoformat()
+                        # s = int(str(current_active_duration.total_seconds()).split('.')[0])
+                        # ms = int(str(current_active_duration.total_seconds()).split('.')[1])
+                        # current_active_duration = datetime.time(second=s, microsecond=ms).isoformat()
                         to_execute = ("""UPDATE metering SET 
-                                             current_active_duration='%s'
+                                             current_active_duration=SEC_TO_TIME('%s')
                                              WHERE ap_slice_id='%s'""" % 
-                                             (current_active_duration, s_id)
+                                             (current_active_duration.total_seconds(), s_id)
                                      )
                     self.LOGGER.debug(to_execute)
                     db.execute(to_execute)
@@ -170,10 +170,10 @@ class AuroraDB(object):
                     ms = int(str(total_active_duration.total_seconds()).split('.')[1])
                     total_active_duration = datetime.time(second=s, microsecond=ms).isoformat()
                     to_execute = ("""UPDATE metering SET 
-                                         total_active_duration='%s',
+                                         total_active_duration=SEC_TO_TIME('%s'),
                                          last_time_updated='%s'
                                          WHERE ap_slice_id='%s'""" % 
-                                         (total_active_duration, now, s_id)
+                                         (total_active_duration.total_seconds(), now, s_id)
                                  )
                     self.LOGGER.debug(to_execute)
                     db.execute(to_execute)
