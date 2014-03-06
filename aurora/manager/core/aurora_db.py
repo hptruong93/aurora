@@ -126,7 +126,7 @@ class AuroraDB(object):
         minutes = int(time // 60)
         time = time - minutes * 60
         seconds = int(time)
-        microseconds = time - seconds
+        microseconds = (time - seconds) * 1000000
         time_format = '%s:%s:%s.%s' % (str(hours), str(minutes), str(seconds), str(microseconds))
         return time_format
 
