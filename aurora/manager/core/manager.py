@@ -415,12 +415,12 @@ class Manager(object):
         if args['tag']:
             arg_tag = args['tag'][0]
 
-        json_list = [] #If a file is provided for multiple APs,
-                       #we need to split the file for each AP, saved here
+        json_list = [] # If a file is provided for multiple APs,
+                       # we need to split the file for each AP, saved here
 
         if arg_ap:
             aplist = arg_ap
-        elif arg_filter: #We need to apply the filter
+        elif arg_filter: # We need to apply the filter
             result = self.ap_filter(arg_filter)
             aplist = []
             for entry in result:
@@ -432,17 +432,17 @@ class Manager(object):
             return response
 
         if 'TrafficAttributes' not in arg_file.keys():
-            arg_file['TrafficAttributes'] = {}
+            arg_file['TrafficAttributes'] = []
 
-        #Initialize json_list structure (We do NOT yet have a plugin for
-        #VirtualWIFI/RadioInterfaces, just load and send for now)
+        # Initialize json_list structure (We do NOT yet have a plugin for
+        # VirtualWIFI/RadioInterfaces, just load and send for now)
         for i in range(len(aplist)):
             json_list.append({'VirtualInterfaces':[],
                               'VirtualBridges':[],
                               'RadioInterfaces':arg_file['VirtualWIFI'],
                               'TrafficAttributes':arg_file['TrafficAttributes']})
 
-        #Send to plugin for parsing
+        # Send to plugin for parsing
         try:
             json_list = slice_plugin.SlicePlugin(tenant_id,
                                     user_id,
@@ -458,60 +458,54 @@ class Manager(object):
 
         # Print json_list (for debugging)
         for i, entry in enumerate(json_list):
-            #print '\n'
-            self.LOGGER.debug(json.dumps(entry, indent=4, sort_keys=True))
-            #print '\n'
-    #        with open("core/json/wifi__%s.json" % i,"w") as f:
-    #            print "Writing file json/wifi__%s.json\n" % i
-    #            json.dump(entry, f, indent=4)
-    #            f.flush()
-    #            f.close()
-
+            self.LOGGER.debug(json.dumps(entry, indent=4))
 
         add_success = True
-        #Dispatch
+        # Dispatch
         for (index,json_entry) in enumerate(json_list):
-            #Generate unique slice_id and add entry to database
+            # Generate unique slice_id and add entry to database
             slice_uuid = uuid.uuid4()
             json_entry['slice'] = str(slice_uuid)
             
-            #Verify adding process. See request_verification for more information
+            # Verify adding process. See request_verification for more information
+            # An error message is retuned if there is any problem, else None is returned.
             error = Verify.verifyOK(aplist[index], tenant_id, json_entry)
-            #error = None #For testing
-            #An error message is retuned if there is any problem, else None is returned.
+            if error is not None: 
+                message += error + "\n"
+                add_success = False
+                continue
 
-            #Get SSID of slice to be created, only first is captured
+            # There is no error
+            # Get SSID of slice to be created, only first is captured
             ap_slice_ssid = None
             for d_entry in json_entry['config']['RadioInterfaces']:
                 if d_entry['flavor'] == 'wifi_bss':
                     ap_slice_ssid = d_entry['attributes']['name']
                     break
 
-            if error is None: #There is no error
-                error = self.aurora_db.wslice_add(slice_uuid, ap_slice_ssid, tenant_id, aplist[index], project_id)
-
-                if error is not None: #There is an error
-                    message += error + "\n"
-                    add_success = False
-                else:
-                    message += "Adding slice %s: %s\n" % (index + 1, slice_uuid)
-
-                    #Add tags if present
-                    if args['tag']:
-                        self.ap_slice_add_tag({'ap-slice-add-tag':[slice_uuid],
-                                        'tag': [arg_tag],
-                                        'filter':""},
-                                        tenant_id, user_id, project_id)
-                    #Dispatch (use slice_uuid as a message identifier)
-                    self.dispatcher.dispatch(json_entry, aplist[index], str(slice_uuid))
-                    try:
-                        config_db.save_config(json_entry['config'], json_entry['slice'], tenant_id)
-                    except AuroraException, e:
-                        LOGGER.error(e.message)
-
-            else:
+            # Add slice to MySQL DB
+            error = self.aurora_db.wslice_add(slice_uuid, ap_slice_ssid, tenant_id, aplist[index], project_id)
+            if error is not None: #There is an error
                 message += error + "\n"
                 add_success = False
+                self.aurora_db.wslice_delete(slice_uuid)
+                continue
+
+            message += "Adding slice %s: %s\n" % (index + 1, slice_uuid)
+
+            #Add tags if present
+            if args['tag']:
+                self.ap_slice_add_tag({'ap-slice-add-tag':[slice_uuid],
+                                'tag': [arg_tag],
+                                'filter':""},
+                                tenant_id, user_id, project_id)
+
+            #Dispatch (use slice_uuid as a message identifier)
+            self.dispatcher.dispatch(json_entry, aplist[index], str(slice_uuid))
+            try:
+                config_db.save_config(json_entry['config'], json_entry['slice'], tenant_id)
+            except AuroraException, e:
+                LOGGER.error(e.message)
 
         #Return response (message returns a list of uuids for created slices)
         response = {"status":add_success, "message":message}

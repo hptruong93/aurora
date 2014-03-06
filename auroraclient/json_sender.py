@@ -12,7 +12,7 @@ class JSONSender():
     def send_json(self, url, payload):
         
         try:
-            r = requests.post(url, data=json.dumps(payload), timeout=1)
+            r = requests.post(url, data=json.dumps(payload), timeout=5)
         except KeyboardInterrupt:
             return
         except requests.Timeout, t:
@@ -31,7 +31,7 @@ class JSONSender():
         time.sleep(1)
 
         try:
-            r = requests.get(url, timeout=1)    
+            r = requests.get(url, timeout=5)    
         except KeyboardInterrupt:
             return
         except requests.Timeout, t:
