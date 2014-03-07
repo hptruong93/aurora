@@ -1,7 +1,8 @@
 """Module containing threads which can run a continuous
 loop until a stop event is thrown.  Thread target code must
 have a keyword argument for stop_event and must check
-it periodically eg. 
+it periodically eg.::
+
     if stop_event.is_set(): break
 
 """

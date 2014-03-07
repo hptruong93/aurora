@@ -1,16 +1,17 @@
 # Aurora-client Shell
 # SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
-"""
-Command-line interface to the Aurora API
-Uses a JSON file for commands
-Format:[
-         {
-          optional:[[oarg1, {attributes}],[oarg2, {attributes}]...], 
-          positional:[[parg1, {attributes}], [parg2, {attributes}]...], 
-          subargument:[[subarg1, {attributes}, [[osarg1, {attributes}], [osarg2, {attributes}]]], [subarg2, {attributes}]...]
-         }
-       ]
+"""Command-line interface to the Aurora API
+Uses a JSON file for commands::
+    
+    Format:[
+             {
+              optional:[[oarg1, {attributes}],[oarg2, {attributes}]...], 
+              positional:[[parg1, {attributes}], [parg2, {attributes}]...], 
+              subargument:[[subarg1, {attributes}, [[osarg1, {attributes}], [osarg2, {attributes}]]], [subarg2, {attributes}]...]
+             }
+           ]
+
 """
 
 import argparse

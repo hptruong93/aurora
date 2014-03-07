@@ -1,5 +1,4 @@
-"""AP Monitor module to track ap status and received message"""
-import atexit
+"""AP Monitor module to track ap status and received messages"""
 import collections
 import datetime
 import logging
@@ -55,17 +54,13 @@ class APMonitor(object):
             self.LOGGER.error("Error %d: %s" % (e.args[0], e.args[1]))
             sys.exit(1)
 
-        atexit.register(self._closeSQL)
-
-    def _closeSQL(self):
-        self.LOGGER.info("Closing SQL connection...")
-        self.aurora_db.ap_status_unknown()
-        if self.con:
-            self.con.close()
-        else:
-            self.LOGGER.info('Connection already closed!')
-
     def _make_queue_daemon(self):
+        """Creates a queue daemon which watches for set_status calls
+        and adds them to a FIFO queue.  This ensures the _set_status
+        method does not get executed twice at the same time, which can
+        cause the manager to place slices in a confused state.
+
+        """
         self.LOGGER.info("Creating Queue Daemon...")
         self.qd = StoppableThread(target=self._watch_queue)
         self.qd.start()

@@ -93,8 +93,9 @@ class SQLDBCreate(object):
         except mdb.Error, e:
             traceback.print_exc(file=sys.stdout)
 
-logging.basicConfig()
-newDB = SQLDBCreate()
-newDB.create_database()
-newDB.create_tables()
-newDB.close()
+if __name__ == '__main__':
+    logging.basicConfig()
+    newDB = SQLDBCreate()
+    newDB.create_database()
+    newDB.create_tables()
+    newDB.close()

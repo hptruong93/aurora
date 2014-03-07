@@ -994,13 +994,15 @@ class Manager(object):
     def _wnet_show_wslices(self, wnet_name, tenant_id):
         """Helper method for other wnet classes.
 
-        Return: A dictionary containing:
-                {   "message":<NoneType if successful, something
-                                if wnet doesn't exist>
-                    "ap_slices":<NoneType if none, otherwise
-                                  a tuple of tuples with ap_slice
-                                  info related to specified wnet_name>
-                }
+        Returns a dictionary containing::
+        
+            {   "message":<NoneType if successful, something
+                             if wnet doesn't exist>
+                "ap_slices":<NoneType if none, otherwise::
+                              a tuple of tuples with ap_slice
+                              info related to specified wnet_name>
+            }
+
         """
         return_dictionary = {}
         #DEBUG

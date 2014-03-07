@@ -190,4 +190,5 @@ class SliceJSONGenerator(object):
     def printConfig(self):
         print(json.dumps(self.data, sort_keys=True, indent=4))
 
-SliceJSONGenerator('core/json/slicetemp.json')
+if __name__ == '__main__':
+    SliceJSONGenerator('core/json/slicetemp.json')
