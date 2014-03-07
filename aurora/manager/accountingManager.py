@@ -15,7 +15,7 @@ class accountingManager():
         #Connect to Aurora mySQL Database
         print "Connecting to SQLdb in accountingManager...."
         try:
-            self.con = mdb.connect(host, username, password, 'aurora')
+            self.con = mdb.connect(host, username, password, 'aurora') # change back to 'test'
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)

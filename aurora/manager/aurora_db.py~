@@ -17,8 +17,8 @@ class AuroraDB():
     def __init__(self,
                  mysql_host = 'localhost',
                  mysql_username = 'root',
-                 mysql_password = 'supersecret', # Todo: change back to user1234
-                 mysql_db = 'aurora'): # Todo: change back to test
+                 mysql_password = 'user1234', // Todo: change back to supersecret
+                 mysql_db = 'test'): // Todo: change back to aurora
         print "Constructing AuroraDB..."
         #Connect to Aurora mySQL database
         try:

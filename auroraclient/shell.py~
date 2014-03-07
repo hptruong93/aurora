@@ -87,9 +87,11 @@ class AuroraConsole():
             #For add-slice and modify, we need to load the JSON file
             if function == "ap-slice-create" or function == "ap-slice-modify":
                 if not params['file']:
-					if not params['hint']:   # once the hint tag is also missing, the command is not legit                  
+					if function == "ap-slice-create" and params['hint']:
+						print 'I found the hint factor!'
+					else:                    
 						print 'Please Specify a file argument!'
-						return
+                    return
                 else:
                     try:
                         print os.getcwd() + params['file'][0]
@@ -108,10 +110,7 @@ class AuroraConsole():
 #            except:
 #                print 'Invalid Credentials!'
 #                sys.exit(-1)       
-            if params['hint']: #--"hint" token, store params['file'] for the third sent
-                store = params['file'] 
-                params['file']= None
-                
+
             #We will send in the following format: {function:"",parameters:""}
             toSend = {"function":function,"parameters":params}
             ##FOR DEBUGGING PURPOSES
@@ -119,50 +118,8 @@ class AuroraConsole():
             ##END DEBUG
             
             if toSend: #--help commands will not start the server
-                JSONSender().sendJSON("http://132.206.206.133:5554", toSend) # change back to localhost:5554
+                JSONSender().sendJSON("http://132.206.206.133:5554", toSend)
 
-            try:
-                if "location" in params['hint'] or "location,slice-load" in params['hint']: # Once the token is 'hint', wait for users' reply
-                    exitLoop = False
-                    while not exitLoop:
-                        print "Please Enter the location where the AP you want to access:"
-                        print "(Enter 0 to leave otherwise)"
-
-                        choice = raw_input()
-                        if choice == '0':
-                            exitLoop = True;
-                        elif len(choice) > 0: # Unable to do a logic checking here due to the lack of data at the file
-                            print "the location is " + choice
-                            
-                            ##############Send the information back again to the manager###############
-                            params['location'] = choice
-                            print params
-
-                            toSend = {"function":function,"parameters":params}
-                            ##FOR DEBUGGING PURPOSES
-                            #pprint(toSend)
-                            ##END DEBUG
-                            
-                            if toSend: #--help commands will not start the server
-                                message = JSONSender().sendJSON("http://132.206.206.133:5554", toSend) # change back to localhost:5554
-                                if 'openflow' in message.lower(): # Restore params['file'] and clean up params['hint'] to create a slice
-                                    params['file'] = store
-                                    params['hint'] = None
-                                    del params['location']
-                                    params['ap'] = [message]
-                                    print params
-                                    toSend = {"function":function,"parameters":params}
-                                    pprint(toSend)
-                                    if toSend: #--help commands will not start the server
-                                        message = JSONSender().sendJSON("http://132.206.206.133:5554", toSend) # change back to localhost:5554
-                                        
-                            exitLoop = True;
-                        else:
-                            exitLoop = True;
-                            print "Invalid information"
-            except:
-                print "Finshed the current statement"
-                    
             
         
     def _get_ksclient(self, **kwargs):

@@ -90,10 +90,10 @@ class AuroraJsonGenerator():
         print('Virtual Interface Saved!')
     
     def listVI(self):
-        if len(self.data[''])
-        for index in range(0, len(self.data['VirtualInterfaces'])):
-            print('Index '+str(index)+':')
-            print self.data['VirtualInterfaces'][index]
+        if len(self.data['']):
+			for index in range(0, len(self.data['VirtualInterfaces'])):
+				print('Index '+str(index)+':')
+				print self.data['VirtualInterfaces'][index]
     
     def delVI(self):
         self.listVI()

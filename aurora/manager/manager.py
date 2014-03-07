@@ -16,8 +16,8 @@ from pprint import pprint
 #Dispatcher variables
 _MYSQL_HOST = 'localhost'
 _MYSQL_USERNAME = 'root'
-_MYSQL_PASSWORD = 'supersecret'
-_MYSQL_DB = 'aurora'
+_MYSQL_PASSWORD = 'supersecret'#Todo: change back to 'user1234'
+_MYSQL_DB = 'aurora'#Todo: change back to 'test'
 
 class Manager():
 
@@ -26,8 +26,8 @@ class Manager():
 
         ### Dispatcher variables
         host = 'localhost'
-        username = 'outside_world'
-        password = 'wireless_access'
+        username = 'outside_world' # 'outside_world'
+        password = 'wireless_access' # 'wireless_access'
         self.mysql_host = _MYSQL_HOST #host
         self.mysql_username = _MYSQL_USERNAME #'root'
         self.mysql_password = _MYSQL_PASSWORD #'supersecret'
@@ -103,6 +103,19 @@ class Manager():
             tag_compare = False #For tags, we need 2 queries and a quick result compare at the end
             tag_result = []
             args_list = args.split('&')
+
+            if args_list[0] == 'location' or args_list[0] == 'location,slice-load':  # Yang: add one more case if the user ask for the location_tag ['location']
+                try:
+                    with self.con:
+                        cur = self.con.cursor()
+                        tempList = []
+                        if 'location' in args_list[0]:
+                            cur.execute("SELECT * FROM location_tags")
+                            tempList = list(cur.fetchall())
+                            return tempList
+                except mdb.Error, e:
+                    print "Error %d: %s" % (e.args[0], e.args[1])
+            
             for (index, entry) in enumerate(args_list):
                 args_list[index] = entry.strip()
                  #Filter for tags (NOT Query is not yet implemented (future work?),
@@ -347,6 +360,7 @@ class Manager():
         arg_filter = None
         arg_file = None
         arg_tag = None
+        arg_hint = None
         if 'ap' in args:
             arg_ap = args['ap']
         if args['filter']:
@@ -355,9 +369,56 @@ class Manager():
             arg_file = args['file']
         if args['tag']:
             arg_tag = args['tag'][0]
+        if args['hint']:
+            arg_hint = args['hint'][0]
 
         json_list = [] #If a file is provided for multiple APs,
                        #we need to split the file for each AP, saved here
+
+        # Add one section for dealing with 'hint' token, once it is processed, return
+        if arg_hint and "location" in arg_hint:
+            # Try to access the local database to grab location
+            tempList = self.ap_filter(arg_hint)
+            message = ""
+            for entry in tempList:
+                if not ('mcgill' in entry[0] or 'mcgill' in entry[1]):
+                    message += "%5s: %s\n" % (entry[1], entry[0])
+            
+            # Make a decision according to the token "location" OR "slice_load"
+            try:
+                if args['location']: # if there is a location specification
+                    if args['location'].lower() in message.lower(): # check if the location is valid
+                        indexSliceLoad = ""
+                        freespace = 0;
+                        if "slice-load" in arg_hint:
+                            print "Search the lightweight AP"
+                            indexSliceLoad = "unknown"
+                        else:
+                            print "Locate a random AP"
+                        
+                        # Search for the proper slices
+                        for entry in tempList:
+                            #print entry[0]
+                            if args['location'].lower() == entry[0].lower():
+                                # once the location matches -- check if the AP has free spots
+                                apList = self.ap_filter("name=" + entry[1])
+                                if apList[0][1]['number_radio_free'] > 0:
+                                    if(len(indexSliceLoad)==0):
+                                        indexSliceLoad = entry[1]
+                                        break
+                                    elif(apList[0][1]['number_radio_free']>freespace):
+                                        freespace = apList[0][1]['number_radio_free']
+                                        indexSliceLoad = entry[1]
+                        message = indexSliceLoad
+                    else:
+                        message = "invalid location information"
+            except:
+                print "This is the first term"
+                
+            response = {"status":True, "message":message}
+            return response
+
+        # end of the section
 
         if arg_ap:
             aplist = arg_ap
@@ -426,7 +487,7 @@ class Manager():
                                         tenant_id, user_id, project_id)
                 #Dispatch (use slice_uuid as a message identifier)
                 self.dispatch.dispatch(json_entry, aplist[index], str(slice_uuid))
-        
+
         #Return response (message returns a list of uuids for created slices)
         response = {"status":add_success, "message":message}
         return response
@@ -1092,10 +1153,12 @@ class Manager():
         return response
 
 #For Testing
-#Manager().parseargs('ap-slice-create', {'filter':['region=mcgill & number_radio<2 & version<1.1 & number_radio_free!2 & supported_protocol=a/b/g'], 'file':['json/slicetemp.json'], 'tag':['first']},1,1,1)
+#if __name__ == "__main__":
+#Manager().parseargs('ap-slice-create', {'hint': ['location,slice-load'],'filter':['region=mcgill & number_radio<2 & version<1.1 & number_radio_free!2 & supported_protocol=a/b/g'], 'file':['json/slicetemp.json'], 'tag':['first']},1,1,1)
 #Manager().parseargs('ap-slice-create', {'ap':['of1', 'of2', 'of3', 'of4'],'file':['json/slicetemp.json'], 'tag':['first']},1,1,1)
 #Manager().parseargs('ap-slice-create', {'ap':['of1'],'file':['json/slicetemp.json'], 'tag':['first']},1,1,1)
 #Manager().parseargs('ap-list', {'filter':['name=openflow & tag=mc838'], 'i':True},1,1,1)
+#Manager().parseargs('ap-list', {'filter':['location ='], 'i':True},1,1,1)
 #Manager().parseargs('ap-slice-list', {'filter':['tag=first & physical_ap=openflow'], 'i':True}, 1,1,1)
 #Manager().parseargs('wnet_show', {'wnet-show':['wnet-1']}, 0,1,1)
 #Manager().parseargs('ap-slice-add-tag', {'filter':['ap_slice_id=1'], 'tag':'testadding'},1,1,1)
@@ -1104,3 +1167,5 @@ class Manager():
 #Manager().parseargs('wnet-delete', {'wnet-delete':['testadding']},1,1,1)
 #Manager().parseargs('wnet-add-wslice', {'wnet-add-wslice':['wnet-1'], 'slice':['1']},1,1,1)
 #Manager().parseargs('wnet-remove-wslice', {'wnet-remove-wslice':['wnet-1'], 'slice':['1']},1,1,1)
+#Manager().parseargs('ap-slice-create', {'hint': ['location,slice-load'],},1,1,1)
+

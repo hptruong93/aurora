@@ -39,7 +39,7 @@ class SQLCheck():
           
         #Connect to Aurora mySQL Database
         try:
-            self.con = mdb.connect('localhost', 'root', 'supersecret', 'aurora') #Change address Todo: chang it back to user1234 and test
+            self.con = mdb.connect('localhost', 'root', 'user1234', 'test') #Change address Todo: chang it back to supersecret and aurora
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             sys.exit(1)

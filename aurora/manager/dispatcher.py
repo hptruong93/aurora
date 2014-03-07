@@ -204,10 +204,10 @@ if __name__ == '__main__':
     ######
     # Connection Variables
     host = 'localhost'
-    username = 'outside_world'
-    password = 'wireless_access'
+    username = 'outside_world' 
+    password = 'wireless_access' 
     mysql_username = 'root'
-    mysql_password = 'supersecret'
+    mysql_password = 'supersecret' # Todo: change it back to user1234
     sender = Dispatcher(host, username, password, mysql_username, mysql_password)
     provision.run()
 

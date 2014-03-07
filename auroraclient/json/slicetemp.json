@@ -1,0 +1,13 @@
+{
+    "RadioInterfaces": [], 
+    "VirtualBridges": [], 
+    "VirtualInterfaces": [], 
+    "ap_slice_id": 1, 
+    "ap_slice_tags": "capsulator", 
+    "firmware": "xx", 
+    "physical_ap": "slice", 
+    "project_id": 1, 
+    "slice_qos_aggregate_rate": "zzz", 
+    "slice_qos_priority": "priority1", 
+    "tenant_id": 1
+}

@@ -37,6 +37,8 @@ class JSONSender():
 """Action failed, details:
 -------------
 """ + message
+         
+        return message
             
 if __name__ == "__main__": #FOR TESTING
     sender = JSONSender()

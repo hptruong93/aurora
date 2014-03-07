@@ -22,7 +22,7 @@ class resourceMonitor():
         #Connect to Aurora mySQL Database
         print "Connecting to SQLdb in resourceMonitor..."
         try:
-            self.con = mdb.connect(host, username, password, 'aurora')
+            self.con = mdb.connect(host, username, password, 'aurora') #change back to 'test'
             resourceMonitor.sql_locked = False
         except mdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])

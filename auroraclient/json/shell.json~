@@ -79,7 +79,8 @@
                             "nargs":"*",
                             "default":null,
                             "choices":null,
-                            "metavar":"hint"
+                            "metavar":"hint",
+							"location":"unknown"
                         }
                     ],
                     [

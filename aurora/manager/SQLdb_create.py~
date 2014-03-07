@@ -13,7 +13,7 @@ class SQLdbCreate():
     def __init__(self):
         #Connect to Aurora mySQL database
         try:
-            self.con = mdb.connect(host='localhost', user='root', passwd='supersecret') #Change address #Todo: change it back to user1234
+            self.con = mdb.connect(host='localhost', user='root', passwd='user1234') #Change address
 
         except mdb.Error, e:
 
