@@ -318,10 +318,10 @@ class AuroraDB(object):
             sys.exit(1)
 
     def ap_up_slice_status_update(self, ap_slice_id, ap_name, success=False):
+        now = datetime.datetime.now()
         try:
             with self._database_connection() as db:
                 if success:
-                    now = datetime.datetime.now()
                     to_execute = ("""UPDATE metering, ap_slice SET 
                                          metering.last_time_activated=
                                              CASE ap_slice.status
@@ -337,11 +337,18 @@ class AuroraDB(object):
                                              NULL
                                          WHERE 
                                              metering.ap_slice_id='%s' AND
-                                             metering.physical_ap='%s'""" %
+                                             ap_slice.physical_ap='%s'""" %
                                      (now, now, ap_slice_id, ap_name)
                                  )
                     self.LOGGER.debug(to_execute)
                     db.execute(to_execute)
+        except mdb.Error, e:
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
+            sys.exit(1)
+
+        try:
+            with self._database_connection() as db:
+                if success:
                     to_execute = ("""UPDATE ap_slice SET
                                          status= 
                                              CASE status 
