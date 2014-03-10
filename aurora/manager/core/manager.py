@@ -795,7 +795,7 @@ class Manager(object):
             "message":message,
         }
         new_ap = args['ap']
-        ap_slice_id = args['ap_slice_move']
+        ap_slice_id = args['ap-slice-move']
         if not self.aurora_db.wslice_belongs_to(tenant_id, project_id, ap_slice_id):
             message = "You have no slice %s" % ap_slice_id
             response["message"] = message
