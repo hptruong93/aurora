@@ -212,52 +212,231 @@ to reflect the current status of the AP.</p>
 <dl class="method">
 <dt id="core.aurora_db.AuroraDB.ap_add">
 <tt class="descname">ap_add</tt><big>(</big><em>ap_name</em><big>)</big><a class="reference internal" href="_modules/core/aurora_db.html#AuroraDB.ap_add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.aurora_db.AuroraDB.ap_add" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Adds an access point to the MySQL database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ap_name</strong> (<em>str</em>) &#8211; </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises :</th><td class="field-body">InvalidAPNameType</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="core.aurora_db.AuroraDB.ap_down_slice_status_update">
 <tt class="descname">ap_down_slice_status_update</tt><big>(</big><em>ap_name=None</em>, <em>ap_slice_id=None</em><big>)</big><a class="reference internal" href="_modules/core/aurora_db.html#AuroraDB.ap_down_slice_status_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.aurora_db.AuroraDB.ap_down_slice_status_update" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Invoked upon non-receipt timeout of a message, or by 
+an access point sending a FIN message.  Marks all slices
+associated with the AP appropriately depending on their 
+current status, notably active slices are marked &#8216;DOWN&#8217;.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ap_slice_id</strong> (<em>str</em>) &#8211; </li>
+<li><strong>ap_name</strong> (<em>str</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.aurora_db.AuroraDB.ap_slice_set_physical_ap">
+<tt class="descname">ap_slice_set_physical_ap</tt><big>(</big><em>ap_slice_id</em>, <em>ap_name</em><big>)</big><a class="headerlink" href="#core.aurora_db.AuroraDB.ap_slice_set_physical_ap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the physical_ap column entry for a slice.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ap_slice_id</strong> (<em>str</em>) &#8211; </li>
+<li><strong>ap_name</strong> (<em>str</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.aurora_db.AuroraDB.ap_slice_status_pending">
+<tt class="descname">ap_slice_status_pending</tt><big>(</big><em>ap_slice_id</em><big>)</big><a class="headerlink" href="#core.aurora_db.AuroraDB.ap_slice_status_pending" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets status to &#8216;PENDING&#8217; for given ap_slice_id.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ap_slice_id</strong> (<em>str</em>) &#8211; Slice ID to set</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises :</th><td class="field-body">InvalidPENDINGStatusUpdate</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="core.aurora_db.AuroraDB.ap_slice_status_up">
 <tt class="descname">ap_slice_status_up</tt><big>(</big><em>ap_slice_id</em><big>)</big><a class="reference internal" href="_modules/core/aurora_db.html#AuroraDB.ap_slice_status_up"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.aurora_db.AuroraDB.ap_slice_status_up" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Sets status to &#8216;ACTIVE&#8217; for given ap_slice_id.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ap_slice_id</strong> (<em>str</em>) &#8211; Slice ID to set</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises :</th><td class="field-body">InvalidACTIVEStatusUpdate</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="core.aurora_db.AuroraDB.ap_slice_update_mb_sent">
 <tt class="descname">ap_slice_update_mb_sent</tt><big>(</big><em>ap_slice_id</em>, <em>mb_sent</em><big>)</big><a class="reference internal" href="_modules/core/aurora_db.html#AuroraDB.ap_slice_update_mb_sent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.aurora_db.AuroraDB.ap_slice_update_mb_sent" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Updates the metering traffic log for a specific slice.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ap_slice_id</strong> (<em>str</em>) &#8211; </li>
+<li><strong>mb_sent</strong> (<em>float</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="core.aurora_db.AuroraDB.ap_slice_update_time_stats">
 <tt class="descname">ap_slice_update_time_stats</tt><big>(</big><em>ap_slice_id=None</em>, <em>ap_name=None</em><big>)</big><a class="reference internal" href="_modules/core/aurora_db.html#AuroraDB.ap_slice_update_time_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.aurora_db.AuroraDB.ap_slice_update_time_stats" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Records the current time and calculates current and
+cumulative uptime for a slice on an access point.</p>
+<p>If the slice ID is the only parameter given, only that
+slice is updated.  Otherwise, all the slices on the
+access point in question will be updated.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This method does not check the status of the slices
+it is passed.  You must make sure they are candidates
+for metering before calling this method.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ap_slice_id</strong> (<em>str</em>) &#8211; ID of the slice to update</li>
+<li><strong>ap_name</strong> (<em>str</em>) &#8211; Name of the access point where the
+slice resides</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="core.aurora_db.AuroraDB.ap_status_down">
-<tt class="descname">ap_status_down</tt><big>(</big><em>ap_name=None</em>, <em>ap_slice_id=None</em><big>)</big><a class="reference internal" href="_modules/core/aurora_db.html#AuroraDB.ap_status_down"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.aurora_db.AuroraDB.ap_status_down" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<tt class="descname">ap_status_down</tt><big>(</big><em>ap_name=None</em><big>)</big><a class="reference internal" href="_modules/core/aurora_db.html#AuroraDB.ap_status_down"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.aurora_db.AuroraDB.ap_status_down" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the status of an access point to &#8216;DOWN&#8217;.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ap_name</strong> (<em>str</em>) &#8211; </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises :</th><td class="field-body">NoAPNameGivenException</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="core.aurora_db.AuroraDB.ap_status_unknown">
 <tt class="descname">ap_status_unknown</tt><big>(</big><em>ap_name=None</em><big>)</big><a class="reference internal" href="_modules/core/aurora_db.html#AuroraDB.ap_status_unknown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.aurora_db.AuroraDB.ap_status_unknown" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Sets the status of an access point to &#8216;UNKNOWN&#8217;.
+This will occur when the manager has shut down and 
+is no longer polling the APs, though they could
+still be active.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ap_name</strong> (<em>str</em>) &#8211; </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="core.aurora_db.AuroraDB.ap_status_up">
-<tt class="descname">ap_status_up</tt><big>(</big><em>ap_name</em><big>)</big><a class="reference internal" href="_modules/core/aurora_db.html#AuroraDB.ap_status_up"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.aurora_db.AuroraDB.ap_status_up" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<tt class="descname">ap_status_up</tt><big>(</big><em>ap_name=None</em><big>)</big><a class="reference internal" href="_modules/core/aurora_db.html#AuroraDB.ap_status_up"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.aurora_db.AuroraDB.ap_status_up" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the status of an access point to &#8216;UP&#8217;.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ap_name</strong> (<em>str</em>) &#8211; </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises :</th><td class="field-body">NoAPNameGivenException</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="core.aurora_db.AuroraDB.ap_up_slice_status_update">
-<tt class="descname">ap_up_slice_status_update</tt><big>(</big><em>ap_slice_id</em>, <em>success=False</em><big>)</big><a class="reference internal" href="_modules/core/aurora_db.html#AuroraDB.ap_up_slice_status_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.aurora_db.AuroraDB.ap_up_slice_status_update" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<tt class="descname">ap_up_slice_status_update</tt><big>(</big><em>ap_slice_id</em>, <em>ap_name</em>, <em>success=False</em><big>)</big><a class="reference internal" href="_modules/core/aurora_db.html#AuroraDB.ap_up_slice_status_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.aurora_db.AuroraDB.ap_up_slice_status_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Invoked upon receipt of a message from an active
+access point.  Modifies slice status depending on
+whether the associated command was successful.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ap_slice_id</strong> (<em>str</em>) &#8211; </li>
+<li><strong>ap_name</strong> (<em>str</em>) &#8211; </li>
+<li><strong>success</strong> (<em>bool</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="core.aurora_db.AuroraDB.ap_update_hw_info">
 <tt class="descname">ap_update_hw_info</tt><big>(</big><em>hw_database</em>, <em>ap_name</em>, <em>region</em><big>)</big><a class="reference internal" href="_modules/core/aurora_db.html#AuroraDB.ap_update_hw_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.aurora_db.AuroraDB.ap_update_hw_info" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Given a hardware database report from an access
+point, updates information in MySQL DB to remain
+current.  Obvious update criteria are free disk
+space and number_slice_free.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>hw_database</strong> (<em>dict</em>) &#8211; Database containing all
+hardware info for a given
+access point</li>
+<li><strong>ap_name</strong> (<em>str</em>) &#8211; Access point name to associated
+with hardware info</li>
+<li><strong>region</strong> (<em>str</em>) &#8211; Region where the access point is located</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="core.aurora_db.AuroraDB.get_ap_list">
@@ -302,12 +481,51 @@ to reflect the current status of the AP.</p>
 <dl class="method">
 <dt id="core.aurora_db.AuroraDB.wnet_add_wslice">
 <tt class="descname">wnet_add_wslice</tt><big>(</big><em>tenant_id</em>, <em>slice_id</em>, <em>name</em><big>)</big><a class="reference internal" href="_modules/core/aurora_db.html#AuroraDB.wnet_add_wslice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.aurora_db.AuroraDB.wnet_add_wslice" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Adds an ap slice to a wnet.  Both slice and wnet</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tenant_id</strong> (<em>int</em>) &#8211; </li>
+<li><strong>slice_id</strong> (<em>str</em>) &#8211; </li>
+<li><strong>name</strong> (<em>str</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">str - Message for client</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises :</th><td class="field-body"><p class="first last">NoWnetExistsForTenantException, APSliceAlreadyInWnetException</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="core.aurora_db.AuroraDB.wnet_belongs_to">
 <tt class="descname">wnet_belongs_to</tt><big>(</big><em>tenant_id</em>, <em>project_id</em>, <em>wnet_name</em><big>)</big><a class="reference internal" href="_modules/core/aurora_db.html#AuroraDB.wnet_belongs_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.aurora_db.AuroraDB.wnet_belongs_to" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Method to check the ownership of a wnet.  Returns true if
+the given wnet name is owned by the tenant in question, and is
+attributed to the same project.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tenant_id</strong> (<em>int</em>) &#8211; </li>
+<li><strong>project_id</strong> (<em>int</em>) &#8211; </li>
+<li><strong>wnet_name</strong> (<em>str</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">bool</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="core.aurora_db.AuroraDB.wnet_join">
@@ -337,7 +555,26 @@ to reflect the current status of the AP.</p>
 <dl class="method">
 <dt id="core.aurora_db.AuroraDB.wslice_belongs_to">
 <tt class="descname">wslice_belongs_to</tt><big>(</big><em>tenant_id</em>, <em>project_id</em>, <em>ap_slice_id</em><big>)</big><a class="reference internal" href="_modules/core/aurora_db.html#AuroraDB.wslice_belongs_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.aurora_db.AuroraDB.wslice_belongs_to" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Method to check the ownership of a slice.  Returns true if
+the given slice ID is owned by the tenant in question, and is
+attributed to the same project.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tenant_id</strong> (<em>int</em>) &#8211; </li>
+<li><strong>project_id</strong> (<em>int</em>) &#8211; </li>
+<li><strong>ap_slice_id</strong> (<em>str</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">bool</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="core.aurora_db.AuroraDB.wslice_delete">
@@ -347,12 +584,40 @@ to reflect the current status of the AP.</p>
 <dl class="method">
 <dt id="core.aurora_db.AuroraDB.wslice_has_tag">
 <tt class="descname">wslice_has_tag</tt><big>(</big><em>ap_slice_id</em>, <em>tag</em><big>)</big><a class="reference internal" href="_modules/core/aurora_db.html#AuroraDB.wslice_has_tag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.aurora_db.AuroraDB.wslice_has_tag" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Determines whether a specific slice is marked 
+with the given tag.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ap_slice_id</strong> (<em>str</em>) &#8211; </li>
+<li><strong>tag</strong> (<em>str</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">bool</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="core.aurora_db.AuroraDB.wslice_is_deleted">
 <tt class="descname">wslice_is_deleted</tt><big>(</big><em>ap_slice_id</em><big>)</big><a class="reference internal" href="_modules/core/aurora_db.html#AuroraDB.wslice_is_deleted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.aurora_db.AuroraDB.wslice_is_deleted" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Method which determines whether a slice is deleted.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ap_slice_id</strong> (<em>str</em>) &#8211; </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="core.aurora_db.AuroraDB.wslice_remove_tag">
@@ -674,6 +939,17 @@ properties such as status.</p>
 <div class="section" id="module-core.exc">
 <span id="exc-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">exc</span></tt> Module<a class="headerlink" href="#module-core.exc" title="Permalink to this headline">¶</a></h2>
 <dl class="exception">
+<dt id="core.exc.APSliceAlreadyInWnetException">
+<em class="property">exception </em><tt class="descclassname">core.exc.</tt><tt class="descname">APSliceAlreadyInWnetException</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#core.exc.APSliceAlreadyInWnetException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#core.exc.AuroraException" title="core.exc.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">core.exc.AuroraException</span></tt></a></p>
+<dl class="attribute">
+<dt id="core.exc.APSliceAlreadyInWnetException.message">
+<tt class="descname">message</tt><em class="property"> = &quot;AP Slice %(ap_slice_id)s already in '%(wnet)s'&quot;</em><a class="headerlink" href="#core.exc.APSliceAlreadyInWnetException.message" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
 <dt id="core.exc.AuroraException">
 <em class="property">exception </em><tt class="descclassname">core.exc.</tt><tt class="descname">AuroraException</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/core/exc.html#AuroraException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.exc.AuroraException" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
@@ -698,12 +974,67 @@ Inherit it and define info to use it.</p>
 </dd></dl>
 
 <dl class="exception">
+<dt id="core.exc.InvalidACTIVEStatusUpdate">
+<em class="property">exception </em><tt class="descclassname">core.exc.</tt><tt class="descname">InvalidACTIVEStatusUpdate</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#core.exc.InvalidACTIVEStatusUpdate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#core.exc.InvalidStatusUpdate" title="core.exc.InvalidStatusUpdate"><tt class="xref py py-class docutils literal"><span class="pre">core.exc.InvalidStatusUpdate</span></tt></a></p>
+<dl class="attribute">
+<dt id="core.exc.InvalidACTIVEStatusUpdate.message">
+<tt class="descname">message</tt><em class="property"> = &quot;Cannot change status %(status)s to 'ACTIVE'&quot;</em><a class="headerlink" href="#core.exc.InvalidACTIVEStatusUpdate.message" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="core.exc.InvalidAPNameTypeException">
+<em class="property">exception </em><tt class="descclassname">core.exc.</tt><tt class="descname">InvalidAPNameTypeException</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#core.exc.InvalidAPNameTypeException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#core.exc.AuroraException" title="core.exc.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">core.exc.AuroraException</span></tt></a></p>
+<dl class="attribute">
+<dt id="core.exc.InvalidAPNameTypeException.message">
+<tt class="descname">message</tt><em class="property"> = 'Please enter a valid ap_name'</em><a class="headerlink" href="#core.exc.InvalidAPNameTypeException.message" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="core.exc.InvalidPENDINGStatusUpdate">
+<em class="property">exception </em><tt class="descclassname">core.exc.</tt><tt class="descname">InvalidPENDINGStatusUpdate</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#core.exc.InvalidPENDINGStatusUpdate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#core.exc.InvalidStatusUpdate" title="core.exc.InvalidStatusUpdate"><tt class="xref py py-class docutils literal"><span class="pre">core.exc.InvalidStatusUpdate</span></tt></a></p>
+<dl class="attribute">
+<dt id="core.exc.InvalidPENDINGStatusUpdate.message">
+<tt class="descname">message</tt><em class="property"> = &quot;Cannot change status %(status)s to 'PENDING'&quot;</em><a class="headerlink" href="#core.exc.InvalidPENDINGStatusUpdate.message" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="core.exc.InvalidStatusUpdate">
+<em class="property">exception </em><tt class="descclassname">core.exc.</tt><tt class="descname">InvalidStatusUpdate</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#core.exc.InvalidStatusUpdate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#core.exc.AuroraException" title="core.exc.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">core.exc.AuroraException</span></tt></a></p>
+<dl class="attribute">
+<dt id="core.exc.InvalidStatusUpdate.message">
+<tt class="descname">message</tt><em class="property"> = 'Cannot update status %(status)s'</em><a class="headerlink" href="#core.exc.InvalidStatusUpdate.message" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
 <dt id="core.exc.ModifyConfigNotImplemented">
 <em class="property">exception </em><tt class="descclassname">core.exc.</tt><tt class="descname">ModifyConfigNotImplemented</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/core/exc.html#ModifyConfigNotImplemented"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.exc.ModifyConfigNotImplemented" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#core.exc.AuroraException" title="core.exc.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">core.exc.AuroraException</span></tt></a></p>
 <dl class="attribute">
 <dt id="core.exc.ModifyConfigNotImplemented.message">
 <tt class="descname">message</tt><em class="property"> = &quot;Modify config in DB isn't implemented.&quot;</em><a class="headerlink" href="#core.exc.ModifyConfigNotImplemented.message" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="core.exc.NoAPNameGivenException">
+<em class="property">exception </em><tt class="descclassname">core.exc.</tt><tt class="descname">NoAPNameGivenException</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#core.exc.NoAPNameGivenException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#core.exc.AuroraException" title="core.exc.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">core.exc.AuroraException</span></tt></a></p>
+<dl class="attribute">
+<dt id="core.exc.NoAPNameGivenException.message">
+<tt class="descname">message</tt><em class="property"> = 'Cannot set AP status for unspecified AP'</em><a class="headerlink" href="#core.exc.NoAPNameGivenException.message" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -726,6 +1057,17 @@ Inherit it and define info to use it.</p>
 <dl class="attribute">
 <dt id="core.exc.NoSliceIDInConfiguration.message">
 <tt class="descname">message</tt><em class="property"> = 'No slice ID available in configuration.'</em><a class="headerlink" href="#core.exc.NoSliceIDInConfiguration.message" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="core.exc.NoWnetExistsForTenantException">
+<em class="property">exception </em><tt class="descclassname">core.exc.</tt><tt class="descname">NoWnetExistsForTenantException</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#core.exc.NoWnetExistsForTenantException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#core.exc.AuroraException" title="core.exc.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">core.exc.AuroraException</span></tt></a></p>
+<dl class="attribute">
+<dt id="core.exc.NoWnetExistsForTenantException.message">
+<tt class="descname">message</tt><em class="property"> = 'Wnet %(wnet)s does not exist'</em><a class="headerlink" href="#core.exc.NoWnetExistsForTenantException.message" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -815,7 +1157,29 @@ Inherit it and define info to use it.</p>
 <dl class="method">
 <dt id="core.manager.Manager.ap_slice_move">
 <tt class="descname">ap_slice_move</tt><big>(</big><em>args</em>, <em>tenant_id</em>, <em>user_id</em>, <em>project_id</em><big>)</big><a class="reference internal" href="_modules/core/manager.html#Manager.ap_slice_move"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.manager.Manager.ap_slice_move" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Moves a slice from once access point to another.</p>
+<p>The configuration for the slice must not be given,
+and will be fetched from the configuration database
+by slice ID and tenant ID.  No special handover
+methods are implemented, and all wireless clients
+connected to the slice will have to reassociate with 
+the new access point.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>args</strong> (<em>dict</em>) &#8211; </li>
+<li><strong>tenant_id</strong> (<em>int</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="core.manager.Manager.ap_slice_remove_tag">
