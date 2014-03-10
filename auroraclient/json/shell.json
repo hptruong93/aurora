@@ -220,6 +220,7 @@
                             "nargs":1,
                             "default":null,
                             "choices":null,
+                            "required":true,
                             "metavar":"access-point"
                         }
                     ]
@@ -392,7 +393,7 @@
                             "nargs":"+",
                             "default":null,
                             "choices":null,
-                            "required":"TRUE",
+                            "required":true,
                             "metavar":"slices/tags"
                         }
                     ]
@@ -444,6 +445,7 @@
                     "metavar":"name"
                 },
                 [
+                
                 ]
             ],
             [
@@ -456,6 +458,9 @@
                     "choices":null,
                     "metavar":"network_name"
                 },
+                [
+
+                ],
                 [
                     [
                         "subnet_name",
@@ -608,7 +613,7 @@
                             "nargs":"+",
                             "default":null,
                             "choices":null,
-                            "required":"TRUE",
+                            "required":true,
                             "metavar":"tag"
                         }
                     ]

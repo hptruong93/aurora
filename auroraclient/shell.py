@@ -62,17 +62,37 @@ class AuroraArgumentParser(argparse.ArgumentParser):
             for osarg in subarg[2]:
                 if type(osarg[0]) is list and osarg[1]['action']=='store':
                     temp_parser.add_argument(*osarg[0], action=osarg[1]['action'], nargs=osarg[1]['nargs'], default=osarg[1]['default'],
-                                             choices=osarg[1]['choices'], metavar=osarg[1]['metavar'], help=osarg[1]['help'])
+                                             choices=osarg[1]['choices'], metavar=osarg[1]['metavar'], help=osarg[1]['help'], 
+                                             required=osarg[1].get('required', False))
                 
                 elif type(osarg[0]) is not list and osarg[1]['action']=='store':
                     temp_parser.add_argument(osarg[0], action=osarg[1]['action'], nargs=osarg[1]['nargs'], default=osarg[1]['default'],
-                                             choices=osarg[1]['choices'], metavar=osarg[1]['metavar'], help=osarg[1]['help'])
+                                             choices=osarg[1]['choices'], metavar=osarg[1]['metavar'], help=osarg[1]['help'], 
+                                             required=osarg[1].get('required', False))
                 
                 elif type(osarg[0]) is list and osarg[1]['action']=='store_true':
-                    temp_parser.add_argument(*osarg[0], action=osarg[1]['action'], default=osarg[1]['default'], help=osarg[1]['help'])
+                    temp_parser.add_argument(*osarg[0], action=osarg[1]['action'], default=osarg[1]['default'], help=osarg[1]['help'], 
+                                             required=osarg[1].get('required', False))
                                              
                 else:
-                    temp_parser.add_argument(osarg[0], action=osarg[1]['action'], default=osarg[1]['default'], help=osarg[1]['help'])
+                    temp_parser.add_argument(osarg[0], action=osarg[1]['action'], default=osarg[1]['default'], help=osarg[1]['help'], 
+                                             required=osarg[1].get('required', False))
+            if len(subarg) == 4:
+                # Positional subargs are present
+                for psarg in subarg[3]:
+                    if type(psarg[0]) is list and psarg[1]['action']=='store':
+                        temp_parser.add_argument(*psarg[0], action=psarg[1]['action'], nargs=psarg[1]['nargs'], default=psarg[1]['default'],
+                                                 choices=psarg[1]['choices'], metavar=psarg[1]['metavar'], help=psarg[1]['help'])
+                    
+                    elif type(psarg[0]) is not list and psarg[1]['action']=='store':
+                        temp_parser.add_argument(psarg[0], action=psarg[1]['action'], nargs=psarg[1]['nargs'], default=psarg[1]['default'],
+                                                 choices=psarg[1]['choices'], metavar=psarg[1]['metavar'], help=psarg[1]['help'])
+                    
+                    elif type(psarg[0]) is list and psarg[1]['action']=='store_true':
+                        temp_parser.add_argument(*psarg[0], action=psarg[1]['action'], default=psarg[1]['default'], help=psarg[1]['help'])
+                                                 
+                    else:
+                        temp_parser.add_argument(psarg[0], action=psarg[1]['action'], default=psarg[1]['default'], help=psarg[1]['help'])
         
         return parser
 
