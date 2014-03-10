@@ -202,6 +202,30 @@
                 ]
             ],
             [
+                "ap-slice-move",
+                {
+                    "action":"store",
+                    "help":"Move a slice",
+                    "nargs":1,
+                    "default":null,
+                    "choices":null,
+                    "metavar":"slices/tags"
+                },
+                [
+                    [
+                        "--ap",
+                        {
+                            "action":"store",
+                            "help":"New access point",
+                            "nargs":1,
+                            "default":null,
+                            "choices":null,
+                            "metavar":"access-point"
+                        }
+                    ]
+                ]
+            ],
+            [
                 "ap-slice-restart",
                 {
                     "action":"store",
