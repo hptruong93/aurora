@@ -789,19 +789,33 @@ class Manager(object):
         return response
 
     def ap_slice_move(self, args, tenant_id, user_id, project_id):
+        """Moves a slice from once access point to another.
+
+        The configuration for the slice must not be given,
+        and will be fetched from the configuration database
+        by slice ID and tenant ID.  No special handover
+        methods are implemented, and all wireless clients
+        connected to the slice will have to reassociate with 
+        the new access point.
+
+        :param dict args:
+        :param int tenant_id:
+        :rtype: dict
+
+        """
         message = ""
         response = {
             "status":False, 
             "message":message,
         }
-        new_ap = args['ap']
-        ap_slice_id = args['ap-slice-move']
+        new_ap = args['ap'][0]
+        ap_slice_id = args['ap-slice-move'][0]
         if not self.aurora_db.wslice_belongs_to(tenant_id, project_id, ap_slice_id):
             message = "You have no slice %s" % ap_slice_id
             response["message"] = message
             return response
 
-        if wslice_is_deleted(ap_slice_id):
+        if self.aurora_db.wslice_is_deleted(ap_slice_id):
             message = "Your slice is deleted: %s" % ap_slice_id
             response["message"] = message
             return response
@@ -831,7 +845,7 @@ class Manager(object):
             "user":user_id, 
             "config":config,
         }
-        error = Verify.verifyOK(current_ap, tenant_id, config_create)
+        error = Verify.verifyOK(new_ap, tenant_id, config_create)
         if error is not None:
             response["message"] = error
             return response
@@ -839,6 +853,7 @@ class Manager(object):
         # Passed all checks, delete slice from existing ap and create on new one
         self.dispatcher.dispatch(config_delete, current_ap)
         self.dispatcher.dispatch(config_create, new_ap)
+        self.aurora_db.ap_slice_set_physical_ap(ap_slice_id, new_ap)
         message += "Moved %s from %s to %s" % (ap_slice_id, current_ap, new_ap)
 
         response = {

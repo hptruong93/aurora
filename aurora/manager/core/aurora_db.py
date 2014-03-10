@@ -130,6 +130,19 @@ class AuroraDB(object):
         time_format = '%s:%s:%s.%s' % (str(hours), str(minutes), str(seconds), str(microseconds))
         return time_format
 
+    def ap_slice_set_physical_ap(self, ap_slice_id, ap_name):
+        try:
+            with self._database_connection() as db:
+                db.execute(
+                    """UPDATE ap_slice SET
+                               physical_ap='%s'
+                           WHERE ap_slice_id='%s'""" %
+                       (ap_name, ap_slice_id)
+                )
+        except Exception, e:
+            traceback.print_exc(file=sys.stdout)
+
+
     def ap_slice_update_time_stats(self, ap_slice_id=None, ap_name=None):
         self.LOGGER.debug("Updating time stats for %s", (ap_slice_id or ap_name))
         if ap_name is not None:
