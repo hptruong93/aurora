@@ -1,5 +1,6 @@
+#---------
 # Base Exception for Aurora program
-
+#
 class AuroraException(Exception):
     """Base class for exceptions in Aurora.
     Inherit it and define info to use it."""
@@ -21,6 +22,9 @@ class AuroraException(Exception):
 
         super(AuroraException, self).__init__(self.message)
 
+#---------
+# Config DB related exceptions
+#
 class NoSliceIDInConfiguration(AuroraException):
     message = "No slice ID available in configuration."
 
@@ -32,3 +36,30 @@ class NoConfigExistsError(AuroraException):
 
 class CannotCreateTenantConfigDir(AuroraException):
     message = "Cannot create the config DB directory %(dir_path)s"
+
+#---------
+# Aurora DB Status-related exceptions
+#
+class InvalidStatusUpdate(AuroraException):
+    message = "Cannot update status %(status)s"
+
+class InvalidPENDINGStatusUpdate(InvalidStatusUpdate):
+    message = "Cannot change status %(status)s to 'PENDING'"
+
+class InvalidACTIVEStatusUpdate(InvalidStatusUpdate):
+    message = "Cannot change status %(status)s to 'ACTIVE'"
+
+#---------
+# Aurora DB related exceptions
+#
+class NoAPNameGivenException(AuroraException):
+    message = "Cannot set AP status for unspecified AP"
+
+class InvalidAPNameTypeException(AuroraException):
+    message = "Please enter a valid ap_name"
+
+class NoWnetExistsForTenantException(AuroraException):
+    message = "Wnet %(wnet)s does not exist"
+
+class APSliceAlreadyInWnetException(AuroraException):
+    message = "AP Slice %(ap_slice_id)s already in '%(wnet)s'"
