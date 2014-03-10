@@ -317,7 +317,7 @@ class AuroraDB(object):
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
 
-    def ap_up_slice_status_update(self, ap_slice_id, success=False):
+    def ap_up_slice_status_update(self, ap_slice_id, ap_name, success=False):
         try:
             with self._database_connection() as db:
                 if success:
@@ -335,8 +335,10 @@ class AuroraDB(object):
                                              ELSE metering.current_mb_sent END,
                                          metering.last_time_updated=
                                              NULL
-                                         WHERE metering.ap_slice_id='%s'""" %
-                                     (now, now, ap_slice_id)
+                                         WHERE 
+                                             metering.ap_slice_id='%s' AND
+                                             metering.physical_ap='%s'""" %
+                                     (now, now, ap_slice_id, ap_name)
                                  )
                     self.LOGGER.debug(to_execute)
                     db.execute(to_execute)
@@ -347,8 +349,10 @@ class AuroraDB(object):
                                                  WHEN 'DELETING' THEN 'DELETED' 
                                                  WHEN 'DOWN' THEN 'ACTIVE' 
                                              ELSE status END
-                                         WHERE ap_slice_id='%s'""" %
-                                     ap_slice_id
+                                         WHERE 
+                                             ap_slice_id='%s' AND
+                                             physical_ap='%s'""" %
+                                     (ap_slice_id, ap_name)
                                  )
                 else:
                     to_execute = ("""UPDATE ap_slice SET 

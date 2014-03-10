@@ -342,7 +342,7 @@ class APMonitor(object):
             # Access point is up - we are receiving individual packets
             if ap_up:
                 self.aurora_db.ap_status_up(ap_name)
-                self.aurora_db.ap_up_slice_status_update(unique_id, success)
+                self.aurora_db.ap_up_slice_status_update(unique_id, ap_name, success)
                 self.aurora_db.ap_slice_update_time_stats(ap_slice_id=unique_id)
             # Access point down, mark all slices and failed/down
             else:
