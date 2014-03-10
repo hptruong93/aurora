@@ -396,7 +396,8 @@ class AuroraDB(object):
                                "ap_slice_id = '%s'" % (ap_slice_id) )
                 db.execute(to_execute)
                 status = db.fetchone()
-                if status[0] == 'DELETED':
+                if (status[0] == 'DELETED' or
+                    status[0] == 'DELETING'):
                     return True
         except mdb.Error, e:
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])

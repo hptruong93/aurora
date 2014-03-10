@@ -790,16 +790,61 @@ class Manager(object):
 
     def ap_slice_move(self, args, tenant_id, user_id, project_id):
         message = ""
+        response = {
+            "status":False, 
+            "message":message,
+        }
         new_ap = args['ap']
         ap_slice_id = args['ap_slice_move']
-        if self.aurora_db.wslice_belongs_to(tenant_id, project_id, ap_slice_id):
-            config = {"slice":ap_slice_id, "command":"delete_slice", "user":user_id}
-            error = Verify.verifyOK(tenant_id = tenant_id, request = config)
+        if not self.aurora_db.wslice_belongs_to(tenant_id, project_id, ap_slice_id):
+            message = "You have no slice %s" % ap_slice_id
+            response["message"] = message
+            return response
 
+        if wslice_is_deleted(ap_slice_id):
+            message = "Your slice is deleted: %s" % ap_slice_id
+            response["message"] = message
+            return response
+
+        # Verify slice can be deleted from current AP
+        config_delete = {
+            "slice":ap_slice_id, 
+            "command":"delete_slice", 
+            "user":user_id,
+        }
+        error = Verify.verifyOK(tenant_id = tenant_id, request = config_delete)
+        if error is not None:
+            response["message"] = error
+            return response
+
+        # Verify slice can be created on new AP
+        current_ap = self.aurora_db.get_wslice_physical_ap(ap_slice_id)
+        try:
             config = config_db.get_config(ap_slice_id, tenant_id)
-            #body =
+        except NoConfigExistsError as err:
+            response["message"] = err.message
+            return response
 
-        response = {"status":True, "message": message}
+        config_create = {
+            "slice":ap_slice_id, 
+            "command":"create_slice", 
+            "user":user_id, 
+            "config":config,
+        }
+        error = Verify.verifyOK(current_ap, tenant_id, config_create)
+        if error is not None:
+            response["message"] = error
+            return response
+
+        # Passed all checks, delete slice from existing ap and create on new one
+        self.dispatcher.dispatch(config_delete, current_ap)
+        self.dispatcher.dispatch(config_create, new_ap)
+        message += "Moved %s from %s to %s" % (ap_slice_id, current_ap, new_ap)
+
+        response = {
+            "status":True, 
+            "message": message,
+        }
         return response
 
     def ap_slice_show(self, args, tenant_id, user_id, project_id):
