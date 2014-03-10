@@ -295,6 +295,28 @@ class AuroraDB(object):
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
 
+    def ap_slice_status_pending(self, ap_slice_id):
+        try:
+            with self._database_connection() as db:
+                num_results = db.execute("SELECT status FROM ap_slice WHERE ap_slice_id='%s'" % ap_slice_id)
+                status = None
+
+                if num_results == 1:
+                    status = db.fetchone()[0]
+                    if (status != 'ACTIVE' and
+                            status != 'FAILED'):
+                        raise Exception("Cannot change status %s to 'PENDING'" % status)
+
+                    self.LOGGER.info("Setting status 'PENDING' for %s", ap_slice_id)
+                    to_execute = ("UPDATE ap_slice SET "
+                                          "status='PENDING' "
+                                      "WHERE ap_slice_id='%s'" % ap_slice_id)
+                    self.LOGGER.debug(to_execute)
+                    db.execute(to_execute)
+        except mdb.Error, e:
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
+            sys.exit(1)
+
     def ap_up_slice_status_update(self, ap_slice_id, success=False):
         try:
             with self._database_connection() as db:

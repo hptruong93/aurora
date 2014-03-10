@@ -854,6 +854,7 @@ class Manager(object):
         self.dispatcher.dispatch(config_delete, current_ap)
         self.dispatcher.dispatch(config_create, new_ap)
         self.aurora_db.ap_slice_set_physical_ap(ap_slice_id, new_ap)
+        self.aurora_db.ap_slice_status_pending(ap_slice_id)
         message += "Moved %s from %s to %s" % (ap_slice_id, current_ap, new_ap)
 
         response = {
