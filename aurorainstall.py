@@ -13,10 +13,13 @@ Examples:
     $ sudo python aurorainstall.py --uninstall
 """
 def main():
-    import sys
-    import shutil
     import os
+    import shutil
+    import site
+    import sys
     import time
+    import traceback
+
     args = sys.argv[1:]
     
     # Check proper usage
@@ -60,10 +63,59 @@ def main():
         if (e[0] == 2):
             print "auroramanager does not already exist, contining..."
             
-    
+    if site.check_enableusersite():
+        site_package_dir = site.getusersitepackages()
+    else:
+        site_package_dir = site.getsitepackages()[0]
+    try:
+        os.unlink(os.path.join(site_package_dir, 'aurora.pth'))
+    except OSError:
+        # File didn't exist
+        pass
+    except Exception:
+        traceback.print_exc(file=sys.stdout)
+        exit(1)
+    try:
+        os.unlink(os.path.join(site_package_dir, 'python-auroraclient.pth'))
+    except OSError:
+        # File didn't exist
+        pass
+    except Exception:
+        traceback.print_exc(file=sys.stdout)
+        exit(1)
+
+
     # If not --uninstall
     if len(args) == 0:
-        #create files auroramanager and aurora
+        # Add module directory to python path
+        try:
+            os.makedirs(site_package_dir)
+        except OSError:
+            # File already exists
+            pass
+        try:
+            with open(os.path.join(site_package_dir,'aurora.pth'), 'w') as F:
+                F.write(auroraDirectory + '/aurora\n')
+            with open(os.path.join(site_package_dir,'python-auroraclient.pth'), 'w') as F:
+                F.write(auroraDirectory + '/python-auroraclient\n')
+        except Exception:
+            traceback.print_exc(file=sys.stdout)
+            try:
+                os.unlink(os.path.join(site_package_dir, 'aurora.pth'))
+            except OSError:
+                pass
+            except Exception:
+                traceback.print_exc(file=sys.stdout)
+            try:
+                os.unlink(os.path.join(site_package_dir, 'python-auroraclient.pth'))
+            except OSError:
+                pass
+            except Exception:
+                traceback.print_exc(file=sys.stdout)
+            traceback.print_exc(file=sys.stdout)
+            exit(1)
+
+        # Create files auroramanager and aurora
         print "Creating auroramanager..."
         with open('auroramanager', 'w') as f:
             f.write('''#!/usr/bin/python -tt
@@ -91,7 +143,7 @@ if __name__ == "__main__":
     else:
         to_execute = "python shell.py"
     
-    os.chdir(auroraDirectory + '/aurora/manager')
+    os.chdir(auroraDirectory + '/aurora/aurora')
     
     # split args into a list
     execute_args = shlex.split(to_execute)              
@@ -130,7 +182,7 @@ if __name__ == "__main__":
     else:
         to_execute = "python shell.py"
     
-    os.chdir(auroraDirectory + '/auroraclient')
+    os.chdir(auroraDirectory + '/python-auroraclient')
     
     # split args into a list
     execute_args = shlex.split(to_execute)      
