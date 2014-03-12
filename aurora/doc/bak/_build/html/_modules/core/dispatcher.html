@@ -1,0 +1,363 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>core.dispatcher &mdash; core  documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="core  documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">core  documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for core.dispatcher</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span><span class="p">,</span> <span class="n">pformat</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">import</span> <span class="nn">weakref</span>
+
+<span class="kn">import</span> <span class="nn">pika</span>
+
+<span class="kn">from</span> <span class="nn">cls_logger</span> <span class="kn">import</span> <span class="n">get_cls_logger</span>
+<span class="kn">import</span> <span class="nn">ap_provision.writer</span> <span class="kn">as</span> <span class="nn">provision</span>
+<span class="kn">from</span> <span class="nn">stop_thread</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">PIKA_LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;pika&#39;</span><span class="p">)</span>
+<span class="n">PIKA_LOGGER</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Dispatcher</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="Dispatcher"><a class="viewcode-back" href="../../core.html#core.dispatcher.Dispatcher">[docs]</a>
+    <span class="n">lock</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">TIMEOUT</span> <span class="o">=</span> <span class="mi">30</span>
+    <span class="n">dispatch_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">mysql_username</span><span class="p">,</span> <span class="n">mysql_password</span><span class="p">,</span> <span class="n">aurora_db</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Establishes the connection to RabbitMQ and sets up the queues&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span> <span class="o">=</span> <span class="n">get_cls_logger</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Constructing Dispatcher...&quot;</span><span class="p">)</span>
+        <span class="c"># Run Pika logger so that error messages get printed</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">host</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">username</span> <span class="o">=</span> <span class="n">username</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">password</span>
+        <span class="n">Dispatcher</span><span class="o">.</span><span class="n">lock</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">restarting_connection</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span> <span class="o">=</span> <span class="n">aurora_db</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timeout_callback</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">response_callback</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="c"># Create list for requests sent out</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">requests_sent</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c">#self.apm = ap_monitor.APMonitor(self, host, mysql_username, mysql_password)</span>
+        <span class="c">#self._start_connection()</span>
+
+        <span class="c"># Setup complete, now start listening and processing</span>
+        <span class="c"># This jumpstarts the connection, which in turn uses the callbacks</span>
+        <span class="c"># Note: connect() is called automatically in SelectConnection().__init__()</span>
+        <span class="c">#</span>
+        <span class="c"># self.connection.connect()</span>
+
+        <span class="c"># Start ioloop, this will quit by itself when Dispatcher().stop() is run</span>
+
+    <span class="k">def</span> <span class="nf">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Deconstructing...&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">set_timeout_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout_callback</span><span class="p">):</span>
+<div class="viewcode-block" id="Dispatcher.set_timeout_callback"><a class="viewcode-back" href="../../core.html#core.dispatcher.Dispatcher.set_timeout_callback">[docs]</a>        <span class="bp">self</span><span class="o">.</span><span class="n">timeout_callback</span> <span class="o">=</span> <span class="n">timeout_callback</span>
+
+    <span class="k">def</span> <span class="nf">set_response_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response_callback</span><span class="p">):</span></div>
+<div class="viewcode-block" id="Dispatcher.set_response_callback"><a class="viewcode-back" href="../../core.html#core.dispatcher.Dispatcher.set_response_callback">[docs]</a>        <span class="bp">self</span><span class="o">.</span><span class="n">response_callback</span> <span class="o">=</span> <span class="n">response_callback</span>
+
+    <span class="k">def</span> <span class="nf">start_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+<div class="viewcode-block" id="Dispatcher.start_connection"><a class="viewcode-back" href="../../core.html#core.dispatcher.Dispatcher.start_connection">[docs]</a>        <span class="bp">self</span><span class="o">.</span><span class="n">_start_connection</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_start_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+        <span class="n">credentials</span> <span class="o">=</span> <span class="n">pika</span><span class="o">.</span><span class="n">PlainCredentials</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="n">pika</span><span class="o">.</span><span class="n">SelectConnection</span><span class="p">(</span><span class="n">pika</span><span class="o">.</span><span class="n">ConnectionParameters</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="n">credentials</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_connected</span><span class="p">)</span>
+        <span class="c"># Start ioloop, this will quit by itself when Dispatcher().stop() is run</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">listener</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">ioloop</span><span class="o">.</span><span class="n">start</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Starting pika listener </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">listener</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">listener</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_stop_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stop_all_request_sent_timers</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_restart_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Channel has died, restarting...&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stop_connection</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">restarting_connection</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_start_connection</span><span class="p">()</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">is_open</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">is_open</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Channel back up, dispatching...&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_stop_all_request_sent_timers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">requests_sent</span><span class="p">:</span>
+            <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">requests_sent</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Cancelling timer </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">entry</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">entry</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">on_connected</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+<div class="viewcode-block" id="Dispatcher.on_connected"><a class="viewcode-back" href="../../core.html#core.dispatcher.Dispatcher.on_connected">[docs]</a>        <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">channel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channel_open</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">channel_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_channel</span><span class="p">):</span></div>
+<div class="viewcode-block" id="Dispatcher.channel_open"><a class="viewcode-back" href="../../core.html#core.dispatcher.Dispatcher.channel_open">[docs]</a>        <span class="bp">self</span><span class="o">.</span><span class="n">channel</span> <span class="o">=</span> <span class="n">new_channel</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">queue_declare</span><span class="p">(</span><span class="n">exclusive</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">durable</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">on_queue_declared</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_queue_declared</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frame</span><span class="p">):</span></div>
+<div class="viewcode-block" id="Dispatcher.on_queue_declared"><a class="viewcode-back" href="../../core.html#core.dispatcher.Dispatcher.on_queue_declared">[docs]</a>        <span class="bp">self</span><span class="o">.</span><span class="n">callback_queue</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">method</span><span class="o">.</span><span class="n">queue</span>
+        <span class="n">provision</span><span class="o">.</span><span class="n">update_reply_queue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">callback_queue</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">basic_consume</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response_callback</span><span class="p">,</span> <span class="n">queue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">callback_queue</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">restarting_connection</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">restarting_connection</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_start_pika_channel_open_monitor</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_send_manager_up_status</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_send_manager_up_status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+        <span class="k">for</span> <span class="n">ap</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">get_ap_list</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="p">({</span><span class="s">&#39;command&#39;</span><span class="p">:</span><span class="s">&#39;SYN&#39;</span><span class="p">},</span> <span class="n">ap</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_start_pika_channel_open_monitor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pika_monitor_thread</span> <span class="o">=</span> <span class="n">StoppableThread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_pika_monitor_loop</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Starting pika monitor thread </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pika_monitor_thread</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pika_monitor_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_stop_pika_channel_open_monitor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Stopping pika monitor thread </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pika_monitor_thread</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pika_monitor_thread</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_pika_monitor_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stop_event</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">stop_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">is_open</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">is_open</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;Pika connection down, restarting&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_restart_connection</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">ap</span><span class="p">,</span> <span class="n">unique_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Dispatcher.dispatch"><a class="viewcode-back" href="../../core.html#core.dispatcher.Dispatcher.dispatch">[docs]</a>        <span class="sd">&quot;&quot;&quot;Send data to the specified queue.</span>
+<span class="sd">        Note that the caller is expected to set database</span>
+<span class="sd">        properties such as status.&quot;&quot;&quot;</span>
+        <span class="c"># Create unique_id if none exists</span>
+        <span class="k">if</span> <span class="n">unique_id</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">unique_id</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">-</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ap</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()))</span>
+
+        <span class="c"># Convert JSON to string</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+        <span class="c"># Send JSON</span>
+        <span class="c"># We attach a reply_to and correlation ID to tell the AP to send a message to the queue we create (randomly generated name) at init</span>
+        <span class="c"># with the correlation id specified.  This means that</span>
+        <span class="c"># we can see if our request executed successfully or not</span>
+        <span class="c"># See http://www.rabbitmq.com/tutorials/tutorial-six-python.html for more info</span>
+        <span class="k">if</span> <span class="n">Dispatcher</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Locked, waiting...&quot;</span><span class="p">)</span>
+            <span class="k">while</span> <span class="n">Dispatcher</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+                <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Locking...&quot;</span><span class="p">)</span>
+        <span class="n">Dispatcher</span><span class="o">.</span><span class="n">lock</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="c"># Dispatch, catch if no channel exists</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">is_open</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">is_open</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">basic_publish</span><span class="p">(</span><span class="n">exchange</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">routing_key</span><span class="o">=</span><span class="n">ap</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">message</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="n">pika</span><span class="o">.</span><span class="n">BasicProperties</span><span class="p">(</span><span class="n">reply_to</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">callback_queue</span><span class="p">,</span> <span class="n">correlation_id</span> <span class="o">=</span> <span class="n">unique_id</span><span class="p">,</span> <span class="n">content_type</span><span class="o">=</span><span class="s">&quot;application/json&quot;</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+            <span class="c"># self.LOGGER.error(e.message)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Message for </span><span class="si">%s</span><span class="s"> dispatched&quot;</span><span class="p">,</span> <span class="n">ap</span><span class="p">)</span>
+            <span class="n">ap_slice_id</span> <span class="o">=</span> <span class="s">&#39;NONE&#39;</span>
+            <span class="k">if</span> <span class="n">config</span><span class="p">[</span><span class="s">&#39;command&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;SYN&#39;</span><span class="p">:</span>
+                <span class="n">ap_slice_id</span> <span class="o">=</span> <span class="s">&#39;SYN&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ap_slice_id</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">&#39;slice&#39;</span><span class="p">]</span>
+            <span class="c"># Start a timeout countdown</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;ap_slice_id </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span><span class="n">ap_slice_id</span><span class="p">)</span>
+            <span class="n">timer</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Timer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">TIMEOUT</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout_callback</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">ap_slice_id</span><span class="p">,</span><span class="n">ap</span><span class="p">,</span><span class="n">unique_id</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Adding timer </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">timer</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">requests_sent</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">unique_id</span><span class="p">,</span> <span class="n">timer</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">))</span>
+            <span class="n">timer</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;requests_sent </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">requests_sent</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Starting timer: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">requests_sent</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Unlocking...&quot;</span><span class="p">)</span>
+        <span class="n">Dispatcher</span><span class="o">.</span><span class="n">lock</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="k">def</span> <span class="nf">get_open_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+<div class="viewcode-block" id="Dispatcher.get_open_channel"><a class="viewcode-back" href="../../core.html#core.dispatcher.Dispatcher.get_open_channel">[docs]</a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">is_open</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+<div class="viewcode-block" id="Dispatcher.stop"><a class="viewcode-back" href="../../core.html#core.dispatcher.Dispatcher.stop">[docs]</a>        <span class="c"># SelectConnection object close method cancels ioloop and cleanly</span>
+        <span class="c"># closes associated channels</span>
+        <span class="c"># Stop timers</span>
+        <span class="c">#self.apm.stop()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stop_pika_channel_open_monitor</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stop_connection</span><span class="p">()</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">listener</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout_callback</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_callback</span>
+
+    <span class="k">def</span> <span class="nf">_get_uuid_for_ap_syn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_syn</span><span class="p">):</span></div>
+        <span class="k">for</span> <span class="n">request</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">requests_sent</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">request</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">ap_syn</span><span class="p">)</span> <span class="ow">and</span> <span class="n">request</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;SYN&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">request</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_have_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">correlation_id</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">request</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">requests_sent</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">request</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">correlation_id</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="n">request</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">remove_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_uuid</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ap_syn</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Dispatcher.remove_request"><a class="viewcode-back" href="../../core.html#core.dispatcher.Dispatcher.remove_request">[docs]</a>        <span class="k">if</span> <span class="n">ap_syn</span><span class="p">:</span>
+            <span class="n">message_uuid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_uuid_for_ap_syn</span><span class="p">(</span><span class="n">ap_syn</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">have_request</span><span class="p">,</span> <span class="n">request</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_have_request</span><span class="p">(</span><span class="n">message_uuid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">have_request</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Cancelling timer </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">request</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">request</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Removing request </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">request</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">requests_sent</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+
+<span class="c"># Menu loop; thanks Kevin</span>
+<span class="c"># Obviously this code will not be in a final version</span>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span></div></div>
+    <span class="n">exitLoop</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="c">######</span>
+    <span class="c"># Connection Variables</span>
+    <span class="n">host</span> <span class="o">=</span> <span class="s">&#39;localhost&#39;</span>
+    <span class="n">username</span> <span class="o">=</span> <span class="s">&#39;outside_world&#39;</span>
+    <span class="n">password</span> <span class="o">=</span> <span class="s">&#39;wireless_access&#39;</span>
+    <span class="n">mysql_username</span> <span class="o">=</span> <span class="s">&#39;root&#39;</span>
+    <span class="n">mysql_password</span> <span class="o">=</span> <span class="s">&#39;supersecret&#39;</span>
+    <span class="n">sender</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">mysql_username</span><span class="p">,</span> <span class="n">mysql_password</span><span class="p">)</span>
+
+    <span class="kn">import</span> <span class="nn">ap_provision.http_srv</span> <span class="kn">as</span> <span class="nn">provision_srv</span>
+    <span class="n">provision_srv</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">exitLoop</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;Choose an option: &#39;</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;0. Exit&#39;</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;1. Dispatch&#39;</span><span class="p">)</span>
+        <span class="n">choice</span> <span class="o">=</span> <span class="nb">raw_input</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">choice</span> <span class="o">==</span> <span class="s">&#39;0&#39;</span><span class="p">:</span>
+            <span class="n">exitLoop</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="c"># Stop listening for replies</span>
+            <span class="n">sender</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+
+        <span class="k">elif</span> <span class="n">choice</span> <span class="o">==</span> <span class="s">&#39;1&#39;</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;Enter json filename&#39;</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="nb">file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="nb">raw_input</span><span class="p">())</span>
+                <span class="n">config</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">file</span><span class="p">)</span>
+                <span class="nb">file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">&#39;Bad file, returning to menu&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+
+                <span class="k">print</span><span class="p">(</span><span class="s">&#39;Enter ap ID&#39;</span><span class="p">)</span>
+                <span class="n">ap</span> <span class="o">=</span> <span class="nb">raw_input</span><span class="p">()</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">&#39;Enter unique id&#39;</span><span class="p">)</span>
+                <span class="n">unique_id</span> <span class="o">=</span> <span class="nb">raw_input</span><span class="p">()</span>
+                <span class="n">sender</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span> <span class="n">config</span><span class="p">,</span> <span class="n">ap</span><span class="p">,</span> <span class="n">unique_id</span><span class="p">)</span>
+
+    <span class="n">provision_srv</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">core  documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Author.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
