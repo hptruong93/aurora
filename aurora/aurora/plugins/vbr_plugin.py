@@ -11,8 +11,8 @@ class VirtualBridgePlugin(object):
     
     def __init__(self, tenant_id):
         self.tenant_id = tenant_id
-        self.flavors = {'ovs':'core.plugins.ovs_plugin.OVSPlugin',
-                        'linux_bridge':'core.plugins.linux_bridge_plugin.LinuxBridgePlugin'}
+        self.flavors = {'ovs':'aurora.plugins.ovs_plugin.OVSPlugin',
+                        'linux_bridge':'aurora.plugins.linux_bridge_plugin.LinuxBridgePlugin'}
         self.default = [{'flavor':'linux_bridge',
                          'attributes':{'name':'linux_bridge',
                                        'interfaces':[],
