@@ -8,15 +8,16 @@ import traceback
 import requests
 
 class JSONSender():
-    
+    HTTP_TIMEOUT = 5
+
     def send_json(self, url, payload):
         
         try:
-            r = requests.post(url, data=json.dumps(payload), timeout=5)
+            r = requests.post(url, data=json.dumps(payload), timeout=self.HTTP_TIMEOUT)
         except KeyboardInterrupt:
             return
-        except requests.Timeout, t:
-            print t.message[1]
+        except requests.Timeout as t:
+            print t.message
             return
         except:
             traceback.print_exc()
@@ -31,11 +32,11 @@ class JSONSender():
         time.sleep(1)
 
         try:
-            r = requests.get(url, timeout=5)    
+            r = requests.get(url, timeout=self.HTTP_TIMEOUT)    
         except KeyboardInterrupt:
             return
-        except requests.Timeout, t:
-            print t.message[1]
+        except requests.Timeout as t:
+            print t.message
             return
         except:
             traceback.print_exc()

@@ -25,11 +25,11 @@ def main():
     # Check proper usage
     if len(args) > 1:
         print "Invalid number of args.  Usage: python aurorainstall.py [--uninstall]"
-        exit(1)
+        sys.exit(1)
     if len(args) == 1:
         if args[0] != "--uninstall":
             print "Invalid argument.  Usage: python aurorainstall.py [--uninstall]"
-            exit(1)
+            sys.exit(1)
 
     auroraDirectory = os.getcwd()
     print "cwd: ", auroraDirectory
@@ -62,6 +62,19 @@ def main():
     except OSError as e:
         if (e[0] == 2):
             print "auroramanager does not already exist, contining..."
+    try:
+        print "Removing /usr/local/bin/aurora-manager..."
+        os.remove("/usr/local/bin/aurora-manager")
+    except IOError as e:
+        if (e[0] == errno.EPERM):
+            print >> sys.stderr, "You need root permissions to do this!"
+            sys.exit(1)
+        else:
+            print >> sys.stderr, e
+            print "Continuing..."
+    except OSError as e:
+        if (e[0] == 2):
+            print "aurora-manager does not already exist, contining..."
             
     if site.check_enableusersite():
         site_package_dir = site.getusersitepackages()
@@ -74,7 +87,7 @@ def main():
         pass
     except Exception:
         traceback.print_exc(file=sys.stdout)
-        exit(1)
+        sys.exit(1)
     try:
         os.unlink(os.path.join(site_package_dir, 'python-auroraclient.pth'))
     except OSError:
@@ -82,7 +95,7 @@ def main():
         pass
     except Exception:
         traceback.print_exc(file=sys.stdout)
-        exit(1)
+        sys.exit(1)
 
 
     # If not --uninstall
@@ -117,102 +130,47 @@ def main():
 
         # Create files auroramanager and aurora
         print "Creating auroramanager..."
-        with open('auroramanager', 'w') as f:
+        with open('aurora-manager', 'w') as f:
             f.write('''#!/usr/bin/python -tt
-"""Script which launches ManagerServer.py.
-Usage: auroramanager [-n] [args]
-    -n starts process in a new terminal
-"""
+"""Script which launches aurora's manager"""
+import sys
+
+from aurora.shell import main
 
 if __name__ == "__main__":
-    import os
-    import shlex
-    import subprocess
-    import sys
-    import time
-
-    args = sys.argv[1:]
-    auroraDirectory = \''''+auroraDirectory+'''\'
-    
-    if len(args) > 0:
-        if args[0] == '-n':
-            python_execute = "python shell.py " + ' '.join(args[1:])
-            to_execute = "gnome-terminal --tab -e \\\"/bin/bash -c '" + python_execute + "; exec /bin/bash'\\\""
-        else:
-            to_execute = "python shell.py " + ' '.join(args)
-    else:
-        to_execute = "python shell.py"
-    
-    os.chdir(auroraDirectory + '/aurora/aurora')
-    
-    # split args into a list
-    execute_args = shlex.split(to_execute)              
-
-    try:
-        server_proc = subprocess.Popen(execute_args)
-        server_proc.wait()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        server_proc.wait()
+    sys.exit(main())
 ''')
 
         print "Creating aurora..."
-        with open('auroralauncher', 'w') as f:
+        with open('aurora-client', 'w') as f:
             f.write('''#!/usr/bin/python -tt
-"""Script which launches auroraclient/shell.py.
-Usage: aurora [-n] [args]
-    -n starts process in a new terminal
-"""
+"""Script which launches aurora's client."""
+import sys
+
+from auroraclient.shell import main
 
 if __name__ == "__main__":
-    import subprocess
-    import shlex
-    import sys
-    import os
-    args = sys.argv[1:]
-    auroraDirectory = \''''+auroraDirectory+'''\'
-    
-    if len(args) > 0:
-        if args[0] == '-n':
-            python_execute = "python shell.py " + ' '.join(args[1:])
-            to_execute = "gnome-terminal --tab -e \\\"/bin/bash -c '" + python_execute + "; exec /bin/bash'\\\""
-        else:
-            to_execute = "python shell.py " + ' '.join(args)
-    else:
-        to_execute = "python shell.py"
-    
-    os.chdir(auroraDirectory + '/python-auroraclient')
-    
-    # split args into a list
-    execute_args = shlex.split(to_execute)      
-
-    try:
-        server_proc = subprocess.Popen(execute_args)
-        server_proc.wait()
-    except KeyboardInterrupt:
-        pass
+    sys.exit(main())
 ''')
         
-        os.chmod("auroramanager", 0755)
-        os.chmod("auroralauncher", 0755)
+        os.chmod("aurora-manager", 0755)
+        os.chmod("aurora-client", 0755)
         
         
         #copy files to /usr/local/bin
         print "Copying files to /usr/local/bin..."
         try:
-            shutil.move('auroramanager', '/usr/local/bin/auroramanager')
-            shutil.move('auroralauncher', '/usr/local/bin/aurora')
+            shutil.move('aurora-manager', '/usr/local/bin/aurora-manager')
+            shutil.move('aurora-client', '/usr/local/bin/aurora')
         except IOError as e:
             if (e[0] == 13):
                 print >> sys.stderr, "You need root permissions to do this!"
             print >> sys.stderr, e
             sys.exit(1)
-        print "\nTo run, first start auroramanager:"
-        print "\t$ auroramanager -n"
+        print "\nTo run, first start aurora-manager:"
+        print "\t$ aurora-manager"
         print "Then start aurora:"
         print "\t$ aurora --help"
-        print "Omitting '-n' will launch in current terminal."
 
 if __name__ == "__main__":
     main()
