@@ -187,7 +187,7 @@ class AuroraDB(object):
             traceback.print_exc(file=sys.stdout)
 
 
-    def ap_slice_update_time_stats(self, ap_slice_id=None, ap_name=None):
+    def ap_slice_update_time_stats(self, ap_slice_id=None, ap_name=None, ap_down=False):
         """Records the current time and calculates current and
         cumulative uptime for a slice on an access point.
 
@@ -224,6 +224,10 @@ class AuroraDB(object):
                      current_active_duration, total_active_duration) = (None, None, None, None)
                     if previous_time_stats is not None:
                         (last_time_activated, last_time_updated, total_active_duration) = previous_time_stats
+                    if last_time_activated is None and ap_down:
+                        # Slice was never activated and ap didn't respond, don't update stats
+                        continue
+                        
                     if last_time_activated is None:
                         self.LOGGER.warn("No value for last time activated for slice %s", s_id)
                         self.LOGGER.info("Setting last time activated %s", now)

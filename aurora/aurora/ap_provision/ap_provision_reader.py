@@ -11,8 +11,9 @@ import traceback
 def _get_physical_ap_info():
     output = {}
     current_dir = os.getcwd()
-    provision_dir = os.path.dirname(os.path.abspath(__file__)) #Change if file is moved somewhere else
-    for file in glob.glob(os.path.join(provision_dir, "*.json")):
+    provision_json_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),'json') #Change if file is moved somewhere else
+    logging.INFO("Fetching ")
+    for file in glob.glob(os.path.join(provision_json_dir, "*.json")):
         content = json.load(open(file))
         output[content['queue']] = content
     return output
