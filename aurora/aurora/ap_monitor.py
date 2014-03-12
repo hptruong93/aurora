@@ -46,14 +46,6 @@ class APMonitor(object):
         self.timeout_queue = collections.deque()
         self._make_queue_daemon()
 
-        #Connect to Aurora mySQL Database
-        self.LOGGER.info("Connecting to SQLdb...")
-        try:
-            self.con = mdb.connect(host, username, password, 'aurora')
-        except mdb.Error, e:
-            self.LOGGER.error("Error %d: %s" % (e.args[0], e.args[1]))
-            sys.exit(1)
-
     def _make_queue_daemon(self):
         """Creates a queue daemon which watches for set_status calls
         and adds them to a FIFO queue.  This ensures the _set_status
