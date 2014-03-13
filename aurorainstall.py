@@ -73,21 +73,23 @@ Usage: auroramanager [-n] [args]
 """
 
 if __name__ == "__main__":
-    import subprocess
-    import shlex
-    import sys
     import os
+    import shlex
+    import subprocess
+    import sys
+    import time
+
     args = sys.argv[1:]
     auroraDirectory = \''''+auroraDirectory+'''\'
     
     if len(args) > 0:
         if args[0] == '-n':
-            python_execute = "python ManagerServer.py " + ' '.join(args[1:])
+            python_execute = "python shell.py " + ' '.join(args[1:])
             to_execute = "gnome-terminal --tab -e \\\"/bin/bash -c '" + python_execute + "; exec /bin/bash'\\\""
         else:
-            to_execute = "python ManagerServer.py " + ' '.join(args)
+            to_execute = "python shell.py " + ' '.join(args)
     else:
-        to_execute = "python ManagerServer.py"
+        to_execute = "python shell.py"
     
     os.chdir(auroraDirectory + '/aurora/manager')
     
@@ -98,8 +100,9 @@ if __name__ == "__main__":
         server_proc = subprocess.Popen(execute_args)
         server_proc.wait()
     except KeyboardInterrupt:
-        time.sleep(2)
         pass
+    finally:
+        server_proc.wait()
 ''')
 
         print "Creating aurora..."
@@ -153,7 +156,10 @@ if __name__ == "__main__":
                 print >> sys.stderr, "You need root permissions to do this!"
             print >> sys.stderr, e
             sys.exit(1)
-        print "\nTo run, first start auroramanager:\n\t$ auroramanager -n\nThen start aurora:\n\t$ aurora --help"
+        print "\nTo run, first start auroramanager:"
+        print "\t$ auroramanager -n"
+        print "Then start aurora:"
+        print "\t$ aurora --help"
         print "Omitting '-n' will launch in current terminal."
 
 if __name__ == "__main__":

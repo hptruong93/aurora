@@ -36,3 +36,7 @@ nosetests.xml
 
 # Tilde Files
 *~
+
+# Server specific jsons
+aurora/manager/response.json
+
