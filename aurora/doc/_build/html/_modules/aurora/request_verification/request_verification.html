@@ -1,0 +1,443 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>aurora.request_verification.request_verification &mdash; aurora  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="aurora  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">aurora  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for aurora.request_verification.request_verification</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span> <span class="c">#This is not needed for python 3.x</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">traceback</span>
+<span class="c"># Try and avoid adding to python path</span>
+<span class="c">#sys.path.insert(0,&#39;core/ap_provision/&#39;)</span>
+<span class="c">#import ap_provision_reader as provision_reader</span>
+<span class="kn">from</span> <span class="nn">..ap_provision</span> <span class="kn">import</span> <span class="n">ap_provision_reader</span> <span class="k">as</span> <span class="n">provision_reader</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">verification_exception</span> <span class="kn">as</span> <span class="nn">exceptions</span>
+<span class="kn">import</span> <span class="nn">MySQLdb</span> <span class="kn">as</span> <span class="nn">mdb</span>
+
+<span class="c">#This module is called by manager before acting on any AP.</span>
+<span class="c">#This will detect inconsistency/ invalid request/operation of the manager requested by the client.</span>
+
+<span class="n">GENERAL_CHECK</span> <span class="o">=</span> <span class="s">&#39;general_check&#39;</span>
+<span class="n">CREATE_SLICE</span> <span class="o">=</span> <span class="s">&#39;create_slice&#39;</span> <span class="c">#This is the command name appears in the request parsed by manager.py</span>
+<span class="n">DELETE_SLICE</span> <span class="o">=</span> <span class="s">&#39;delete_slice&#39;</span> <span class="c">#This is the command name appears in manager.py</span>
+
+<span class="c">#Base abstract class for all verifications</span>
+<div class="viewcode-block" id="RequestVerification"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.request_verification.RequestVerification">[docs]</a><span class="k">class</span> <span class="nc">RequestVerification</span><span class="p">():</span>
+    <span class="n">__metaclass__</span> <span class="o">=</span> <span class="n">ABCMeta</span>
+    
+    <span class="c">#This method return a connection to mysql database</span>
+    <span class="c">#This method must be wrapped by a try catch block (catching mdb.Error)</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_database_connection</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">mdb</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s">&#39;localhost&#39;</span><span class="p">,</span>
+                                   <span class="s">&#39;root&#39;</span><span class="p">,</span>
+                                   <span class="s">&#39;supersecret&#39;</span><span class="p">,</span>
+                                   <span class="s">&#39;aurora&#39;</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_ap_name_exists</span><span class="p">(</span><span class="n">mysqlCursor</span><span class="p">,</span> <span class="n">physical_ap</span><span class="p">):</span>
+        <span class="n">mysqlCursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;&quot;&quot;SELECT name FROM ap WHERE name = </span><span class="si">%s</span><span class="s">&quot;&quot;&quot;</span><span class="p">,</span> <span class="n">physical_ap</span><span class="p">)</span>
+        <span class="n">ap_names</span> <span class="o">=</span> <span class="n">mysqlCursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ap_names</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="bp">False</span>
+
+    <span class="c">#Do not override this</span>
+<div class="viewcode-block" id="RequestVerification.verify"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.request_verification.RequestVerification.verify">[docs]</a>    <span class="k">def</span> <span class="nf">verify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="n">check_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_detail_verification</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">request</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">check_result</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_exception</span><span class="p">()(</span><span class="n">check_result</span><span class="p">)</span>
+</div>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_get_exception</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="bp">NotImplemented</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_detail_verification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="APSliceNumberVerification"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.request_verification.APSliceNumberVerification">[docs]</a><span class="k">class</span> <span class="nc">APSliceNumberVerification</span><span class="p">(</span><span class="n">RequestVerification</span><span class="p">):</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_get_exception</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">NoAvailableSpaceLeftInAP</span>
+
+    <span class="c">#If request = None, it checks for inconsistency in the database, namely an AP with n radios should not have more than 4n ap slices</span>
+    <span class="c">#If request != None, it checks for the ap requested for available space.</span>
+    <span class="c">#The method raises a NoAvailableSpaceLeftInAP exception if there is any conflict.</span>
+    <span class="k">def</span> <span class="nf">_detail_verification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="n">_ADDITIONAL_SLICE</span> <span class="o">=</span> <span class="p">{</span><span class="c">#For each command, we will check for a certain adding constant</span>
+            <span class="n">GENERAL_CHECK</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span> 
+            <span class="n">CREATE_SLICE</span> <span class="p">:</span> <span class="mi">1</span>
+        <span class="p">}</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">con</span> <span class="o">=</span> <span class="n">RequestVerification</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> 
+            <span class="k">with</span> <span class="n">con</span><span class="p">:</span>
+                <span class="n">cursor</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+
+                <span class="n">name</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">used_slice</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">number_radio</span> <span class="o">=</span> <span class="mi">2</span>
+
+                <span class="k">if</span> <span class="n">request</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;&quot;&quot;SELECT name, used_slice, number_radio, number_radio_free </span>
+<span class="s">                                      FROM (SELECT physical_ap, COUNT(physical_ap) AS used_slice </span>
+<span class="s">                                            FROM ap_slice </span>
+<span class="s">                                            WHERE status &lt;&gt; &quot;DELETED&quot;</span>
+<span class="s">                                              AND status &lt;&gt; &quot;FAILED&quot;</span>
+<span class="s">                                            GROUP BY physical_ap) AS </span>
+<span class="s">                                      A LEFT JOIN ap ON A.physical_ap = ap.name</span>
+<span class="s">                                      WHERE name IS NOT NULL&quot;&quot;&quot;</span><span class="p">)</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+                    
+                    <span class="k">for</span> <span class="n">ap</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">ap</span><span class="p">[</span><span class="n">used_slice</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">ap</span><span class="p">[</span><span class="n">number_radio</span><span class="p">]:</span>
+                            <span class="k">return</span> <span class="s">&#39;The AP &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ap</span><span class="p">[</span><span class="n">name</span><span class="p">])</span> <span class="o">+</span> <span class="s">&#39; has no space left to create new slice.&#39;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">RequestVerification</span><span class="o">.</span><span class="n">_ap_name_exists</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">request</span><span class="p">[</span><span class="s">&#39;physical_ap&#39;</span><span class="p">]):</span>
+                        <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">NoSuchAPExists</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="s">&#39;physical_ap&#39;</span><span class="p">]))</span>
+
+                    <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;&quot;&quot;SELECT name, used_slice, number_radio, number_radio_free </span>
+<span class="s">                                      FROM (SELECT physical_ap, COUNT(physical_ap) AS used_slice </span>
+<span class="s">                                            FROM ap_slice </span>
+<span class="s">                                            WHERE status &lt;&gt; &quot;DELETED&quot;</span>
+<span class="s">                                              AND status &lt;&gt; &quot;FAILED&quot;</span>
+<span class="s">                                            GROUP BY physical_ap) AS </span>
+<span class="s">                                      A LEFT JOIN ap ON A.physical_ap = ap.name</span>
+<span class="s">                                      WHERE name = </span><span class="si">%s</span><span class="s"> &quot;&quot;&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="s">&#39;physical_ap&#39;</span><span class="p">]))</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="bp">None</span> <span class="c">#No slice has been created yet on the interested ap</span>
+
+                    <span class="n">ap</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">ap</span><span class="p">[</span><span class="n">used_slice</span><span class="p">]</span> <span class="o">+</span> <span class="n">_ADDITIONAL_SLICE</span><span class="p">[</span><span class="n">command</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">ap</span><span class="p">[</span><span class="n">number_radio</span><span class="p">]:</span> <span class="c">#We create new slice</span>
+                        <span class="k">return</span> <span class="s">&#39;The AP </span><span class="se">\&#39;</span><span class="s">&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ap</span><span class="p">[</span><span class="n">name</span><span class="p">])</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\&#39;</span><span class="s"> has no space left to execute command </span><span class="se">\&#39;</span><span class="s">&#39;</span> <span class="o">+</span> <span class="n">command</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\&#39;</span><span class="s">.&#39;</span>
+                        <span class="c">#Else return None later</span>
+
+        <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">Error</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">MissingKeyInRequest</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+<span class="c">#See RadioConfigInvalid exception for what this class is verifying</span></div>
+<div class="viewcode-block" id="RadioConfigExistedVerification"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.request_verification.RadioConfigExistedVerification">[docs]</a><span class="k">class</span> <span class="nc">RadioConfigExistedVerification</span><span class="p">(</span><span class="n">RequestVerification</span><span class="p">):</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_get_exception</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">RadioConfigInvalid</span>
+
+    <span class="k">def</span> <span class="nf">_detail_verification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">request</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c">#Check for invalid configuration on ap radio using the request</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">request_ap_info</span> <span class="o">=</span> <span class="n">provision_reader</span><span class="o">.</span><span class="n">get_physical_ap_info</span><span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="s">&#39;physical_ap&#39;</span><span class="p">])</span>
+                <span class="n">configuring_radio</span> <span class="o">=</span> <span class="n">provision_reader</span><span class="o">.</span><span class="n">get_radio_wifi_radio</span><span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="s">&#39;config&#39;</span><span class="p">])</span>
+                <span class="n">request_has_config</span> <span class="o">=</span> <span class="n">configuring_radio</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
+
+                <span class="k">if</span> <span class="n">configuring_radio</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">requested_radio</span> <span class="o">=</span> <span class="n">provision_reader</span><span class="o">.</span><span class="n">get_radio_wifi_bss</span><span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="s">&#39;config&#39;</span><span class="p">])</span>
+                    <span class="n">number_slices</span> <span class="o">=</span> <span class="n">provision_reader</span><span class="o">.</span><span class="n">get_number_slice_on_radio</span><span class="p">(</span><span class="n">request_ap_info</span><span class="p">,</span> <span class="n">requested_radio</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">number_slices</span> <span class="o">=</span> <span class="n">provision_reader</span><span class="o">.</span><span class="n">get_number_slice_on_radio</span><span class="p">(</span><span class="n">request_ap_info</span><span class="p">,</span> <span class="n">configuring_radio</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">number_slices</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">NoSuchAPExists</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="s">&#39;physical_ap&#39;</span><span class="p">]))</span>
+
+                <span class="n">config_existed</span> <span class="o">=</span> <span class="n">number_slices</span> <span class="o">!=</span> <span class="mi">0</span>
+
+                <span class="k">if</span> <span class="n">config_existed</span> <span class="ow">and</span> <span class="n">request_has_config</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="s">&quot;Radio for the ap &quot;</span> <span class="o">+</span> <span class="n">request</span><span class="p">[</span><span class="s">&#39;physical_ap&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="s">&quot; has already been configured. Cannot change the radio&#39;s configurations.&quot;</span>
+                <span class="k">elif</span> <span class="p">(</span><span class="ow">not</span> <span class="n">config_existed</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">request_has_config</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="s">&quot;Radio for the ap &quot;</span> <span class="o">+</span> <span class="n">request</span><span class="p">[</span><span class="s">&#39;physical_ap&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="s">&quot; has not been configured. An initial configuration is required.&quot;</span>
+
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">MissingKeyInRequest</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+<span class="c">#See BridgeNumberInvalid exception for what this class is verifying</span></div>
+<div class="viewcode-block" id="BridgeNumberVerification"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.request_verification.BridgeNumberVerification">[docs]</a><span class="k">class</span> <span class="nc">BridgeNumberVerification</span><span class="p">(</span><span class="n">RequestVerification</span><span class="p">):</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_get_exception</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">BridgeNumberInvalid</span>
+
+    <span class="k">def</span> <span class="nf">_detail_verification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">request</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">bridge_list</span> <span class="o">=</span> <span class="n">request</span><span class="p">[</span><span class="s">&#39;config&#39;</span><span class="p">][</span><span class="s">&#39;VirtualBridges&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bridge_list</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="s">&quot;Attempt to create slice with &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bridge_list</span><span class="p">))</span> <span class="o">+</span> <span class="s">&quot; bridge(s). Exactly one bridge is required.&quot;</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">MissingKeyInRequest</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+
+<span class="c">#See VirtualInterfaceNumberInvalid exception for what this class is verifying</span></div>
+<div class="viewcode-block" id="VirtualInterfaceNumberVerification"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.request_verification.VirtualInterfaceNumberVerification">[docs]</a><span class="k">class</span> <span class="nc">VirtualInterfaceNumberVerification</span><span class="p">(</span><span class="n">RequestVerification</span><span class="p">):</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_get_exception</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">VirtualInterfaceNumberInvalid</span>
+
+    <span class="k">def</span> <span class="nf">_detail_verification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">request</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c">#Check for number of VirtualInterface in the request</span>
+                <span class="n">number_of_virtual_interface</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="s">&#39;config&#39;</span><span class="p">][</span><span class="s">&#39;VirtualInterfaces&#39;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">number_of_virtual_interface</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="s">&quot;Attempt to create slice with &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">number_of_virtual_interface</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot; interface(s). Exactly two VirtualInterface is required.&quot;</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">MissingKeyInRequest</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        
+<span class="c">#See AccessConflict exception for what this class is verifying</span>
+<span class="c">#This class assumes the request has been checked with APSliceNumberVerification, BridgeNumberVerification and</span>
+<span class="c">#VirtualInterfaceNumberVerification</span></div>
+<div class="viewcode-block" id="AccessConflictVerification"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.request_verification.AccessConflictVerification">[docs]</a><span class="k">class</span> <span class="nc">AccessConflictVerification</span><span class="p">(</span><span class="n">RequestVerification</span><span class="p">):</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_get_exception</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">AccessConflict</span>
+
+    <span class="k">def</span> <span class="nf">_detail_verification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">request</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">tenant_id</span> <span class="o">=</span> <span class="n">request</span><span class="p">[</span><span class="s">&#39;tenant_id&#39;</span><span class="p">]</span>
+
+                <span class="n">requested_bridge</span> <span class="o">=</span> <span class="n">request</span><span class="p">[</span><span class="s">&#39;config&#39;</span><span class="p">][</span><span class="s">&#39;VirtualBridges&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="s">&#39;name&#39;</span><span class="p">]</span>
+                <span class="n">requested_interfaces</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([])</span>
+                <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="n">request</span><span class="p">[</span><span class="s">&#39;config&#39;</span><span class="p">][</span><span class="s">&#39;VirtualInterfaces&#39;</span><span class="p">]:</span>
+                    <span class="n">requested_interfaces</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">interface</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="s">&#39;attach_to&#39;</span><span class="p">])</span>
+
+                <span class="n">con</span> <span class="o">=</span> <span class="n">RequestVerification</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span>
+                <span class="k">with</span> <span class="n">con</span><span class="p">:</span>
+                    <span class="n">cursor</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+                    <span class="n">physical_ap</span> <span class="o">=</span> <span class="n">request</span><span class="p">[</span><span class="s">&#39;physical_ap&#39;</span><span class="p">]</span>                    
+
+                    <span class="c">#Get all of his slices</span>
+                    <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;&quot;&quot;SELECT ap_slice_id FROM ap_slice</span>
+<span class="s">                                       WHERE tenant_id = </span><span class="si">%s</span><span class="s"></span>
+<span class="s">                                       AND physical_ap = </span><span class="si">%s</span><span class="s"></span>
+<span class="s">                                       AND status &lt;&gt; &quot;DELETED&quot;</span>
+<span class="s">                                       &quot;&quot;&quot;</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">tenant_id</span><span class="p">),</span> <span class="n">physical_ap</span><span class="p">))</span>
+                    
+                    <span class="c">#Get the client&#39;s slices</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">sublist</span><span class="p">]</span>
+
+                    <span class="c">#At this point, we are sure that the ap exists since its existence has been previously checked by</span>
+                    <span class="c">#APSliceNumberVerification</span>
+                    <span class="n">ap_info</span> <span class="o">=</span> <span class="n">provision_reader</span><span class="o">.</span><span class="n">get_physical_ap_info</span><span class="p">(</span><span class="n">physical_ap</span><span class="p">)</span>
+                    <span class="n">init_database</span> <span class="o">=</span> <span class="n">ap_info</span><span class="p">[</span><span class="s">&#39;last_known_config&#39;</span><span class="p">][</span><span class="s">&#39;init_database&#39;</span><span class="p">]</span>
+
+                    <span class="k">for</span> <span class="nb">slice</span> <span class="ow">in</span> <span class="n">init_database</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="nb">slice</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">result</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">slice</span> <span class="o">!=</span> <span class="s">&#39;default_slice&#39;</span><span class="p">):</span> <span class="c">#Then slice must be someone else&#39;s</span>
+                            <span class="n">current_slice</span> <span class="o">=</span> <span class="n">init_database</span><span class="p">[</span><span class="nb">slice</span><span class="p">]</span>
+                            <span class="n">bridge</span> <span class="o">=</span> <span class="n">current_slice</span><span class="p">[</span><span class="s">&#39;VirtualBridges&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="s">&#39;name&#39;</span><span class="p">]</span>
+
+                            <span class="n">interfaces</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([])</span>
+                            <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="n">current_slice</span><span class="p">[</span><span class="s">&#39;VirtualInterfaces&#39;</span><span class="p">]:</span>
+                                <span class="n">interfaces</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">interface</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="s">&#39;attach_to&#39;</span><span class="p">])</span>
+
+                            <span class="c">#Check if conflict</span>
+                            <span class="k">if</span> <span class="ow">not</span> <span class="n">interfaces</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="n">requested_interfaces</span><span class="p">):</span>
+                                <span class="n">conflict</span> <span class="o">=</span> <span class="n">interfaces</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">requested_interfaces</span><span class="p">)</span>
+                                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">AccessConflict</span><span class="p">(</span><span class="s">&quot;Access conflict for interfaces &quot;</span> <span class="o">+</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">conflict</span><span class="p">))</span>
+
+                            <span class="k">if</span> <span class="n">bridge</span> <span class="o">==</span> <span class="n">requested_bridge</span><span class="p">:</span>
+                                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">AccessConflict</span><span class="p">(</span><span class="s">&quot;Access conflict for bridge. Please choose another bridge.&quot;</span><span class="p">)</span>                                
+
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">MissingKeyInRequest</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="k">return</span> <span class="bp">None</span>
+
+
+<span class="c">#See InsufficientBandwidth exception for what this class is verifying</span>
+<span class="c">#This class assumes the request has been checked with APSliceNumberVerification, BridgeNumberVerification,</span>
+<span class="c">#VirtualInterfaceNumberVerification and AccessConflictVerification</span></div>
+<div class="viewcode-block" id="BandwidthVerification"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.request_verification.BandwidthVerification">[docs]</a><span class="k">class</span> <span class="nc">BandwidthVerification</span><span class="p">(</span><span class="n">RequestVerification</span><span class="p">):</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_get_exception</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">InsufficientBandwidth</span>
+
+    <span class="k">def</span> <span class="nf">_check_band_width</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">requested</span><span class="p">,</span> <span class="n">number_of_slice</span><span class="p">,</span> <span class="n">sum_so_far</span><span class="p">):</span>
+        <span class="n">MAX_BANDWIDTH</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span> <span class="p">:</span> <span class="mi">20</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">),</span>         <span class="c">#20Mbps</span>
+                         <span class="mi">2</span> <span class="p">:</span> <span class="mi">14</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">),</span>
+                         <span class="mi">3</span> <span class="p">:</span> <span class="mi">9</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">),</span>
+                         <span class="mi">4</span> <span class="p">:</span> <span class="mi">9</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">),</span>
+                         <span class="mi">5</span> <span class="p">:</span> <span class="mi">9</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">),}</span>
+
+        <span class="n">max_bandwidth</span> <span class="o">=</span> <span class="n">MAX_BANDWIDTH</span><span class="p">[</span><span class="n">number_of_slice</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="c">#including this one as well</span>
+        <span class="n">max_allowance</span> <span class="o">=</span> <span class="n">max_bandwidth</span> <span class="o">/</span> <span class="p">(</span><span class="n">number_of_slice</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="c">#including this one as well</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">requested</span> <span class="o">&gt;=</span> <span class="n">max_allowance</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">requested</span> <span class="o">&gt;=</span> <span class="n">max_bandwidth</span> <span class="o">-</span> <span class="n">sum_so_far</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">return</span> <span class="bp">True</span>
+
+    <span class="k">def</span> <span class="nf">_detail_verification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">request</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c">#Check bandwidth requested match with the supported bandwidth</span>
+                <span class="n">request_up</span> <span class="o">=</span> <span class="n">provision_reader</span><span class="o">.</span><span class="n">get_rate_up</span><span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="s">&#39;config&#39;</span><span class="p">])</span> <span class="c">#bps</span>
+                <span class="n">request_down</span> <span class="o">=</span> <span class="n">provision_reader</span><span class="o">.</span><span class="n">get_rate_down</span><span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="s">&#39;config&#39;</span><span class="p">])</span> <span class="c">#bps</span>
+
+                <span class="n">ap_info</span> <span class="o">=</span> <span class="n">provision_reader</span><span class="o">.</span><span class="n">get_physical_ap_info</span><span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="s">&#39;physical_ap&#39;</span><span class="p">])</span>
+                <span class="n">requested_radio</span> <span class="o">=</span> <span class="n">provision_reader</span><span class="o">.</span><span class="n">get_radio_wifi_bss</span><span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="s">&#39;config&#39;</span><span class="p">])</span>
+                <span class="n">number_slices</span> <span class="o">=</span> <span class="n">provision_reader</span><span class="o">.</span><span class="n">get_number_slice_on_radio</span><span class="p">(</span><span class="n">ap_info</span><span class="p">,</span> <span class="n">requested_radio</span><span class="p">)</span>
+
+                <span class="n">rate_up</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">rate_down</span> <span class="o">=</span> <span class="mi">0</span>
+
+                <span class="n">slices</span> <span class="o">=</span> <span class="n">provision_reader</span><span class="o">.</span><span class="n">get_slices</span><span class="p">(</span><span class="n">ap_info</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="nb">slice</span> <span class="ow">in</span> <span class="n">slices</span><span class="p">:</span>
+                    <span class="n">radio</span> <span class="o">=</span> <span class="n">provision_reader</span><span class="o">.</span><span class="n">get_radio_wifi_bss</span><span class="p">(</span><span class="n">slices</span><span class="p">[</span><span class="nb">slice</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">radio</span> <span class="o">==</span> <span class="n">requested_radio</span><span class="p">:</span>
+                        <span class="n">rate_up</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">provision_reader</span><span class="o">.</span><span class="n">get_rate_up</span><span class="p">(</span><span class="n">slices</span><span class="p">[</span><span class="nb">slice</span><span class="p">]))</span>
+                        <span class="n">rate_down</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">provision_reader</span><span class="o">.</span><span class="n">get_rate_down</span><span class="p">(</span><span class="n">slices</span><span class="p">[</span><span class="nb">slice</span><span class="p">]))</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_band_width</span><span class="p">(</span><span class="n">request_up</span><span class="p">,</span> <span class="n">number_slices</span><span class="p">,</span> <span class="n">rate_up</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="s">&quot;The request up rate &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">request_up</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot; is too high!&quot;</span>
+                <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_band_width</span><span class="p">(</span><span class="n">request_down</span><span class="p">,</span> <span class="n">number_slices</span><span class="p">,</span> <span class="n">rate_down</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="s">&quot;The request down rate &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">request_down</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot; is too high!&quot;</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">MissingKeyInRequest</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+
+<span class="c">#See IllegalSliceDeletion exception for what this class is verifying</span></div>
+<div class="viewcode-block" id="ValidDeleteVerification"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.request_verification.ValidDeleteVerification">[docs]</a><span class="k">class</span> <span class="nc">ValidDeleteVerification</span><span class="p">(</span><span class="n">RequestVerification</span><span class="p">):</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_get_exception</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">IllegalSliceDeletion</span>
+
+    <span class="k">def</span> <span class="nf">_detail_verification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">request</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c">#Check for validity of deletion</span>
+                <span class="n">con</span> <span class="o">=</span> <span class="n">RequestVerification</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span>
+                <span class="k">with</span> <span class="n">con</span><span class="p">:</span>
+                    <span class="n">cursor</span> <span class="o">=</span> <span class="n">con</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+                    <span class="c">#Get the ap that the slice is in</span>
+                    <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;&quot;&quot;SELECT physical_ap FROM ap_slice</span>
+<span class="s">                                       WHERE tenant_id = </span><span class="si">%s</span><span class="s"></span>
+<span class="s">                                       AND ap_slice_id = </span><span class="si">%s</span><span class="s"></span>
+<span class="s">                                       AND status &lt;&gt; &quot;DELETED&quot;</span>
+<span class="s">                                       &quot;&quot;&quot;</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="s">&#39;tenant_id&#39;</span><span class="p">]),</span> <span class="n">request</span><span class="p">[</span><span class="s">&#39;slice&#39;</span><span class="p">]))</span> <span class="c">#Look for this key in ap_slice_delete in manager.py</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">NoSuchSliceExists</span><span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="s">&#39;slice&#39;</span><span class="p">])</span>
+                    <span class="c">#There should be only one ap_name</span>
+                    <span class="n">ap_name</span> <span class="o">=</span> <span class="p">[</span><span class="n">element</span> <span class="k">for</span> <span class="n">tupl</span> <span class="ow">in</span> <span class="n">result</span> <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">tupl</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">ap_info</span> <span class="o">=</span> <span class="n">provision_reader</span><span class="o">.</span><span class="n">get_physical_ap_info</span><span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
+                    <span class="nb">slice</span> <span class="o">=</span> <span class="n">provision_reader</span><span class="o">.</span><span class="n">get_slice</span><span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="s">&#39;slice&#39;</span><span class="p">],</span> <span class="n">ap_name</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">slice</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="c">#Slice is none means it has never been successfully created. The client is deleting a FAILED slice.</span>
+                        <span class="k">return</span> <span class="bp">None</span>
+
+                    <span class="n">current_radio</span> <span class="o">=</span> <span class="n">provision_reader</span><span class="o">.</span><span class="n">get_radio_wifi_bss</span><span class="p">(</span><span class="nb">slice</span><span class="p">)</span>
+                    <span class="n">slice_count</span> <span class="o">=</span> <span class="n">provision_reader</span><span class="o">.</span><span class="n">get_number_slice_on_radio</span><span class="p">(</span><span class="n">ap_info</span><span class="p">,</span> <span class="n">current_radio</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">slice_count</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span> <span class="c">#Have to check if this is the main slice</span>
+                        <span class="k">if</span> <span class="n">provision_reader</span><span class="o">.</span><span class="n">get_radio_interface</span><span class="p">(</span><span class="nb">slice</span><span class="p">,</span> <span class="s">&#39;wifi_radio&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                            <span class="k">return</span> <span class="s">&quot;Cannot delete slice containing radio configurations!&quot;</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">Error</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">aurora  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Author.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,86 @@
+{
+    "VirtualWIFI": [
+        {
+            "flavor" : "wifi_bss",
+            "attributes" : 
+                {
+                    "name" : "newslice2",
+                    "radio" : "radio0",
+                    "if_name" : "wlan0-2"
+                    
+                }
+        },
+        {
+            "flavor" : "wifi_bss",
+            "attributes" : 
+                {
+                    "name" : "newslice3",
+                    "radio" : "radio0",
+                    "if_name" : "wlan0-3"
+                    
+                }
+        }
+    ], 
+    "VirtualBridges": [
+        {
+            "flavor":"linux_bridge",
+            "attributes":   
+                {
+                    "name":"linux-br2",
+                    "interfaces":
+                        ["vwlan0-2","veth3"],
+                    "bridge_settings":{},
+                    "port_settings":{}
+                }
+        },
+        {
+            "flavor":"linux_bridge",
+            "attributes":   
+                {
+                    "name":"linux-br3",
+                    "interfaces":
+                        ["vwlan0-3","veth4"],
+                    "bridge_settings":{},
+                    "port_settings":{}
+                }
+        }
+    ], 
+    "VirtualInterfaces": [
+        {
+            "flavor":"veth",
+            "attributes": 
+                {
+                    "attach_to":"eth0",
+                    "name":"veth3",
+                    "mac":"00:00:00:00:00:10"
+                }
+        },
+        {
+            "flavor":"veth",
+            "attributes":
+                {
+                    "attach_to":"wlan0-2",
+                    "name":"vwlan0-2",
+                    "mac":"00:00:00:00:00:20"
+                }
+        },
+        {
+            "flavor":"veth",
+            "attributes": 
+                {
+                    "attach_to":"eth0",
+                    "name":"veth4",
+                    "mac":"00:00:00:00:00:11"
+                }
+        },
+        {
+            "flavor":"veth",
+            "attributes":
+                {
+                    "attach_to":"wlan0-3",
+                    "name":"vwlan0-3",
+                    "mac":"00:00:00:00:00:21"
+                }
+        }
+    ]
+}
