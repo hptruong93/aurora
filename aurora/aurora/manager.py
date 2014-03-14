@@ -300,6 +300,12 @@ class Manager(object):
 
     def ap_slice_restart(self, args, tenant_id, user_id, project_id): #UNTESTED, RUN AT OWN RISK
         slice_names = args['ap-slice-restart'] #Multiple Names
+        message = ""
+        response = {
+            "status":False, 
+            "message":message,
+        }
+
         if args['filter']:
             slice_names = []
             args_filter = args['filter'][0]
@@ -311,26 +317,56 @@ class Manager(object):
         for ap_slice_id in slice_names:
             #Get ap name
             try:
-                with mdb.connect(self.mysql_host,
-                                 self.mysql_username,
-                                 self.mysql_password,
-                                 self.mysql_db) as db:
-                    db.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id='%s'" % ap_slice_id )
-                    ap_name = db.fetchone()[0]
-            except mdb.Error, e:
-                traceback.print_exc(file=sys.stdout)
-                # self.LOGGER.error( "Error %d: %s", e.args[0], e.args[1])
+                ap_name = self.aurora_db.get_wslice_physical_ap(ap_slice_id)
+            except Exception as e:
+                message += e.message
+                continue
 
-            #Note: This will remove all associated tenant_tags
-            self.LOGGER.info("Deleting Slice %s", ap_slice_id)
-            self.ap_slice_delete({"ap-slice-delete":str(ap_slice_id)})
+            if not self.aurora_db.wslice_belongs_to(tenant_id, project_id, ap_slice_id):
+                message += "You have no slice %s" % ap_slice_id
+                continue
 
-            self.LOGGER.info("Recreating Slice %s", ap_slice_id)
-            self.ap_slice_create({"ap":str(ap_name)})
+            if self.aurora_db.wslice_is_deleted(ap_slice_id):
+                message += "Your slice is deleted, cannot restart: %s" % ap_slice_id
+                continue
 
-            #return response
-            response = {"status":True, "message":""}
-            return response
+            # Verify slice can be deleted from current AP
+            config_delete = {
+                "slice":ap_slice_id, 
+                "command":"delete_slice", 
+                "user":user_id,
+            }
+            error = Verify.verifyOK(tenant_id = tenant_id, request = config_delete)
+            if error is not None:
+                message += error
+                continue
+
+            # Verify slice can be created on new AP
+            try:
+                config = config_db.get_config(ap_slice_id, tenant_id)
+            except NoConfigExistsError as err:
+                message += err.message
+                continue
+
+            config_create = {
+                "slice":ap_slice_id, 
+                "command":"create_slice", 
+                "user":user_id, 
+                "config":config,
+            }
+
+            # Passed all checks, delete slice from existing ap and create on new one
+            self.dispatcher.dispatch(config_delete, ap_name)
+            self.aurora_db.ap_slice_status_pending(ap_slice_id)
+            self.dispatcher.dispatch(config_create, ap_name)
+            message += "Restarted %s on %s" % (ap_slice_id, ap_name)
+
+        response = {
+            "status":True, 
+            "message": message,
+        }
+
+        return response
 
     def ap_slice_add_tag(self, args, tenant_id, user_id, project_id):
         message = ""
