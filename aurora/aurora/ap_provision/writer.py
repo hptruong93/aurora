@@ -7,7 +7,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def get_json_files():
-    provision_dir = os.path.dirname(os.path.abspath(__file__), 'json')
+    provision_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'json')
     paths = os.listdir(provision_dir)
     result = []
     for fname in paths:
