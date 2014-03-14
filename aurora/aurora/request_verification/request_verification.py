@@ -267,7 +267,10 @@ class BandwidthVerification(RequestVerification):
                          2 : 14 * (1024 * 1024),
                          3 : 9 * (1024 * 1024),
                          4 : 9 * (1024 * 1024),
-                         5 : 9 * (1024 * 1024),}
+                         5 : 9 * (1024 * 1024),
+                         6 : 9 * (1024 * 1024),
+                         7 : 9 * (1024 * 1024),
+                         8 : 9 * (1024 * 1024),}
 
         max_bandwidth = MAX_BANDWIDTH[number_of_slice + 1] #including this one as well
         max_allowance = max_bandwidth / (number_of_slice + 1) #including this one as well
@@ -286,8 +289,7 @@ class BandwidthVerification(RequestVerification):
                 request_down = provision_reader.get_rate_down(request['config']) #bps
 
                 ap_info = provision_reader.get_physical_ap_info(request['physical_ap'])
-                requested_radio = provision_reader.get_radio_wifi_bss(request['config'])
-                number_slices = provision_reader.get_number_slice_on_radio(ap_info, requested_radio)
+                number_slices = provision_reader.get_slice_count(ap_info)
 
                 rate_up = 0
                 rate_down = 0
