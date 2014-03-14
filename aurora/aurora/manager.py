@@ -909,9 +909,9 @@ class Manager(object):
                                           tenant_id, user_id, project_id)['message']
             else:
                 message += "Error: You have no slice '%s'.\n" % arg_id
-            if arg_id == args['ap-slice-show'][-1]:
-                response = {"status":False, "message": message}
-                return response
+            #if arg_id == args['ap-slice-show'][-1]:
+            #    response = {"status":False, "message": message}
+            #    return response
 
         response = {"status":True, "message": message}
         return response
