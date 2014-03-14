@@ -29,8 +29,8 @@ class Manager(object):
 
     MYSQL_HOST = 'localhost'
     MYSQL_USERNAME = 'root'
-    MYSQL_PASSWORD = 'supersecret'
-    MYSQL_DB = 'aurora'
+    MYSQL_PASSWORD = 'supersecret' 
+    MYSQL_DB = 'aurora' 
 
     def __init__(self):
         self.LOGGER = get_cls_logger(self)
@@ -127,6 +127,19 @@ class Manager(object):
             tag_compare = False #For tags, we need 2 queries and a quick result compare at the end
             tag_result = []
             args_list = args.split('&')
+            
+            if args_list[0] == 'location' or args_list[0] == 'location,slice-load':  # Yang: add one more case if the user ask for the location_tag ['location']
+                try:
+                    with self.con:
+                        cur = self.con.cursor()
+                        tempList = []
+                        if 'location' in args_list[0]:
+                            cur.execute("SELECT * FROM location_tags")
+                            tempList = list(cur.fetchall())
+                            return tempList
+                except mdb.Error, e:
+                    print "Error %d: %s" % (e.args[0], e.args[1])
+
             for (index, entry) in enumerate(args_list):
                 args_list[index] = entry.strip()
                  #Filter for tags (NOT Query is not yet implemented (future work?),
@@ -406,6 +419,7 @@ class Manager(object):
         arg_filter = None
         arg_file = None
         arg_tag = None
+        arg_hint = None
         if 'ap' in args:
             arg_ap = args['ap']
         if args['filter']:
@@ -414,9 +428,56 @@ class Manager(object):
             arg_file = args['file']
         if args['tag']:
             arg_tag = args['tag'][0]
+        if args['hint']:
+            arg_hint = args['hint'][0]
 
         json_list = [] # If a file is provided for multiple APs,
                        # we need to split the file for each AP, saved here
+        # Add one section for dealing with 'hint' token, once it is processed, return
+        if arg_hint and "location" in arg_hint:
+            # Try to access the local database to grab location
+            tempList = self.ap_filter(arg_hint)
+            message = ""
+            for entry in tempList:
+                if not ('mcgill' in entry[0] or 'mcgill' in entry[1]):
+                    message += "%5s: %s\n" % (entry[1], entry[0])
+            
+            # Make a decision according to the token "location" OR "slice_load"
+            try:
+                if args['location']: # if there is a location specification
+                    if args['location'].lower() in message.lower(): # check if the location is valid
+                        indexSliceLoad = ""
+                        freespace = 0;
+                        if "slice-load" in arg_hint:
+                            print "Search the lightweight AP"
+                            indexSliceLoad = "unknown"
+                        else:
+                            print "Locate a random AP"
+                        
+                        # Search for the proper slices
+                        for entry in tempList:
+                            if args['location'].lower() == entry[0].lower():
+                                # once the location matches -- check if the AP has free spots
+                                apList = self.ap_filter("name=" + entry[1])
+
+                                if apList[0][1]['number_slice_free'] > 0:
+                                    if(len(indexSliceLoad)==0):
+                                        indexSliceLoad = entry[1]
+                                        break
+                                    elif(apList[0][1]['number_slice_free']>freespace):
+                                        freespace = apList[0][1]['number_slice_free']
+                                        indexSliceLoad = entry[1]
+
+                        message = indexSliceLoad
+                    else:
+                        message = "invalid location information"
+            except:
+                print "This is the first term"
+                
+            response = {"status":True, "message":message}
+            return response
+
+        # end of the section
 
         if arg_ap:
             aplist = arg_ap
