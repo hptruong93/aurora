@@ -50,8 +50,8 @@
             "flavor":"tc",
             "attributes":
                 {
-                    "rate_up":"1000000",
-                    "rate_down":"1000000"
+                    "uplink":"1000000",
+                    "downlink":"1000000"
                 }
         }
 

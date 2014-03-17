@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from pprint import pformat
+import sys
 import threading
 import traceback
 
@@ -29,8 +30,8 @@ class ProvisionHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
                 file_name = self.path[27:] + '.json'
                 if ".." in file_name:
                     raise RequestInvalidConfigFileNameException()
-                with open(os.path.join(_PROVISION_DIR, file_name)) as CF:
-                    config_file = json.dumps(json.load(CF,'r'))
+                with open(os.path.join(self._PROVISION_DIR, file_name),'r') as CF:
+                    config_file = json.dumps(json.load(CF))
                 
             except RequestInvalidConfigFileNameException:
                 # File does not exist/ not permitted/ not json

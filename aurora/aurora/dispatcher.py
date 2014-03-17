@@ -68,7 +68,11 @@ class Dispatcher(object):
 
     def _start_connection(self):
         credentials = pika.PlainCredentials(self.username, self.password)
-        self.connection = pika.SelectConnection(pika.ConnectionParameters(host=self.host, credentials=credentials), self.on_connected)
+        self.connection = pika.SelectConnection(pika.ConnectionParameters(
+                                                    host=self.host,
+                                                    credentials=credentials
+                                                ),
+                                                self.on_connected)
         # Start ioloop, this will quit by itself when Dispatcher().stop() is run
         
         self.listener = threading.Thread(target=self.connection.ioloop.start)
@@ -82,6 +86,9 @@ class Dispatcher(object):
     def _restart_connection(self):
         self.LOGGER.info("Channel has died, restarting...")
         self._stop_connection()
+        self.listener.join()
+        while self.connection.is_open and self.channel.is_open:
+            time.sleep(0.1)
         self.restarting_connection = True
         self._start_connection()
         while not self.connection.is_open and not self.channel.is_open:
@@ -99,7 +106,8 @@ class Dispatcher(object):
 
     def channel_open(self, new_channel):
         self.channel = new_channel
-        response = self.channel.queue_declare(exclusive=True, durable=True, callback=self.on_queue_declared)
+        response = self.channel.queue_declare(durable=True, 
+                                              callback=self.on_queue_declared)
 
     def on_queue_declared(self, frame):
         self.callback_queue = frame.method.queue

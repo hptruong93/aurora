@@ -190,7 +190,7 @@ class APMonitor(object):
 
             # Set status, stop timer, delete record
             #print "entry[2]:",entry[2]
-            if entry[2] != 'admin':
+            if entry is not None and entry[2] != 'admin':
                 self.set_status(None, entry[2], decoded_response['successful'], ap_name=ap_name)
                 self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
 

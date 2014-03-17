@@ -62,8 +62,8 @@
             "flavor":"tc",
             "attributes":
                 {
-                    "rate_up":"2mbit",
-                    "rate_down":"1mbit"
+                    "uplink":"2mbit",
+                    "downlink":"1mbit"
                 }
         }
 
