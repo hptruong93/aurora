@@ -1,4 +1,24 @@
 #!/bin/bash
+# Author: Mike Kobierski
+# Date: March 17th, 2014
+#
+# Usage:    To copy all files in aurora directory 
+#
+#               $ ./update_manager.sh 
+#
+#           To copy only a single file contained somewhere in
+#           aurora directory (it will be found using bash's 'find')
+#
+#               $ ./update_manager.sh manager.py
+#
+#           To copy files from a directory
+#
+#               $ ./update_manager.sh ap_provision
+#
+#           Files can be picked using a wildcard
+#
+#               $ ./update_manage.sh manager*
+
 MANAGER_USERNAME=ubuntu
 MANAGER_IP=132.206.206.133
 HOME_AURORA_DIR=/home/ubuntu/aurora
@@ -22,6 +42,7 @@ then
         done
     done
 else
+    echo "Copying aurora directory"
     # Don't print output from this command
     scp -r * $MANAGER_USERNAME@$MANAGER_IP:$HOME_AURORA_DIR 2>&1 1>/dev/null
 fi
