@@ -1,10 +1,10 @@
 #!/usr/bin/python -tt
 #
-# Mike Kobierski aurora install script
+# Author: Mike Kobierski
 
 """A short script which copies python launch code
 aurora and auroraclient to /usr/local/bin.  This
-eases launching aurora/manager/ManagerServer.py
+eases launching aurora/aurora/ManagerServer.py
 and auroraclient/shell.py.
 
 Run with root privileges.
