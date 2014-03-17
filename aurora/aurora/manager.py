@@ -271,8 +271,9 @@ class Manager(object):
         try:
             entry = toPrint[0]
         except IndexError as e:
-            traceback.print_exc(file=sys.stdout)
-            response = {"status":False, "message":e.message}
+            # There are no access points to list
+            err_msg = " None"
+            response = {"status":True, "message":err_msg}
             return response
 
         else:
@@ -300,25 +301,40 @@ class Manager(object):
         #TODO: Verify filter passes correctly
         arg_name = args['ap-show'][0]
         toPrint = self.ap_filter('name='+arg_name)
+        message = ""
+
+
+        message += self.ap_list(
+                {
+                    'filter':['name=%s' % arg_name,],
+                    'i':True
+                },
+                tenant_id, 
+                user_id, 
+                project_id
+        )['message']
+
+
+
 
         # Build table headings
-        pt = prettytable.PrettyTable()
-        pt.add_column("Name", [])
+        # pt = prettytable.PrettyTable()
+        # pt.add_column("Name", [])
 
-        print toPrint
+        # print toPrint
 
-        for attr in toPrint[0][1]:
-            pt.add_column(attr, [])
+        # for attr in toPrint[0][1]:
+        #     pt.add_column(attr, [])
 
-        # Populate table data
-        for entry in toPrint:
-            table_row = []
-            table_row.append(entry[0])
-            for attr in entry[1]:
-                table_row.append(entry[1][attr])
-            pt.add_row(table_row)
+        # # Populate table data
+        # for entry in toPrint:
+        #     table_row = []
+        #     table_row.append(entry[0])
+        #     for attr in entry[1]:
+        #         table_row.append(entry[1][attr])
+        #     pt.add_row(table_row)
 
-        message = pt.get_string()
+        # message = pt.get_string()
 
         #return response
         response = {"status":True, "message":message}
@@ -840,17 +856,22 @@ class Manager(object):
             return response
         if not newList:
             message += " None\n"
-        for entry in newList:
-            message += "%12s: %s" % ("ap_slice_id", entry['ap_slice_id'])
-            if not arg_i:
-                message += " ('%s' on %s) - %s\n" % (entry['ap_slice_ssid'], entry['physical_ap'], entry['status'])
-
+        else:
+            pt = prettytable.PrettyTable()
+            entry = newList[0]
+            for attr in entry:
+                pt.add_column(attr, [])
+                
+            # Populate table rows
+            for entry in newList:
+                table_row = []
+                for attr in entry:
+                    table_row.append(entry[attr])
+                pt.add_row(table_row)
+            if arg_i:
+                message = pt.get_string()
             else:
-                message += " '%s'\n" % entry['ap_slice_ssid']
-                for key,value in entry.iteritems():
-                    if key != 'ap_slice_id' and key != 'ap_slice_ssid':
-                        message += "%12s: %s\n" % (key, value)
-                message += '\n'
+                message = pt.get_string(fields=["ap_slice_id", "ap_slice_ssid", "physical_ap", "status"])
 
         #Return response
         response = {"status":True, "message":message}
