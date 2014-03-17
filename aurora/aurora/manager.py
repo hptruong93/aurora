@@ -314,28 +314,6 @@ class Manager(object):
                 project_id
         )['message']
 
-
-
-
-        # Build table headings
-        # pt = prettytable.PrettyTable()
-        # pt.add_column("Name", [])
-
-        # print toPrint
-
-        # for attr in toPrint[0][1]:
-        #     pt.add_column(attr, [])
-
-        # # Populate table data
-        # for entry in toPrint:
-        #     table_row = []
-        #     table_row.append(entry[0])
-        #     for attr in entry[1]:
-        #         table_row.append(entry[1][attr])
-        #     pt.add_row(table_row)
-
-        # message = pt.get_string()
-
         #return response
         response = {"status":True, "message":message}
         return response
@@ -791,11 +769,25 @@ class Manager(object):
                     cur = self.con.cursor()
                     #TODO: Allow admin to see all (tenant_id of 0)
                     if len(expression) != 0:
-                        cur.execute( ("SELECT * FROM ap_slice WHERE "
-                                     "tenant_id = '%s' AND " % tenant_id) + expression )
+                        cur.execute( ("""SELECT * 
+                            FROM 
+                                (SELECT ap_slice_id, total_mb_sent, total_active_duration
+                                    FROM
+                                        metering
+                                ) AS A
+                                RIGHT JOIN ap_slice AS B USING (ap_slice_id)
+                            WHERE 
+                                tenant_id = '%s' AND """ % tenant_id) + expression ) 
                     else:
-                        cur.execute( "SELECT * FROM ap_slice WHERE "
-                                     "tenant_id = '%s'" % tenant_id )
+                        cur.execute("""SELECT * 
+                            FROM 
+                                (SELECT ap_slice_id, total_mb_sent, total_active_duration
+                                    FROM
+                                        metering
+                                ) AS A
+                                RIGHT JOIN ap_slice AS B USING (ap_slice_id)
+                            WHERE 
+                                tenant_id = '%s' AND """ % tenant_id)
                     tempList = list(cur.fetchall())
                     #Compare result with tag_list if necessary
                     if tag_compare:
@@ -805,6 +797,7 @@ class Manager(object):
                                 comparedList.append(slice_entry)
                         tempList = comparedList
                     #Prune thorugh list
+
                     for i in range(len(tempList)):
                         newList.append({})
                         newList[i]['ap_slice_id'] = tempList[i][0]
@@ -815,12 +808,10 @@ class Manager(object):
                         newList[i]['wnet_id'] = tempList[i][5]
                         newList[i]['status'] = tempList[i][6]
                         # TODO: Append these values from metering table
-                        # newList[i]['time_active'] = tempList[i][7]
-                        # newList[i]['last_active_time'] = tempList[i][8]
-                        # newList[i]['mb_sent'] = tempList[i][9]
+                        newList[i]['total_mb_sent'] = tempList[i][7]
+                        newList[i]['total_active_duration'] = tempList[i][8]
                         #Get a list of tags
-                        cur.execute("SELECT name FROM tenant_tags WHERE ap_slice_id=\'" + \
-                                    str(tempList[i][0])+"\'")
+                        cur.execute("SELECT name FROM tenant_tags WHERE ap_slice_id='%s'" % tempList[i][0])
                         tagList = cur.fetchall()
                         tagString = ""
                         for tag in tagList:

@@ -369,7 +369,7 @@ class APMonitor(object):
                                              },
                                              ap)
                 else:
-                    self.LOGGER.warn("No active slice %s", slice_id)
+                    self.LOGGER.warn("No active slice %s", ap_slice_id)
         except Exception, e:
             traceback.print_exc(file=sys.stdout)
 
