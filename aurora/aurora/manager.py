@@ -4,6 +4,7 @@
 import json
 import logging
 from pprint import pprint, pformat
+import prettytable
 import sys
 import time
 import traceback
@@ -263,15 +264,33 @@ class Manager(object):
         arg_i = args['i']
         toPrint = self.ap_filter(arg_filter)
         message = ""
+
+        pt = prettytable.PrettyTable()
+
+        # Populate column headings
+        try:
+            entry = toPrint[0]
+        except IndexError as e:
+            traceback.print_exc(file=sys.stdout)
+            response = {"status":False, "message":e.message}
+            return response
+
+        else:
+            pt.add_column("Name", [])
+            for attr in entry[1]:
+                pt.add_column(attr, [])    
+            
+        # Populate table rows
         for entry in toPrint:
-            if not arg_i:
-                message += "%5s: %s - %s\n" % ("Name", entry[0], entry[1]['status'])
-            else: #Print extra data
-                message += "%19s: %s - %s\n" % ("Name", entry[0], entry[1]['status'])
-                for attr in entry[1]:
-                    if attr != 'status':
-                        message += "%19s: %s\n" % (attr, entry[1][attr])
-                message += '\n'
+            table_row = []
+            table_row.append(entry[0])
+            for attr in entry[1]:
+                table_row.append(entry[1][attr])
+            pt.add_row(table_row)
+        if arg_i:
+            message = pt.get_string()
+        else:
+            message = pt.get_string(fields=["Name", "status"])
 
         #return response
         response = {"status":True, "message":message}
@@ -281,13 +300,26 @@ class Manager(object):
         #TODO: Verify filter passes correctly
         arg_name = args['ap-show'][0]
         toPrint = self.ap_filter('name='+arg_name)
-        message = ""
+
+        # Build table headings
+        pt = prettytable.PrettyTable()
+        pt.add_column("Name", [])
+
+        print toPrint
+
+        for attr in toPrint[0][1]:
+            pt.add_column(attr, [])
+
+        # Populate table data
         for entry in toPrint:
-            message += "%19s: %s\n" % ("Name", entry[0])
+            table_row = []
+            table_row.append(entry[0])
             for attr in entry[1]:
-                if attr != 'status':
-                    message += "%19s: %s\n" % (attr, entry[1][attr])
-            message += '\n'
+                table_row.append(entry[1][attr])
+            pt.add_row(table_row)
+
+        message = pt.get_string()
+
         #return response
         response = {"status":True, "message":message}
         return response
