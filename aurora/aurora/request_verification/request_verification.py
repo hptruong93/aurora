@@ -287,6 +287,7 @@ class BandwidthVerification(RequestVerification):
                 #Check bandwidth requested match with the supported bandwidth
                 request_up = provision_reader.get_uplink(request['config']) #bps
                 request_down = provision_reader.get_downlink(request['config']) #bps
+                requested_radio = provision_reader.get_radio_wifi_radio(request['config'])
 
                 ap_info = provision_reader.get_physical_ap_info(request['physical_ap'])
                 number_slices = provision_reader.get_slice_count(ap_info)

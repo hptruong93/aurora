@@ -142,6 +142,7 @@ class APMonitor(object):
             slices_to_restart = decoded_response['slices_to_restart']
             self.restart_slices(ap_name, slices_to_restart)
             provision.update_last_known_config(ap_name, config)
+            self.aurora_db.ap_syn_clean_deleting_status(ap_name)
             self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
             self.start_poller(ap_name)
             return
@@ -149,7 +150,7 @@ class APMonitor(object):
         elif message == 'SYN/ACK':
             self.LOGGER.info("%s responded to 'SYN' request", ap_name)
             # Cancel timers corresponding to 'SYN' message
-            (have_request, entry) = self.dispatcher._have_request(props.correlation_id)
+            (have_request, entry) = self.dispatcher.have_request(props.correlation_id)
             if have_request:
                 entry[1].cancel()
                 self.dispatcher.requests_sent.remove(entry)
@@ -181,9 +182,9 @@ class APMonitor(object):
             self.LOGGER.debug(pformat(config))
             return
 
-        (have_request, entry) = self.dispatcher._have_request(props.correlation_id)
+        (have_request, entry) = self.dispatcher.have_request(props.correlation_id)
 
-        if have_request is not None:
+        if have_request is not None and entry is not None:
             # decoded_response = json.loads(body)
             self.LOGGER.debug('Printing received message')
             self.LOGGER.debug(message)

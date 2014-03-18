@@ -131,8 +131,15 @@ class AuroraConsole():
 #                print 'Invalid Credentials!'
 #                sys.exit(-1)       
 
-            #We will send in the following format: {function:"",parameters:""}
-            to_send = {'function':function,'parameters':params}
+            # We will send in the following format: {function:"",parameters:""}
+            # Use default tenant id, project id, and user id of -1
+            to_send = {
+                'function':function,
+                'parameters':params,
+                'tenant_id':os.environ.get("AURORA_TENANT", -1),
+                'project_id':os.environ.get("AURORA_PROJECT", -1),
+                'user_id':os.environ.get("AURORA_USER", -1),
+            }
             ##FOR DEBUGGING PURPOSES
             print json.dumps(to_send, indent=4)
             ##END DEBUG

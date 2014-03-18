@@ -8,7 +8,7 @@ import traceback
 import requests
 
 class JSONSender():
-    HTTP_TIMEOUT = 5
+    HTTP_TIMEOUT = 10
 
     def send_json(self, url, payload):
         

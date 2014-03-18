@@ -659,11 +659,38 @@ class Manager(object):
             try:
                 with self.con:
                     cur = self.con.cursor()
+
                     if tenant_id == 0:
-                        cur.execute("SELECT * FROM ap_slice")
+                        to_execute = """SELECT * 
+                            FROM 
+                                (SELECT ap_slice_id, total_mb_sent, total_active_duration
+                                    FROM
+                                        metering
+                                ) AS A
+                                RIGHT JOIN ap_slice AS B USING (ap_slice_id)"""
+                        self.LOGGER.debug(to_execute)
+                        cur.execute(to_execute)
                     else:
-                        cur.execute( "SELECT * FROM ap_slice WHERE "
-                                     "tenant_id = '%s'" % tenant_id )
+                        to_execute = """SELECT * 
+                            FROM 
+                                (SELECT ap_slice_id, total_mb_sent, total_active_duration
+                                    FROM
+                                        metering
+                                ) AS A
+                                RIGHT JOIN ap_slice AS B USING (ap_slice_id)
+                            WHERE 
+                                tenant_id = '%s'""" % tenant_id
+                        self.LOGGER.debug(to_execute)
+                        cur.execute(to_execute)
+
+
+
+
+                    # if tenant_id == 0:
+                    #     cur.execute("SELECT * FROM ap_slice")
+                    # else:
+                    #     cur.execute( "SELECT * FROM ap_slice WHERE "
+                    #                  "tenant_id = '%s'" % tenant_id )
                     tempList =  cur.fetchall()
                     #pprint(tempList)
                     #Prune thorugh list
@@ -676,6 +703,8 @@ class Manager(object):
                         newList[i]['project_id'] = tempList[i][4]
                         newList[i]['wnet_id'] = tempList[i][5]
                         newList[i]['status'] = tempList[i][6]
+                        newList[i]['total_mb_sent'] = tempList[i][7]
+                        newList[i]['total_active_duration'] = tempList[i][8]
                         #Get a list of tags
                         cur.execute( "SELECT name FROM tenant_tags WHERE "
                                      "ap_slice_id = '%s'" % tempList[i][0] )
@@ -768,7 +797,20 @@ class Manager(object):
                 with self.con:
                     cur = self.con.cursor()
                     #TODO: Allow admin to see all (tenant_id of 0)
-                    if len(expression) != 0:
+                    if len(expression) == 0:
+                        expression = ''
+
+                    if tenant_id == 0:
+                        cur.execute( ("""SELECT * 
+                            FROM 
+                                (SELECT ap_slice_id, total_mb_sent, total_active_duration
+                                    FROM
+                                        metering
+                                ) AS A
+                                RIGHT JOIN ap_slice AS B USING (ap_slice_id)
+                            WHERE """
+                        ) + expression) 
+                    else:
                         cur.execute( ("""SELECT * 
                             FROM 
                                 (SELECT ap_slice_id, total_mb_sent, total_active_duration
@@ -777,17 +819,8 @@ class Manager(object):
                                 ) AS A
                                 RIGHT JOIN ap_slice AS B USING (ap_slice_id)
                             WHERE 
-                                tenant_id = '%s' AND """ % tenant_id) + expression ) 
-                    else:
-                        cur.execute("""SELECT * 
-                            FROM 
-                                (SELECT ap_slice_id, total_mb_sent, total_active_duration
-                                    FROM
-                                        metering
-                                ) AS A
-                                RIGHT JOIN ap_slice AS B USING (ap_slice_id)
-                            WHERE 
-                                tenant_id = '%s' AND """ % tenant_id)
+                                tenant_id = '%s' AND """ % tenant_id
+                        ) + expression)
                     tempList = list(cur.fetchall())
                     #Compare result with tag_list if necessary
                     if tag_compare:

@@ -385,7 +385,8 @@ class AuroraDB(object):
                 if num_results == 1:
                     status = db.fetchone()[0]
                     if (status != 'ACTIVE' and
-                            status != 'FAILED'):
+                            status != 'FAILED' and
+                            status != 'PENDING'):
                         raise InvalidPENDINGStatusUpdate(status=status)
 
                     self.LOGGER.info("Setting status 'PENDING' for %s", ap_slice_id)
@@ -395,6 +396,32 @@ class AuroraDB(object):
                     self.LOGGER.debug(to_execute)
                     db.execute(to_execute)
         except mdb.Error as e:
+            traceback.print_exc(file=sys.stdout)
+
+    def ap_syn_clean_deleting_status(self, ap_name):
+        """Invoked when manager receives a SYN message from an
+        access point indicating it is connecting.  Access points which
+        connect to manager will not restart slices that are marked as
+        'DELETING', therefore we should change their status to 
+        'DELETED' to confirm they no longer exist.
+
+        :param str ap_name:
+
+        """
+        try:
+            with self._database_connection() as db:
+                to_execute = ("""UPDATE ap_slice SET
+                                     status=
+                                         CASE status
+                                             WHEN 'DELETING' THEN 'DELETED'
+                                         ELSE status END
+                                     WHERE
+                                         physical_ap='%s'""" %
+                                 ap_name
+                             )
+                self.LOGGER.debug(to_execute)
+                db.execute(to_execute)
+        except mdb.ERROR as e:
             traceback.print_exc(file=sys.stdout)
 
     def ap_up_slice_status_update(self, ap_slice_id, ap_name, success=False):
