@@ -1,10 +1,15 @@
 # Capsulator Flavor Plugin for slice_plugin
 # SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 import copy
+import glob
 import importlib
 import json
 import os
 import sys
+import traceback
+import types
+
+from aurora.exc import *
 
 
 class CapsulatorPlugin(object):
@@ -22,20 +27,26 @@ class CapsulatorPlugin(object):
         
     def default_tuntag(self):
         #Load tenant slice database
-        try:
-            JFILE = open(os.path.dirname(__file__) + '/../json/apslice-'+str(self.tenant_id)+'.json', 'r')
-            APlist = json.load(JFILE)
-            JFILE.close()
-        except IOError:
-            print('Error opening file!')
-            sys.exit(-1)
-        
-        #Get starting tunnel_tag numbers, for generation
+        config_db_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                     'config_db',
+                                     str(self.tenant_id))
+
         ttlist = [0]
-        for entry in APlist:
-            for interface in entry['VirtualInterfaces']:
-                if 'tunnel_tag' in interface['attributes']:
-                    ttlist.append(int(interface['attributes']['tunnel_tag']))
+        for file_ in glob.glob(os.path.join(config_db_dir, "*.json")):
+            try:
+                content = json.load(open(file_, 'r'))
+                for interface in content.get('VirtualInterfaces',None):
+                    ttlist.append(
+                        int(interface.get(
+                                'attributes',{}
+                            ).get(
+                                'tunnel_tag', 0
+                            )
+                        )
+                    )
+            except Exception:
+                traceback.print_exc(file=sys.stdout)
+
         return max(ttlist) + 1
 
     def parse(self, entry, numSlice, currentIndex, entryIndex):
@@ -53,11 +64,11 @@ class CapsulatorPlugin(object):
             else:
                 if not attr in entry['attributes']:
                     parsedEntry['attributes'][attr] = self.attributes[attr]['default']
-        
-        print "numSlice:",numSlice
-  #      print entry['attributes'][key]
-                     
-        #Loop through the attributes
+
+        #print "numSlice:",numSlice
+        #print entry['attributes'][key]
+
+        # Loop through the attributes
         for key in self.attributes:
             if not key in entry['attributes']: #Default
                 parsedEntry['attributes'][key] = str(self.attributes[key]['default'] + TuntagOffset)
@@ -67,25 +78,33 @@ class CapsulatorPlugin(object):
                 else:
                     parsedEntry['attributes'][key] = str(entry['attributes'][key])
             else: #List entry, check for cases
-                #Case 1, single AP
-                if numSlice == 1 and len(entry['attributes'][key]) == 1:
-                    parsedEntry['attributes'][key] = str(entry['attributes'][key][0])
-            
-                #Case 2, multiple APs
-                elif numSlice == len(entry['attributes'][key]):
-                    parsedEntry['attributes'][key] = str(entry['attributes'][key][currentIndex])
-                
-                #Case 3, Empty list, we need to generate (will need to use init loaded json information)
-                elif len(entry['attributes'][key]) == 0:
-                    parsedEntry['attributes'][key] = str(self.attributes[key]['default'] + TuntagOffset)
-                
-                #Case 4, error in data
-                else:
-                    print numSlice
-                    print len(entry['attributes'][key])
-                    err_msg = 'Error in json file, please check that the tunnel_tags match the number of APs!'
-                #    print(err_msg)
-                    raise Exception(err_msg + '\n')
-              #      sys.exit(-1) #Maybe implement an exception?
+                try:
+                    # Case 1, single AP
+                    if numSlice == 1:
+                        if type(entry['attributes'][key]) is types.IntType:
+                            parsedEntry['attributes'][key] = str(entry['attributes'][key])
+                        elif len(entry['attributes'][key]) == 1:
+                            parsedEntry['attributes'][key] = str(entry['attributes'][key][0])
+                        else:
+                            raise InvalidCapsulatorConfigurationException()
+
+                    # Case 2, multiple APs
+                    elif numSlice == len(entry['attributes'][key]):
+                        parsedEntry['attributes'][key] = str(entry['attributes'][key][currentIndex])
+                    
+                    # Case 3, Empty list, we need to generate (will need to use init loaded json information)
+                    elif len(entry['attributes'][key]) == 0:
+                        parsedEntry['attributes'][key] = str(self.attributes[key]['default'] + TuntagOffset)
+                    
+                    # Case 4, error in data
+                    else:
+                        print numSlice
+                        print len(entry['attributes'][key])
+                        err_msg = 'Error in json file, please check that the tunnel_tags match the number of APs!'
+                    #    print(err_msg)
+                        raise Exception(err_msg + '\n')
+                  #      sys.exit(-1) #Maybe implement an exception?
+                except Exception:
+                    traceback.print_exc(file=sys.stdout)
             
         return parsedEntry

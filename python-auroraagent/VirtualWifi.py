@@ -94,6 +94,15 @@ class VirtualWifi:
     def modify_slice(self, configuration):
         """Modifies BSS parameters specified, without restarting any radios.
         Modification of radios requires the use of delete/create."""
-        raise Exception("Modify for WiFi not implemented.")
+        # raise Exception("Modify for WiFi not implemented.")
+        for interface in configuration:
+            # Only BSS parameters are allowed
+            if interface["flavour"] == "wifi_bss":
+                # TODO(mike)
+                pass
+
+    # TODO(mike)!!!
+    # def restart_slice(self
+
         
        

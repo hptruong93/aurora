@@ -146,7 +146,9 @@ class Dispatcher(object):
 
     def _pika_monitor_loop(self, stop_event=None):
         while not stop_event.is_set():
-            if not self.connection.is_open or not self.channel.is_open:
+            if (not hasattr(self, 'connection') or not hasattr(self, 'channel') or
+                    not self.connection.is_open or not self.channel.is_open):
+                # One of self.connection or self.channel doesn't exist, restart
                 self.LOGGER.warn("Pika connection down, restarting")
                 self._restart_connection()
                 self.LOGGER.warn("Continuing pika_monitor loop")
@@ -186,9 +188,20 @@ class Dispatcher(object):
 
         try:
             self.channel.basic_publish(exchange='', routing_key=ap, body=message, properties=pika.BasicProperties(reply_to = self.callback_queue, correlation_id = unique_id, content_type="application/json"))
+        except IndexError as e:
+            # Likely publishing the message didn't work
+            self.LOGGER.warn(e.message)
+            try:
+                # Force the channel to close, the channel monitor should
+                # notice, and restart the channel
+                self.LOGGER.info("Forcing a channel close")
+                self._stop_connection()
+            except Exception:
+                traceback.print_exc(file=sys.stdout)
         except Exception as e:
+            # A more serious error occured
             traceback.print_exc(file=sys.stdout)
-            # self.LOGGER.error(e.message)
+            #self.LOGGER.error(e.message)
         else:
             self.LOGGER.info("Message for %s dispatched", ap)
             ap_slice_id = 'NONE'

@@ -23,7 +23,7 @@
                     "key":"23456"
                 }
         }
-    ], 
+    ],     
     "VirtualBridges": [
         {
             "flavor":"ovs",
@@ -34,7 +34,8 @@
                         ["vwlan0","veth0"],
                     "bridge_settings":
                         {
-                            "controller":["tcp:10.5.8.3"]
+                            "controller":["tcp:10.5.8.3"],
+                            "dpid":"00:00:00:00:00:05"
                         },
                     "port_settings":{}
                 }
@@ -42,15 +43,12 @@
     ], 
     "VirtualInterfaces": [
         {
-            "flavor":"capsulator",
+            "flavor":"veth",
             "attributes": 
                 {
                     "attach_to":"eth0",
-                    "name":"tun0",
-                    "forward_to":"10.5.8.3",
-                    "tunnel_tag":1,
-                    "is_virtual":true
-
+                    "name":"veth0",
+                    "mac":"00:00:00:00:00:30"
                 }
         },
         {

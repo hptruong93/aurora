@@ -17,10 +17,10 @@ import MySQLdb as mdb
 from aurora.cls_logger import get_cls_logger
 from aurora.ap_provision import writer as provision
 from aurora.stop_thread import *
-#import dispatcher
 
 KB = 1024**1
 MB = 1024**2
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -133,14 +133,13 @@ class APMonitor(object):
         if message == 'SYN':
             #TODO: If previous message has been dispatched and we are waiting 
             #      for a response, cancel the timer and/or send the command again
-            # AP has started, check if we need to restart slices
+            # AP has started, check if we need to recreate slices
             self.LOGGER.info("%s has connected...", ap_name)
             self.aurora_db.ap_status_up(ap_name)
             self.dispatcher.remove_request(ap_syn=ap_name)
-            # Tell ap monitor, let it handle restart of slices
-            #self.start_poller(ap_name)
-            slices_to_restart = decoded_response['slices_to_restart']
-            self.restart_slices(ap_name, slices_to_restart)
+
+            slices_to_recreate = decoded_response['slices_to_recreate']
+            self.recreate_slices(ap_name, slices_to_recreate)
             provision.update_last_known_config(ap_name, config)
             self.aurora_db.ap_syn_clean_deleting_status(ap_name)
             self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
@@ -349,24 +348,24 @@ class APMonitor(object):
         except Exception, e:
             self.LOGGER.error(str(e))
 
-    def restart_slices(self, ap, slice_list):
-        """Restarts the slices on their access point.
+    def recreate_slices(self, ap, slice_list):
+        """Recreats the slices on their access point.
 
         :param str ap: Name of the access point
-        :param list slice_list: List of slices to restart
+        :param list slice_list: List of slices to recreate
 
         """
         try:
             for ap_slice_id in slice_list:
-                user_id = self.aurora_db.get_user_for_active_ap_slice(ap_slice_id)
-                self.LOGGER.debug("Returned user id %s", user_id)
-                if user_id is not None:
-                    assert type(user_id) is IntType,"Need user_id to be IntType"
-                    self.LOGGER.info("%s for tenant %s", ap_slice_id, user_id)
-                    self.LOGGER.info("Restarting %s", ap_slice_id)
+                tenant_id = self.aurora_db.get_tenant_for_active_ap_slice(ap_slice_id)
+                self.LOGGER.debug("Returned tenant id %s", tenant_id)
+                if tenant_id is not None:
+                    assert type(tenant_id) is IntType,"Need tenant_id to be IntType"
+                    self.LOGGER.info("%s for tenant %s", ap_slice_id, tenant_id)
+                    self.LOGGER.info("Recreating %s", ap_slice_id)
                     self.dispatcher.dispatch({'slice': ap_slice_id,
-                                              'command': 'restart_slice',
-                                              'user': user_id
+                                              'command': 'recreate_slice',
+                                              'user': tenant_id
                                              },
                                              ap)
                 else:

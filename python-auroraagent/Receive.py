@@ -141,24 +141,25 @@ class Receive():
                 print "Waiting for channel"
                 printed = True
         print "AP up - alerting manager...",
-        slices_to_restart = []
+        slices_to_recreate = []
         if 'init_database' in config['last_known_config']:
             if len(config['last_known_config']['init_database']) > 1:
-                slices_to_restart = []
+                slices_to_recreate = []
                 last_db_config = config['last_known_config']['init_database']
                 main_slice = self.agent.find_main_slice(last_db_config)
                 if not main_slice:
                     print "\nError: No slice with radio profile"
                     return
-                slices_to_restart.append(main_slice)
+                slices_to_recreate.append(main_slice)
                 
                 for key in last_db_config.keys():
                     if key != "default_slice" and key != main_slice:
-                        slices_to_restart.append(key)
+                        slices_to_recreate.append(key)
+
         data_for_sender = {"successful":True,
                            "message":"SYN",
                            "config":{},
-                           "slices_to_restart":slices_to_restart,
+                           "slices_to_recreate":slices_to_recreate,
                            "ap":self.queue}
         data_for_sender['config']['init_database'] = self.agent.database.database
         data_for_sender['config']['init_user_id_database'] = self.agent.database.user_id_data

@@ -845,7 +845,7 @@ class AuroraDB(object):
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
 
-    def get_user_for_active_ap_slice(self, ap_slice_id):
+    def get_tenant_for_active_ap_slice(self, ap_slice_id):
         try:
             with self._database_connection() as db:
                 to_execute = ("""SELECT tenant_id 

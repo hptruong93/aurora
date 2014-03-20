@@ -69,3 +69,9 @@ class APSliceAlreadyInWnetException(AuroraException):
 #
 class RequestInvalidConfigFileNameException(AuroraException):
     message = "File names outside directory not permitted"
+
+#---------
+# Slice plugin exceptions
+#
+class InvalidCapsulatorConfigurationException(AuroraException):
+    message = "The capsulator configuration given is invalid"

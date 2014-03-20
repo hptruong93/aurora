@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import sys
+import traceback
 
 from aurora.cls_logger import get_cls_logger
 
@@ -37,6 +38,7 @@ class SlicePlugin(object):
                     try:
                         json_list[i][key] = getattr(newmodule, class_name)(self.tenant_id).parse(data[key], numSlice, i) #i is the current index
                     except Exception as e:
+                        traceback.print_exc(file=sys.stdout)
                         raise Exception(e.message)
             else: #Make default
                 self.LOGGER.warning(key+' not found. File might not parse correctly. Please check configuration and try again!')

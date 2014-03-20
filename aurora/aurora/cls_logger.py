@@ -101,7 +101,7 @@ def set_up_root_logger(level=None):
     logging.root.handlers.append(stream_handler)
     logging.root.setLevel(logging.INFO)
     if level is not None:
-        LOGGER.info("Setting logging level to %s", level)
+        LOGGER.debug("Setting logging level to %s", level)
         logging.root.setLevel(level)
 
 def get_cls_logger(cls):

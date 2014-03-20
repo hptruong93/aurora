@@ -4,6 +4,9 @@ import exception, json, pprint, Database, atexit, sys
 import VirtualWifi
 import Monitor
 import subprocess
+import time
+import traceback
+import types
 
 class SliceAgent:
     """The Slice Agent is the high level interface to the creation,
@@ -60,6 +63,7 @@ class SliceAgent:
         try:
             self.wifi.create_slice(config["RadioInterfaces"])
         except Exception as e:
+            traceback.print_exc(file=sys.stdout)
             print " [v] Exception: %s" %e.message
             self.delete_slice(slice)
             # DEBUG
@@ -78,6 +82,7 @@ class SliceAgent:
                 else:
                     vif_down = if_names[1]
             except Exception as e:
+                traceback.print_exc(file=sys.stdout)
                 print " [v] Exception: %s" %e.message
                 # Abort, delete
                 self.delete_slice(slice)
@@ -90,6 +95,7 @@ class SliceAgent:
             try:
                 self.v_bridges.create_bridge(bridges['flavor'], bridge_name)
             except Exception as e:
+                traceback.print_exc(file=sys.stdout)
                 # Abort, delete
                 print " [v] Exception: %s" %e.message
                 self.delete_slice(slice)
@@ -101,6 +107,7 @@ class SliceAgent:
                     try:
                         self.v_bridges.add_port_to_bridge(bridge_name, port)
                     except Exception as e:
+                        traceback.print_exc(file=sys.stdout)
                         print " [v] Exception: %s" %e.message
                         # Abort, delete.
                         self.delete_slice(slice)
@@ -112,6 +119,7 @@ class SliceAgent:
                     try:
                         self.v_bridges.modify_bridge(bridge_name, setting, setting_list[setting])
                     except Exception as e:
+                        traceback.print_exc(file=sys.stdout)
                         print " [v] Exception: %s" %e.message
                         # Abort, delete. Settings don't matter when deleting
                         self.delete_slice(slice)
@@ -123,32 +131,32 @@ class SliceAgent:
                         try:
                             self.v_bridges.modify_port(bridge_name, port, setting, bridges['attributes']['port_settings'][port][setting])
                         except Exception as e:
+                            traceback.print_exc(file=sys.stdout)
                             print " [v] Exception: %s" %e.message
                             # Abort, delete
                             self.delete_slice(slice)
                             raise exception.SliceCreationFailed("Aborting.\nError applying setting " + setting + " to port " + port + " on bridge " + bridge_name + '\n' + e.message)
 
-        if "TrafficAttributes" in config.keys():
-            for traffic_control in config['TrafficAttributes']:
-                try:
-                    #find up if
-                    print "vif_up,vif_down",vif_up, vif_down
-                    traffic_control["attributes"]["if_up"] = vif_up
-                    traffic_control["attributes"]["if_down"] = vif_down
-                    if traffic_control["flavor"] == "ovs-tc":
-                        if "ovs" in self.v_bridges.module_list.keys():
-                            traffic_control["attributes"]["ovs_db_sock"] = self.v_bridges.module_list["ovs"].socket_file.name
-                        else:
-                            raise Exception("No ovs module previously loaded")
-                    self.tc.create(traffic_control["flavor"], traffic_control["attributes"])
-                except Exception as e:
-                    print " [v] Exception: %s" %e.message
-                    # Abort, delete
-                    self.delete_slice(slice)
-                    raise exception.SliceCreationFailed("Aborting.\nQoS creation failed\n" + e.message)
+        for traffic_control in config.get('TrafficAttributes',[]):
+            try:
+                #find up if
+                print "vif_up,vif_down",vif_up, vif_down
+                traffic_control["attributes"]["if_up"] = vif_up
+                traffic_control["attributes"]["if_down"] = vif_down
+                if traffic_control["flavor"] == "ovs-tc":
+                    if "ovs" in self.v_bridges.module_list.keys():
+                        traffic_control["attributes"]["ovs_db_sock"] = self.v_bridges.module_list["ovs"].socket_file.name
+                    else:
+                        raise Exception("No ovs module previously loaded")
+                self.tc.create(traffic_control["flavor"], traffic_control["attributes"])
+            except Exception as e:
+                traceback.print_exc(file=sys.stdout)
+                print " [v] Exception: %s" %e.message
+                # Abort, delete
+                self.delete_slice(slice)
+                raise exception.SliceCreationFailed("Aborting.\nQoS creation failed\n" + e.message)
         
         self.database.reset_active_slice()
-
 
     def delete_slice(self, slice):
         """Delete a given slice, and ignore any errors that occur in
@@ -203,7 +211,6 @@ class SliceAgent:
             pass
         self.database.reset_active_slice()
 
-
     def modify_slice(self, slice, config):
         """The modify slice command will execute modify
         functions on various modules.  It will only execute commands
@@ -213,31 +220,152 @@ class SliceAgent:
         virtual interfaces, virtual bridges, or
         adding/deleting ports from bridges.
 
-        At this time, this restricts the commands to port and
-        bridge modifications from the VirtualBridge module,
-        with no support for port addition or deletion."""
+        Commands that deal with changing wifi settings have to be 
+        used carefully.  Changing a slice SSID is easy - as long as
+        the slice is not the main_bss.  If it is, uci must be used
+        to reconfigure it, meaning all slices will be destructed and
+        recreated.
+
+        In case something goes wrong, backups of each slice are taken
+        and are stored in self.database.prev_database - this way
+        they can be recreated from their last known good configuration.
+
+        """
+        # Take a backup in case everything goes wrong
+        self.database.prev_database = self.database.database
+        self.database.prev_user_id_data = self.database.user_id_data
 
         self.database.set_active_slice(slice)
 
-        data = config["VirtualBridges"]
-        name = data["name"]
-        # Bridge settings
-        for setting in data["bridge_settings"]:
-            self.v_bridges.modify_bridge(name, setting, data["bridge_settings"][setting])
-        # Port settings
-        for port in data["port_settings"]:
-            for port_setting in data["port_settings"][port]:
-                self.v_bridges.modify_port(name, port, port_setting, data["port_settings"][port][port_setting])
+        slice_configuration = self.database.get_slice_data(slice)
+
+        # For DEBUGGING
+        print "Previous slice configuration"
+        print json.dumps(slice_configuration, indent=4)
+
+        # Modify slice configuration to include changed attributes
+        for section, new_configuration_list in config.iteritems():
+            # Section contains an item among:
+            #    "RadioInterfaces", "VirtualInterfaces",
+            #    "VirtualBridges", "TrafficAttributes"
+            for new_configuration in new_configuration_list:
+                for item in slice_configuration.get(section):
+                    # Use default constants of 0 and 1 force a false
+                    # conditional evaluation if neither element for "name"
+                    # can be found
+                    if (item.get("attributes",{}).get("name", 0) == 
+                            new_configuration.get(
+                                "attributes",{}
+                            ).get("name", 1)):
+                        # We now have the item to modify: update attributes
+                        for attribute_name, attribute in \
+                                new_configuration.get("attributes").iteritems():
+                            it = item["attributes"].get(attribute_name)
+                            if type(it) is types.DictType:
+                                # Item to update is a dictionary, use dict's
+                                # update() method, which will only overwrite
+                                # entries existing in both dicts.
+                                it.update(attribute)
+                            elif attribute_name == "name":
+                                # Since section lookup and matching is done 
+                                # by name, changing a name requires a new
+                                # item in the modification config - "new_name"
+                                new_name = new_configuration.get(
+                                    "attributes", {}).get(
+                                    "new_name"
+                                )
+                                if new_name is not None:
+                                    item["attributes"]["name"] = new_name
+                            else:
+                                it = attribute
+
+        # FOR DEBUGGING
+        print "Modified slice configuration"
+        print json.dumps(slice_configuration, indent=4)
+
+        # try:
+        #     if "RadioInterfaces" in config.keys():
+        #         self.wifi.modify_slice(config["RadioInterfaces"])
+        # except Exception as e:
+        #     # Restart slices using last known good configuration
+        #     print " [v] Exception: %s" % e.message
+        #     self.restart_slice(slice)
+
+        #     # DEBUG
+        #     #raise
+        #     raise exception.SliceModificationFailed(
+        #         "Aborting. Unable to modify WiFi slice for %s\n%s" %
+        #         (str(slice), e.message)
+        #     )
+
+        # --OLD--
+        # try:
+        #     if "VirtualBridges" in config.keys():
+
+        # data = config["VirtualBridges"]
+        # name = data["name"]
+        # # Bridge settings
+        # for setting in data["bridge_settings"]:
+        #     self.v_bridges.modify_bridge(name, setting, data["bridge_settings"][setting])
+        # # Port settings
+        # for port in data["port_settings"]:
+        #     for port_setting in data["port_settings"][port]:
+        #         self.v_bridges.modify_port(
+        #             name, port, port_setting, 
+        #             data["port_settings"][port][port_setting]
+        #         )
 
         self.database.reset_active_slice()
     
-    def restart_slice(self, slice, user):
+    def restart_slice(self, slice):
+        """Restarts a slice by deleting it and recreating it using 
+        last known good configuration from prev_database.  This 
+        method should only be called from within self.modify_slice.
+
+        The implementation of this method will have to change once 
+        OpenWRTWifi is no longer the sole module responsible for 
+        creation and deletion of wireless slices.  This is due to 
+        the limitation of a single radio configuration per radio - if
+        the main bss is deleted, all other bss on the same radio 
+        will have to be restarted as well.
+
+        """
+        userid = self.database.get_slice_user(slice)
+        main_bss = self.find_main_slice()
+
+        print ("Restarting %s... " % slice),
+        if slice == main_bss:
+            print "determined it is main_bss!"
+            slices_on_radio = self.database.hw_get_bss_in_radio_entry(
+                self.database.get_slice_radio(slice)
+            )
+
+            # All slices on the radio must be deleted, then the slice with 
+            # the main bss must be restarted first, followed by the rest.
+            for slice_to_delete in slices_on_radio:
+                if slice_to_delete != slice:
+                    self.delete_slice(slice_to_delete)
+
+            # All slices except that with main_bss are now deleted,
+            # can delete main slice
+            self.delete_slice(slice)
+
+            # Now all slices can once again be recreated, beginning with
+            # the main_bss slice
+            self.recreate_slice(slice, userid)
+            for slice_to_recreate in slices_on_radio:
+                self.recreate_slice(slice_to_recreate, userid)
+        else:
+            # Not a main_bss, simply delete the slice, and recreate it
+            # from the previously stored database.
+            self.delete_slice(slice)
+            self.recreate_slice(slice, userid)
+
+    def recreate_slice(self, slice, user):
         if slice in self.database.prev_database.keys():
             self.create_slice(slice, user, self.database.prev_database[slice])
         else:
             raise Exception("Error: No slice configuration found for" + slice)
-        
-        
 
     def remote_API(self, slice, info):
         """The remote API command accepts a specially formatted JSON
@@ -249,6 +377,7 @@ class SliceAgent:
         For example, to execute the command get_status(tap1) in VirtualInterfaces,
         you would format info like so:
         { "module" : "VirtualInterfaces", "command" : "get_status", "args" : { "name" : "tap1"} }"""
+
 
 
         self.database.set_active_slice(slice)
@@ -277,8 +406,8 @@ class SliceAgent:
             self.delete_slice(slice)
         elif command == "modify_slice":
             self.modify_slice(slice, config)
-        elif command == "restart_slice":
-            self.restart_slice(slice, user)
+        elif command == "recreate_slice":
+            self.recreate_slice(slice, user)
         elif command == "remote_API":
             # The remote API can return data
             return self.remote_API(slice, config)
@@ -290,7 +419,6 @@ class SliceAgent:
             return self.monitor.get_stats()
         else:
             raise exception.CommandNotFound(command)
-
 
     def restart(self):
         # Restart machine (OS), but give time for aurora to send OK to manager
@@ -309,3 +437,148 @@ class SliceAgent:
         self.v_bridges.reset()
         self.v_interfaces.reset()
         return "AP reset"
+
+def get_test_agent():
+    """Returns an initialized SliceAgent instance."""
+    init_config = {
+        "default_config": {
+            "init_hardware_database": {
+                "wifi_radio": {
+                    "number_radio_free": "0", 
+                    "max_bss_per_radio": "4", 
+                    "radio_list": [], 
+                    "number_radio": "0"
+                }, 
+                "aurora_version": "0.2", 
+                "firmware": "OpenWRT", 
+                "memory_mb": "256", 
+                "free_disk": "256", 
+                "firmware_version": "r39154"
+            }, 
+            "default_active_slice": "default_slice", 
+            "init_database": {
+                "default_slice": {
+                    "VirtualInterfaces": [], 
+                    "RadioInterfaces": [], 
+                    "VirtualBridges": []
+                }
+            }, 
+            "init_user_id_database": {
+                "default_user": [
+                    "default_slice"
+                ]
+            }
+        }
+    }
+    return SliceAgent(init_config)
+
+def test_create_slice(agent, slice, slice_config = None):
+    """Create a slice using slice_config"""
+    if slice_config is None:
+        slice_config = {
+            "RadioInterfaces": [
+                {
+                    "flavor" : "wifi_radio",
+                    "attributes" : 
+                        {
+                            "name" : "radio0",
+                            "channel" : "1",
+                            "txpower" : "20",
+                            "disabled" : "0",
+                            "country" : "CA",
+                            "hwmode" : "abg"   
+                        }
+                },
+                {
+                    "flavor" : "wifi_bss",
+                    "attributes" : 
+                        {
+                            "name" : "BCRL vSwitch",
+                            "radio" : "radio0",
+                            "if_name" : "wlan0",
+                            "encryption_type":"wep-open",
+                            "key":"23456"
+                        }
+                }
+            ],     
+            "VirtualBridges": [
+                {
+                    "flavor":"ovs",
+                    "attributes":   
+                        {
+                            "name":"vswitch-br",
+                            "interfaces":
+                                ["vwlan0","veth0"],
+                            "bridge_settings":
+                                {
+                                    "controller":"tcp:10.5.8.3",
+                                    "dpid":"00:00:00:00:00:05"
+                                },
+                            "port_settings":{}
+                        }
+                }
+            ], 
+            "VirtualInterfaces": [
+                {
+                    "flavor":"veth",
+                    "attributes": 
+                        {
+                            "attach_to":"eth0",
+                            "name":"veth0",
+                            "mac":"00:00:00:00:00:30"
+                        }
+                },
+                {
+                    "flavor":"veth",
+                    "attributes":
+                        {
+                            "attach_to":"wlan0",
+                            "name":"vwlan0",
+                            "mac":"00:00:00:00:00:31"
+                        }
+                }
+            ]
+        }
+    agent.execute(slice, "create_slice", config=slice_config, user="1")
+
+def test_modify_slice(agent, slice, slice_config=None):
+    if slice_config is None:
+        slice_config = {
+            "RadioInterfaces": [
+                {
+                    "flavor" : "wifi_bss",
+                    "attributes" : 
+                        {
+                            "name" : "BCRL vSwitch",
+                            "new_name": "BCRL new"
+                        }
+                }
+            ],
+            "VirtualBridges": [
+                {
+                    "flavor":"ovs",
+                    "attributes":   
+                        {
+                            "name":"vswitch-br",
+                            "bridge_settings":
+                                {
+                                    "controller":"tcp:10.5.8.3:9933"
+                                },
+                        }
+                }
+            ]
+        }
+    agent.execute(slice, "modify_slice", config=slice_config, user="1")
+
+def main_test():
+    slice_id = "slice1"
+    agent = get_test_agent()
+    test_create_slice(agent, slice_id)
+    print "Creation complete!"
+    time.sleep(1)
+    test_modify_slice(agent, slice_id)
+    print "Modification complete!"
+    time.sleep(1)
+
+if __name__ == "__main__":
+    main_test()

@@ -21,7 +21,7 @@ class Database:
 	
 	Note that no functions are provided to modify the fields in entries
 	as the database does not know what entries contain beyond the requirement to
-	have a slice, section, flavour and unique name, and thus cannot search for
+	have a slice, section, flavor and unique name, and thus cannot search for
 	specific fields.  The user, however, can modify data without replacing
 	entire entries by using get_entry, which provides a reference that can be
 	modified.
@@ -56,12 +56,12 @@ class Database:
     def __init__(self, config):
         # Create intial database from template
         self.database = config["default_config"]["init_database"]
-        if "init_database" in config["last_known_config"].keys():
+        if "init_database" in config.get("last_known_config", {}).keys():
             self.prev_database = config["last_known_config"]["init_database"]
         else:
             self.prev_database = {}
         self.user_id_data = config["default_config"]["init_user_id_database"]
-        if "init_user_id_database" in config["last_known_config"].keys():
+        if "init_user_id_database" in config.get("last_known_config", {}).keys():
             self.prev_user_id_data = config["last_known_config"]["init_database"]
         else:
             self.prev_user_id_data = {}
@@ -72,7 +72,7 @@ class Database:
     
     def set_active_slice(self, slice):
         """Set the active slice, used for commands such as
-        add_entry or del_entry."""
+        add_entry or delete_entry."""
         self.active_slice = slice
         
     def get_active_slice(self):
@@ -153,6 +153,22 @@ class Database:
         # is get_entry, but it needs to be accessible to 
         # allow for nested data modification.
         return copy.deepcopy(self.database[slice])
+
+    def get_slice_radio(self, slice):
+        """Searches the database and returns the radio on which
+        the slice in question is created.  If no radio can be
+        found, SliceRadioNotFound is raised.
+
+        """
+        radio_interfaces = self.database.get(slice, {}).get(
+            "RadioInterfaces",[]
+        )
+        for interface in radio_interfaces:
+            if interface.get("flavor") == "wifi_bss":
+                return interface.get("attributes", {}).get(
+                    "radio", None
+                )
+        raise exception.SliceRadioNotFound()
     
     def get_slice_list(self):
         """Return a list of slices."""
@@ -161,8 +177,16 @@ class Database:
     def get_user_list(self):
         """Return a list of users."""
         return self.user_id_data.keys()
+
+    def get_slice_user(self, slice):
+        """Finds the user that owns a specific slice."""
+        for userid in self.get_user_list():
+            for slice_ in self.get_associated_slice(self, userid):
+                if slice_ == slice:
+                    return userid
+        raise exception.NoUserIDForSlice()
     
-    def add_entry(self, section, flavour, info):
+    def add_entry(self, section, flavor, info):
         """Add an entry to the database.
         Names in each section must be unique, but different sections
         can have the same name."""
@@ -173,7 +197,7 @@ class Database:
             # OK, does not exist
             if section not in self.database[self.active_slice].keys():
                 self.database[self.active_slice][section] = []
-            self.database[self.active_slice][section].append({ "flavor" : flavour, "attributes" : info })
+            self.database[self.active_slice][section].append({ "flavor" : flavor, "attributes" : info })
         else:
             # Error
             raise exception.NameAlreadyInUse(info["name"])
@@ -188,10 +212,10 @@ class Database:
             # Ignore any errors deleting
             pass
     
-    def replace_entry(self, section, name, flavour, info):
+    def replace_entry(self, section, name, flavor, info):
         """A shortcut to deleting and adding an entry."""
-        self.del_entry(section, name)
-        self.add_entry(section, flavour, info)
+        self.delete_entry(section, name)
+        self.add_entry(section, flavor, info)
     
     def get_entry(self, section, name):
         """Returns the entry identified by section and name
@@ -337,4 +361,8 @@ class Database:
             return json.dumps(self.hw_database)
         else:
             return pprint.pformat(self.hw_database)
+
+    def hw_get_bss_in_radio_entry(self, radio):
+        radio_entry = self.hw_get_radio_entry(radio)
+        return radio_entry.get("bss_list")
         

@@ -38,7 +38,10 @@ class BridgeNotFound(AuroraException):
     
 class SliceNotFound(AuroraException):
     message = "The slice does not exist."
-    
+
+class SliceRadioNotFound(AuroraException):
+    message = "The slice radio can not be found."
+
 class InstanceNotFound(AuroraException):
     message = "The instance does not exist."
     
@@ -53,6 +56,9 @@ class InvalidConfig(AuroraException):
     
 class SliceCreationFailed(AuroraException):
     message = "Unable to create slice."
+
+class SliceModificationFailed(AuroraException):
+    message = "Unable to modify slice."
     
 class ReachedBSSLimitOnRadio(AuroraException):
     message = "No more BSS are permitted on this radio."
@@ -72,3 +78,5 @@ class hostapdError(AuroraException):
 class disabledError(AuroraException):
     message = "The radio must be active to execute this function."
 
+class NoUserIDForSlice(AuroraException):
+    message = "No user id was found for the slice in question."

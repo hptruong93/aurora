@@ -1,10 +1,12 @@
 # Open V Switch Flavor Plugin for slice_plugin
 # SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 import copy
+import glob
 import importlib
 import json
 import os
 import sys
+import traceback
 
 
 class OVSPlugin(object):
@@ -25,20 +27,30 @@ class OVSPlugin(object):
 
     def default_dpid(self):
         #Load tenant slice database
-        try:
-            JFILE = open(os.path.dirname(__file__) + '/../json/apslice-'+str(self.tenant_id)+'.json', 'r')
-            APlist = json.load(JFILE)
-            JFILE.close()
-        except IOError:
-            print('Error opening file!')
-            sys.exit(-1)
-        
-        #Get starting DPID and tunnel_tag numbers, for generation
+        config_db_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                     'config_db',
+                                     str(self.tenant_id))
+
         dpidlist = [0]
-        for entry in APlist:
-            for bridge in entry['VirtualBridges']:
-                if 'dpid' in bridge['attributes']['bridge_settings']:
-                    dpidlist.append(int(bridge['attributes']['bridge_settings']['dpid']))
+        for file_ in glob.glob(os.path.join(config_db_dir, "*.json")):
+            try:
+                content = json.load(open(file_, 'r'))
+                for bridge in content.get('VirtualBridges',None):
+                    # DPID may be in the same format as a MAC address:
+                    #     xx:xx:xx:xx:xx:xx
+                    dpidlist.append(
+                        int(bridge.get(
+                                'attributes',{}
+                            ).get(
+                                'bridge_settings', {}
+                            ).get(
+                                'dpid',0
+                            ).replace(':','')
+                        )
+                    )
+            except Exception:
+                traceback.print_exc(file=sys.stdout)
+
         return max(dpidlist) + 1
     
     def parse(self, entry, numSlice, currentIndex, entryIndex):
@@ -94,3 +106,7 @@ class OVSPlugin(object):
                             sys.exit(-1) #Maybe implement an exception?
             
         return parsedEntry
+
+if __name__ == "__main__":
+    OVSPlugin(1)
+

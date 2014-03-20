@@ -64,9 +64,12 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         function = JSONfile['function']
         parameters = JSONfile['parameters']
-        tenant_id = JSONfile['tenant_id']
-        project_id = JSONfile['project_id']
-        user_id = JSONfile['user_id']
+
+        # The following are used to determine who is creating a slice.
+        # Defaults are all -1
+        tenant_id = JSONfile.get('tenant_id') or -1
+        project_id = JSONfile.get('project_id') or -1
+        user_id = JSONfile.get('user_id') or -1
         
         #Send to manager.py
         #Format of response: {"status":(true of false) ,"message":"string if necessary"}
@@ -109,7 +112,6 @@ class ManagerServer(BaseHTTPServer.HTTPServer):
 
 def main():
     level = logging.INFO
-    print sys.argv
     if len(sys.argv) > 1:
         level = sys.argv[1]
         if level == "DEBUG":
