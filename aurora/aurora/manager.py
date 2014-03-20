@@ -4,7 +4,6 @@
 import json
 import logging
 from pprint import pprint, pformat
-import prettytable
 import sys
 import time
 import traceback
@@ -30,8 +29,8 @@ class Manager(object):
 
     MYSQL_HOST = 'localhost'
     MYSQL_USERNAME = 'root'
-    MYSQL_PASSWORD = 'supersecret'
-    MYSQL_DB = 'aurora'
+    MYSQL_PASSWORD = 'supersecret' 
+    MYSQL_DB = 'aurora' 
 
     def __init__(self):
         self.LOGGER = get_cls_logger(self)
@@ -128,6 +127,19 @@ class Manager(object):
             tag_compare = False #For tags, we need 2 queries and a quick result compare at the end
             tag_result = []
             args_list = args.split('&')
+            
+            if args_list[0] == 'location' or args_list[0] == 'location,slice-load':  # Yang: add one more case if the user ask for the location_tag ['location']
+                try:
+                    with self.con:
+                        cur = self.con.cursor()
+                        tempList = []
+                        if 'location' in args_list[0]:
+                            cur.execute("SELECT * FROM location_tags")
+                            tempList = list(cur.fetchall())
+                            return tempList
+                except mdb.Error, e:
+                    print "Error %d: %s" % (e.args[0], e.args[1])
+
             for (index, entry) in enumerate(args_list):
                 args_list[index] = entry.strip()
                  #Filter for tags (NOT Query is not yet implemented (future work?),
@@ -264,34 +276,15 @@ class Manager(object):
         arg_i = args['i']
         toPrint = self.ap_filter(arg_filter)
         message = ""
-
-        pt = prettytable.PrettyTable()
-
-        # Populate column headings
-        try:
-            entry = toPrint[0]
-        except IndexError as e:
-            # There are no access points to list
-            err_msg = " None"
-            response = {"status":True, "message":err_msg}
-            return response
-
-        else:
-            pt.add_column("Name", [])
-            for attr in entry[1]:
-                pt.add_column(attr, [])    
-            
-        # Populate table rows
         for entry in toPrint:
-            table_row = []
-            table_row.append(entry[0])
-            for attr in entry[1]:
-                table_row.append(entry[1][attr])
-            pt.add_row(table_row)
-        if arg_i:
-            message = pt.get_string()
-        else:
-            message = pt.get_string(fields=["Name", "status"])
+            if not arg_i:
+                message += "%5s: %s - %s\n" % ("Name", entry[0], entry[1]['status'])
+            else: #Print extra data
+                message += "%19s: %s - %s\n" % ("Name", entry[0], entry[1]['status'])
+                for attr in entry[1]:
+                    if attr != 'status':
+                        message += "%19s: %s\n" % (attr, entry[1][attr])
+                message += '\n'
 
         #return response
         response = {"status":True, "message":message}
@@ -302,18 +295,12 @@ class Manager(object):
         arg_name = args['ap-show'][0]
         toPrint = self.ap_filter('name='+arg_name)
         message = ""
-
-
-        message += self.ap_list(
-                {
-                    'filter':['name=%s' % arg_name,],
-                    'i':True
-                },
-                tenant_id, 
-                user_id, 
-                project_id
-        )['message']
-
+        for entry in toPrint:
+            message += "%19s: %s\n" % ("Name", entry[0])
+            for attr in entry[1]:
+                if attr != 'status':
+                    message += "%19s: %s\n" % (attr, entry[1][attr])
+            message += '\n'
         #return response
         response = {"status":True, "message":message}
         return response
@@ -326,12 +313,6 @@ class Manager(object):
 
     def ap_slice_restart(self, args, tenant_id, user_id, project_id): #UNTESTED, RUN AT OWN RISK
         slice_names = args['ap-slice-restart'] #Multiple Names
-        message = ""
-        response = {
-            "status":False, 
-            "message":message,
-        }
-
         if args['filter']:
             slice_names = []
             args_filter = args['filter'][0]
@@ -343,56 +324,26 @@ class Manager(object):
         for ap_slice_id in slice_names:
             #Get ap name
             try:
-                ap_name = self.aurora_db.get_wslice_physical_ap(ap_slice_id)
-            except Exception as e:
-                message += e.message
-                continue
+                with mdb.connect(self.mysql_host,
+                                 self.mysql_username,
+                                 self.mysql_password,
+                                 self.mysql_db) as db:
+                    db.execute("SELECT physical_ap FROM ap_slice WHERE ap_slice_id='%s'" % ap_slice_id )
+                    ap_name = db.fetchone()[0]
+            except mdb.Error, e:
+                traceback.print_exc(file=sys.stdout)
+                # self.LOGGER.error( "Error %d: %s", e.args[0], e.args[1])
 
-            if not self.aurora_db.wslice_belongs_to(tenant_id, project_id, ap_slice_id):
-                message += "You have no slice %s" % ap_slice_id
-                continue
+            #Note: This will remove all associated tenant_tags
+            self.LOGGER.info("Deleting Slice %s", ap_slice_id)
+            self.ap_slice_delete({"ap-slice-delete":str(ap_slice_id)})
 
-            if self.aurora_db.wslice_is_deleted(ap_slice_id):
-                message += "Your slice is deleted, cannot restart: %s" % ap_slice_id
-                continue
+            self.LOGGER.info("Recreating Slice %s", ap_slice_id)
+            self.ap_slice_create({"ap":str(ap_name)})
 
-            # Verify slice can be deleted from current AP
-            config_delete = {
-                "slice":ap_slice_id, 
-                "command":"delete_slice", 
-                "user":user_id,
-            }
-            error = Verify.verifyOK(tenant_id = tenant_id, request = config_delete)
-            if error is not None:
-                message += error
-                continue
-
-            # Verify slice can be created on new AP
-            try:
-                config = config_db.get_config(ap_slice_id, tenant_id)
-            except NoConfigExistsError as err:
-                message += err.message
-                continue
-
-            config_create = {
-                "slice":ap_slice_id, 
-                "command":"create_slice", 
-                "user":user_id, 
-                "config":config,
-            }
-
-            # Passed all checks, delete slice from existing ap and create on new one
-            self.dispatcher.dispatch(config_delete, ap_name)
-            self.aurora_db.ap_slice_status_pending(ap_slice_id)
-            self.dispatcher.dispatch(config_create, ap_name)
-            message += "Restarted %s on %s" % (ap_slice_id, ap_name)
-
-        response = {
-            "status":True, 
-            "message": message,
-        }
-
-        return response
+            #return response
+            response = {"status":True, "message":""}
+            return response
 
     def ap_slice_add_tag(self, args, tenant_id, user_id, project_id):
         message = ""
@@ -468,6 +419,7 @@ class Manager(object):
         arg_filter = None
         arg_file = None
         arg_tag = None
+        arg_hint = None
         if 'ap' in args:
             arg_ap = args['ap']
         if args['filter']:
@@ -476,9 +428,56 @@ class Manager(object):
             arg_file = args['file']
         if args['tag']:
             arg_tag = args['tag'][0]
+        if args['hint']:
+            arg_hint = args['hint'][0]
 
         json_list = [] # If a file is provided for multiple APs,
                        # we need to split the file for each AP, saved here
+        # Add one section for dealing with 'hint' token, once it is processed, return
+        if arg_hint and "location" in arg_hint:
+            # Try to access the local database to grab location
+            tempList = self.ap_filter(arg_hint)
+            message = ""
+            for entry in tempList:
+                if not ('mcgill' in entry[0] or 'mcgill' in entry[1]):
+                    message += "%5s: %s\n" % (entry[1], entry[0])
+            
+            # Make a decision according to the token "location" OR "slice_load"
+            try:
+                if args['location']: # if there is a location specification
+                    if args['location'].lower() in message.lower(): # check if the location is valid
+                        indexSliceLoad = ""
+                        freespace = 0;
+                        if "slice-load" in arg_hint:
+                            print "Search the lightweight AP"
+                            indexSliceLoad = "unknown"
+                        else:
+                            print "Locate a random AP"
+                        
+                        # Search for the proper slices
+                        for entry in tempList:
+                            if args['location'].lower() == entry[0].lower():
+                                # once the location matches -- check if the AP has free spots
+                                apList = self.ap_filter("name=" + entry[1])
+
+                                if apList[0][1]['number_slice_free'] > 0:
+                                    if(len(indexSliceLoad)==0):
+                                        indexSliceLoad = entry[1]
+                                        break
+                                    elif(apList[0][1]['number_slice_free']>freespace):
+                                        freespace = apList[0][1]['number_slice_free']
+                                        indexSliceLoad = entry[1]
+
+                        message = indexSliceLoad
+                    else:
+                        message = "invalid location information"
+            except:
+                print "This is the first term"
+                
+            response = {"status":True, "message":message}
+            return response
+
+        # end of the section
 
         if arg_ap:
             aplist = arg_ap
@@ -857,7 +856,6 @@ class Manager(object):
 
         return newList
 
-
     def ap_slice_list(self, args, tenant_id, user_id, project_id):
         message = ""
         if args['filter']:
@@ -880,22 +878,17 @@ class Manager(object):
             return response
         if not newList:
             message += " None\n"
-        else:
-            pt = prettytable.PrettyTable()
-            entry = newList[0]
-            for attr in entry:
-                pt.add_column(attr, [])
-                
-            # Populate table rows
-            for entry in newList:
-                table_row = []
-                for attr in entry:
-                    table_row.append(entry[attr])
-                pt.add_row(table_row)
-            if arg_i:
-                message = pt.get_string()
+        for entry in newList:
+            message += "%12s: %s" % ("ap_slice_id", entry['ap_slice_id'])
+            if not arg_i:
+                message += " ('%s' on %s) - %s\n" % (entry['ap_slice_ssid'], entry['physical_ap'], entry['status'])
+
             else:
-                message = pt.get_string(fields=["ap_slice_id", "ap_slice_ssid", "physical_ap", "status"])
+                message += " '%s'\n" % entry['ap_slice_ssid']
+                for key,value in entry.iteritems():
+                    if key != 'ap_slice_id' and key != 'ap_slice_ssid':
+                        message += "%12s: %s\n" % (key, value)
+                message += '\n'
 
         #Return response
         response = {"status":True, "message":message}
@@ -987,8 +980,8 @@ class Manager(object):
             else:
                 message += "Error: You have no slice '%s'.\n" % arg_id
             #if arg_id == args['ap-slice-show'][-1]:
-            #    response = {"status":False, "message": message}
-            #    return response
+            #   response = {"status":False, "message": message}
+            #  return response
 
         response = {"status":True, "message": message}
         return response

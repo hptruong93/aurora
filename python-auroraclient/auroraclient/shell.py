@@ -23,6 +23,7 @@ import sys
 #from keystoneclient.v2_0 import client as ksclient #commented in order to compile locally
 
 from auroraclient import json_sender
+from auroraclient import slice_json_generator
 
 CLIENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -111,12 +112,13 @@ class AuroraConsole():
             #For add-slice and modify, we need to load the JSON file
             if function == 'ap-slice-create' or function == 'ap-slice-modify':
                 if not params['file']:
-                    print 'Please Specify a file argument!'
-                    return
+                    if not params['hint']:   # once the hint tag is also missing, the command is not legit                  
+                        print 'Please Specify a file argument!'
+                        return
                 else:
                     try:
                         JFILE = open(os.path.join(CLIENT_DIR, 'json', params['file'][0]), 'r')
-                        # print JFILE
+                        #print JFILE
                         file_content = json.load(JFILE)
                         params['file'] = file_content
                         JFILE.close()
@@ -130,9 +132,11 @@ class AuroraConsole():
 #            except:
 #                print 'Invalid Credentials!'
 #                sys.exit(-1)       
-
-            # We will send in the following format: {function:"",parameters:""}
-            # Use default tenant id, project id, and user id of -1
+            if 'hint' in params: #--"hint" token, store params['file'] for the third sent
+                store = params['file'] 
+                params['file']= None
+                
+            #We will send in the following format: {function:"",parameters:""}
             to_send = {
                 'function':function,
                 'parameters':params,
@@ -145,8 +149,64 @@ class AuroraConsole():
             ##END DEBUG
             
             if to_send: #--help commands will not start the server
-                json_sender.JSONSender().send_json('http://132.206.206.133:5554', to_send)
+                json_sender.JSONSender().send_json('http://localhost:5554', to_send) # change back to 132.206.206.133:5554
+                self.slice_json_generator = slice_json_generator.SliceJsonGenerator('shell.json',1,1,1); # Initialize the slice_json_generator
 
+            try:
+                if "location" in params['hint'] or "location,slice-load" in params['hint']: # Once the token is 'hint', wait for users' reply
+                    exitLoop = False
+                    while not exitLoop:
+                        print "Please Enter the location where the AP you want to access:"
+                        print "(Enter 0 to leave otherwise)"
+
+                        choice = raw_input()
+                        if choice == '0':
+                            exitLoop = True;
+                        elif len(choice) > 0: # Unable to do a logic checking here due to the lack of data at the file
+                            print "the location is " + choice
+
+                            ##############Send the information back again to the manager###############
+                            params['location'] = choice
+                           ## print params
+                            to_send = {
+                                'function':function,
+                                'parameters':params,
+                                'tenant_id':os.environ.get("AURORA_TENANT", -1),
+                                'project_id':os.environ.get("AURORA_PROJECT", -1),
+                                'user_id':os.environ.get("AURORA_USER", -1),
+                            }
+                            ##FOR DEBUGGING PURPOSES
+                            #pprint(to_send)
+                            ##END DEBUG
+                            
+                            if to_send: #--help commands will not start the server
+                                message = json_sender.JSONSender().send_json('http://localhost:5554', to_send) # change back to 132.206.206.133:5554
+
+                                if 'openflow' in message.lower(): # Restore params['file'] and clean up params['hint'] to create a slice
+                                    params['file'] = store
+                                    params['hint'] = None
+                                    del params['location']
+                                    params['ap'] = [message]
+                                    print params
+                                    to_send = {
+                                        'function':function,
+                                        'parameters':params,
+                                        'tenant_id':os.environ.get("AURORA_TENANT", -1),
+                                        'project_id':os.environ.get("AURORA_PROJECT", -1),
+                                        'user_id':os.environ.get("AURORA_USER", -1),
+                                    }
+                                    pprint(to_send)
+                                    if to_send: #--help commands will not start the server
+                                        message = json_sender.JSONSender().send_json('http://localhost:5554', to_send) # change back to 132.206.206.133:5554
+
+                                        
+                            exitLoop = True;
+                        else:
+                            exitLoop = True;
+                            print "Invalid information"
+            except:
+                print "Finshed the current statement"
+                    
             
         
     def _get_ksclient(self, **kwargs):
@@ -180,7 +240,7 @@ class AuroraConsole():
         _ksclient = self._get_ksclient(**kwargs)
         token = _ksclient.auth_token
         return token
-
+        
 def main():
     AuroraConsole().main(sys.argv)
         
