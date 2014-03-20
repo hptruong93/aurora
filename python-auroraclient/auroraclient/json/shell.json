@@ -110,17 +110,6 @@
                             "metavar":"filter"
                         }
                     ],
-					[
-                        "--hint",
-                        {
-                            "action":"store",
-                            "help":"Hint according to AP's location",
-                            "nargs":"*",
-                            "default":null,
-                            "choices":null,
-                            "metavar":"hint"
-                        }
-                    ],
                     [
                         "--hint",
                         {
