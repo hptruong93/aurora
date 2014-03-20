@@ -42,7 +42,8 @@ class SliceJsonGenerator():
                 exitLoop = True
                 # Dump to JSON file
                 try:
-                    self.JFILE = open(filename, 'w')
+                   ## print "the file name is " + filename
+                    self.JFILE = open(filename, "w")
                 except IOError:
                     print('Error opening file for writing!')
                     sys.exit(-1)
@@ -182,4 +183,4 @@ class SliceJsonGenerator():
     def printConfig(self):
         print(json.dumps(self.data, sort_keys=True, indent=4))
 
-SliceJsonGenerator('json/slicetemp.json',1,1,1)
+#SliceJsonGenerator('json/slicetemp.json',1,1,1)

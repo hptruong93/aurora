@@ -8,7 +8,7 @@ import traceback
 import requests
 
 class JSONSender():
-    HTTP_TIMEOUT = 5
+    HTTP_TIMEOUT = 10
 
     def send_json(self, url, payload):
         
@@ -51,6 +51,7 @@ class JSONSender():
             print 'Action failed'
         print '-'*13
         print message
+        return message
         
             
 if __name__ == '__main__': #FOR TESTING

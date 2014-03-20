@@ -658,11 +658,38 @@ class Manager(object):
             try:
                 with self.con:
                     cur = self.con.cursor()
+
                     if tenant_id == 0:
-                        cur.execute("SELECT * FROM ap_slice")
+                        to_execute = """SELECT * 
+                            FROM 
+                                (SELECT ap_slice_id, total_mb_sent, total_active_duration
+                                    FROM
+                                        metering
+                                ) AS A
+                                RIGHT JOIN ap_slice AS B USING (ap_slice_id)"""
+                        self.LOGGER.debug(to_execute)
+                        cur.execute(to_execute)
                     else:
-                        cur.execute( "SELECT * FROM ap_slice WHERE "
-                                     "tenant_id = '%s'" % tenant_id )
+                        to_execute = """SELECT * 
+                            FROM 
+                                (SELECT ap_slice_id, total_mb_sent, total_active_duration
+                                    FROM
+                                        metering
+                                ) AS A
+                                RIGHT JOIN ap_slice AS B USING (ap_slice_id)
+                            WHERE 
+                                tenant_id = '%s'""" % tenant_id
+                        self.LOGGER.debug(to_execute)
+                        cur.execute(to_execute)
+
+
+
+
+                    # if tenant_id == 0:
+                    #     cur.execute("SELECT * FROM ap_slice")
+                    # else:
+                    #     cur.execute( "SELECT * FROM ap_slice WHERE "
+                    #                  "tenant_id = '%s'" % tenant_id )
                     tempList =  cur.fetchall()
                     #pprint(tempList)
                     #Prune thorugh list
@@ -675,6 +702,8 @@ class Manager(object):
                         newList[i]['project_id'] = tempList[i][4]
                         newList[i]['wnet_id'] = tempList[i][5]
                         newList[i]['status'] = tempList[i][6]
+                        newList[i]['total_mb_sent'] = tempList[i][7]
+                        newList[i]['total_active_duration'] = tempList[i][8]
                         #Get a list of tags
                         cur.execute( "SELECT name FROM tenant_tags WHERE "
                                      "ap_slice_id = '%s'" % tempList[i][0] )
@@ -767,12 +796,30 @@ class Manager(object):
                 with self.con:
                     cur = self.con.cursor()
                     #TODO: Allow admin to see all (tenant_id of 0)
-                    if len(expression) != 0:
-                        cur.execute( ("SELECT * FROM ap_slice WHERE "
-                                     "tenant_id = '%s' AND " % tenant_id) + expression )
+                    if len(expression) == 0:
+                        expression = ''
+
+                    if tenant_id == 0:
+                        cur.execute( ("""SELECT * 
+                            FROM 
+                                (SELECT ap_slice_id, total_mb_sent, total_active_duration
+                                    FROM
+                                        metering
+                                ) AS A
+                                RIGHT JOIN ap_slice AS B USING (ap_slice_id)
+                            WHERE """
+                        ) + expression) 
                     else:
-                        cur.execute( "SELECT * FROM ap_slice WHERE "
-                                     "tenant_id = '%s'" % tenant_id )
+                        cur.execute( ("""SELECT * 
+                            FROM 
+                                (SELECT ap_slice_id, total_mb_sent, total_active_duration
+                                    FROM
+                                        metering
+                                ) AS A
+                                RIGHT JOIN ap_slice AS B USING (ap_slice_id)
+                            WHERE 
+                                tenant_id = '%s' AND """ % tenant_id
+                        ) + expression)
                     tempList = list(cur.fetchall())
                     #Compare result with tag_list if necessary
                     if tag_compare:
@@ -782,6 +829,7 @@ class Manager(object):
                                 comparedList.append(slice_entry)
                         tempList = comparedList
                     #Prune thorugh list
+
                     for i in range(len(tempList)):
                         newList.append({})
                         newList[i]['ap_slice_id'] = tempList[i][0]
@@ -792,12 +840,10 @@ class Manager(object):
                         newList[i]['wnet_id'] = tempList[i][5]
                         newList[i]['status'] = tempList[i][6]
                         # TODO: Append these values from metering table
-                        # newList[i]['time_active'] = tempList[i][7]
-                        # newList[i]['last_active_time'] = tempList[i][8]
-                        # newList[i]['mb_sent'] = tempList[i][9]
+                        newList[i]['total_mb_sent'] = tempList[i][7]
+                        newList[i]['total_active_duration'] = tempList[i][8]
                         #Get a list of tags
-                        cur.execute("SELECT name FROM tenant_tags WHERE ap_slice_id=\'" + \
-                                    str(tempList[i][0])+"\'")
+                        cur.execute("SELECT name FROM tenant_tags WHERE ap_slice_id='%s'" % tempList[i][0])
                         tagList = cur.fetchall()
                         tagString = ""
                         for tag in tagList:
@@ -809,7 +855,6 @@ class Manager(object):
                 # self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
 
         return newList
-
 
     def ap_slice_list(self, args, tenant_id, user_id, project_id):
         message = ""
@@ -934,9 +979,9 @@ class Manager(object):
                                           tenant_id, user_id, project_id)['message']
             else:
                 message += "Error: You have no slice '%s'.\n" % arg_id
-            if arg_id == args['ap-slice-show'][-1]:
-                response = {"status":False, "message": message}
-                return response
+            #if arg_id == args['ap-slice-show'][-1]:
+            #   response = {"status":False, "message": message}
+            #  return response
 
         response = {"status":True, "message": message}
         return response

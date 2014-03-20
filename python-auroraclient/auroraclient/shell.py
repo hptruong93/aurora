@@ -23,6 +23,7 @@ import sys
 #from keystoneclient.v2_0 import client as ksclient #commented in order to compile locally
 
 from auroraclient import json_sender
+from auroraclient import slice_json_generator
 
 CLIENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -136,13 +137,21 @@ class AuroraConsole():
                 params['file']= None
                 
             #We will send in the following format: {function:"",parameters:""}
-            to_send = {'function':function,'parameters':params}
+            to_send = {
+                'function':function,
+                'parameters':params,
+                'tenant_id':os.environ.get("AURORA_TENANT", -1),
+                'project_id':os.environ.get("AURORA_PROJECT", -1),
+                'user_id':os.environ.get("AURORA_USER", -1),
+            }
             ##FOR DEBUGGING PURPOSES
             print json.dumps(to_send, indent=4)
             ##END DEBUG
             
             if to_send: #--help commands will not start the server
-                json_sender.JSONSender().send_json('http://132.206.206.133:5554', to_send) # change back to localhost:5554
+                json_sender.JSONSender().send_json('http://localhost:5554', to_send) # change back to 132.206.206.133:5554
+            
+            self.slice_json_generator = slice_json_generator.SliceJsonGenerator(os.path.join(CLIENT_DIR, 'json/shell.json'),1,1,1); # Initialize the slice_json_generator
 
             try:
                 if "location" in params['hint'] or "location,slice-load" in params['hint']: # Once the token is 'hint', wait for users' reply
@@ -156,27 +165,39 @@ class AuroraConsole():
                             exitLoop = True;
                         elif len(choice) > 0: # Unable to do a logic checking here due to the lack of data at the file
                             print "the location is " + choice
-                            
+
                             ##############Send the information back again to the manager###############
                             params['location'] = choice
-                            print params
-                            to_send = {"function":function,"parameters":params}
+                           ## print params
+                            to_send = {
+                                'function':function,
+                                'parameters':params,
+                                'tenant_id':os.environ.get("AURORA_TENANT", -1),
+                                'project_id':os.environ.get("AURORA_PROJECT", -1),
+                                'user_id':os.environ.get("AURORA_USER", -1),
+                            }
                             ##FOR DEBUGGING PURPOSES
                             #pprint(to_send)
                             ##END DEBUG
                             
                             if to_send: #--help commands will not start the server
-                                message = json_sender.JSONSender().send_json('http://132.206.206.133:5554', to_send) # change back to localhost:5554
+                                message = json_sender.JSONSender().send_json('http://localhost:5554', to_send) # change back to 132.206.206.133:5554
                                 if 'openflow' in message.lower(): # Restore params['file'] and clean up params['hint'] to create a slice
                                     params['file'] = store
                                     params['hint'] = None
                                     del params['location']
                                     params['ap'] = [message]
                                     print params
-                                    to_send = {"function":function,"parameters":params}
+                                    to_send = {
+                                        'function':function,
+                                        'parameters':params,
+                                        'tenant_id':os.environ.get("AURORA_TENANT", -1),
+                                        'project_id':os.environ.get("AURORA_PROJECT", -1),
+                                        'user_id':os.environ.get("AURORA_USER", -1),
+                                    }
                                     pprint(to_send)
                                     if to_send: #--help commands will not start the server
-                                        message = json_sender.JSONSender().send_json('http://132.206.206.133:5554', to_send) # change back to localhost:5554
+                                        message = json_sender.JSONSender().send_json('http://localhost:5554', to_send) # change back to 132.206.206.133:5554
                                         
                             exitLoop = True;
                         else:
