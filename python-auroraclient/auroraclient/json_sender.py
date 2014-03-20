@@ -51,6 +51,7 @@ class JSONSender():
             print 'Action failed'
         print '-'*13
         print message
+        return message
         
             
 if __name__ == '__main__': #FOR TESTING
