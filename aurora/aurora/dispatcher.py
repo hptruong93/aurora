@@ -68,7 +68,11 @@ class Dispatcher(object):
 
     def _start_connection(self):
         credentials = pika.PlainCredentials(self.username, self.password)
-        self.connection = pika.SelectConnection(pika.ConnectionParameters(host=self.host, credentials=credentials), self.on_connected)
+        self.connection = pika.SelectConnection(pika.ConnectionParameters(
+                                                    host=self.host,
+                                                    credentials=credentials
+                                                ),
+                                                self.on_connected)
         # Start ioloop, this will quit by itself when Dispatcher().stop() is run
         
         self.listener = threading.Thread(target=self.connection.ioloop.start)
@@ -77,15 +81,30 @@ class Dispatcher(object):
 
     def _stop_connection(self):
         self._stop_all_request_sent_timers()
-        self.connection.close()
+        try:
+            self.connection.close()
+        except AttributeError as e:
+            self.LOGGER.debug("Connection already closed...")
+            
 
     def _restart_connection(self):
         self.LOGGER.info("Channel has died, restarting...")
         self._stop_connection()
+        self.listener.join()
+        printed_waiting = False
+        while self.connection.is_open or self.channel.is_open:
+            if not printed_waiting:
+                self.LOGGER.info("Waiting for channel to close...")
+                printed_waiting = True
+            time.sleep(1)
         self.restarting_connection = True
         self._start_connection()
-        while not self.connection.is_open and not self.channel.is_open:
-            time.sleep(0.1)
+        printed_waiting = False
+        while not (self.connection.is_open and self.channel.is_open):
+            if not printed_waiting:
+                self.LOGGER.info("Waiting for channel to open...")
+                printed_waiting = True
+            time.sleep(1)
         self.LOGGER.info("Channel back up, dispatching...")
 
     def _stop_all_request_sent_timers(self):
@@ -99,7 +118,8 @@ class Dispatcher(object):
 
     def channel_open(self, new_channel):
         self.channel = new_channel
-        response = self.channel.queue_declare(exclusive=True, durable=True, callback=self.on_queue_declared)
+        response = self.channel.queue_declare(durable=True, 
+                                              callback=self.on_queue_declared)
 
     def on_queue_declared(self, frame):
         self.callback_queue = frame.method.queue
@@ -129,6 +149,7 @@ class Dispatcher(object):
             if not self.connection.is_open or not self.channel.is_open:
                 self.LOGGER.warn("Pika connection down, restarting")
                 self._restart_connection()
+                self.LOGGER.warn("Continuing pika_monitor loop")
             else:
                 time.sleep(0.5)
 
@@ -140,6 +161,8 @@ class Dispatcher(object):
         # Create unique_id if none exists
         if unique_id is None:
             unique_id = "%s-%s" % (ap, str(uuid.uuid4()))
+        else:
+            unique_id = "%s-%s" % (ap, unique_id)
 
         # Convert JSON to string
         message = json.dumps(config)
@@ -180,7 +203,10 @@ class Dispatcher(object):
             self.requests_sent.append((unique_id, timer, ap_slice_id))
             timer.start()
             self.LOGGER.debug("requests_sent %s",self.requests_sent)
-            self.LOGGER.debug("Starting timer: %s",self.requests_sent[-1])
+            if len(self.requests_sent) > 0:
+                self.LOGGER.debug("Starting timer: %s",self.requests_sent[-1])
+            else:
+                self.LOGGER.error("Cannot start nonexistant timer")
 
         self.LOGGER.debug("Unlocking...")
         Dispatcher.lock = False
@@ -205,24 +231,34 @@ class Dispatcher(object):
 
     def _get_uuid_for_ap_syn(self, ap_syn):
         for request in self.requests_sent:
-            if request[0].startswith(ap_syn) and request[2] == 'SYN':
-                return request[0]
+            if request[0].startswith(ap_syn + '-'):
+                yield request[0]
 
-    def _have_request(self, correlation_id):
+    def have_request(self, correlation_id):
         for request in self.requests_sent:
             if request[0] == correlation_id:
                 return (True, request)
         return (False, None)
 
     def remove_request(self, message_uuid=None, ap_syn=None):
+        # If ap_syn isn't None, find all requests for this ap and cancel them
+        # to create a clean slate.  User will have to manually restart failed slices.
         if ap_syn:
-            message_uuid = self._get_uuid_for_ap_syn(ap_syn)
-        (have_request, request) = self._have_request(message_uuid)
-        if have_request:
-            self.LOGGER.debug("Cancelling timer %s", request[1])
-            request[1].cancel()
-            self.LOGGER.debug("Removing request %s", str(request))
-            self.requests_sent.remove(request)
+            for message_uuid in self._get_uuid_for_ap_syn(ap_syn):
+                (have_request, request) = self.have_request(message_uuid)
+                if have_request:
+                    self.LOGGER.debug("Cancelling timer %s", request[1])
+                    request[1].cancel()
+                    self.LOGGER.debug("Removing request %s", str(request))
+                    self.requests_sent.remove(request)
+        else:
+            (have_request, request) = self.have_request(message_uuid)
+            if have_request:
+                self.LOGGER.debug("Cancelling timer %s", request[1])
+                request[1].cancel()
+                self.LOGGER.debug("Removing request %s", str(request))
+                self.requests_sent.remove(request)
+
 
 # Menu loop; thanks Kevin
 # Obviously this code will not be in a final version

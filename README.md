@@ -31,6 +31,9 @@ python paste: http://bitbucket.org/ianb/paste
 requests: www.python-requests.org
 Version 2.0.1 tested
 
+prettytable: code.google.com/p/prettytable/
+Version 0.7.2
+
 =======
 Access Point:
 

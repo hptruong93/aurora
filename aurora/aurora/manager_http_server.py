@@ -61,11 +61,19 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         # Begin the response
         self.send_response(200)
         self.end_headers()
+
+        function = JSONfile['function']
+        parameters = JSONfile['parameters']
+        tenant_id = JSONfile['tenant_id']
+        project_id = JSONfile['project_id']
+        user_id = JSONfile['user_id']
         
         #Send to manager.py
         #Format of response: {"status":(true of false) ,"message":"string if necessary"}
-        response = NewConnectionHandler.MANAGER.parseargs(JSONfile['function'], JSONfile['parameters'], 1,1,1)
-        self.LOGGER.debug(response['message'])
+        response = NewConnectionHandler.MANAGER.parseargs(
+                function, parameters, tenant_id,
+                user_id, project_id
+        )
 
         #Save response to file
         with open(os.path.join(CLIENT_DIR, 'json/response.json'), 'w') as RESPONSE_FILE: 

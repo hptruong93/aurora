@@ -8,7 +8,7 @@ import traceback
 
 import MySQLdb as mdb
 
-from aurora.ap_provision import ap_provision_reader as provision_reader
+from aurora.ap_provision import reader as provision_reader
 from aurora.request_verification import verification_exception as exceptions
 
 
@@ -267,7 +267,10 @@ class BandwidthVerification(RequestVerification):
                          2 : 14 * (1024 * 1024),
                          3 : 9 * (1024 * 1024),
                          4 : 9 * (1024 * 1024),
-                         5 : 9 * (1024 * 1024),}
+                         5 : 9 * (1024 * 1024),
+                         6 : 9 * (1024 * 1024),
+                         7 : 9 * (1024 * 1024),
+                         8 : 9 * (1024 * 1024),}
 
         max_bandwidth = MAX_BANDWIDTH[number_of_slice + 1] #including this one as well
         max_allowance = max_bandwidth / (number_of_slice + 1) #including this one as well
@@ -282,28 +285,28 @@ class BandwidthVerification(RequestVerification):
                 return None
             else:
                 #Check bandwidth requested match with the supported bandwidth
-                request_up = provision_reader.get_rate_up(request['config']) #bps
-                request_down = provision_reader.get_rate_down(request['config']) #bps
+                request_up = provision_reader.get_uplink(request['config']) #bps
+                request_down = provision_reader.get_downlink(request['config']) #bps
+                requested_radio = provision_reader.get_radio_wifi_radio(request['config'])
 
                 ap_info = provision_reader.get_physical_ap_info(request['physical_ap'])
-                requested_radio = provision_reader.get_radio_wifi_bss(request['config'])
-                number_slices = provision_reader.get_number_slice_on_radio(ap_info, requested_radio)
+                number_slices = provision_reader.get_slice_count(ap_info)
 
-                rate_up = 0
-                rate_down = 0
+                uplink = 0
+                downlink = 0
 
                 slices = provision_reader.get_slices(ap_info)
 
                 for slice in slices:
                     radio = provision_reader.get_radio_wifi_bss(slices[slice])
                     if radio == requested_radio:
-                        rate_up += int(provision_reader.get_rate_up(slices[slice]))
-                        rate_down += int(provision_reader.get_rate_down(slices[slice]))
+                        uplink += int(provision_reader.get_uplink(slices[slice]))
+                        downlink += int(provision_reader.get_downlink(slices[slice]))
 
-                if not self._check_band_width(request_up, number_slices, rate_up):
-                    return "The request up rate " + str(request_up) + " is too high!"
-                elif not self._check_band_width(request_down, number_slices, rate_down):
-                    return "The request down rate " + str(request_down) + " is too high!"
+                if not self._check_band_width(request_up, number_slices, uplink):
+                    return "The request uplink " + str(request_up) + " is too high!"
+                elif not self._check_band_width(request_down, number_slices, downlink):
+                    return "The request downlink " + str(request_down) + " is too high!"
             return None
         except KeyError, e:
                 raise exceptions.MissingKeyInRequest(str(e.args[0]))

@@ -1,4 +1,8 @@
 {
+<<<<<<< HEAD
     "message": "openflow1: MC734\nopenflow2: MC838\nopenflow4: MC838\nopenflow5: MC838\nopenflow3: TR1024\n", 
+=======
+    "message": "No slice 'someslice'\nNo slice 'newslice'\n", 
+>>>>>>> 58ab0c8798735f76097d9a66017ec2ce932c2ef6
     "status": true
 }

@@ -81,8 +81,8 @@ if __name__ == '__main__':
                 "TrafficAttributes": [
                     {       
                         "attributes": {
-                            "rate_down": "1000000",
-                            "rate_up": "1000000",
+                            "downlink": "1000000",
+                            "uplink": "1000000",
                             "if_up": "veth2",
                             "if_down": "vwlan0-2",
                             "name": "veth2vwlan0-2"

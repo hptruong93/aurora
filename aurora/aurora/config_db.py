@@ -10,7 +10,7 @@ from types import *
 from aurora.exc import *
 
 LOGGER = logging.getLogger(__name__)
-DB_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config_db')
+DB_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config_db/')
 
 def save_config(config, ap_slice_id, tenant_id):
     """Saves a given configuration file in the name of it's slice
@@ -91,5 +91,6 @@ def get_file_path(ap_slice_id, tenant_id, dir_only=False):
 
     """
     if dir_only:
+        # DB_FOLDER must end with a '/'
         return DB_FOLDER + str(tenant_id)
     return DB_FOLDER + '{0}/{1}.json'.format(tenant_id, ap_slice_id)

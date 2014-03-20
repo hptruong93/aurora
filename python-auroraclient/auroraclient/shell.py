@@ -149,9 +149,8 @@ class AuroraConsole():
             ##END DEBUG
             
             if to_send: #--help commands will not start the server
-                json_sender.JSONSender().send_json('http://localhost:5554', to_send) # change back to 132.206.206.133:5554
-            
-            self.slice_json_generator = slice_json_generator.SliceJsonGenerator(os.path.join(CLIENT_DIR, 'json/shell.json'),1,1,1); # Initialize the slice_json_generator
+
+                json_sender.JSONSender().send_json('http://132.206.206.133:5554', to_send) # change back to localhost:5554
 
             try:
                 if "location" in params['hint'] or "location,slice-load" in params['hint']: # Once the token is 'hint', wait for users' reply
@@ -181,7 +180,9 @@ class AuroraConsole():
                             ##END DEBUG
                             
                             if to_send: #--help commands will not start the server
-                                message = json_sender.JSONSender().send_json('http://localhost:5554', to_send) # change back to 132.206.206.133:5554
+
+                                message = json_sender.JSONSender().send_json('http://132.206.206.133:5554', to_send) # change back to localhost:5554
+
                                 if 'openflow' in message.lower(): # Restore params['file'] and clean up params['hint'] to create a slice
                                     params['file'] = store
                                     params['hint'] = None
@@ -197,7 +198,9 @@ class AuroraConsole():
                                     }
                                     pprint(to_send)
                                     if to_send: #--help commands will not start the server
-                                        message = json_sender.JSONSender().send_json('http://localhost:5554', to_send) # change back to 132.206.206.133:5554
+
+                                        message = json_sender.JSONSender().send_json('http://132.206.206.133:5554', to_send) # change back to localhost:5554
+
                                         
                             exitLoop = True;
                         else:

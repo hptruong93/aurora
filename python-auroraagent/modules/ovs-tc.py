@@ -8,22 +8,22 @@ class OvsTC:
         # Keep track of all created instances
         self.process_list = {}
 
-    def start(self, rate_up = None, rate_down = None, if_up = None, if_down = None, ovs_db_sock = None, name = None):
+    def start(self, uplink = None, downlink = None, if_up = None, if_down = None, ovs_db_sock = None, name = None):
         """Sets up queues and using ovs-vsctl to limit rates to specified limits."""
 
         if ovs_db_sock is None:
             raise Exception("TC Error: no ovs sock specified")
 
         # Check that for supplied rates, if is specified
-        if (rate_up and not if_up) or (rate_down and not if_down):
+        if (uplink and not if_up) or (downlink and not if_down):
             # Need interface
             raise Exception("TC Error: No interface on which to apply QOS")
 
         qos_list = []
-        if rate_up:
-            qos_list.append((rate_up, if_up))
-        if rate_down:
-            qos_list.append((rate_down, if_down))
+        if uplink:
+            qos_list.append((uplink, if_up))
+        if downlink:
+            qos_list.append((downlink, if_down))
         for qos_rule in qos_list:
             command = ["ovs-vsctl", "--db=unix:%s" % ovs_db_sock,"clear", "Port", qos_rule[1], "qos"]
             print "\n  $ "," ".join(command)

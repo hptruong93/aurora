@@ -53,8 +53,8 @@
             "flavor":"ovs-tc",
             "attributes":
                 {
-                    "rate_up":"500000",
-                    "rate_down":"500000"
+                    "uplink":"500000",
+                    "downlink":"500000"
                 }
         }
 

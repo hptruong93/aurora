@@ -7,7 +7,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def get_json_files():
-    provision_dir = os.path.dirname(os.path.abspath(__file__))
+    provision_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'json')
     paths = os.listdir(provision_dir)
     result = []
     for fname in paths:
@@ -33,7 +33,10 @@ def update_last_known_config(ap, config):
         if prev_config['queue'] == ap:
             ap_config_name = F.name
             break
-    LOGGER.debug(F)
+    try:
+        LOGGER.debug(F)
+    except UnboundLocalError:
+        LOGGER.warn("WARNING: No accessible files in ap_provision")
     F.close()
     del F
     prev_config['last_known_config'] = config

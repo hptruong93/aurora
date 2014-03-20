@@ -63,21 +63,21 @@ def get_radio_wifi_radio(slice):
         return interface['name']
     return None
 
-def get_rate_up(slice):
+def get_uplink(slice):
     sum_up = 0
     try:
         for item in slice['TrafficAttributes']:
-            sum_up += int(item['attributes']['rate_up'])
+            sum_up += int(item['attributes']['uplink'])
     except KeyError as e:
         #Well this slice does not have any traffic info associated with it
         pass
     return sum_up
 
-def get_rate_down(slice):
+def get_downlink(slice):
     sum_down = 0
     try:
         for item in slice['TrafficAttributes']:
-            sum_down += int(item['attributes']['rate_down'])
+            sum_down += int(item['attributes']['downlink'])
     except KeyError as e:
         #Well this slice does not have any traffic info associated with it
         pass
