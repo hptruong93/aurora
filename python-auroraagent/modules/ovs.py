@@ -10,7 +10,10 @@
 # but more complicated cases (i.e. optional parameters) can easily be added.
 
 import tempfile, subprocess, psutil, os
+
 import exception
+
+
 class OpenVSwitch:
     """OpenVSwitch module.  Controls the OpenVSwitch daemon, allowing
     for the creation and modification of bridges and their ports.
@@ -39,8 +42,7 @@ class OpenVSwitch:
         """Start required ovs daemons."""
         self.database_file = tempfile.NamedTemporaryFile()
         self.socket_file = tempfile.NamedTemporaryFile()
-        print self.database_file
-        print self.socket_file
+
         # Close the files since we won't be writing to them
         # Also, tools like ovsdb-tool won't overwrite existing files
         # We are simply using temporary files to generate random names that don't conflict
@@ -81,18 +83,18 @@ class OpenVSwitch:
         # Can't use close for database since it is already closed
         # Socket should already have been removed, but just in case
         try:
-            print "Removing ovs_db", self.database_file.name
+            # print "Removing ovs_db", self.database_file.name
             os.remove(self.database_file.name)
         except Exception:
-            print "...doesn't exist"
-            #pass
+            # print "...doesn't exist"
+            pass
         
         try:
-            print "Removing ovs_socket", self.socket_file.name
+            # print "Removing ovs_socket", self.socket_file.name
             os.remove(self.socket_file.name)
         except Exception:
-            print "...doesn't exist"
-            #pass
+            # print "...doesn't exist"
+            pass
     
     def create_bridge(self, bridge):
         """Create a bridge with the given name."""

@@ -53,6 +53,8 @@ class Database:
 	
 	"""
     
+    DEFAULT_RADIO = "radio0"
+
     def __init__(self, config):
         # Create intial database from template
         self.database = config["default_config"]["init_database"]
@@ -70,6 +72,14 @@ class Database:
         
         self.hw_database = config["default_config"]["init_hardware_database"]
     
+    def backup_current_config(self):
+        """Stores the current configuration in the backup 
+        database, prev_database, prev_user_id_data.
+
+        """
+        self.prev_database = copy.deepcopy(self.database)
+        self.prev_user_id_data = copy.deepcopy(self.user_id_data)
+
     def set_active_slice(self, slice):
         """Set the active slice, used for commands such as
         add_entry or delete_entry."""
@@ -82,7 +92,27 @@ class Database:
     def reset_active_slice(self):
         """Set the active slice back to the default slice."""
         self.active_slice = self.DEFAULT_ACTIVE_SLICE
-        
+
+    def find_main_slice(self, config=None, radio=DEFAULT_RADIO):
+        """Searches through a given set of slice configurations
+        for the slice containing the main_bss.
+
+        :param dict config:
+        :param str radio:
+        :rtype: string
+
+        """
+        if config == None:
+            config = dict(
+                [(k,v) for (k,v) in self.database.iteritems() 
+                    if k != "default_slice"]
+            )
+        for slice, attributes in config.iteritems():
+            for item in attributes["RadioInterfaces"]:
+                if item["flavor"] == "wifi_radio":
+                    if item["attributes"]["name"] == radio:
+                        return slice
+        return None
     def add_slice_to_user(self, user, slice):
         """Add the given slice to the user, and create
         the user if he does not exist.  Slices already
@@ -138,9 +168,11 @@ class Database:
             # Delete the slice
             self.delete_slice_from_user(user, slice)
         
-    def get_associated_slice(self, userid):
+    def get_associated_slice(self, userid, prev=False):
         """Returns a list of slices associated to the userid."""
         # Using deepcopy; same reason as below
+        if prev:
+            return copy.deepcopy(self.prev_user_id_data.get(userid))
         return copy.deepcopy(self.user_id_data[userid])
     
     def get_slice_data(self, slice):
@@ -159,6 +191,10 @@ class Database:
         the slice in question is created.  If no radio can be
         found, SliceRadioNotFound is raised.
 
+        :param string slice:
+        :rtype: string
+        :raises: exception.SliceRadioNotFound
+
         """
         radio_interfaces = self.database.get(slice, {}).get(
             "RadioInterfaces",[]
@@ -172,16 +208,31 @@ class Database:
     
     def get_slice_list(self):
         """Return a list of slices."""
-        return self.database.keys()
+        return list(k for k in self.database.keys() if k != "default_slice")
+
+    def get_slice_ssid_map(self):
+        slice_name_and_ssid = {}
+        for slice_id, slice_config in self.database.iteritems():
+            for slice_radio_config in slice_config.get(
+                        "RadioInterfaces", []
+                    ):
+                if slice_radio_config.get("flavor") == "wifi_bss":
+                    slice_name_and_ssid[slice_id] = \
+                        slice_radio_config.get("attributes", {}).get(
+                            "name"
+                        )
+        return slice_name_and_ssid
         
-    def get_user_list(self):
+    def get_user_list(self, prev=False):
         """Return a list of users."""
+        if prev:
+            return self.prev_user_id_data.keys()
         return self.user_id_data.keys()
 
-    def get_slice_user(self, slice):
+    def get_slice_user(self, slice, prev=False):
         """Finds the user that owns a specific slice."""
-        for userid in self.get_user_list():
-            for slice_ in self.get_associated_slice(self, userid):
+        for userid in self.get_user_list(prev):
+            for slice_ in self.get_associated_slice(userid, prev):
                 if slice_ == slice:
                     return userid
         raise exception.NoUserIDForSlice()
@@ -354,7 +405,7 @@ class Database:
         for entry in self.hw_database["wifi_radio"]["radio_list"]:
             if entry["name"] == radio:
                 return entry
-        raise exception.EntryNotFound(radio)
+            raise exception.EntryNotFound(radio)
         
     def hw_list_all(self, as_json=False):
         if as_json:
@@ -362,7 +413,33 @@ class Database:
         else:
             return pprint.pformat(self.hw_database)
 
-    def hw_get_bss_in_radio_entry(self, radio):
+    def hw_get_slice_id_on_radio(self, radio):
+        """Determines which slices exist on a physical radio, and lists 
+        them by slice_id.
+
+        :rtype: list 
+
+        """
         radio_entry = self.hw_get_radio_entry(radio)
-        return radio_entry.get("bss_list")
+        # print "radio_entry"
+        # print radio_entry
+
+        slice_name_and_ssid_map = self.get_slice_ssid_map()
+        slice_ssid_and_name_map = dict([(v, k) for (k, v) in 
+                slice_name_and_ssid_map.iteritems()])
+        # print json.dumps(slice_name_and_ssid_map, indent=4)
+        # print json.dumps(slice_ssid_and_name_map, indent=4)
+
+        slice_id_on_radio = []
+        for bss in radio_entry.get("bss_list", []):
+            slice_id = slice_ssid_and_name_map.get(
+                bss.get("name"), None
+            )
+            if slice_id is not None:
+                slice_id_on_radio.append(slice_id)
+
+        # print "slice_id_on_radio"
+        # print slice_id_on_radio
+
+        return slice_id_on_radio
         

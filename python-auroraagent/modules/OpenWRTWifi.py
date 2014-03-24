@@ -1,6 +1,9 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
-import subprocess, os, tempfile, exception
+import subprocess, os, inspect, tempfile
 import psutil, copy
+
+import exception
+
 
 ####
 # Implementation note: there are two 'databases', so to speak.

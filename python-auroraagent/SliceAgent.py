@@ -32,16 +32,6 @@ class SliceAgent:
         # Clean up on exit
         atexit.register(self.__reset)
 
-    def find_main_slice(self, config):
-        return self._find_main_slice(config)    
-    
-    def _find_main_slice(self, config):
-        for slice, attributes in config.iteritems():
-            for item in attributes["RadioInterfaces"]:
-                if item["flavor"] == "wifi_radio":
-                    return slice
-        return None
-    
     def create_slice(self, slice, user, config):
         """Create a slice with the given configuration.
         Will raise exceptions if errors are encountered."""
@@ -170,7 +160,6 @@ class SliceAgent:
             print "...does not exist"
             #pass
         else:
-
             # Delete all bridges
             for bridge in slice_data['VirtualBridges']:
                 try:
@@ -183,30 +172,28 @@ class SliceAgent:
                         self.tc.delete(traffic_control['attributes']['name'])
                     except:
                         print("Error: Unable to remove Qos " + traffic_control['attributes']['name'])
-
             # Delete all virtual interfaces
             for interface in slice_data['VirtualInterfaces']:
                 try:
                     self.v_interfaces.delete(interface['attributes']['name'])
                 except:
                     print("Error: Unable to delete virtual interface " + interface['attributes']['name'])
-
             # Delete wifi
             try:
                 self.wifi.delete_slice(slice_data["RadioInterfaces"])
-            except:
+            except exception.hostapdError as e:
                 # With WiFi, sometimes hostapd can take a while to be brought down
                 # and the WiFi code thinks something screwy happened since
                 # hostapd is still running when it should have been killed.
                 # Everything is OK, though, since it gets killed a few msecs later.
-                print("Error: Exception encountered deleting wifi for " + slice + ". Likely not a cause for concern.")
-
+                #print "Error: Exception encountered deleting wifi for ", + slice + ". Likely not a cause for concern.")
+                pass
+            except Exception as e:
+                traceback.print_exc(file=sys.stdout)
 
         # Delete database entry; catch errors
         try:
-            print ">>>"
             self.database.delete_slice(slice)
-            print "<<<"
         except:
             pass
         self.database.reset_active_slice()
@@ -232,8 +219,7 @@ class SliceAgent:
 
         """
         # Take a backup in case everything goes wrong
-        self.database.prev_database = self.database.database
-        self.database.prev_user_id_data = self.database.user_id_data
+        self.database.backup_current_config()
 
         self.database.set_active_slice(slice)
 
@@ -283,20 +269,20 @@ class SliceAgent:
         print "Modified slice configuration"
         print json.dumps(slice_configuration, indent=4)
 
-        # try:
-        #     if "RadioInterfaces" in config.keys():
-        #         self.wifi.modify_slice(config["RadioInterfaces"])
-        # except Exception as e:
-        #     # Restart slices using last known good configuration
-        #     print " [v] Exception: %s" % e.message
-        #     self.restart_slice(slice)
+        try:
+            if "RadioInterfaces" in config.keys():
+                self.wifi.modify_slice(config["RadioInterfaces"])
+        except Exception as e:
+            # Restart slices using last known good configuration
+            print " [v] Exception: %s" % e.message
+            self.restart_slice(slice)
 
-        #     # DEBUG
-        #     #raise
-        #     raise exception.SliceModificationFailed(
-        #         "Aborting. Unable to modify WiFi slice for %s\n%s" %
-        #         (str(slice), e.message)
-        #     )
+            # DEBUG
+            #raise
+            raise exception.SliceModificationFailed(
+                "Aborting. Unable to modify WiFi slice for %s\n%s" %
+                (str(slice), e.message)
+            )
 
         # --OLD--
         # try:
@@ -331,41 +317,57 @@ class SliceAgent:
 
         """
         userid = self.database.get_slice_user(slice)
-        main_bss = self.find_main_slice()
+        slice_radio = self.database.get_slice_radio(slice)
+        slice_config = {}
+        # Populate slice_config for slices on radio in question
+        slices_on_radio = self.database.hw_get_slice_id_on_radio(slice_radio)
+        print slices_on_radio
+        for slice_id in slices_on_radio:
+            # print slice_id
+            # print slice_config
+            # print self.database.get_slice_data(slice_id)
+            slice_config[slice_id] = self.database.get_slice_data(slice_id)
+
+
+        main_bss = self.database.find_main_slice(slice_config, slice_radio)
+
 
         print ("Restarting %s... " % slice),
         if slice == main_bss:
-            print "determined it is main_bss!"
-            slices_on_radio = self.database.hw_get_bss_in_radio_entry(
-                self.database.get_slice_radio(slice)
-            )
-
-            # All slices on the radio must be deleted, then the slice with 
-            # the main bss must be restarted first, followed by the rest.
+            print ("main bss!")
+            # All slices on the radio must be deleted, then the slice
+            # with the main bss must be restarted first, followed by 
+            # the rest.
             for slice_to_delete in slices_on_radio:
                 if slice_to_delete != slice:
                     self.delete_slice(slice_to_delete)
-
             # All slices except that with main_bss are now deleted,
             # can delete main slice
             self.delete_slice(slice)
-
             # Now all slices can once again be recreated, beginning with
             # the main_bss slice
+            print "Recreating %s" % slice
             self.recreate_slice(slice, userid)
+            slices_on_radio.remove(slice)
             for slice_to_recreate in slices_on_radio:
-                self.recreate_slice(slice_to_recreate, userid)
+                # Recreate additional slices.
+                print "Recreating %s" % slice_to_recreate
+                self.recreate_slice(slice_to_recreate)
         else:
             # Not a main_bss, simply delete the slice, and recreate it
             # from the previously stored database.
             self.delete_slice(slice)
             self.recreate_slice(slice, userid)
+        self.database.reset_active_slice()
 
-    def recreate_slice(self, slice, user):
-        if slice in self.database.prev_database.keys():
+    def recreate_slice(self, slice, user=None):
+        if (slice in self.database.prev_database.keys() and 
+                slice != "default_slice"):
+            if user is None:
+                user = self.database.get_slice_user(slice, prev=True)
             self.create_slice(slice, user, self.database.prev_database[slice])
         else:
-            raise Exception("Error: No slice configuration found for" + slice)
+            raise Exception("Error: No slice configuration found for " + slice)
 
     def remote_API(self, slice, info):
         """The remote API command accepts a specially formatted JSON
@@ -438,147 +440,8 @@ class SliceAgent:
         self.v_interfaces.reset()
         return "AP reset"
 
-def get_test_agent():
-    """Returns an initialized SliceAgent instance."""
-    init_config = {
-        "default_config": {
-            "init_hardware_database": {
-                "wifi_radio": {
-                    "number_radio_free": "0", 
-                    "max_bss_per_radio": "4", 
-                    "radio_list": [], 
-                    "number_radio": "0"
-                }, 
-                "aurora_version": "0.2", 
-                "firmware": "OpenWRT", 
-                "memory_mb": "256", 
-                "free_disk": "256", 
-                "firmware_version": "r39154"
-            }, 
-            "default_active_slice": "default_slice", 
-            "init_database": {
-                "default_slice": {
-                    "VirtualInterfaces": [], 
-                    "RadioInterfaces": [], 
-                    "VirtualBridges": []
-                }
-            }, 
-            "init_user_id_database": {
-                "default_user": [
-                    "default_slice"
-                ]
-            }
-        }
-    }
-    return SliceAgent(init_config)
-
-def test_create_slice(agent, slice, slice_config = None):
-    """Create a slice using slice_config"""
-    if slice_config is None:
-        slice_config = {
-            "RadioInterfaces": [
-                {
-                    "flavor" : "wifi_radio",
-                    "attributes" : 
-                        {
-                            "name" : "radio0",
-                            "channel" : "1",
-                            "txpower" : "20",
-                            "disabled" : "0",
-                            "country" : "CA",
-                            "hwmode" : "abg"   
-                        }
-                },
-                {
-                    "flavor" : "wifi_bss",
-                    "attributes" : 
-                        {
-                            "name" : "BCRL vSwitch",
-                            "radio" : "radio0",
-                            "if_name" : "wlan0",
-                            "encryption_type":"wep-open",
-                            "key":"23456"
-                        }
-                }
-            ],     
-            "VirtualBridges": [
-                {
-                    "flavor":"ovs",
-                    "attributes":   
-                        {
-                            "name":"vswitch-br",
-                            "interfaces":
-                                ["vwlan0","veth0"],
-                            "bridge_settings":
-                                {
-                                    "controller":"tcp:10.5.8.3",
-                                    "dpid":"00:00:00:00:00:05"
-                                },
-                            "port_settings":{}
-                        }
-                }
-            ], 
-            "VirtualInterfaces": [
-                {
-                    "flavor":"veth",
-                    "attributes": 
-                        {
-                            "attach_to":"eth0",
-                            "name":"veth0",
-                            "mac":"00:00:00:00:00:30"
-                        }
-                },
-                {
-                    "flavor":"veth",
-                    "attributes":
-                        {
-                            "attach_to":"wlan0",
-                            "name":"vwlan0",
-                            "mac":"00:00:00:00:00:31"
-                        }
-                }
-            ]
-        }
-    agent.execute(slice, "create_slice", config=slice_config, user="1")
-
-def test_modify_slice(agent, slice, slice_config=None):
-    if slice_config is None:
-        slice_config = {
-            "RadioInterfaces": [
-                {
-                    "flavor" : "wifi_bss",
-                    "attributes" : 
-                        {
-                            "name" : "BCRL vSwitch",
-                            "new_name": "BCRL new"
-                        }
-                }
-            ],
-            "VirtualBridges": [
-                {
-                    "flavor":"ovs",
-                    "attributes":   
-                        {
-                            "name":"vswitch-br",
-                            "bridge_settings":
-                                {
-                                    "controller":"tcp:10.5.8.3:9933"
-                                },
-                        }
-                }
-            ]
-        }
-    agent.execute(slice, "modify_slice", config=slice_config, user="1")
-
-def main_test():
-    slice_id = "slice1"
-    agent = get_test_agent()
-    test_create_slice(agent, slice_id)
-    print "Creation complete!"
-    time.sleep(1)
-    test_modify_slice(agent, slice_id)
-    print "Modification complete!"
-    time.sleep(1)
+def main():
+    raise Exception("main() not implemented")
 
 if __name__ == "__main__":
-    main_test()
+    main()

@@ -146,7 +146,9 @@ class Receive():
             if len(config['last_known_config']['init_database']) > 1:
                 slices_to_recreate = []
                 last_db_config = config['last_known_config']['init_database']
-                main_slice = self.agent.find_main_slice(last_db_config)
+                main_slice = self.agent.database.find_main_slice(
+                    last_db_config
+                )
                 if not main_slice:
                     print "\nError: No slice with radio profile"
                     return

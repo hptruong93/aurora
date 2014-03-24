@@ -9,7 +9,10 @@
 # and format the command line.  The current parsing is done as simple if statements,
 # but more complicated cases (i.e. optional parameters) can easily be added.
 
-import subprocess, exception
+import subprocess
+
+import exception
+
 
 class Brctl:
     """Linux bridge module

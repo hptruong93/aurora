@@ -21,8 +21,8 @@ class AuroraException(Exception):
 
         super(AuroraException, self).__init__(message)
 
-class FlavourNotExist(AuroraException):
-    message = "Flavour does not exist!"
+class FlavorNotExist(AuroraException):
+    message = "Flavor does not exist!"
     
 class ModuleNotLoaded(AuroraException):
     message = "Module not found in loaded module list."

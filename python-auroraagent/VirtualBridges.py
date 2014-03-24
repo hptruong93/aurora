@@ -2,7 +2,7 @@
 # Currently covers linux-bridge and OVS
 
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
-import json, sys, exception, copy
+import json, sys, exception, copy, os
 class VirtualBridges:
     """Virtual Bridge class.
 
@@ -10,7 +10,7 @@ class VirtualBridges:
     directed to this class. It will handle any implementation or program 
     specfic parameters necessary."""
     
-    MODULE_JSON_FILE = 'modules.json'
+    MODULE_JSON_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),'modules.json')
     MODULES_FOLDER = 'modules'
 
     def __init__(self, database):
@@ -23,35 +23,35 @@ class VirtualBridges:
         json_file.close()
         self.database = database
         
-    def __load_module(self, flavour):
+    def __load_module(self, flavor):
         
         # Cast to string - some issues with unicode?
-        flavour = str(flavour)
+        flavor = str(flavor)
         # Try returning an existing module
         try:
-            return self.__get_module(flavour)
+            return self.__get_module(flavor)
         # If that fails, load it
         except exception.ModuleNotLoaded:
             module_file = __import__(self.MODULES_FOLDER,globals(),locals(),
-                    [flavour]).__dict__[flavour]
-            module_class_name = self.metadata.get(flavour).get('class')
+                    [flavor]).__dict__[flavor]
+            module_class_name = self.metadata.get(flavor).get('class')
             module_class = getattr(module_file, module_class_name)
             module_instance = module_class(self.database)
             # Add to module list
-            self.module_list[flavour] = module_instance
+            self.module_list[flavor] = module_instance
             # Give an instance
             return module_instance
     
-    def __get_module(self,flavour):
-        if flavour in self.module_list:
-            return self.module_list[flavour]
+    def __get_module(self,flavor):
+        if flavor in self.module_list:
+            return self.module_list[flavor]
         else:
-            raise exception.ModuleNotLoaded(flavour)
+            raise exception.ModuleNotLoaded(flavor)
     
     
-    def __unload_module(self,flavour):
+    def __unload_module(self,flavor):
         try:
-            del self.module_list[flavour]
+            del self.module_list[flavor]
         # If module not loaded, ignore
         except KeyError:
             pass
@@ -60,19 +60,19 @@ class VirtualBridges:
         self.module_list.clear()
     
     def __get_module_used(self, bridge):
-        return self.module_list[self.__get_flavour(bridge)]
+        return self.module_list[self.__get_flavor(bridge)]
         
-    def __get_flavour(self, bridge):
+    def __get_flavor(self, bridge):
         return self.__get_entry(bridge)["flavor"]
     
-    def create_bridge(self, flavour, name):
-        """Create a bridge of type flavour and with the given name."""
-        if flavour not in self.metadata:
-            raise exception.FlavourNotExist(flavour)
+    def create_bridge(self, flavor, name):
+        """Create a bridge of type flavor and with the given name."""
+        if flavor not in self.metadata:
+            raise exception.FlavorNotExist(flavor)
         
         # Load module
-        print "Loading module:",flavour
-        program = self.__load_module(flavour)
+        print "Loading module:",flavor
+        program = self.__load_module(flavor)
         
         # Module should now be running and we can execute commands
         # The assumption is that we try and create a bridge before modifying one
@@ -127,9 +127,9 @@ class VirtualBridges:
         Usually, this information will be direct from the managing program."""
         # Go through each module, and get info
         info = ""
-        for flavour in self.module_list:
-            info += ("Flavour: " + flavour + "\n")
-            info += self.module_list[flavour].show()
+        for flavor in self.module_list:
+            info += ("flavor: " + flavor + "\n")
+            info += self.module_list[flavor].show()
         
         return info
         

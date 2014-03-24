@@ -20,7 +20,7 @@ class Example:
         #Kills all known instances of the virtual interface.
             
 There are some additional requirements not (explicitly) mentioned above.  These are:
--   The file name must match that of the flavour sent to the create() function
+-   The file name must match that of the flavor sent to the create() function
     in the Virtual Interfaces class.
 -   The class name must be specified in the modules.json file.
 -   The class must keep track of all interfaces/instances it creates.

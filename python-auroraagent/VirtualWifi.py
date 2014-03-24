@@ -1,5 +1,5 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
-import json
+import json, os
 
 class VirtualWifi:
     """Responsible for configuring the WiFi radio interfaces of a device.
@@ -12,7 +12,7 @@ class VirtualWifi:
     # - Virtual Wifi - is responsible for updating the higher level
     # database, in the same league as VirtualBridges or VirtualInterfaces.
     
-    MODULE_JSON_FILE = 'modules.json'
+    MODULE_JSON_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),'modules.json')
     MODULES_FOLDER = 'modules'
 
 
@@ -28,14 +28,14 @@ class VirtualWifi:
         json_file.close()
         
         
-    def __load_module(self, flavour, metadata):
+    def __load_module(self, flavor, metadata):
         
         # Cast to string - some issues with unicode?  Also, append Wifi to name
-        flavour = str(flavour) + "Wifi"
+        flavor = str(flavor) + "Wifi"
         
         module_file = __import__(self.MODULES_FOLDER,globals(),locals(),
-                [flavour]).__dict__[flavour]
-        module_class_name = metadata[flavour]['class']
+                [flavor]).__dict__[flavor]
+        module_class_name = metadata[flavor]['class']
         
         module_class = getattr(module_file, module_class_name)
         module_instance = module_class(self.database)
@@ -92,14 +92,27 @@ class VirtualWifi:
         self.wifi.apply_changes()
     
     def modify_slice(self, configuration):
-        """Modifies BSS parameters specified, without restarting any radios.
-        Modification of radios requires the use of delete/create."""
+        """Modifies BSS parameters specified, without restarting any 
+        radios. Modification of radios requires the use of 
+        delete/create. 
+
+        TODO(mike): Determine whether it is possible to change network 
+        SSID without restarting a radio.  If not, slice modification of 
+        SSID will require extra special care - modifying the main bss 
+        would be a special case and require a different procedure than
+        for an auxiliary slice.
+
+        :param dict configuration:
+
+        """
         # raise Exception("Modify for WiFi not implemented.")
         for interface in configuration:
             # Only BSS parameters are allowed
-            if interface["flavour"] == "wifi_bss":
+            if interface["flavor"] == "wifi_bss":
                 # TODO(mike)
+                #self.wifi.
                 pass
+            # self.database.replace_entry("RadioInterfaces", )
 
     # TODO(mike)!!!
     # def restart_slice(self
