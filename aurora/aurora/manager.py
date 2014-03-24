@@ -4,6 +4,7 @@
 import json
 import logging
 from pprint import pprint, pformat
+import prettytable
 import sys
 import time
 import traceback
