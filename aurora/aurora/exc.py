@@ -75,3 +75,9 @@ class RequestInvalidConfigFileNameException(AuroraException):
 #
 class InvalidCapsulatorConfigurationException(AuroraException):
     message = "The capsulator configuration given is invalid"
+
+#---------
+# Manager related exceptions
+#
+class NoSliceConfigFileException(AuroraException):
+    message = "No slice configuration file found"

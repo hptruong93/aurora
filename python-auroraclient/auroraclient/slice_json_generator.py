@@ -42,7 +42,7 @@ class SliceJsonGenerator():
                 exitLoop = True
                 # Dump to JSON file
                 try:
-                   ## print "the file name is " + filename
+                    print "the file name is " + filename
                     self.JFILE = open(filename, "w")
                 except IOError:
                     print('Error opening file for writing!')

@@ -19,6 +19,7 @@ import json
 import os
 from pprint import pprint
 import sys
+import traceback
 
 #from keystoneclient.v2_0 import client as ksclient #commented in order to compile locally
 
@@ -26,6 +27,7 @@ from auroraclient import json_sender
 from auroraclient import slice_json_generator
 
 CLIENT_DIR = os.path.dirname(os.path.abspath(__file__))
+CLIEN_JSON_DIR =  os.path.join(CLIENT_DIR, 'json')
 
 class AuroraArgumentParser(argparse.ArgumentParser):
     
@@ -37,7 +39,7 @@ class AuroraArgumentParser(argparse.ArgumentParser):
         
         # Load the JSON file
         try:
-            with open(os.path.join(CLIENT_DIR, 'json/shell.json'), 'r') as JFILE:
+            with open(os.path.join(CLIEN_JSON_DIR, 'shell.json'), 'r') as JFILE:
                 commands = json.load(JFILE)[0]
         except:
             print('Error loading json file!')
@@ -105,26 +107,40 @@ class AuroraConsole():
         if(len(argv) < 2):
             print('Error! Unexpected number of arguments.')
         else:
-            function = argv[1] #Used for attrs function call
+            function = argv[1] # Used for attrs function call
+            manager_addr = os.environ.get("AURORA_MANAGER_HOST", "localhost")
+
             parser = AuroraArgumentParser()
             params = vars(parser.base_parser().parse_args(argv[1:]))
+
             print 'function: %s' % function
+
             #For add-slice and modify, we need to load the JSON file
             if function == 'ap-slice-create' or function == 'ap-slice-modify':
-                if not params['file']:
-                    if not params['hint']:   # once the hint tag is also missing, the command is not legit                  
-                        print 'Please Specify a file argument!'
-                        return
-                else:
-                    try:
-                        JFILE = open(os.path.join(CLIENT_DIR, 'json', params['file'][0]), 'r')
-                        #print JFILE
-                        file_content = json.load(JFILE)
-                        params['file'] = file_content
-                        JFILE.close()
-                    except:
-                        print('Error loading json file!')
-                        sys.exit(-1)
+                if not (params['file'] or params['hint']):                
+                    print 'Please specify a file argument or hint!'
+                    return
+                elif params['hint'] and not params['file']:
+                    # Generate a json for use
+                    GEN_JSON_FNAME = 'gen_config.json'
+                    GEN_JSON_FPATH = os.path.join(CLIEN_JSON_DIR, GEN_JSON_FNAME)
+
+                    self.slice_json_generator = \
+                        slice_json_generator.SliceJsonGenerator(
+                            GEN_JSON_FPATH,
+                            1,1,1
+                    ) # Initialize the slice_json_generator
+                    params['file'] = [GEN_JSON_FPATH,]
+                    
+                try:
+                    JFILE = open(os.path.join(CLIENT_DIR, 'json', params['file'][0]), 'r')
+                    #print JFILE
+                    file_content = json.load(JFILE)
+                    params['file'] = file_content
+                    JFILE.close()
+                except:
+                    print('Error loading json file!')
+                    sys.exit(-1)
             #Authenticate
 
 #            try:
@@ -132,7 +148,7 @@ class AuroraConsole():
 #            except:
 #                print 'Invalid Credentials!'
 #                sys.exit(-1)       
-            if 'hint' in params: #--"hint" token, store params['file'] for the third sent
+            if params.get('hint') is not None: #--"hint" token, store params['file'] for the third sent
                 store = params['file'] 
                 params['file']= None
                 
@@ -149,11 +165,13 @@ class AuroraConsole():
             ##END DEBUG
             
             if to_send: #--help commands will not start the server
-                json_sender.JSONSender().send_json('http://localhost:5554', to_send) # change back to 132.206.206.133:5554
-                self.slice_json_generator = slice_json_generator.SliceJsonGenerator('shell.json',1,1,1); # Initialize the slice_json_generator
+                json_sender.JSONSender().send_json('http://%s:5554' % manager_addr, to_send) # change back to 132.206.206.133:5554
 
             try:
-                if "location" in params['hint'] or "location,slice-load" in params['hint']: # Once the token is 'hint', wait for users' reply
+                arg_hint = params.get('hint')
+                if arg_hint is None:
+                    sys.exit(0)
+                if "location" in arg_hint or "location,slice-load" in arg_hint: # Once the token is 'hint', wait for users' reply
                     exitLoop = False
                     while not exitLoop:
                         print "Please Enter the location where the AP you want to access:"
@@ -179,8 +197,8 @@ class AuroraConsole():
                             #pprint(to_send)
                             ##END DEBUG
                             
-                            if to_send: #--help commands will not start the server
-                                message = json_sender.JSONSender().send_json('http://localhost:5554', to_send) # change back to 132.206.206.133:5554
+                            if to_send:
+                                message = json_sender.JSONSender().send_json('http://%s:5554' % manager_addr, to_send) # change back to 132.206.206.133:5554
 
                                 if 'openflow' in message.lower(): # Restore params['file'] and clean up params['hint'] to create a slice
                                     params['file'] = store
@@ -196,15 +214,16 @@ class AuroraConsole():
                                         'user_id':os.environ.get("AURORA_USER", -1),
                                     }
                                     pprint(to_send)
-                                    if to_send: #--help commands will not start the server
-                                        message = json_sender.JSONSender().send_json('http://localhost:5554', to_send) # change back to 132.206.206.133:5554
+                                    if to_send:
+                                        message = json_sender.JSONSender().send_json('http://%s:5554' % manager_addr, to_send) # change back to 132.206.206.133:5554
 
                                         
                             exitLoop = True;
                         else:
                             exitLoop = True;
                             print "Invalid information"
-            except:
+            except Exception as e:
+                traceback.print_exc(file=sys.stdout)
                 print "Finshed the current statement"
                     
             
