@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+#
+# source aurorarc [tenant_id] [project_id] [user_id] [aurora_manager_addr]
+#
+# Configure a set of credentials for tenant
+
+if [[ -n "$1" ]]; then
+    AURORA_TENANT=$1
+fi
+if [[ -n "$2" ]]; then
+    AURORA_PROJECT=$2
+fi
+if [[ -n "$3" ]]; then
+    AURORA_USER=$3
+fi
+if [[ -n "$4" ]]; then
+    AURORA_MANAGER_HOST=$4
+fi
+
+export AURORA_TENANT=${AURORA_TENANT:--1}
+export AURORA_PROJECT=${AURORA_PROJECT:--1}
+export AURORA_USER=${AURORA_USER:--1}
+export AURORA_MANAGER_HOST=${AURORA_MANAGER_HOST:-localhost}
