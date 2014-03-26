@@ -386,17 +386,19 @@ class Manager(object):
                 message += err.message
                 continue
 
-            config_create = {
+            config_restart = {
                 "slice":ap_slice_id, 
-                "command":"create_slice", 
-                "user":user_id, 
+                "command":"restart_slice", 
                 "config":config,
             }
 
-            # Passed all checks, delete slice from existing ap and create on new one
-            self.dispatcher.dispatch(config_delete, ap_name)
-            self.aurora_db.ap_slice_status_pending(ap_slice_id)
-            self.dispatcher.dispatch(config_create, ap_name)
+            # Passed all checks, restart slice
+            self.aurora_db.ap_slice_update_time_stats(ap_slice_id=ap_slice_id)
+            try:
+                self.aurora_db.ap_slice_status_pending(ap_slice_id)
+            except InvalidStatusUpdate as e:
+                self.LOGGER.warn(e.message)
+            self.dispatcher.dispatch(config_restart, ap_name)
             message += "Restarted %s on %s" % (ap_slice_id, ap_name)
 
         response = {

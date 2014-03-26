@@ -6,9 +6,11 @@ import logging
 import os
 from pprint import pprint
 import sys
+import traceback
 
 from aurora import cls_logger
 from aurora import manager
+from aurora.exc import *
 
 LOGGER = logging.getLogger(__name__)
 
@@ -73,10 +75,12 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         
         #Send to manager.py
         #Format of response: {"status":(true of false) ,"message":"string if necessary"}
+
         response = NewConnectionHandler.MANAGER.parseargs(
                 function, parameters, tenant_id,
                 user_id, project_id
         )
+
 
         #Save response to file
         with open(os.path.join(CLIENT_DIR, 'json/response.json'), 'w') as RESPONSE_FILE: 
@@ -136,8 +140,8 @@ def main():
         msrvr = ManagerServer(server_address, handler_class)
         LOGGER.info("Starting webserver...")
         msrvr.serve_forever()
-
-    except KeyboardInterrupt:
+        
+    except KeyboardInterrupt, KeyboardInterruptStopEvent:
         LOGGER.info("Shutting down webserver...")
         msrvr.server_close()
     except Exception:

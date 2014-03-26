@@ -208,7 +208,7 @@ class AuroraDB(object):
         """
         self.LOGGER.debug("Updating time stats for %s", (ap_slice_id or ap_name))
         if ap_name is not None:
-            slice_list = self.get_physical_ap_slices(ap_name)
+            slice_list = self.get_physical_ap_slices(ap_name, not_deleted_only=True)
         else:
             slice_list = [ap_slice_id]
         self.LOGGER.debug("slice list: %s", slice_list)
@@ -356,6 +356,12 @@ class AuroraDB(object):
 
                 if num_results == 1:
                     status = db.fetchone()[0]
+                    if status == 'FAILED':
+                        try:
+                            self.ap_slice_status_pending(ap_slice_id)
+                            status = 'PENDING'
+                        except AuroraException as e:
+                            self.LOGGER.warn(e.message)
                     if (status != 'ACTIVE' and
                             status != 'PENDING' and
                             status != 'DOWN'):
@@ -369,12 +375,13 @@ class AuroraDB(object):
                     db.execute(to_execute)
         except mdb.Error as e:
             traceback.print_exc(file=sys.stdout)
+        return True
 
     def ap_slice_status_pending(self, ap_slice_id):
         """Sets status to 'PENDING' for given ap_slice_id.
 
         :param str ap_slice_id: Slice ID to set
-        :raises: InvalidPENDINGStatusUpdate
+        :raises: InvalidPENDINGStatusUpdate, DOWNtoPENDINGStatusUpdateWarning
 
         """
         try:
@@ -384,6 +391,10 @@ class AuroraDB(object):
 
                 if num_results == 1:
                     status = db.fetchone()[0]
+                    if status == 'DOWN':
+                        raise DOWNtoPENDINGStatusUpdateWarning(
+                            ap_slice_id=ap_slice_id
+                        )
                     if (status != 'ACTIVE' and
                             status != 'FAILED' and
                             status != 'PENDING'):
@@ -397,6 +408,7 @@ class AuroraDB(object):
                     db.execute(to_execute)
         except mdb.Error as e:
             traceback.print_exc(file=sys.stdout)
+        return True
 
     def ap_syn_clean_deleting_status(self, ap_name):
         """Invoked when manager receives a SYN message from an
@@ -437,6 +449,9 @@ class AuroraDB(object):
         now = datetime.datetime.now()
         try:
             with self._database_connection() as db:
+                db.execute("""SELECT status FROM ap_slice
+                                  WHERE ap_slice_id='%s'""" % ap_slice_id)
+                self.LOGGER.debug("status = %s", db.fetchone()[0])
                 if success:
                     to_execute = ("""UPDATE metering, ap_slice SET 
                                          metering.last_time_activated=
@@ -453,11 +468,15 @@ class AuroraDB(object):
                                              NULL
                                          WHERE 
                                              metering.ap_slice_id='%s' AND
+                                             ap_slice.ap_slice_id='%s' AND
                                              ap_slice.physical_ap='%s'""" %
-                                     (now, now, ap_slice_id, ap_name)
+                                     (now, now, ap_slice_id, ap_slice_id, ap_name)
                                  )
                     self.LOGGER.debug(to_execute)
                     db.execute(to_execute)
+                db.execute("""SELECT last_time_activated FROM metering 
+                                  WHERE ap_slice_id='%s'""" % ap_slice_id)
+                self.LOGGER.debug("new last_time_activated = %s", db.fetchone()[0])
         except mdb.Error as e:
             traceback.print_exc(file=sys.stdout)
 
@@ -877,14 +896,23 @@ class AuroraDB(object):
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
 
-    def get_physical_ap_slices(self, ap_name):
+    def get_physical_ap_slices(self, ap_name, not_deleted_only=False):
         try:
             with self._database_connection() as db:
-                to_execute = ("""SELECT ap_slice_id
-                                     FROM ap_slice
-                                     WHERE physical_ap='%s'""" %
-                                 (ap_name)
-                             )
+                if not_deleted_only:
+                    to_execute = ("""SELECT ap_slice_id
+                                         FROM ap_slice
+                                         WHERE physical_ap='%s' AND 
+                                             status<>'DELETED' AND
+                                             status<>'DELETING'""" %
+                                     (ap_name)
+                                 )
+                else:
+                    to_execute = ("""SELECT ap_slice_id
+                                         FROM ap_slice
+                                         WHERE physical_ap='%s'""" %
+                                     (ap_name)
+                                 )
                 db.execute(to_execute)
                 result = db.fetchall()
                 slice_list = []

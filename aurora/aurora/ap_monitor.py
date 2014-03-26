@@ -90,6 +90,7 @@ class APMonitor(object):
             poller_thread = self.poller_threads.pop(ap_name)
             self.LOGGER.debug("Stopping thread %s %s", ap_name, poller_thread)
             poller_thread.stop()
+            poller_thread.join()
 
     def process_response(self, channel, method, props, body):
         """Processes any responses it sees, checking to see if the
@@ -161,8 +162,12 @@ class APMonitor(object):
 
             #ap_slice_list = map(lambda slice_: slice_ in config['init_database'].keys() if slice_ != 'default_slice')
             # self.LOGGER.debug("Test map %s", test_map)
+            self.aurora_db.ap_syn_clean_deleting_status(ap_name)
             for ap_slice_id in (ap_slice_id for ap_slice_id in config['init_database'].keys() if ap_slice_id != 'default_slice'):
-                self.aurora_db.ap_slice_status_up(ap_slice_id)
+                try:
+                    self.aurora_db.ap_slice_status_up(ap_slice_id)
+                except AuroraException as e:
+                    self.LOGGER.warn(e.message)
             self.start_poller(ap_name)
             return
 
@@ -217,13 +222,16 @@ class APMonitor(object):
         # Regardless of content of message, acknowledge receipt of it
         channel.basic_ack(delivery_tag = method.delivery_tag)
 
-    def timeout(self, ap_slice_id, ap_name, message_uuid = None):
+    def timeout(self, ap_slice_id, ap_name, message_uuid=None):
         """This code will execute when a response is not
         received for the command associated with the unique_id
         after a certain time period.  It modifies the database
         to reflect the current status of the AP.
 
         """
+        self.LOGGER.warn("A message timeout occured for %s (%s) %s",
+                         ap_name, ap_slice_id, 
+                         message_uuid if message_uuid is not None else '')
         if message_uuid is not None:
             # dispatcher = self.dispatcher_ref()
             # if dispatcher is None:

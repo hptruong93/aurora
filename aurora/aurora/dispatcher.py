@@ -2,6 +2,7 @@
 import json
 import logging
 from pprint import pprint, pformat
+import signal
 import sys
 import threading
 import traceback
@@ -14,9 +15,10 @@ import pika
 from aurora.cls_logger import get_cls_logger
 from aurora.ap_provision import writer as provision
 from aurora.stop_thread import *
+from aurora.exc import *
 
 PIKA_LOGGER = logging.getLogger('pika')
-PIKA_LOGGER.setLevel(logging.WARNING)
+PIKA_LOGGER.setLevel(logging.INFO)
 LOGGER = logging.getLogger(__name__)
 
 
@@ -25,7 +27,7 @@ class Dispatcher(object):
     lock = None
     TIMEOUT = 30
     dispatch_count = 0
-
+    status_closing = False
     def __init__(self, host, username, password, mysql_username, mysql_password, aurora_db):
         """Establishes the connection to RabbitMQ and sets up the queues"""
         self.LOGGER = get_cls_logger(self)
@@ -67,6 +69,7 @@ class Dispatcher(object):
         self._start_connection()
 
     def _start_connection(self):
+        self.channel = None
         credentials = pika.PlainCredentials(self.username, self.password)
         self.connection = pika.SelectConnection(pika.ConnectionParameters(
                                                     host=self.host,
@@ -82,7 +85,13 @@ class Dispatcher(object):
     def _stop_connection(self):
         self._stop_all_request_sent_timers()
         try:
+            con_open = True
+            del self.channel 
+            self.LOGGER.warn("Connection state: %s",
+                             self.connection.connection_state)
+            Dispatcher.status_closing = True
             self.connection.close()
+            Dispatcher.lock = False
         except AttributeError as e:
             self.LOGGER.debug("Connection already closed...")
             
@@ -91,19 +100,38 @@ class Dispatcher(object):
         self.LOGGER.info("Channel has died, restarting...")
         self._stop_connection()
         self.listener.join()
+
+        # Dispatcher.lock = False
         printed_waiting = False
-        while self.connection.is_open or self.channel.is_open:
+
+        while True:
             if not printed_waiting:
                 self.LOGGER.info("Waiting for channel to close...")
                 printed_waiting = True
+            
+            try:
+                if self.connection.is_closed:
+                    self.LOGGER.debug("Connection closed...")
+                    break
+            except AttributeError as e:
+                self.LOGGER.debug("Connection closed (doesn't exist)...")
+                break
             time.sleep(1)
+
         self.restarting_connection = True
+        self.LOGGER.info("Starting new connection...")
         self._start_connection()
         printed_waiting = False
-        while not (self.connection.is_open and self.channel.is_open):
+        while True:
             if not printed_waiting:
                 self.LOGGER.info("Waiting for channel to open...")
                 printed_waiting = True
+            try:
+                if self.connection.is_open and self.channel.is_open:
+                    break
+            except AttributeError as e:
+                pass
+            # Channel is not up again yet
             time.sleep(1)
         self.LOGGER.info("Channel back up, dispatching...")
 
@@ -118,6 +146,7 @@ class Dispatcher(object):
 
     def channel_open(self, new_channel):
         self.channel = new_channel
+        Dispatcher.status_closing = False
         response = self.channel.queue_declare(durable=True, 
                                               callback=self.on_queue_declared)
 
@@ -143,23 +172,28 @@ class Dispatcher(object):
     def _stop_pika_channel_open_monitor(self):
         self.LOGGER.info("Stopping pika monitor thread %s", self._pika_monitor_thread)
         self._pika_monitor_thread.stop()
+        self._pika_monitor_thread.join()
 
     def _pika_monitor_loop(self, stop_event=None):
         while not stop_event.is_set():
-            if (not hasattr(self, 'connection') or not hasattr(self, 'channel') or
-                    not self.connection.is_open or not self.channel.is_open):
-                # One of self.connection or self.channel doesn't exist, restart
-                self.LOGGER.warn("Pika connection down, restarting")
+            try:
+                if not (self.connection.is_open and self.channel.is_open):
+                    self.LOGGER.warn("Pika connection down, restarting")
+                    self._restart_connection()
+                    self.LOGGER.warn("Continuing pika_monitor loop")
+            except AttributeError:
+                self.LOGGER.warn("Connection doesn't exist, restarting")
                 self._restart_connection()
                 self.LOGGER.warn("Continuing pika_monitor loop")
-            else:
-                time.sleep(0.5)
+
+            time.sleep(0.5)
 
 
     def dispatch(self, config, ap, unique_id=None):
         """Send data to the specified queue.
         Note that the caller is expected to set database
         properties such as status."""
+
         # Create unique_id if none exists
         if unique_id is None:
             unique_id = "%s-%s" % (ap, str(uuid.uuid4()))
@@ -168,6 +202,7 @@ class Dispatcher(object):
 
         # Convert JSON to string
         message = json.dumps(config)
+        self.LOGGER.debug(message)
 
         # Send JSON
         # We attach a reply_to and correlation ID to tell the AP to send a message to the queue we create (randomly generated name) at init
@@ -179,13 +214,22 @@ class Dispatcher(object):
             while Dispatcher.lock:
                 time.sleep(0.1)
                 pass
+
+        if Dispatcher.status_closing:
+            raise MessageSendAttemptWhileClosing()
+
         self.LOGGER.debug("Locking...")
         Dispatcher.lock = True
 
         # Dispatch, catch if no channel exists
-        while not self.connection.is_open or not self.channel.is_open:
-            time.sleep(0.5)
-
+        while True:
+            try:
+                if self.connection.is_open and self.channel.is_open:
+                    break
+            except AttributeError:
+                pass
+            time.sleep(0.25)
+        die_by_kb = False
         try:
             self.channel.basic_publish(exchange='', routing_key=ap, body=message, properties=pika.BasicProperties(reply_to = self.callback_queue, correlation_id = unique_id, content_type="application/json"))
         except IndexError as e:
@@ -198,6 +242,8 @@ class Dispatcher(object):
                 self._stop_connection()
             except Exception:
                 traceback.print_exc(file=sys.stdout)
+        except KeyboardInterrupt:
+            die_by_kb = True
         except Exception as e:
             # A more serious error occured
             traceback.print_exc(file=sys.stdout)
@@ -223,6 +269,8 @@ class Dispatcher(object):
 
         self.LOGGER.debug("Unlocking...")
         Dispatcher.lock = False
+        if die_by_kb:
+            raise KeyboardInterrupt()
 
     def get_open_channel(self):
         if self.channel.is_open:
@@ -236,8 +284,8 @@ class Dispatcher(object):
         #self.apm.stop()
         self._stop_pika_channel_open_monitor()
         self._stop_connection()
+
         del self.connection
-        del self.channel
         del self.listener
         del self.timeout_callback
         del self.response_callback

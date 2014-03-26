@@ -49,6 +49,9 @@ class InvalidPENDINGStatusUpdate(InvalidStatusUpdate):
 class InvalidACTIVEStatusUpdate(InvalidStatusUpdate):
     message = "Cannot change status %(status)s to 'ACTIVE'"
 
+class DOWNtoPENDINGStatusUpdateWarning(InvalidStatusUpdate):
+    message = "Slice %(ap_slice_id)s is 'DOWN', not updating to 'PENDING'"
+
 #---------
 # Aurora DB related exceptions
 #
@@ -81,3 +84,12 @@ class InvalidCapsulatorConfigurationException(AuroraException):
 #
 class NoSliceConfigFileException(AuroraException):
     message = "No slice configuration file found"
+
+class KeyboardInterruptStopEvent(Exception):
+    message = "Stopping webserver"
+
+#---------
+# Dispatcher related exceptions
+#
+class MessageSendAttemptWhileClosing(AuroraException):
+    message = "Tried to dispatch while dispatcher is closing"
