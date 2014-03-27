@@ -1,0 +1,220 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>auroraagent.test.SliceAgent_test &mdash; auroraagent  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="auroraagent  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">auroraagent  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for auroraagent.test.SliceAgent_test</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">importlib</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="c"># Since this file is for testing, add subdirectories to python path.</span>
+<span class="c"># This lets them run without issue without using relative imports.</span>
+<span class="n">cmd_folder</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">getfile</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">currentframe</span><span class="p">()))[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+<span class="k">if</span> <span class="n">cmd_folder</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cmd_folder</span><span class="p">)</span>
+
+<span class="n">cmd_subfolder</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">getfile</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">currentframe</span><span class="p">()))[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="s">&quot;..&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+<span class="k">if</span> <span class="n">cmd_subfolder</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cmd_subfolder</span><span class="p">)</span>
+
+<span class="n">cmd_subfolder</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">getfile</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">currentframe</span><span class="p">()))[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="s">&quot;..&quot;</span><span class="p">,</span>
+            <span class="s">&quot;modules&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+<span class="k">if</span> <span class="n">cmd_subfolder</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cmd_subfolder</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">conf</span>
+<span class="kn">from</span> <span class="nn">SliceAgent</span> <span class="kn">import</span> <span class="n">SliceAgent</span>
+
+
+<div class="viewcode-block" id="print_databases"><a class="viewcode-back" href="../../../auroraagent.test.html#auroraagent.test.SliceAgent_test.print_databases">[docs]</a><span class="k">def</span> <span class="nf">print_databases</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">tag</span><span class="p">:</span>
+        <span class="k">print</span> <span class="n">tag</span>
+    <span class="k">print</span> <span class="s">&quot;Database&quot;</span>
+    <span class="k">print</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">agent</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">database</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s">&quot;Previous Database&quot;</span>
+    <span class="k">print</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">agent</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">prev_database</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="get_test_agent"><a class="viewcode-back" href="../../../auroraagent.test.html#auroraagent.test.SliceAgent_test.get_test_agent">[docs]</a><span class="k">def</span> <span class="nf">get_test_agent</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns an initialized SliceAgent instance.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">SliceAgent</span><span class="p">(</span><span class="n">conf</span><span class="o">.</span><span class="n">AGENT_INIT_CONFIG</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="test_create_slice"><a class="viewcode-back" href="../../../auroraagent.test.html#auroraagent.test.SliceAgent_test.test_create_slice">[docs]</a><span class="k">def</span> <span class="nf">test_create_slice</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="nb">slice</span><span class="p">,</span> <span class="n">slice_config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a slice using slice_config&quot;&quot;&quot;</span>
+    <span class="n">agent</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="nb">slice</span><span class="p">,</span> <span class="s">&quot;create_slice&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">slice_config</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="s">&quot;1&quot;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="test_modify_slice"><a class="viewcode-back" href="../../../auroraagent.test.html#auroraagent.test.SliceAgent_test.test_modify_slice">[docs]</a><span class="k">def</span> <span class="nf">test_modify_slice</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="nb">slice</span><span class="p">,</span> <span class="n">slice_config</span><span class="o">=</span><span class="n">conf</span><span class="o">.</span><span class="n">DEFAULT_MODIFY_CONFIG_MAIN_R0</span><span class="p">):</span>
+    <span class="n">agent</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="nb">slice</span><span class="p">,</span> <span class="s">&quot;modify_slice&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">slice_config</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="s">&quot;1&quot;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="test_restart_slice"><a class="viewcode-back" href="../../../auroraagent.test.html#auroraagent.test.SliceAgent_test.test_restart_slice">[docs]</a><span class="k">def</span> <span class="nf">test_restart_slice</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+    <span class="n">agent</span><span class="o">.</span><span class="n">restart_slice</span><span class="p">(</span><span class="nb">slice</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="main_test_create"><a class="viewcode-back" href="../../../auroraagent.test.html#auroraagent.test.SliceAgent_test.main_test_create">[docs]</a><span class="k">def</span> <span class="nf">main_test_create</span><span class="p">():</span>
+    <span class="n">slice_id</span> <span class="o">=</span> <span class="s">&quot;slice1&quot;</span>
+    <span class="n">agent</span> <span class="o">=</span> <span class="n">get_test_agent</span><span class="p">()</span>
+    <span class="n">test_create_slice</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="n">slice_id</span><span class="p">,</span> <span class="n">conf</span><span class="o">.</span><span class="n">MAIN_SLICE_CONFIG_R0</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s">&quot;Creation complete!&quot;</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="k">del</span> <span class="n">agent</span>
+</div>
+<div class="viewcode-block" id="main_test_create_and_modify"><a class="viewcode-back" href="../../../auroraagent.test.html#auroraagent.test.SliceAgent_test.main_test_create_and_modify">[docs]</a><span class="k">def</span> <span class="nf">main_test_create_and_modify</span><span class="p">():</span>
+    <span class="n">slice_id</span> <span class="o">=</span> <span class="s">&quot;slice1&quot;</span>
+    <span class="n">agent</span> <span class="o">=</span> <span class="n">get_test_agent</span><span class="p">()</span>
+    <span class="n">test_create_slice</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="n">slice_id</span><span class="p">,</span> <span class="n">conf</span><span class="o">.</span><span class="n">MAIN_SLICE_CONFIG_R0</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s">&quot;Creation complete!&quot;</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">test_modify_slice</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="n">slice_id</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s">&quot;Modification complete!&quot;</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">del</span> <span class="n">agent</span>
+</div>
+<div class="viewcode-block" id="main_test_create_and_restart_1"><a class="viewcode-back" href="../../../auroraagent.test.html#auroraagent.test.SliceAgent_test.main_test_create_and_restart_1">[docs]</a><span class="k">def</span> <span class="nf">main_test_create_and_restart_1</span><span class="p">():</span>
+    <span class="n">slice_id</span> <span class="o">=</span> <span class="s">&quot;slice1&quot;</span>
+    <span class="n">agent</span> <span class="o">=</span> <span class="n">get_test_agent</span><span class="p">()</span>
+    <span class="n">test_create_slice</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="n">slice_id</span><span class="p">,</span> <span class="n">conf</span><span class="o">.</span><span class="n">MAIN_SLICE_CONFIG_R0</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s">&quot;Creation complete!&quot;</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">agent</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">backup_current_config</span><span class="p">()</span>
+
+    <span class="n">test_restart_slice</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="n">slice_id</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s">&quot;Restarted </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">slice_id</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+    <span class="k">del</span> <span class="n">agent</span>
+</div>
+<div class="viewcode-block" id="main_test_create_and_restart_2"><a class="viewcode-back" href="../../../auroraagent.test.html#auroraagent.test.SliceAgent_test.main_test_create_and_restart_2">[docs]</a><span class="k">def</span> <span class="nf">main_test_create_and_restart_2</span><span class="p">():</span>
+    <span class="c"># Create slice 1 - MAIN</span>
+    <span class="n">slice_id</span> <span class="o">=</span> <span class="s">&quot;slice1&quot;</span>
+    <span class="n">agent</span> <span class="o">=</span> <span class="n">get_test_agent</span><span class="p">()</span>
+    <span class="n">test_create_slice</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="n">slice_id</span><span class="p">,</span> <span class="n">conf</span><span class="o">.</span><span class="n">MAIN_SLICE_CONFIG_R0</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s">&quot;Creation complete (</span><span class="si">%s</span><span class="s">)!&quot;</span> <span class="o">%</span> <span class="n">slice_id</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c"># Create slice 2 - SECOND</span>
+    <span class="n">slice_id</span> <span class="o">=</span> <span class="s">&quot;slice2&quot;</span>
+    <span class="n">test_create_slice</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="n">slice_id</span><span class="p">,</span> <span class="n">conf</span><span class="o">.</span><span class="n">SECOND_SLICE_CONFIG_R0</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s">&quot;Creation complete (</span><span class="si">%s</span><span class="s">)!&quot;</span> <span class="o">%</span> <span class="n">slice_id</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">agent</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">backup_current_config</span><span class="p">()</span>
+
+    <span class="n">test_restart_slice</span><span class="p">(</span><span class="n">agent</span><span class="p">,</span> <span class="s">&quot;slice1&quot;</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s">&quot;Restarted </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">slice_id</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+
+
+    <span class="k">del</span> <span class="n">agent</span>
+</div>
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../auroraagent.test.html#auroraagent.test.SliceAgent_test.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">main_test_create_and_restart_1</span><span class="p">()</span>
+</div>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">auroraagent  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Author.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

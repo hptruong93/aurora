@@ -1,0 +1,215 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>auroraagent.VirtualWifi &mdash; auroraagent  documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="auroraagent  documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">auroraagent  documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for auroraagent.VirtualWifi</h1><div class="highlight"><pre>
+<span class="c"># SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith</span>
+<span class="kn">import</span> <span class="nn">json</span><span class="o">,</span> <span class="nn">os</span>
+
+<div class="viewcode-block" id="VirtualWifi"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.VirtualWifi.VirtualWifi">[docs]</a><span class="k">class</span> <span class="nc">VirtualWifi</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Responsible for configuring the WiFi radio interfaces of a device.</span>
+<span class="sd">    Abstracts away implementation specific code.&quot;&quot;&quot;</span>
+    
+    <span class="c">###</span>
+    <span class="c"># Note re database: OpenWRTWifi (or other implementation)</span>
+    <span class="c"># fills in/updates/uses the HARDWARE database, being low-level.</span>
+    <span class="c"># It does not care about slices. Instead, this class</span>
+    <span class="c"># - Virtual Wifi - is responsible for updating the higher level</span>
+    <span class="c"># database, in the same league as VirtualBridges or VirtualInterfaces.</span>
+    
+    <span class="n">MODULE_JSON_FILE</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">__file__</span><span class="p">)),</span><span class="s">&#39;modules.json&#39;</span><span class="p">)</span>
+    <span class="n">MODULES_FOLDER</span> <span class="o">=</span> <span class="s">&#39;modules&#39;</span>
+
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">database</span><span class="p">):</span>
+
+        <span class="c"># Load database</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        
+        <span class="c"># Load correct implementation of Wifi, depending</span>
+        <span class="c"># on current OS</span>
+        <span class="n">json_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MODULE_JSON_FILE</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wifi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__load_module</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">hw_get_firmware_name</span><span class="p">(),</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">json_file</span><span class="p">)[</span><span class="s">&quot;VirtualWifi&quot;</span><span class="p">])</span>
+        <span class="n">json_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        
+        
+    <span class="k">def</span> <span class="nf">__load_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flavor</span><span class="p">,</span> <span class="n">metadata</span><span class="p">):</span>
+        
+        <span class="c"># Cast to string - some issues with unicode?  Also, append Wifi to name</span>
+        <span class="n">flavor</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">flavor</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;Wifi&quot;</span>
+        
+        <span class="n">module_file</span> <span class="o">=</span> <span class="nb">__import__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MODULES_FOLDER</span><span class="p">,</span><span class="nb">globals</span><span class="p">(),</span><span class="nb">locals</span><span class="p">(),</span>
+                <span class="p">[</span><span class="n">flavor</span><span class="p">])</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">flavor</span><span class="p">]</span>
+        <span class="n">module_class_name</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">[</span><span class="n">flavor</span><span class="p">][</span><span class="s">&#39;class&#39;</span><span class="p">]</span>
+        
+        <span class="n">module_class</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module_file</span><span class="p">,</span> <span class="n">module_class_name</span><span class="p">)</span>
+        <span class="n">module_instance</span> <span class="o">=</span> <span class="n">module_class</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">module_instance</span>
+        
+            
+            
+<div class="viewcode-block" id="VirtualWifi.create_slice"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.VirtualWifi.VirtualWifi.create_slice">[docs]</a>    <span class="k">def</span> <span class="nf">create_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configuration</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets up radios and adds any BSS specified.</span>
+<span class="sd">        Will restart radios only if required.&quot;&quot;&quot;</span>
+        
+        <span class="c"># Set up radios only first</span>
+        <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="n">configuration</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">interface</span><span class="p">[</span><span class="s">&quot;flavor&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;wifi_radio&quot;</span><span class="p">:</span>
+            
+                <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">add_entry</span><span class="p">(</span><span class="s">&quot;RadioInterfaces&quot;</span><span class="p">,</span> <span class="s">&quot;wifi_radio&quot;</span><span class="p">,</span> <span class="n">interface</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">])</span>
+                
+                <span class="bp">self</span><span class="o">.</span><span class="n">wifi</span><span class="o">.</span><span class="n">setup_radio</span><span class="p">(</span><span class="o">**</span><span class="n">interface</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">])</span>
+                
+                
+        <span class="c"># Now setup BSS</span>
+        <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="n">configuration</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">interface</span><span class="p">[</span><span class="s">&quot;flavor&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;wifi_bss&quot;</span><span class="p">:</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">add_entry</span><span class="p">(</span><span class="s">&quot;RadioInterfaces&quot;</span><span class="p">,</span> <span class="s">&quot;wifi_bss&quot;</span><span class="p">,</span> <span class="n">interface</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">])</span>
+                
+                <span class="bp">self</span><span class="o">.</span><span class="n">wifi</span><span class="o">.</span><span class="n">add_bss</span><span class="p">(</span><span class="o">**</span><span class="n">interface</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">])</span>
+                
+         
+        <span class="bp">self</span><span class="o">.</span><span class="n">wifi</span><span class="o">.</span><span class="n">apply_changes</span><span class="p">()</span>
+        
+    </div>
+<div class="viewcode-block" id="VirtualWifi.delete_slice"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.VirtualWifi.VirtualWifi.delete_slice">[docs]</a>    <span class="k">def</span> <span class="nf">delete_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configuration</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Deletes any BSS and/or radios in the slice.</span>
+<span class="sd">        Note that the radio will be reset only if required.</span>
+<span class="sd">        Data other than names of radios or SSIDs is not parsed or stored.&quot;&quot;&quot;</span>
+        
+        
+        <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="n">configuration</span><span class="p">:</span>
+            <span class="c"># Order of BSS/radio disabling is not important</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">interface</span><span class="p">[</span><span class="s">&quot;flavor&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;wifi_radio&quot;</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">wifi</span><span class="o">.</span><span class="n">setup_radio</span><span class="p">(</span><span class="n">interface</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">][</span><span class="s">&quot;name&quot;</span><span class="p">],</span> <span class="n">disabled</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            
+                <span class="k">elif</span> <span class="n">interface</span><span class="p">[</span><span class="s">&quot;flavor&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;wifi_bss&quot;</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">wifi</span><span class="o">.</span><span class="n">remove_bss</span><span class="p">(</span><span class="n">interface</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">][</span><span class="s">&quot;radio&quot;</span><span class="p">],</span><span class="n">interface</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">][</span><span class="s">&quot;name&quot;</span><span class="p">])</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">delete_entry</span><span class="p">(</span><span class="s">&quot;RadioInterfaces&quot;</span><span class="p">,</span> <span class="n">interface</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">][</span><span class="s">&quot;name&quot;</span><span class="p">])</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+                
+        <span class="bp">self</span><span class="o">.</span><span class="n">wifi</span><span class="o">.</span><span class="n">apply_changes</span><span class="p">()</span>
+    </div>
+<div class="viewcode-block" id="VirtualWifi.modify_slice"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.VirtualWifi.VirtualWifi.modify_slice">[docs]</a>    <span class="k">def</span> <span class="nf">modify_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configuration</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Modifies BSS parameters specified, without restarting any </span>
+<span class="sd">        radios. Modification of radios requires the use of </span>
+<span class="sd">        delete/create. </span>
+
+<span class="sd">        TODO(mike): Determine whether it is possible to change network </span>
+<span class="sd">        SSID without restarting a radio.  If not, slice modification of </span>
+<span class="sd">        SSID will require extra special care - modifying the main bss </span>
+<span class="sd">        would be a special case and require a different procedure than</span>
+<span class="sd">        for an auxiliary slice.</span>
+
+<span class="sd">        :param dict configuration:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># raise Exception(&quot;Modify for WiFi not implemented.&quot;)</span>
+        <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="n">configuration</span><span class="p">:</span>
+            <span class="c"># Only BSS parameters are allowed</span>
+            <span class="k">if</span> <span class="n">interface</span><span class="p">[</span><span class="s">&quot;flavor&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;wifi_bss&quot;</span><span class="p">:</span>
+                <span class="c"># TODO(mike)</span>
+                <span class="c">#self.wifi.</span>
+                <span class="k">pass</span>
+            <span class="c"># self.database.replace_entry(&quot;RadioInterfaces&quot;, )</span>
+
+    <span class="c"># TODO(mike)!!!</span>
+    <span class="c"># def restart_slice(self</span>
+
+        
+       </div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">auroraagent  documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Author.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

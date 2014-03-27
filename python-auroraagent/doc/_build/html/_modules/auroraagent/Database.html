@@ -1,0 +1,539 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>auroraagent.Database &mdash; auroraagent  documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="auroraagent  documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">auroraagent  documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for auroraagent.Database</h1><div class="highlight"><pre>
+<span class="c"># SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith</span>
+
+<span class="kn">import</span> <span class="nn">json</span><span class="o">,</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">exception</span><span class="o">,</span> <span class="nn">pprint</span><span class="o">,</span> <span class="nn">copy</span>
+<div class="viewcode-block" id="Database"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database">[docs]</a><span class="k">class</span> <span class="nc">Database</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Generic database for all class data.</span>
+<span class="sd">    Format for slice data:</span>
+<span class="sd">    {</span>
+<span class="sd">	&quot;slice_name&quot;: {</span>
+<span class="sd">        &quot;section&quot;: [</span>
+<span class="sd">            {</span>
+<span class="sd">                &quot;some_attribute&quot;: {</span>
+<span class="sd">                    &quot;att1&quot;: &quot;p1&quot;, </span>
+<span class="sd">                    &quot;name&quot;: &quot;p2&quot;</span>
+<span class="sd">                }, </span>
+<span class="sd">                &quot;other_attribute&quot;: &quot;veth&quot;</span>
+<span class="sd">            }, </span>
+<span class="sd">	}</span>
+<span class="sd">	Every entry is expected to have a &quot;name&quot; field, unique on the device where </span>
+<span class="sd">	this code is run.  For a number of entries, interface names</span>
+<span class="sd">	are a good choice.</span>
+<span class="sd">	</span>
+<span class="sd">	Note that no functions are provided to modify the fields in entries</span>
+<span class="sd">	as the database does not know what entries contain beyond the requirement to</span>
+<span class="sd">	have a slice, section, flavor and unique name, and thus cannot search for</span>
+<span class="sd">	specific fields.  The user, however, can modify data without replacing</span>
+<span class="sd">	entire entries by using get_entry, which provides a reference that can be</span>
+<span class="sd">	modified.</span>
+<span class="sd">	</span>
+<span class="sd">	For the &#39;hardware&#39; data, the format is different. Ex.:</span>
+<span class="sd">	</span>
+<span class="sd">	  {</span>
+<span class="sd">      &quot;firmware&quot;:&quot;openwrt&quot;,</span>
+<span class="sd">      &quot;firmware_version&quot;:&quot;r37630&quot;,</span>
+<span class="sd">      &quot;aurora_version&quot;:&quot;0.1&quot;,</span>
+<span class="sd">      &quot;memory_mb&quot;:&quot;256&quot;,</span>
+<span class="sd">      &quot;wifi_radio&quot;:</span>
+<span class="sd">        {</span>
+<span class="sd">            &quot;number_radio&quot;:&quot;1&quot;,</span>
+<span class="sd">            &quot;number_radio_free&quot;:&quot;1&quot;,</span>
+<span class="sd">            &quot;radio_list&quot;:</span>
+<span class="sd">                [</span>
+<span class="sd">                    {</span>
+<span class="sd">                        &quot;name&quot;: &quot;radio0&quot;,</span>
+<span class="sd">                        &quot;bss_list&quot;:[...]</span>
+<span class="sd">                        }]}}</span>
+<span class="sd">     </span>
+<span class="sd">     The details of what goes in the  radio list</span>
+<span class="sd">     is mostly left to whatever class uses it, but</span>
+<span class="sd">     the minimum requirement is that each entry be a </span>
+<span class="sd">     dictionary with a name field that will be used to refer</span>
+<span class="sd">     to the object.</span>
+
+<span class="sd">	</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+    
+    <span class="n">DEFAULT_RADIO</span> <span class="o">=</span> <span class="s">&quot;radio0&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="c"># Create intial database from template</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">database</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">&quot;default_config&quot;</span><span class="p">][</span><span class="s">&quot;init_database&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s">&quot;init_database&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;last_known_config&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">prev_database</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">&quot;last_known_config&quot;</span><span class="p">][</span><span class="s">&quot;init_database&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">prev_database</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_id_data</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">&quot;default_config&quot;</span><span class="p">][</span><span class="s">&quot;init_user_id_database&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s">&quot;init_user_id_database&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;last_known_config&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">prev_user_id_data</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">&quot;last_known_config&quot;</span><span class="p">][</span><span class="s">&quot;init_database&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">prev_user_id_data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">active_slice</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">&quot;default_config&quot;</span><span class="p">][</span><span class="s">&quot;default_active_slice&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_ACTIVE_SLICE</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">&quot;default_config&quot;</span><span class="p">][</span><span class="s">&quot;default_active_slice&quot;</span><span class="p">]</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">&quot;default_config&quot;</span><span class="p">][</span><span class="s">&quot;init_hardware_database&quot;</span><span class="p">]</span>
+    
+<div class="viewcode-block" id="Database.backup_current_config"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.backup_current_config">[docs]</a>    <span class="k">def</span> <span class="nf">backup_current_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Stores the current configuration in the backup </span>
+<span class="sd">        database, prev_database, prev_user_id_data.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prev_database</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prev_user_id_data</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user_id_data</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Database.set_active_slice"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.set_active_slice">[docs]</a>    <span class="k">def</span> <span class="nf">set_active_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the active slice, used for commands such as</span>
+<span class="sd">        add_entry or delete_entry.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">active_slice</span> <span class="o">=</span> <span class="nb">slice</span>
+        </div>
+<div class="viewcode-block" id="Database.get_active_slice"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.get_active_slice">[docs]</a>    <span class="k">def</span> <span class="nf">get_active_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the current active slice setting.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_slice</span>
+    </div>
+<div class="viewcode-block" id="Database.reset_active_slice"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.reset_active_slice">[docs]</a>    <span class="k">def</span> <span class="nf">reset_active_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the active slice back to the default slice.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">active_slice</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_ACTIVE_SLICE</span>
+</div>
+<div class="viewcode-block" id="Database.find_main_slice"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.find_main_slice">[docs]</a>    <span class="k">def</span> <span class="nf">find_main_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">radio</span><span class="o">=</span><span class="n">DEFAULT_RADIO</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Searches through a given set of slice configurations</span>
+<span class="sd">        for the slice containing the main_bss.</span>
+
+<span class="sd">        :param dict config:</span>
+<span class="sd">        :param str radio:</span>
+<span class="sd">        :rtype: string</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">config</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+                <span class="p">[(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span> 
+                    <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s">&quot;default_slice&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="nb">slice</span><span class="p">,</span> <span class="n">attributes</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">attributes</span><span class="p">[</span><span class="s">&quot;RadioInterfaces&quot;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="s">&quot;flavor&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;wifi_radio&quot;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">][</span><span class="s">&quot;name&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">radio</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="nb">slice</span>
+        <span class="k">return</span> <span class="bp">None</span></div>
+<div class="viewcode-block" id="Database.add_slice_to_user"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.add_slice_to_user">[docs]</a>    <span class="k">def</span> <span class="nf">add_slice_to_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add the given slice to the user, and create</span>
+<span class="sd">        the user if he does not exist.  Slices already</span>
+<span class="sd">        owned by the user are ignored.&quot;&quot;&quot;</span>
+        <span class="c"># Create user if necessary</span>
+        <span class="k">if</span> <span class="n">user</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_id_data</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_user</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+        <span class="c"># Do not append if already listed</span>
+        <span class="k">if</span> <span class="nb">slice</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_id_data</span><span class="p">[</span><span class="n">user</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">user_id_data</span><span class="p">[</span><span class="n">user</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">slice</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="Database.delete_slice_from_user"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.delete_slice_from_user">[docs]</a>    <span class="k">def</span> <span class="nf">delete_slice_from_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete the slice from the user.  Will</span>
+<span class="sd">        silently ignore any errors such as the user not existing</span>
+<span class="sd">        or the user not owning the slice.&quot;&quot;&quot;</span>
+        <span class="c"># Ignore any errors when removing, as user/slice</span>
+        <span class="c"># may no longer exist</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">user_id_data</span><span class="p">[</span><span class="n">user</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="nb">slice</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+    </div>
+<div class="viewcode-block" id="Database.create_user"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.create_user">[docs]</a>    <span class="k">def</span> <span class="nf">create_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create the given user, but do nothing</span>
+<span class="sd">        if he already exists.&quot;&quot;&quot;</span>
+        <span class="c"># Don&#39;t want to overwrite existing user</span>
+        <span class="k">if</span> <span class="n">user</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_id_data</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">user_id_data</span><span class="p">[</span><span class="n">user</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    </div>
+<div class="viewcode-block" id="Database.delete_user"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.delete_user">[docs]</a>    <span class="k">def</span> <span class="nf">delete_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete the given user, and ignore any</span>
+<span class="sd">        errors such as the user not existing.&quot;&quot;&quot;</span>
+        <span class="c"># Ignore any errors deleting</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_id_data</span><span class="p">[</span><span class="n">user</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+    </div>
+<div class="viewcode-block" id="Database.create_slice"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.create_slice">[docs]</a>    <span class="k">def</span> <span class="nf">create_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">slice</span><span class="p">,</span> <span class="n">userid</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a new slice with a blank template.&quot;&quot;&quot;</span>
+        <span class="c"># This is probably faster than using a template but having to do a deep copy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">[</span><span class="nb">slice</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="s">&quot;VirtualInterfaces&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s">&quot;VirtualBridges&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s">&quot;RadioInterfaces&quot;</span> <span class="p">:</span> <span class="p">[]</span> <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_slice_to_user</span><span class="p">(</span><span class="n">userid</span><span class="p">,</span> <span class="nb">slice</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="Database.delete_slice"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.delete_slice">[docs]</a>    <span class="k">def</span> <span class="nf">delete_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete a slice and all associated information.&quot;&quot;&quot;</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">[</span><span class="nb">slice</span><span class="p">]</span>
+        <span class="c"># Reset active slice to default if in use</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_slice</span> <span class="o">==</span> <span class="nb">slice</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_active_slice</span><span class="p">()</span>
+        <span class="c"># Find any instances in user list</span>
+        <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_id_data</span><span class="p">:</span>
+            <span class="c"># Delete the slice</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">delete_slice_from_user</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="nb">slice</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="Database.get_associated_slice"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.get_associated_slice">[docs]</a>    <span class="k">def</span> <span class="nf">get_associated_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userid</span><span class="p">,</span> <span class="n">prev</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a list of slices associated to the userid.&quot;&quot;&quot;</span>
+        <span class="c"># Using deepcopy; same reason as below</span>
+        <span class="k">if</span> <span class="n">prev</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prev_user_id_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">userid</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user_id_data</span><span class="p">[</span><span class="n">userid</span><span class="p">])</span>
+    </div>
+<div class="viewcode-block" id="Database.get_slice_data"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.get_slice_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_slice_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a (deep) copy of the contents of the slice.&quot;&quot;&quot;</span>
+        <span class="c"># Need deep copy because users may iterate over the list</span>
+        <span class="c"># while modifying the core database</span>
+        <span class="c"># Other functions should not need this, </span>
+        <span class="c"># as they do not return data that is likely to be iterated</span>
+        <span class="c"># over and modified.  The closest that fits the bill </span>
+        <span class="c"># is get_entry, but it needs to be accessible to </span>
+        <span class="c"># allow for nested data modification.</span>
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">[</span><span class="nb">slice</span><span class="p">])</span>
+</div>
+<div class="viewcode-block" id="Database.get_slice_radio"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.get_slice_radio">[docs]</a>    <span class="k">def</span> <span class="nf">get_slice_radio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Searches the database and returns the radio on which</span>
+<span class="sd">        the slice in question is created.  If no radio can be</span>
+<span class="sd">        found, SliceRadioNotFound is raised.</span>
+
+<span class="sd">        :param string slice:</span>
+<span class="sd">        :rtype: string</span>
+<span class="sd">        :raises: exception.SliceRadioNotFound</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">radio_interfaces</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">slice</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s">&quot;RadioInterfaces&quot;</span><span class="p">,[]</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="n">radio_interfaces</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">interface</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;flavor&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s">&quot;wifi_bss&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">interface</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;attributes&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="s">&quot;radio&quot;</span><span class="p">,</span> <span class="bp">None</span>
+                <span class="p">)</span>
+        <span class="k">raise</span> <span class="n">exception</span><span class="o">.</span><span class="n">SliceRadioNotFound</span><span class="p">()</span>
+    </div>
+<div class="viewcode-block" id="Database.get_slice_list"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.get_slice_list">[docs]</a>    <span class="k">def</span> <span class="nf">get_slice_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a list of slices.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s">&quot;default_slice&quot;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Database.get_slice_ssid_map"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.get_slice_ssid_map">[docs]</a>    <span class="k">def</span> <span class="nf">get_slice_ssid_map</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">slice_name_and_ssid</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">slice_id</span><span class="p">,</span> <span class="n">slice_config</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">slice_radio_config</span> <span class="ow">in</span> <span class="n">slice_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                        <span class="s">&quot;RadioInterfaces&quot;</span><span class="p">,</span> <span class="p">[]</span>
+                    <span class="p">):</span>
+                <span class="k">if</span> <span class="n">slice_radio_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;flavor&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s">&quot;wifi_bss&quot;</span><span class="p">:</span>
+                    <span class="n">slice_name_and_ssid</span><span class="p">[</span><span class="n">slice_id</span><span class="p">]</span> <span class="o">=</span> \
+                        <span class="n">slice_radio_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;attributes&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                            <span class="s">&quot;name&quot;</span>
+                        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">slice_name_and_ssid</span>
+        </div>
+<div class="viewcode-block" id="Database.get_user_list"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.get_user_list">[docs]</a>    <span class="k">def</span> <span class="nf">get_user_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prev</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a list of users.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">prev</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prev_user_id_data</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_id_data</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Database.get_slice_user"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.get_slice_user">[docs]</a>    <span class="k">def</span> <span class="nf">get_slice_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">slice</span><span class="p">,</span> <span class="n">prev</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Finds the user that owns a specific slice.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">userid</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_user_list</span><span class="p">(</span><span class="n">prev</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">slice_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_associated_slice</span><span class="p">(</span><span class="n">userid</span><span class="p">,</span> <span class="n">prev</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">slice_</span> <span class="o">==</span> <span class="nb">slice</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">userid</span>
+        <span class="k">raise</span> <span class="n">exception</span><span class="o">.</span><span class="n">NoUserIDForSlice</span><span class="p">()</span>
+    </div>
+<div class="viewcode-block" id="Database.add_entry"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.add_entry">[docs]</a>    <span class="k">def</span> <span class="nf">add_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">section</span><span class="p">,</span> <span class="n">flavor</span><span class="p">,</span> <span class="n">info</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add an entry to the database.</span>
+<span class="sd">        Names in each section must be unique, but different sections</span>
+<span class="sd">        can have the same name.&quot;&quot;&quot;</span>
+        <span class="c"># Complain if entry already exists</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_entry</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="s">&quot;name&quot;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="n">exception</span><span class="o">.</span><span class="n">EntryNotFound</span><span class="p">:</span>
+            <span class="c"># OK, does not exist</span>
+            <span class="k">if</span> <span class="n">section</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">active_slice</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">active_slice</span><span class="p">][</span><span class="n">section</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">active_slice</span><span class="p">][</span><span class="n">section</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">({</span> <span class="s">&quot;flavor&quot;</span> <span class="p">:</span> <span class="n">flavor</span><span class="p">,</span> <span class="s">&quot;attributes&quot;</span> <span class="p">:</span> <span class="n">info</span> <span class="p">})</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># Error</span>
+            <span class="k">raise</span> <span class="n">exception</span><span class="o">.</span><span class="n">NameAlreadyInUse</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s">&quot;name&quot;</span><span class="p">])</span>
+
+    </div>
+<div class="viewcode-block" id="Database.delete_entry"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.delete_entry">[docs]</a>    <span class="k">def</span> <span class="nf">delete_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">section</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove an entry from the database.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_entry</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">active_slice</span><span class="p">][</span><span class="n">section</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="c"># Ignore any errors deleting</span>
+            <span class="k">pass</span>
+    </div>
+<div class="viewcode-block" id="Database.replace_entry"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.replace_entry">[docs]</a>    <span class="k">def</span> <span class="nf">replace_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">section</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">flavor</span><span class="p">,</span> <span class="n">info</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;A shortcut to deleting and adding an entry.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delete_entry</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_entry</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="n">flavor</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="Database.get_entry"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.get_entry">[docs]</a>    <span class="k">def</span> <span class="nf">get_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">section</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the entry identified by section and name</span>
+<span class="sd">        if it exists.  Raises exception.EntryNotFound if it does not.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">section</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">active_slice</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">active_slice</span><span class="p">][</span><span class="n">section</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">entry</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">][</span><span class="s">&quot;name&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">entry</span>
+        <span class="k">raise</span> <span class="n">exception</span><span class="o">.</span><span class="n">EntryNotFound</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="Database.get_entry_search"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.get_entry_search">[docs]</a>    <span class="k">def</span> <span class="nf">get_entry_search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the entry identified by name if it exists.</span>
+<span class="sd">        Searches through the entire dictionary (keeping to one slice), </span>
+<span class="sd">        rather than a single section.</span>
+<span class="sd">        </span>
+<span class="sd">        If multiple entries with the same name exist, only one will be returned.</span>
+<span class="sd">        Raises exception.EntryNotFound if the entry does not exist.&quot;&quot;&quot;</span>
+        <span class="c"># TODO: Speed this up?</span>
+        <span class="k">for</span> <span class="n">section</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">active_slice</span><span class="p">]:</span>
+            <span class="c"># Faster than calling get_entry - it would redo dictionary</span>
+            <span class="c"># lookups unecessarily</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_entry</span><span class="p">(</span><span class="n">section</span><span class="p">,</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">exception</span><span class="o">.</span><span class="n">EntryNotFound</span><span class="p">:</span>
+                <span class="c"># Ignore not finding in a specific section; only raise error</span>
+                <span class="c"># when not in any section</span>
+                <span class="k">pass</span>
+        <span class="k">raise</span> <span class="n">exception</span><span class="o">.</span><span class="n">EntryNotFound</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        
+        </div>
+<div class="viewcode-block" id="Database.list_slice_contents"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.list_slice_contents">[docs]</a>    <span class="k">def</span> <span class="nf">list_slice_contents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">slice</span><span class="p">,</span> <span class="n">as_json</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a formatted string showing the slice contents.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">as_json</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">[</span><span class="nb">slice</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pprint</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">[</span><span class="nb">slice</span><span class="p">])</span>
+        </div>
+<div class="viewcode-block" id="Database.list_users"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.list_users">[docs]</a>    <span class="k">def</span> <span class="nf">list_users</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">as_json</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">as_json</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_user_list</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pprint</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_user_list</span><span class="p">())</span>
+        </div>
+<div class="viewcode-block" id="Database.list_users_full"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.list_users_full">[docs]</a>    <span class="k">def</span> <span class="nf">list_users_full</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">as_json</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">as_json</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user_id_data</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pprint</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user_id_data</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="Database.list_all"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.list_all">[docs]</a>    <span class="k">def</span> <span class="nf">list_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">as_json</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">as_json</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pprint</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">)</span>
+            
+            
+            </div>
+<div class="viewcode-block" id="Database.hw_get_firmware_name"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.hw_get_firmware_name">[docs]</a>    <span class="k">def</span> <span class="nf">hw_get_firmware_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the name of the firmware.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;firmware&quot;</span><span class="p">]</span>
+    </div>
+<div class="viewcode-block" id="Database.hw_set_firmware_name"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.hw_set_firmware_name">[docs]</a>    <span class="k">def</span> <span class="nf">hw_set_firmware_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">firmware</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the name of the firmware.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;firmware&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">firmware</span>
+    </div>
+<div class="viewcode-block" id="Database.hw_get_aurora_version"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.hw_get_aurora_version">[docs]</a>    <span class="k">def</span> <span class="nf">hw_get_aurora_version</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the aurora version.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;aurora_version&quot;</span><span class="p">]</span>
+        </div>
+<div class="viewcode-block" id="Database.hw_set_aurora_version"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.hw_set_aurora_version">[docs]</a>    <span class="k">def</span> <span class="nf">hw_set_aurora_version</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aurora</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the aurora version.  Accepts a string.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;aurora_version&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">aurora</span>
+        </div>
+<div class="viewcode-block" id="Database.hw_get_memory_mb"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.hw_get_memory_mb">[docs]</a>    <span class="k">def</span> <span class="nf">hw_get_memory_mb</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the total RAM of the device.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;memory_mb&quot;</span><span class="p">]</span>
+        </div>
+<div class="viewcode-block" id="Database.hw_set_memory_mb"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.hw_set_memory_mb">[docs]</a>    <span class="k">def</span> <span class="nf">hw_set_memory_mb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memory</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the amount of the total RAM on the device.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;memory_mb&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">memory</span>
+</div>
+<div class="viewcode-block" id="Database.hw_get_free_disk"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.hw_get_free_disk">[docs]</a>    <span class="k">def</span> <span class="nf">hw_get_free_disk</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the total RAM of the device.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;free_disk&quot;</span><span class="p">]</span>
+        </div>
+<div class="viewcode-block" id="Database.hw_set_free_disk"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.hw_set_free_disk">[docs]</a>    <span class="k">def</span> <span class="nf">hw_set_free_disk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memory</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the amount of the total RAM on the device.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;free_disk&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">memory</span>
+    
+        </div>
+<div class="viewcode-block" id="Database.hw_get_num_radio"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.hw_get_num_radio">[docs]</a>    <span class="k">def</span> <span class="nf">hw_get_num_radio</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the total number of physical radios.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;wifi_radio&quot;</span><span class="p">][</span><span class="s">&quot;number_radio&quot;</span><span class="p">]</span>
+        </div>
+<div class="viewcode-block" id="Database.hw_set_num_radio"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.hw_set_num_radio">[docs]</a>    <span class="k">def</span> <span class="nf">hw_set_num_radio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">radios</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the total number of physical radios.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;wifi_radio&quot;</span><span class="p">][</span><span class="s">&quot;number_radio&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">radios</span>
+        </div>
+<div class="viewcode-block" id="Database.hw_get_num_radio_free"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.hw_get_num_radio_free">[docs]</a>    <span class="k">def</span> <span class="nf">hw_get_num_radio_free</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the number of free radios.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;wifi_radio&quot;</span><span class="p">][</span><span class="s">&quot;number_radio_free&quot;</span><span class="p">]</span>
+        </div>
+<div class="viewcode-block" id="Database.hw_set_num_radio_free"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.hw_set_num_radio_free">[docs]</a>    <span class="k">def</span> <span class="nf">hw_set_num_radio_free</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">radios</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the number of free radios.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;wifi_radio&quot;</span><span class="p">][</span><span class="s">&quot;number_radio_free&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">radios</span>
+        </div>
+<div class="viewcode-block" id="Database.hw_get_max_bss_per_radio"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.hw_get_max_bss_per_radio">[docs]</a>    <span class="k">def</span> <span class="nf">hw_get_max_bss_per_radio</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the maximum number of bss allowed per radio</span>
+<span class="sd">        on this device.  Often constrained by limitations arising</span>
+<span class="sd">        from the underlying software or hardware.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;wifi_radio&quot;</span><span class="p">][</span><span class="s">&quot;max_bss_per_radio&quot;</span><span class="p">]</span>
+        </div>
+<div class="viewcode-block" id="Database.hw_set_max_bss_per_radio"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.hw_set_max_bss_per_radio">[docs]</a>    <span class="k">def</span> <span class="nf">hw_set_max_bss_per_radio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bss</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the maximum number of bss allowed per radio</span>
+<span class="sd">        on this device.  Often constrained by limitations arising</span>
+<span class="sd">        from the underlying software or hardware.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;wifi_radio&quot;</span><span class="p">][</span><span class="s">&quot;max_bss_per_radio&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bss</span>
+    </div>
+<div class="viewcode-block" id="Database.hw_add_radio_entry"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.hw_add_radio_entry">[docs]</a>    <span class="k">def</span> <span class="nf">hw_add_radio_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">radio_info</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a radio entry with information given as a dictionary,</span>
+<span class="sd">        which requires at least a name field with a string value.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;wifi_radio&quot;</span><span class="p">][</span><span class="s">&quot;radio_list&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">radio_info</span><span class="p">)</span>
+        
+    </div>
+<div class="viewcode-block" id="Database.hw_del_radio_entry"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.hw_del_radio_entry">[docs]</a>    <span class="k">def</span> <span class="nf">hw_del_radio_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">radio</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Deletes a radio entry identified by name.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;wifi_radio&quot;</span><span class="p">][</span><span class="s">&quot;radio_list&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hw_get_radio_entry</span><span class="p">(</span><span class="n">radio</span><span class="p">))</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="c"># Ignore any errors deleting</span>
+            <span class="k">pass</span>
+        </div>
+<div class="viewcode-block" id="Database.hw_get_radio_entry"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.hw_get_radio_entry">[docs]</a>    <span class="k">def</span> <span class="nf">hw_get_radio_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">radio</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the entry identified by radio name</span>
+<span class="sd">        if it exists.  Raises exception.EntryNotFound if it does not.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;wifi_radio&quot;</span><span class="p">][</span><span class="s">&quot;radio_list&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">entry</span><span class="p">[</span><span class="s">&quot;name&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">radio</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">entry</span>
+            <span class="k">raise</span> <span class="n">exception</span><span class="o">.</span><span class="n">EntryNotFound</span><span class="p">(</span><span class="n">radio</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="Database.hw_list_all"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.hw_list_all">[docs]</a>    <span class="k">def</span> <span class="nf">hw_list_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">as_json</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">as_json</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pprint</span><span class="o">.</span><span class="n">pformat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Database.hw_get_slice_id_on_radio"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.hw_get_slice_id_on_radio">[docs]</a>    <span class="k">def</span> <span class="nf">hw_get_slice_id_on_radio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">radio</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Determines which slices exist on a physical radio, and lists </span>
+<span class="sd">        them by slice_id.</span>
+
+<span class="sd">        :rtype: list </span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">radio_entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hw_get_radio_entry</span><span class="p">(</span><span class="n">radio</span><span class="p">)</span>
+        <span class="c"># print &quot;radio_entry&quot;</span>
+        <span class="c"># print radio_entry</span>
+
+        <span class="n">slice_name_and_ssid_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_slice_ssid_map</span><span class="p">()</span>
+        <span class="n">slice_ssid_and_name_map</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([(</span><span class="n">v</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> 
+                <span class="n">slice_name_and_ssid_map</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()])</span>
+        <span class="c"># print json.dumps(slice_name_and_ssid_map, indent=4)</span>
+        <span class="c"># print json.dumps(slice_ssid_and_name_map, indent=4)</span>
+
+        <span class="n">slice_id_on_radio</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">bss</span> <span class="ow">in</span> <span class="n">radio_entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;bss_list&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="n">slice_id</span> <span class="o">=</span> <span class="n">slice_ssid_and_name_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="n">bss</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">),</span> <span class="bp">None</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">slice_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">slice_id_on_radio</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">slice_id</span><span class="p">)</span>
+
+        <span class="c"># print &quot;slice_id_on_radio&quot;</span>
+        <span class="c"># print slice_id_on_radio</span>
+
+        <span class="k">return</span> <span class="n">slice_id_on_radio</span>
+        </div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">auroraagent  documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Author.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

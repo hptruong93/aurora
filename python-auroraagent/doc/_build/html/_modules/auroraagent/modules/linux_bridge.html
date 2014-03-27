@@ -1,0 +1,271 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>auroraagent.modules.linux_bridge &mdash; auroraagent  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="auroraagent  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">auroraagent  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for auroraagent.modules.linux_bridge</h1><div class="highlight"><pre>
+<span class="c"># Linux bridge module</span>
+<span class="c"># SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith</span>
+
+<span class="c"># If you wish to add functionaility for custom modify type commands</span>
+<span class="c"># i.e. abstracting a long multi-parameter command to a simple one-argument function</span>
+<span class="c"># i.e. application do_something --with=1234 --output=test.db &quot;file.test&quot; -X</span>
+<span class="c"># to module.do_this(1234,test.db)</span>
+<span class="c"># Simply modify the modify_bridge and modify_port commands to properly parse</span>
+<span class="c"># and format the command line.  The current parsing is done as simple if statements,</span>
+<span class="c"># but more complicated cases (i.e. optional parameters) can easily be added.</span>
+
+<span class="kn">import</span> <span class="nn">subprocess</span>
+
+<span class="kn">import</span> <span class="nn">exception</span>
+
+
+<div class="viewcode-block" id="Brctl"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.linux_bridge.Brctl">[docs]</a><span class="k">class</span> <span class="nc">Brctl</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Linux bridge module</span>
+<span class="sd">    Controls the default bridge module that operates in the kernel,</span>
+<span class="sd">    normally controlled with the brctl command.</span>
+<span class="sd">    Note that brctl options may vary with the shell used; this program</span>
+<span class="sd">    is designed to configure only the basics offered with the </span>
+<span class="sd">    busybox v.1.19.4 implementation, although it may work</span>
+<span class="sd">    with other implementations without issue.&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="nf">__exec_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="c"># Want to throw exception if we give an invalid command</span>
+        <span class="c"># Note: args is a list of arguments</span>
+        <span class="c"># Format: [ arg1, arg2, arg3...]</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;brctl&quot;</span><span class="p">]</span>
+        <span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        
+        <span class="k">print</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">  $ &quot;</span><span class="p">,</span><span class="s">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+        <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">database</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+
+<div class="viewcode-block" id="Brctl.start"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.linux_bridge.Brctl.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="c"># Nothing to start</span>
+        <span class="k">pass</span>
+    </div>
+<div class="viewcode-block" id="Brctl.stop"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.linux_bridge.Brctl.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="c"># Nothing to do</span>
+        <span class="k">pass</span>
+    </div>
+<div class="viewcode-block" id="Brctl.create_bridge"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.linux_bridge.Brctl.create_bridge">[docs]</a>    <span class="k">def</span> <span class="nf">create_bridge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a bridge with the given name.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exec_command</span><span class="p">([</span><span class="s">&quot;addbr&quot;</span><span class="p">,</span><span class="n">name</span><span class="p">])</span>
+        
+        <span class="c"># Bring bridge up</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;ifconfig&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s">&quot;up&quot;</span><span class="p">]</span>
+        
+        <span class="k">print</span> <span class="s">&quot;  $ &quot;</span><span class="p">,</span><span class="s">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+        <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span><span class="s">&quot;ifconfig&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s">&quot;up&quot;</span><span class="p">])</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">add_entry</span><span class="p">(</span><span class="s">&quot;VirtualBridges&quot;</span><span class="p">,</span> <span class="s">&quot;linux_bridge&quot;</span><span class="p">,</span> <span class="p">{</span> <span class="s">&quot;name&quot;</span> <span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s">&quot;interfaces&quot;</span> <span class="p">:</span> <span class="p">[],</span> <span class="s">&quot;bridge_settings&quot;</span> <span class="p">:</span> <span class="p">{},</span> <span class="s">&quot;port_settings&quot;</span> <span class="p">:</span> <span class="p">{}</span> <span class="p">})</span>
+    </div>
+<div class="viewcode-block" id="Brctl.delete_bridge"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.linux_bridge.Brctl.delete_bridge">[docs]</a>    <span class="k">def</span> <span class="nf">delete_bridge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete a bridge with the given name.&quot;&quot;&quot;</span>
+        <span class="c"># Bridge must be brought down first</span>
+        <span class="c"># Ignoring any errors for ifconfig</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;ifconfig&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s">&quot;down&quot;</span><span class="p">]</span>
+        
+        <span class="k">print</span> <span class="s">&quot;  $ &quot;</span><span class="p">,</span><span class="s">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+        <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">([</span><span class="s">&quot;ifconfig&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s">&quot;down&quot;</span><span class="p">])</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exec_command</span><span class="p">([</span><span class="s">&quot;delbr&quot;</span><span class="p">,</span><span class="n">name</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">delete_entry</span><span class="p">(</span><span class="s">&quot;VirtualBridges&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="Brctl.add_port"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.linux_bridge.Brctl.add_port">[docs]</a>    <span class="k">def</span> <span class="nf">add_port</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a port to the given bridge.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exec_command</span><span class="p">([</span><span class="s">&quot;addif&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">interface</span><span class="p">])</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">get_entry</span><span class="p">(</span><span class="s">&quot;VirtualBridges&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">)</span>
+        <span class="n">entry</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">][</span><span class="s">&quot;interfaces&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">interface</span><span class="p">)</span>
+        <span class="n">entry</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">][</span><span class="s">&quot;port_settings&quot;</span><span class="p">][</span><span class="n">interface</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    </div>
+<div class="viewcode-block" id="Brctl.delete_port"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.linux_bridge.Brctl.delete_port">[docs]</a>    <span class="k">def</span> <span class="nf">delete_port</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete a port from the given bridge.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exec_command</span><span class="p">([</span><span class="s">&quot;delif&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">interface</span><span class="p">])</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">get_entry</span><span class="p">(</span><span class="s">&quot;VirtualBridges&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">)</span>
+        <span class="n">entry</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">][</span><span class="s">&quot;interfaces&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">interface</span><span class="p">)</span>
+        <span class="k">del</span> <span class="n">entry</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">][</span><span class="s">&quot;port_settings&quot;</span><span class="p">][</span><span class="n">interface</span><span class="p">]</span>
+</div>
+<div class="viewcode-block" id="Brctl.modify_bridge"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.linux_bridge.Brctl.modify_bridge">[docs]</a>    <span class="k">def</span> <span class="nf">modify_bridge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Modifies a given bridge with the specified command and parameters.</span>
+<span class="sd">        Some commands do not require any parameters, or it may be</span>
+<span class="sd">        optional. These are marked with a \*.  Generally, not specifying a command</span>
+<span class="sd">        deletes the setting or resets it to default.</span>
+<span class="sd">        Some commands require a dictionary of parameters in the format</span>
+<span class="sd">        { arg1 : one, arg2: two, arg3: three }.</span>
+<span class="sd">        These are marked with {dict}.</span>
+<span class="sd">        Normally, parameters is simply a string.</span>
+<span class="sd">        </span>
+<span class="sd">        Commands                Parameters</span>
+<span class="sd">        ageing                  age</span>
+<span class="sd">        forward_delay           delay</span>
+<span class="sd">        hello_time              time</span>
+<span class="sd">        max_age                 age</span>
+<span class="sd">        bridge_priority         priority</span>
+<span class="sd">        stp                     setting (string &quot;on&quot; or &quot;off&quot;)</span>
+<span class="sd">        ip                      IP Address\*</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">brctl_command</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">if</span> <span class="n">command</span> <span class="o">==</span> <span class="s">&quot;ageing&quot;</span><span class="p">:</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span> <span class="s">&quot;setageing&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">parameters</span> <span class="p">]</span>
+        <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s">&quot;forward_delay&quot;</span><span class="p">:</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span> <span class="s">&quot;setfd&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">parameters</span> <span class="p">]</span>
+        <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s">&quot;hello_time&quot;</span><span class="p">:</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span> <span class="s">&quot;sethello&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">parameters</span> <span class="p">]</span>
+        <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s">&quot;max_age&quot;</span><span class="p">:</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span> <span class="s">&quot;setmaxage&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">parameters</span> <span class="p">]</span>
+        <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s">&quot;bridge_priority&quot;</span><span class="p">:</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span> <span class="s">&quot;setbridgeprio&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">parameters</span> <span class="p">]</span>
+        <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s">&quot;stp&quot;</span><span class="p">:</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span> <span class="s">&quot;stp&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">parameters</span> <span class="p">]</span>
+        <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s">&quot;ip&quot;</span><span class="p">:</span>
+            <span class="n">brctl_command</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">parameters</span> <span class="o">==</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">parameters</span> <span class="o">==</span> <span class="s">&quot;0.0.0.0&quot;</span> <span class="ow">or</span> <span class="n">parameters</span> <span class="o">==</span> <span class="s">&quot;0&quot;</span><span class="p">):</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="p">[</span> <span class="s">&quot;ifconfig&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="s">&quot;0.0.0.0&quot;</span> <span class="p">]</span>
+                <span class="n">parameters</span> <span class="o">=</span> <span class="s">&quot;0.0.0.0&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="p">[</span> <span class="s">&quot;ifconfig&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">parameters</span> <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">exception</span><span class="o">.</span><span class="n">CommandNotFound</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+        
+        
+        <span class="k">if</span> <span class="n">brctl_command</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__exec_command</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;ifconfig&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s">&quot;down&quot;</span><span class="p">]</span>
+            <span class="k">print</span> <span class="s">&quot;  $ &quot;</span><span class="p">,</span><span class="s">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+            <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        
+        <span class="c"># Update database</span>
+        <span class="n">data_update</span> <span class="o">=</span> <span class="p">[</span> <span class="n">command</span><span class="p">,</span> <span class="n">parameters</span> <span class="p">]</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">get_entry</span><span class="p">(</span><span class="s">&quot;VirtualBridges&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">)</span>
+        <span class="n">entry</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">][</span><span class="s">&quot;bridge_settings&quot;</span><span class="p">][</span><span class="n">data_update</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">data_update</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        </div>
+<div class="viewcode-block" id="Brctl.modify_port"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.linux_bridge.Brctl.modify_port">[docs]</a>    <span class="k">def</span> <span class="nf">modify_port</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Modifies a given bridge port with the specified command and parameters.</span>
+<span class="sd">        Some commands do not require any parameters, or it may be</span>
+<span class="sd">        optional. These are marked with a \*.</span>
+<span class="sd">        Some commands require a dictionary of parameters in the format</span>
+<span class="sd">        { arg1 : one, arg2: two, arg3: three }.</span>
+<span class="sd">        These are marked with {dict}.</span>
+<span class="sd">        Normally, parameters is simply a string.</span>
+<span class="sd">        </span>
+<span class="sd">        Commands                Parameters</span>
+<span class="sd">        priority                priority&quot;&quot;&quot;</span>
+        
+        <span class="c"># Find command, and format as appropriate</span>
+        <span class="c"># busybox bridge command (1.19.4) seems to have an error in the help file</span>
+        <span class="c"># it specifies: setportprio BRIDGE PRIO		Set port priority</span>
+        <span class="c"># which produces a segmentation fault.  The command that does not return </span>
+        <span class="c"># an error is setportprio BRIDGE PORT PRIO</span>
+        <span class="k">if</span> <span class="n">command</span> <span class="o">==</span> <span class="s">&quot;priority&quot;</span><span class="p">:</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span> <span class="s">&quot;setportprio&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">parameters</span> <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">exception</span><span class="o">.</span><span class="n">CommandNotFound</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exec_command</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="c"># Update database</span>
+        <span class="n">data_update</span> <span class="o">=</span> <span class="p">[</span> <span class="n">command</span><span class="p">,</span> <span class="n">parameters</span> <span class="p">]</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">get_entry</span><span class="p">(</span><span class="s">&quot;VirtualBridges&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">)</span>
+        <span class="n">entry</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">][</span><span class="s">&quot;port_settings&quot;</span><span class="p">][</span><span class="n">port</span><span class="p">][</span><span class="n">data_update</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">data_update</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        </div>
+<div class="viewcode-block" id="Brctl.show"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.linux_bridge.Brctl.show">[docs]</a>    <span class="k">def</span> <span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the output of the show command as a byte string.&quot;&quot;&quot;</span>
+        <span class="c"># Need to get output, which is not provided by __exec_command</span>
+        <span class="k">return</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span><span class="s">&quot;brctl&quot;</span><span class="p">,</span><span class="s">&quot;show&quot;</span><span class="p">])</span>
+
+    
+        
+        
+</pre></div></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">auroraagent  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Author.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

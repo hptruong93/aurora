@@ -1,0 +1,296 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>auroraagent.modules.ovs &mdash; auroraagent  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="auroraagent  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">auroraagent  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for auroraagent.modules.ovs</h1><div class="highlight"><pre>
+<span class="c"># OpenVSwitch module</span>
+<span class="c"># SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith</span>
+
+<span class="c"># If you wish to add functionaility for custom commands</span>
+<span class="c"># - say abstracting a long multi-parameter command to a simple one-argument function</span>
+<span class="c"># i.e. application do_something --with=1234 --output=test.db &quot;file.test&quot; -X</span>
+<span class="c"># to module.do_this(1234,test.db)</span>
+<span class="c"># Simply modify the modify_bridge and modify_port commands to properly parse</span>
+<span class="c"># and format the command line.  The current parsing is done as simple if statements,</span>
+<span class="c"># but more complicated cases (i.e. optional parameters) can easily be added.</span>
+
+<span class="kn">import</span> <span class="nn">tempfile</span><span class="o">,</span> <span class="nn">subprocess</span><span class="o">,</span> <span class="nn">psutil</span><span class="o">,</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">exception</span>
+
+
+<div class="viewcode-block" id="OpenVSwitch"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.ovs.OpenVSwitch">[docs]</a><span class="k">class</span> <span class="nc">OpenVSwitch</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;OpenVSwitch module.  Controls the OpenVSwitch daemon, allowing</span>
+<span class="sd">    for the creation and modification of bridges and their ports.</span>
+<span class="sd">    Designed for OVS v 1.9.0&quot;&quot;&quot;</span>
+    
+    <span class="c"># Change this to suit your environment.  Tested with</span>
+    <span class="c"># both OpenWRT (Attitude Adjustment w/ OVS from Julius Schulz-Zander)</span>
+    <span class="c"># and Ubuntu 13.04 w/ OVS 1.9 from apt</span>
+    <span class="n">ovs_schema</span> <span class="o">=</span> <span class="s">&quot;/usr/share/openvswitch/vswitch.ovsschema&quot;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">database</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">__exec_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="c"># Want to throw exception if we give an invalid command</span>
+        <span class="c"># Note: args is a list of arguments</span>
+        <span class="c"># Format: [ arg1, arg2, arg3...]</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;ovs-vsctl&quot;</span><span class="p">,</span> <span class="s">&quot;--db=unix:&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">socket_file</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+        <span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">print</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">  $ &quot;</span><span class="p">,</span><span class="s">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+        <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="OpenVSwitch.start"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.ovs.OpenVSwitch.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Start required ovs daemons.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">database_file</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">socket_file</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">()</span>
+
+        <span class="c"># Close the files since we won&#39;t be writing to them</span>
+        <span class="c"># Also, tools like ovsdb-tool won&#39;t overwrite existing files</span>
+        <span class="c"># We are simply using temporary files to generate random names that don&#39;t conflict</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">database_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">socket_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="c">#os.remove(self.database_file.name)</span>
+        <span class="c">#os.remove(self.socket_file.name)</span>
+
+        <span class="c"># Create database in temporary file</span>
+        <span class="c"># Will raise exception if it fails</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;ovsdb-tool&quot;</span><span class="p">,</span> <span class="s">&quot;create&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">database_file</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ovs_schema</span><span class="p">]</span>
+        <span class="k">print</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">  $ &quot;</span><span class="p">,</span><span class="s">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+        <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span><span class="s">&quot;ovsdb-tool&quot;</span><span class="p">,</span> <span class="s">&quot;create&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">database_file</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ovs_schema</span><span class="p">])</span>
+       
+        <span class="c"># Start ovs database server</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;ovsdb-server&quot;</span><span class="p">,</span> <span class="s">&quot;--remote=punix:&quot;</span> <span class="o">+</span> 
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">socket_file</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">database_file</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">print</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">  $ &quot;</span><span class="p">,</span><span class="s">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">database_process</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">Popen</span><span class="p">([</span><span class="s">&quot;ovsdb-server&quot;</span><span class="p">,</span> <span class="s">&quot;--remote=punix:&quot;</span> <span class="o">+</span> 
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">socket_file</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">database_file</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
+       
+        <span class="c"># Start vswitchd</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;ovs-vswitchd&quot;</span><span class="p">,</span> <span class="s">&quot;unix:&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">socket_file</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">print</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">  $ &quot;</span><span class="p">,</span><span class="s">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vswitch_process</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">Popen</span><span class="p">([</span><span class="s">&quot;ovs-vswitchd&quot;</span><span class="p">,</span> <span class="s">&quot;unix:&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">socket_file</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
+       </div>
+<div class="viewcode-block" id="OpenVSwitch.stop"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.ovs.OpenVSwitch.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Stop all OVS daemons.&quot;&quot;&quot;</span>
+        <span class="c"># Kill vswitchd</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vswitch_process</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vswitch_process</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+        
+        <span class="c"># Kill database server</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">database_process</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">database_process</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+        
+        <span class="c"># Can&#39;t use close for database since it is already closed</span>
+        <span class="c"># Socket should already have been removed, but just in case</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c"># print &quot;Removing ovs_db&quot;, self.database_file.name</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">database_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="c"># print &quot;...doesn&#39;t exist&quot;</span>
+            <span class="k">pass</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c"># print &quot;Removing ovs_socket&quot;, self.socket_file.name</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">socket_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="c"># print &quot;...doesn&#39;t exist&quot;</span>
+            <span class="k">pass</span>
+    </div>
+<div class="viewcode-block" id="OpenVSwitch.create_bridge"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.ovs.OpenVSwitch.create_bridge">[docs]</a>    <span class="k">def</span> <span class="nf">create_bridge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bridge</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a bridge with the given name.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exec_command</span><span class="p">([</span><span class="s">&quot;add-br&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">])</span>
+        <span class="c"># Bring bridge up</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;ifconfig&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="s">&quot;up&quot;</span><span class="p">]</span>
+        <span class="k">print</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">  $ &quot;</span><span class="p">,</span><span class="s">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+        <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span><span class="s">&quot;ifconfig&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="s">&quot;up&quot;</span><span class="p">])</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">add_entry</span><span class="p">(</span><span class="s">&quot;VirtualBridges&quot;</span><span class="p">,</span> <span class="s">&quot;ovs&quot;</span><span class="p">,</span> <span class="p">{</span> <span class="s">&quot;name&quot;</span> <span class="p">:</span> <span class="n">bridge</span><span class="p">,</span> <span class="s">&quot;interfaces&quot;</span> <span class="p">:</span> <span class="p">[],</span> <span class="s">&quot;bridge_settings&quot;</span> <span class="p">:</span> <span class="p">{},</span> <span class="s">&quot;port_settings&quot;</span> <span class="p">:</span> <span class="p">{}</span> <span class="p">})</span>
+    </div>
+<div class="viewcode-block" id="OpenVSwitch.delete_bridge"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.ovs.OpenVSwitch.delete_bridge">[docs]</a>    <span class="k">def</span> <span class="nf">delete_bridge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bridge</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete a bridge with the given name.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">socket_file</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__exec_command</span><span class="p">([</span><span class="s">&quot;del-br&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">print</span> <span class="n">bridge</span> <span class="o">+</span> <span class="s">&quot; does not exist, maybe it was already killed.&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">delete_entry</span><span class="p">(</span><span class="s">&quot;VirtualBridges&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="OpenVSwitch.modify_bridge"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.ovs.OpenVSwitch.modify_bridge">[docs]</a>    <span class="k">def</span> <span class="nf">modify_bridge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Modifies a given bridge with the specified command and parameters.</span>
+<span class="sd">        Some commands do not require any parameters, or it may be</span>
+<span class="sd">        optional. These are marked with a \*.  Generally, not specifying a command</span>
+<span class="sd">        deletes the setting or resets it to default.</span>
+<span class="sd">        Some commands require a dictionary of parameters in the format</span>
+<span class="sd">        { arg1 : one, arg2: two, arg3: three }.</span>
+<span class="sd">        These are marked with {dict}.</span>
+<span class="sd">        Normally, parameters is simply a string.</span>
+<span class="sd">        </span>
+<span class="sd">        Commands        Parameters</span>
+<span class="sd">        controller      controller\*</span>
+<span class="sd">        fail_mode       mode\*</span>
+<span class="sd">        ip              IP address\*</span>
+<span class="sd">        dpid            DPID value\*&quot;&quot;&quot;</span>
+        
+        <span class="c"># By default, ovs command</span>
+        <span class="n">ovs_command</span> <span class="o">=</span> <span class="bp">True</span>
+        
+        <span class="c"># Find command, and format as appropriate</span>
+        <span class="k">if</span> <span class="n">command</span> <span class="o">==</span> <span class="s">&quot;controller&quot;</span><span class="p">:</span>
+            <span class="c"># Check if controller = 0.0.0.0, 0, None or 0 -&gt; no controller</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">parameters</span> <span class="o">==</span> <span class="bp">None</span> <span class="ow">or</span>  <span class="n">parameters</span> <span class="o">==</span> <span class="s">&quot;0.0.0.0&quot;</span> <span class="ow">or</span> <span class="n">parameters</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">parameters</span> <span class="o">==</span> <span class="s">&quot;0&quot;</span> <span class="p">):</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="p">[</span> <span class="s">&quot;del-controller&quot;</span><span class="p">,</span> <span class="n">bridge</span> <span class="p">]</span>
+                <span class="n">parameters</span> <span class="o">=</span> <span class="s">&quot;0.0.0.0&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="p">[</span> <span class="s">&quot;set-controller&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">parameters</span> <span class="p">]</span>
+        <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s">&quot;fail_mode&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">parameters</span> <span class="o">==</span> <span class="bp">None</span><span class="p">):</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="p">[</span> <span class="s">&quot;del-fail-mode&quot;</span><span class="p">,</span> <span class="n">bridge</span> <span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="p">[</span> <span class="s">&quot;set-fail-mode&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">parameters</span> <span class="p">]</span>
+        <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s">&quot;ip&quot;</span><span class="p">:</span>
+            <span class="n">ovs_command</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">parameters</span> <span class="o">==</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">parameters</span> <span class="o">==</span> <span class="s">&quot;0.0.0.0&quot;</span> <span class="ow">or</span> <span class="n">parameters</span> <span class="o">==</span> <span class="s">&quot;0&quot;</span><span class="p">):</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="p">[</span> <span class="s">&quot;ifconfig&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="s">&quot;0.0.0.0&quot;</span> <span class="p">]</span>
+                <span class="n">parameters</span> <span class="o">=</span> <span class="s">&quot;0.0.0.0&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="p">[</span> <span class="s">&quot;ifconfig&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">parameters</span> <span class="p">]</span>
+                
+        <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s">&quot;dpid&quot;</span><span class="p">:</span>
+            <span class="c"># Ignore if none specified</span>
+            <span class="k">if</span> <span class="n">parameters</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="p">[</span> <span class="s">&quot;set&quot;</span><span class="p">,</span> <span class="s">&quot;Bridge&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="s">&quot;other_config:datapath-id=0&quot;</span> <span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="p">[</span> <span class="s">&quot;set&quot;</span><span class="p">,</span> <span class="s">&quot;Bridge&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="s">&quot;other_config:datapath-id=&quot;</span> <span class="o">+</span> <span class="n">parameters</span> <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">exception</span><span class="o">.</span><span class="n">CommandNotFound</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="n">ovs_command</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__exec_command</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">  $ &quot;</span><span class="p">,</span><span class="s">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+            <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        
+        <span class="c"># Update database</span>
+        <span class="n">data_update</span> <span class="o">=</span> <span class="p">[</span> <span class="n">command</span><span class="p">,</span> <span class="n">parameters</span> <span class="p">]</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">get_entry</span><span class="p">(</span><span class="s">&quot;VirtualBridges&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">)</span>
+        <span class="n">entry</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">][</span><span class="s">&quot;bridge_settings&quot;</span><span class="p">][</span><span class="n">data_update</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">data_update</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    </div>
+<div class="viewcode-block" id="OpenVSwitch.add_port"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.ovs.OpenVSwitch.add_port">[docs]</a>    <span class="k">def</span> <span class="nf">add_port</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a port to the given bridge.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exec_command</span><span class="p">([</span><span class="s">&quot;add-port&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">port</span><span class="p">])</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">get_entry</span><span class="p">(</span><span class="s">&quot;VirtualBridges&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">)</span>
+        <span class="n">entry</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">][</span><span class="s">&quot;interfaces&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">port</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="OpenVSwitch.delete_port"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.ovs.OpenVSwitch.delete_port">[docs]</a>    <span class="k">def</span> <span class="nf">delete_port</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete a port from the given bridge.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__exec_command</span><span class="p">([</span><span class="s">&quot;del-port&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">port</span><span class="p">])</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">get_entry</span><span class="p">(</span><span class="s">&quot;VirtBridges&quot;</span><span class="p">,</span> <span class="n">bridge</span><span class="p">)</span>
+        <span class="n">entry</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">][</span><span class="s">&quot;interfaces&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">port</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="OpenVSwitch.modify_port"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.ovs.OpenVSwitch.modify_port">[docs]</a>    <span class="k">def</span> <span class="nf">modify_port</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Not currently allowed.&quot;&quot;&quot;</span>
+        <span class="c"># Not allowing any port modifications at this time</span>
+        <span class="c"># May change at a later date</span>
+        <span class="k">raise</span> <span class="n">exception</span><span class="o">.</span><span class="n">CommandNotFound</span><span class="p">(</span><span class="s">&quot;No port modifications to OVS allowed.&quot;</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="OpenVSwitch.show"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.ovs.OpenVSwitch.show">[docs]</a>    <span class="k">def</span> <span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the output of the show command as a byte string.&quot;&quot;&quot;</span>
+        <span class="c"># Need to get output, which is not provided by __exec_command</span>
+        <span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;ovs-vsctl&quot;</span><span class="p">,</span> <span class="s">&quot;--db=unix:&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">socket_file</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s">&quot;show&quot;</span><span class="p">]</span>
+        <span class="k">print</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">  $ &quot;</span><span class="p">,</span><span class="s">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span><span class="s">&quot;ovs-vsctl&quot;</span><span class="p">,</span> <span class="s">&quot;--db=unix:&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">socket_file</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s">&quot;show&quot;</span><span class="p">])</span>
+        
+        
+</pre></div></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">auroraagent  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Author.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

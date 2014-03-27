@@ -1,0 +1,244 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>auroraagent.VirtualBridges &mdash; auroraagent  documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="auroraagent  documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">auroraagent  documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for auroraagent.VirtualBridges</h1><div class="highlight"><pre>
+<span class="c"># Virtual Bridge class: configures virtual bridge programs.  </span>
+<span class="c"># Currently covers linux-bridge and OVS</span>
+
+<span class="c"># SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith</span>
+<span class="kn">import</span> <span class="nn">json</span><span class="o">,</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">exception</span><span class="o">,</span> <span class="nn">copy</span><span class="o">,</span> <span class="nn">os</span>
+<div class="viewcode-block" id="VirtualBridges"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.VirtualBridges.VirtualBridges">[docs]</a><span class="k">class</span> <span class="nc">VirtualBridges</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Virtual Bridge class.</span>
+
+<span class="sd">    All commands relating to virtual interfaces directly should be </span>
+<span class="sd">    directed to this class. It will handle any implementation or program </span>
+<span class="sd">    specfic parameters necessary.&quot;&quot;&quot;</span>
+    
+    <span class="n">MODULE_JSON_FILE</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">__file__</span><span class="p">)),</span><span class="s">&#39;modules.json&#39;</span><span class="p">)</span>
+    <span class="n">MODULES_FOLDER</span> <span class="o">=</span> <span class="s">&#39;modules&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">database</span><span class="p">):</span>
+        <span class="c"># Create list of modules</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c"># Load JSON.  Will raise an error if not found, but the code is useless</span>
+        <span class="c"># without it anyways....</span>
+        <span class="n">json_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MODULE_JSON_FILE</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">json_file</span><span class="p">)[</span><span class="s">&quot;VirtualBridges&quot;</span><span class="p">]</span>
+        <span class="n">json_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        
+    <span class="k">def</span> <span class="nf">__load_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flavor</span><span class="p">):</span>
+        
+        <span class="c"># Cast to string - some issues with unicode?</span>
+        <span class="n">flavor</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">flavor</span><span class="p">)</span>
+        <span class="c"># Try returning an existing module</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_module</span><span class="p">(</span><span class="n">flavor</span><span class="p">)</span>
+        <span class="c"># If that fails, load it</span>
+        <span class="k">except</span> <span class="n">exception</span><span class="o">.</span><span class="n">ModuleNotLoaded</span><span class="p">:</span>
+            <span class="n">module_file</span> <span class="o">=</span> <span class="nb">__import__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MODULES_FOLDER</span><span class="p">,</span><span class="nb">globals</span><span class="p">(),</span><span class="nb">locals</span><span class="p">(),</span>
+                    <span class="p">[</span><span class="n">flavor</span><span class="p">])</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">flavor</span><span class="p">]</span>
+            <span class="n">module_class_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">flavor</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;class&#39;</span><span class="p">)</span>
+            <span class="n">module_class</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module_file</span><span class="p">,</span> <span class="n">module_class_name</span><span class="p">)</span>
+            <span class="n">module_instance</span> <span class="o">=</span> <span class="n">module_class</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">)</span>
+            <span class="c"># Add to module list</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span><span class="p">[</span><span class="n">flavor</span><span class="p">]</span> <span class="o">=</span> <span class="n">module_instance</span>
+            <span class="c"># Give an instance</span>
+            <span class="k">return</span> <span class="n">module_instance</span>
+    
+    <span class="k">def</span> <span class="nf">__get_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">flavor</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">flavor</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span><span class="p">[</span><span class="n">flavor</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">exception</span><span class="o">.</span><span class="n">ModuleNotLoaded</span><span class="p">(</span><span class="n">flavor</span><span class="p">)</span>
+    
+    
+    <span class="k">def</span> <span class="nf">__unload_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">flavor</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span><span class="p">[</span><span class="n">flavor</span><span class="p">]</span>
+        <span class="c"># If module not loaded, ignore</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        
+    <span class="k">def</span> <span class="nf">__unload_all_modules</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">__get_module_used</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bridge</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__get_flavor</span><span class="p">(</span><span class="n">bridge</span><span class="p">)]</span>
+        
+    <span class="k">def</span> <span class="nf">__get_flavor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bridge</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_entry</span><span class="p">(</span><span class="n">bridge</span><span class="p">)[</span><span class="s">&quot;flavor&quot;</span><span class="p">]</span>
+    
+<div class="viewcode-block" id="VirtualBridges.create_bridge"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.VirtualBridges.VirtualBridges.create_bridge">[docs]</a>    <span class="k">def</span> <span class="nf">create_bridge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flavor</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a bridge of type flavor and with the given name.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">flavor</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">exception</span><span class="o">.</span><span class="n">FlavorNotExist</span><span class="p">(</span><span class="n">flavor</span><span class="p">)</span>
+        
+        <span class="c"># Load module</span>
+        <span class="k">print</span> <span class="s">&quot;Loading module:&quot;</span><span class="p">,</span><span class="n">flavor</span>
+        <span class="n">program</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__load_module</span><span class="p">(</span><span class="n">flavor</span><span class="p">)</span>
+        
+        <span class="c"># Module should now be running and we can execute commands</span>
+        <span class="c"># The assumption is that we try and create a bridge before modifying one</span>
+        <span class="k">print</span> <span class="s">&quot;Creating bridge:&quot;</span><span class="p">,</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">program</span><span class="o">.</span><span class="n">create_bridge</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">print</span> <span class="s">&quot;SUCCESS&quot;</span>
+    </div>
+<div class="viewcode-block" id="VirtualBridges.delete_bridge"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.VirtualBridges.VirtualBridges.delete_bridge">[docs]</a>    <span class="k">def</span> <span class="nf">delete_bridge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete a bridge &#39;name&#39;.&quot;&quot;&quot;</span>
+        
+        <span class="n">module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_module_used</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">module</span><span class="o">.</span><span class="n">delete_bridge</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+      </div>
+<div class="viewcode-block" id="VirtualBridges.modify_bridge"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.VirtualBridges.VirtualBridges.modify_bridge">[docs]</a>    <span class="k">def</span> <span class="nf">modify_bridge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Execute a command on the bridge that modifies it.</span>
+<span class="sd">        The user is responsible for properly formatting the command</span>
+<span class="sd">        and parameters.&quot;&quot;&quot;</span>
+        <span class="c"># All sanity checking is assumed to be done by the module</span>
+        <span class="c"># At this level, we do not know what commands are valid or not</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_module_used</span><span class="p">(</span><span class="n">bridge</span><span class="p">)</span>
+        <span class="n">module</span><span class="o">.</span><span class="n">modify_bridge</span><span class="p">(</span><span class="n">bridge</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="VirtualBridges.modify_port"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.VirtualBridges.VirtualBridges.modify_port">[docs]</a>    <span class="k">def</span> <span class="nf">modify_port</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Execute a command on a port on a bridge that modifies it.</span>
+<span class="sd">        The user is responsible for properly formatting the command</span>
+<span class="sd">        and parameters.&quot;&quot;&quot;</span>
+        <span class="c"># All sanity checking is assumed to be done by the module</span>
+        <span class="c"># At this level, we do not know what commands are valid or not</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_module_used</span><span class="p">(</span><span class="n">bridge</span><span class="p">)</span>
+        <span class="n">module</span><span class="o">.</span><span class="n">modify_port</span><span class="p">(</span><span class="n">bridge</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+            </div>
+<div class="viewcode-block" id="VirtualBridges.add_port_to_bridge"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.VirtualBridges.VirtualBridges.add_port_to_bridge">[docs]</a>    <span class="k">def</span> <span class="nf">add_port_to_bridge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a port to the specified bridge.&quot;&quot;&quot;</span>
+        <span class="c"># Find module associated with bridge</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_module_used</span><span class="p">(</span><span class="n">bridge</span><span class="p">)</span>
+        
+        <span class="c"># Any bad input will be handled by the module</span>
+        <span class="c"># Usually the base program will send a non-zero return code</span>
+        <span class="c"># which will in turn raise an exception (i.e. port does not exist)</span>
+        <span class="n">module</span><span class="o">.</span><span class="n">add_port</span><span class="p">(</span><span class="n">bridge</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="VirtualBridges.delete_port_from_bridge"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.VirtualBridges.VirtualBridges.delete_port_from_bridge">[docs]</a>    <span class="k">def</span> <span class="nf">delete_port_from_bridge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bridge</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete a port from the specified bridge.&quot;&quot;&quot;</span>
+        <span class="c"># Find module associated with bridge, delete</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_module_used</span><span class="p">(</span><span class="n">bridge</span><span class="p">)</span>
+        <span class="n">module</span><span class="o">.</span><span class="n">delete_port</span><span class="p">(</span><span class="n">bridge</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+    
+    </div>
+<div class="viewcode-block" id="VirtualBridges.list"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.VirtualBridges.VirtualBridges.list">[docs]</a>    <span class="k">def</span> <span class="nf">list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Retrieves and returns detailed information from the modules.</span>
+<span class="sd">        Usually, this information will be direct from the managing program.&quot;&quot;&quot;</span>
+        <span class="c"># Go through each module, and get info</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">flavor</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span><span class="p">:</span>
+            <span class="n">info</span> <span class="o">+=</span> <span class="p">(</span><span class="s">&quot;flavor: &quot;</span> <span class="o">+</span> <span class="n">flavor</span> <span class="o">+</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+            <span class="n">info</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span><span class="p">[</span><span class="n">flavor</span><span class="p">]</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+        
+        <span class="k">return</span> <span class="n">info</span>
+        </div>
+    <span class="k">def</span> <span class="nf">__get_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">get_entry</span><span class="p">(</span><span class="s">&quot;VirtualBridges&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        
+<div class="viewcode-block" id="VirtualBridges.reset"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.VirtualBridges.VirtualBridges.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Stops any running bridges.  Note that this may not delete</span>
+<span class="sd">        bridges, especially for kernel built-in bridges like</span>
+<span class="sd">        the standard linux-bridge module, where the stop function</span>
+<span class="sd">        does nothing.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">module_list</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="c"># Ignore any errors</span>
+                <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__unload_all_modules</span><span class="p">()</span>
+</pre></div></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">auroraagent  documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Author.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,193 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>auroraagent.Monitor &mdash; auroraagent  documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="auroraagent  documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">auroraagent  documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for auroraagent.Monitor</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+
+
+<div class="viewcode-block" id="Monitor"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Monitor.Monitor">[docs]</a><span class="k">class</span> <span class="nc">Monitor</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;The Monitor class tracks slice data usage and access point</span>
+<span class="sd">    hardware info, such as available memory and free disk space</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">database</span><span class="p">):</span>
+        <span class="c">#inti motitor with database</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+
+<div class="viewcode-block" id="Monitor.get_stats"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Monitor.Monitor.get_stats">[docs]</a>    <span class="k">def</span> <span class="nf">get_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fetches stats for the ap slices on this access point,</span>
+<span class="sd">        combines it with data gathered about the memory,</span>
+<span class="sd">        and returns both in a dictionary.</span>
+
+<span class="sd">        :rtype: dict</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ap_slice_stats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_ap_slice_stats</span><span class="p">()</span>
+        <span class="n">memory_stats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_memory_stats</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">({</span><span class="s">&quot;ap_slice_stats&quot;</span><span class="p">:</span><span class="n">ap_slice_stats</span><span class="p">,</span>
+                 <span class="s">&quot;memory_stats&quot;</span><span class="p">:</span><span class="n">memory_stats</span><span class="p">})</span>
+</div>
+    <span class="k">def</span> <span class="nf">_get_memory_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fetches memory statistics from /proc/meminfo using </span>
+<span class="sd">        regular expressions to parse output.</span>
+
+<span class="sd">        :rtype: dict</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span><span class="s">&#39;cat&#39;</span><span class="p">,</span> <span class="s">&#39;/proc/meminfo&#39;</span><span class="p">])</span>
+            <span class="n">memory_mb</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">&#39;MemTotal: *([0-9]*) &#39;</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">free_disk</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">&#39;MemFree: *([0-9]*) &#39;</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="c"># Convert to MB</span>
+            <span class="p">(</span><span class="n">memory_mb</span><span class="p">,</span> <span class="n">free_disk</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">memory_mb</span><span class="p">)</span><span class="o">/</span><span class="mi">1000</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">free_disk</span><span class="p">)</span><span class="o">/</span><span class="mi">1000</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">hw_set_memory_mb</span><span class="p">(</span><span class="n">memory_mb</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">hw_set_free_disk</span><span class="p">(</span><span class="n">free_disk</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="p">{</span><span class="s">&quot;memory_mb&quot;</span><span class="p">:</span><span class="n">memory_mb</span><span class="p">,</span>
+                    <span class="s">&quot;free_disk&quot;</span><span class="p">:</span><span class="n">free_disk</span><span class="p">}</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;[Monitor.py]: _get_memory_stats(): Something went wrong&quot;</span>
+            <span class="k">print</span> <span class="s">&#39;-&#39;</span><span class="o">*</span><span class="mi">60</span>
+            <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+            <span class="k">print</span> <span class="s">&#39;-&#39;</span><span class="o">*</span><span class="mi">60</span>
+
+    <span class="k">def</span> <span class="nf">_get_ap_slice_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sums bytes transmitted and received for each slice,</span>
+<span class="sd">        returns a dict containing their traffic usage.</span>
+
+<span class="sd">        :rtype: dict</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ap_slice_stats</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="nb">slice</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">get_slice_list</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">slice</span> <span class="o">!=</span> <span class="s">&quot;default_slice&quot;</span><span class="p">:</span>
+                <span class="n">slice_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">get_slice_data</span><span class="p">(</span><span class="nb">slice</span><span class="p">)</span>
+                <span class="n">total_tx_bytes</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">slice_data</span><span class="p">[</span><span class="s">&quot;VirtualInterfaces&quot;</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">entry</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">][</span><span class="s">&quot;attach_to&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_interface_name</span><span class="p">(</span><span class="n">slice_data</span><span class="p">):</span>
+                        <span class="n">rx_bytes</span><span class="p">,</span> <span class="n">tx_bytes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_network_traffic</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">][</span><span class="s">&quot;name&quot;</span><span class="p">])</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">total_tx_bytes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tx_bytes</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">rx_bytes</span><span class="p">)</span>
+                        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                            <span class="k">print</span> <span class="s">&quot;Invalid Number </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">tx_bytes</span>
+                <span class="n">ap_slice_stats</span><span class="p">[</span><span class="nb">slice</span><span class="p">]</span> <span class="o">=</span> <span class="n">total_tx_bytes</span>
+        <span class="k">return</span> <span class="n">ap_slice_stats</span>
+
+    <span class="k">def</span> <span class="nf">_get_interface_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">slice_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the name of the interface on the wireless</span>
+<span class="sd">        side of a slice&#39;s virtual bridge - typically this</span>
+<span class="sd">        interface will have a name similar to wlan0.</span>
+
+<span class="sd">        :param dict slice_data: Slice configuration from database</span>
+<span class="sd">        :rtype: string</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">slice_data</span><span class="p">[</span><span class="s">&quot;RadioInterfaces&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">entry</span><span class="p">[</span><span class="s">&quot;flavor&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;wifi_bss&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">entry</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">][</span><span class="s">&quot;if_name&quot;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_get_network_traffic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Finds the transmitted and received bytes for a </span>
+<span class="sd">        given interface.</span>
+
+<span class="sd">        :param string interface:</span>
+<span class="sd">        :rtype: tuple</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">([</span><span class="s">&#39;ifconfig&#39;</span><span class="p">,</span> <span class="n">interface</span><span class="p">],</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span><span class="o">.</span><span class="n">communicate</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">rx_bytes</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s">&#39;RX bytes:([0-9]*) &#39;</span><span class="p">,</span> <span class="n">output</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">tx_bytes</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s">&#39;TX bytes:([0-9]*) &#39;</span><span class="p">,</span> <span class="n">output</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">rx_bytes</span><span class="p">,</span> <span class="n">tx_bytes</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">auroraagent  documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Author.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

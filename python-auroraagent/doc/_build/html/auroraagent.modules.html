@@ -1,0 +1,556 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>modules Package &mdash; auroraagent  documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="auroraagent  documentation" href="index.html" />
+    <link rel="up" title="auroraagent Package" href="auroraagent.html" />
+    <link rel="next" title="test Package" href="auroraagent.test.html" />
+    <link rel="prev" title="auroraagent Package" href="auroraagent.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="auroraagent.test.html" title="test Package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="auroraagent.html" title="auroraagent Package"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">auroraagent  documentation</a> &raquo;</li>
+          <li><a href="auroraagent.html" accesskey="U">auroraagent Package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="modules-package">
+<h1>modules Package<a class="headerlink" href="#modules-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-auroraagent.modules.OpenWRTWifi">
+<span id="openwrtwifi-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">OpenWRTWifi</span></tt> Module<a class="headerlink" href="#module-auroraagent.modules.OpenWRTWifi" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="auroraagent.modules.OpenWRTWifi.OpenWRTWifi">
+<em class="property">class </em><tt class="descclassname">auroraagent.modules.OpenWRTWifi.</tt><tt class="descname">OpenWRTWifi</tt><big>(</big><em>database</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/OpenWRTWifi.html#OpenWRTWifi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.OpenWRTWifi.OpenWRTWifi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Responsible for configuring the WiFi radio interfaces of a device.
+This version is OpenWRT specific.  For other distributions or OSes,
+create a class that implements the same functions
+as appropriate for that distro or OS.</p>
+<dl class="attribute">
+<dt id="auroraagent.modules.OpenWRTWifi.OpenWRTWifi.WIRELESS_FILE_PATH">
+<tt class="descname">WIRELESS_FILE_PATH</tt><em class="property"> = '/etc/config/wireless'</em><a class="headerlink" href="#auroraagent.modules.OpenWRTWifi.OpenWRTWifi.WIRELESS_FILE_PATH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.OpenWRTWifi.OpenWRTWifi.add_bss">
+<tt class="descname">add_bss</tt><big>(</big><em>radio</em>, <em>name</em>, <em>mode=None</em>, <em>encryption_type=None</em>, <em>key=None</em>, <em>auth_server=None</em>, <em>auth_port=None</em>, <em>auth_secret=None</em>, <em>acct_server=None</em>, <em>acct_port=None</em>, <em>acct_secret=None</em>, <em>nasid=None</em>, <em>new_entry=True</em>, <em>macaddr=None</em>, <em>if_name=None</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/OpenWRTWifi.html#OpenWRTWifi.add_bss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.OpenWRTWifi.OpenWRTWifi.add_bss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a new BSS attached to the specified radio.  By default,
+there is no encryption.  Use the encryption_type and key values to set up.
+Passphrases must follow encryptions requirements (i.e. WPA/WEP require
+specific passphrase lengths)</p>
+<p>Possible encryption types include wep-open, wep-shared, psk (WPA-PSK) 
+and psk2 (WPA-PSK2).</p>
+<p>The encryption_type may also be set to wpa or wpa2, which will
+enable the use of WPA-Enterprise using TKIP or CCMP as ciphers,
+respectively.  Enterprise security requires some options; see
+<a class="reference external" href="http://wiki.openwrt.org/doc/uci/wireless">http://wiki.openwrt.org/doc/uci/wireless</a> for details.  Generally,
+you will need at least an auth_server and auth_secret.</p>
+<p>Mode is forced to access point for now.</p>
+<p>new_entry should be false only when non-main SSIDs are desired
+without a corresponding entry in the database. This is used
+specifically when restoring a configuration that already
+exists in the database but has not been set on the radio. The macaddr
+parameter is required with new_entry. if_name should also be specified
+in this case; otherwise, the actual configuration will not match the
+database.</p>
+<p>In general, if_name can be specified when adding a bss, and, if possible,
+it will be used.  If not specified (or the radio has no BSS, hence,
+the new BSS will be a main one) a default one will be generated/used.</p>
+<p>Exceptions will be raised for a number of common encryption
+configuration errors, but not all - in particular WPA at the
+enterprise level.  Exceptions will also (likely) be raised
+if a bss cannot be added to an active radio.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.OpenWRTWifi.OpenWRTWifi.apply_changes">
+<tt class="descname">apply_changes</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/OpenWRTWifi.html#OpenWRTWifi.apply_changes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.OpenWRTWifi.OpenWRTWifi.apply_changes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resets and applies changes on any radios that require it, such as a 
+channel change or a modification of the main BSS.
+An exception will be raised if a hostapd failure occurs and the changes
+are not applied.</p>
+<p>If there are no changes to apply, the above hostapd check will still run,
+raising an error if a hostapd instance that is supposed to run
+is not doing so.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.OpenWRTWifi.OpenWRTWifi.modify_bss">
+<tt class="descname">modify_bss</tt><big>(</big><em>radio</em>, <em>name</em>, <em>new_name=None</em>, <em>encryption_type=None</em>, <em>key=None</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/OpenWRTWifi.html#OpenWRTWifi.modify_bss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.OpenWRTWifi.OpenWRTWifi.modify_bss" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.OpenWRTWifi.OpenWRTWifi.remove_bss">
+<tt class="descname">remove_bss</tt><big>(</big><em>radio</em>, <em>name</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/OpenWRTWifi.html#OpenWRTWifi.remove_bss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.OpenWRTWifi.OpenWRTWifi.remove_bss" title="Permalink to this definition">¶</a></dt>
+<dd><p>The bss associated to the radio is removed on the fly.  
+If the radio is currently disabled, it is removed from the database and 
+will not be reinitialized when the radio is enabled again.</p>
+<p>If a main BSS is removed, all BSS on that radio will be removed
+and the radio will be disabled.</p>
+<p>An exception will be raised if a non-existent SSID is given.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.OpenWRTWifi.OpenWRTWifi.setup">
+<tt class="descname">setup</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/OpenWRTWifi.html#OpenWRTWifi.setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.OpenWRTWifi.OpenWRTWifi.setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method removes any existing wireless configuration, subsequently
+detecting and adding any radios available to Aurora for use.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.OpenWRTWifi.OpenWRTWifi.setup_radio">
+<tt class="descname">setup_radio</tt><big>(</big><em>name</em>, <em>disabled=0</em>, <em>channel=None</em>, <em>hwmode=None</em>, <em>txpower=None</em>, <em>country=None</em>, <em>bss_limit=None</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/OpenWRTWifi.html#OpenWRTWifi.setup_radio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.OpenWRTWifi.OpenWRTWifi.setup_radio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets up a radio with the given parameters.  If parameters
+are unspecified, existing parameters are left unchanged.
+By default, it will enable the radio interface.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-auroraagent.modules.capsulator">
+<span id="capsulator-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">capsulator</span></tt> Module<a class="headerlink" href="#module-auroraagent.modules.capsulator" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="auroraagent.modules.capsulator.Capsulator">
+<em class="property">class </em><tt class="descclassname">auroraagent.modules.capsulator.</tt><tt class="descname">Capsulator</tt><a class="reference internal" href="_modules/auroraagent/modules/capsulator.html#Capsulator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.capsulator.Capsulator" title="Permalink to this definition">¶</a></dt>
+<dd><p>The Capsulator class provides an interface to interact with the
+capsulator program developed by Stanford (v. 0.01b) and modified
+by the BCRL at McGill University to implement IP-based incoming 
+tunnel data filtering.</p>
+<dl class="method">
+<dt id="auroraagent.modules.capsulator.Capsulator.kill_all">
+<tt class="descname">kill_all</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/capsulator.html#Capsulator.kill_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.capsulator.Capsulator.kill_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stops all known instances of capsulator.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="auroraagent.modules.capsulator.Capsulator.retry_attempts">
+<tt class="descname">retry_attempts</tt><em class="property"> = 2</em><a class="headerlink" href="#auroraagent.modules.capsulator.Capsulator.retry_attempts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.capsulator.Capsulator.start">
+<tt class="descname">start</tt><big>(</big><em>attach_to</em>, <em>forward_to</em>, <em>name</em>, <em>tunnel_tag</em>, <em>is_virtual=True</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/capsulator.html#Capsulator.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.capsulator.Capsulator.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts an instance of capsulator.  Please note that incorrect configuration
+can cause the program to fail to start, and an exception may NOT be 
+generated.  The status can be checked with the status command.:</p>
+<div class="highlight-python"><pre>attach_to = names the interface which is the tunnel endpoint
+forward_to = the IP the tunnel should forward frames to
+name = specifies a border interface
+tag = the tag of the border interface
+is_virtual = whether or not to create a virtual interface for
+          border_interface (i.e. a tap).  In this case, 
+          border_interface should not be a real 
+          interface, as it will be created automatically.</pre>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.capsulator.Capsulator.status">
+<tt class="descname">status</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/capsulator.html#Capsulator.status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.capsulator.Capsulator.status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether or not the given instance is running.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.capsulator.Capsulator.stop">
+<tt class="descname">stop</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/capsulator.html#Capsulator.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.capsulator.Capsulator.stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stops an instance of capsulator with this name.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-auroraagent.modules.linux_bridge">
+<span id="linux-bridge-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">linux_bridge</span></tt> Module<a class="headerlink" href="#module-auroraagent.modules.linux_bridge" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="auroraagent.modules.linux_bridge.Brctl">
+<em class="property">class </em><tt class="descclassname">auroraagent.modules.linux_bridge.</tt><tt class="descname">Brctl</tt><big>(</big><em>database</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/linux_bridge.html#Brctl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.linux_bridge.Brctl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Linux bridge module
+Controls the default bridge module that operates in the kernel,
+normally controlled with the brctl command.
+Note that brctl options may vary with the shell used; this program
+is designed to configure only the basics offered with the 
+busybox v.1.19.4 implementation, although it may work
+with other implementations without issue.</p>
+<dl class="method">
+<dt id="auroraagent.modules.linux_bridge.Brctl.add_port">
+<tt class="descname">add_port</tt><big>(</big><em>bridge</em>, <em>interface</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/linux_bridge.html#Brctl.add_port"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.linux_bridge.Brctl.add_port" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a port to the given bridge.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.linux_bridge.Brctl.create_bridge">
+<tt class="descname">create_bridge</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/linux_bridge.html#Brctl.create_bridge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.linux_bridge.Brctl.create_bridge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a bridge with the given name.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.linux_bridge.Brctl.delete_bridge">
+<tt class="descname">delete_bridge</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/linux_bridge.html#Brctl.delete_bridge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.linux_bridge.Brctl.delete_bridge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a bridge with the given name.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.linux_bridge.Brctl.delete_port">
+<tt class="descname">delete_port</tt><big>(</big><em>bridge</em>, <em>interface</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/linux_bridge.html#Brctl.delete_port"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.linux_bridge.Brctl.delete_port" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a port from the given bridge.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.linux_bridge.Brctl.modify_bridge">
+<tt class="descname">modify_bridge</tt><big>(</big><em>bridge</em>, <em>command</em>, <em>parameters=None</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/linux_bridge.html#Brctl.modify_bridge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.linux_bridge.Brctl.modify_bridge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Modifies a given bridge with the specified command and parameters.
+Some commands do not require any parameters, or it may be
+optional. These are marked with a *.  Generally, not specifying a command
+deletes the setting or resets it to default.
+Some commands require a dictionary of parameters in the format
+{ arg1 : one, arg2: two, arg3: three }.
+These are marked with {dict}.
+Normally, parameters is simply a string.</p>
+<p>Commands                Parameters
+ageing                  age
+forward_delay           delay
+hello_time              time
+max_age                 age
+bridge_priority         priority
+stp                     setting (string &#8220;on&#8221; or &#8220;off&#8221;)
+ip                      IP Address*</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.linux_bridge.Brctl.modify_port">
+<tt class="descname">modify_port</tt><big>(</big><em>bridge</em>, <em>port</em>, <em>command</em>, <em>parameters=None</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/linux_bridge.html#Brctl.modify_port"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.linux_bridge.Brctl.modify_port" title="Permalink to this definition">¶</a></dt>
+<dd><p>Modifies a given bridge port with the specified command and parameters.
+Some commands do not require any parameters, or it may be
+optional. These are marked with a *.
+Some commands require a dictionary of parameters in the format
+{ arg1 : one, arg2: two, arg3: three }.
+These are marked with {dict}.
+Normally, parameters is simply a string.</p>
+<p>Commands                Parameters
+priority                priority</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.linux_bridge.Brctl.show">
+<tt class="descname">show</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/linux_bridge.html#Brctl.show"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.linux_bridge.Brctl.show" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the output of the show command as a byte string.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.linux_bridge.Brctl.start">
+<tt class="descname">start</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/linux_bridge.html#Brctl.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.linux_bridge.Brctl.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.linux_bridge.Brctl.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/linux_bridge.html#Brctl.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.linux_bridge.Brctl.stop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-auroraagent.modules.ovs">
+<span id="ovs-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">ovs</span></tt> Module<a class="headerlink" href="#module-auroraagent.modules.ovs" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="auroraagent.modules.ovs.OpenVSwitch">
+<em class="property">class </em><tt class="descclassname">auroraagent.modules.ovs.</tt><tt class="descname">OpenVSwitch</tt><big>(</big><em>database</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/ovs.html#OpenVSwitch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.ovs.OpenVSwitch" title="Permalink to this definition">¶</a></dt>
+<dd><p>OpenVSwitch module.  Controls the OpenVSwitch daemon, allowing
+for the creation and modification of bridges and their ports.
+Designed for OVS v 1.9.0</p>
+<dl class="method">
+<dt id="auroraagent.modules.ovs.OpenVSwitch.add_port">
+<tt class="descname">add_port</tt><big>(</big><em>bridge</em>, <em>port</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/ovs.html#OpenVSwitch.add_port"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.ovs.OpenVSwitch.add_port" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a port to the given bridge.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.ovs.OpenVSwitch.create_bridge">
+<tt class="descname">create_bridge</tt><big>(</big><em>bridge</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/ovs.html#OpenVSwitch.create_bridge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.ovs.OpenVSwitch.create_bridge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a bridge with the given name.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.ovs.OpenVSwitch.delete_bridge">
+<tt class="descname">delete_bridge</tt><big>(</big><em>bridge</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/ovs.html#OpenVSwitch.delete_bridge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.ovs.OpenVSwitch.delete_bridge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a bridge with the given name.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.ovs.OpenVSwitch.delete_port">
+<tt class="descname">delete_port</tt><big>(</big><em>bridge</em>, <em>port</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/ovs.html#OpenVSwitch.delete_port"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.ovs.OpenVSwitch.delete_port" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a port from the given bridge.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.ovs.OpenVSwitch.modify_bridge">
+<tt class="descname">modify_bridge</tt><big>(</big><em>bridge</em>, <em>command</em>, <em>parameters=None</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/ovs.html#OpenVSwitch.modify_bridge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.ovs.OpenVSwitch.modify_bridge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Modifies a given bridge with the specified command and parameters.
+Some commands do not require any parameters, or it may be
+optional. These are marked with a *.  Generally, not specifying a command
+deletes the setting or resets it to default.
+Some commands require a dictionary of parameters in the format
+{ arg1 : one, arg2: two, arg3: three }.
+These are marked with {dict}.
+Normally, parameters is simply a string.</p>
+<p>Commands        Parameters
+controller      controller*
+fail_mode       mode*
+ip              IP address*
+dpid            DPID value*</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.ovs.OpenVSwitch.modify_port">
+<tt class="descname">modify_port</tt><big>(</big><em>bridge</em>, <em>port</em>, <em>command</em>, <em>parameters=None</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/ovs.html#OpenVSwitch.modify_port"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.ovs.OpenVSwitch.modify_port" title="Permalink to this definition">¶</a></dt>
+<dd><p>Not currently allowed.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="auroraagent.modules.ovs.OpenVSwitch.ovs_schema">
+<tt class="descname">ovs_schema</tt><em class="property"> = '/usr/share/openvswitch/vswitch.ovsschema'</em><a class="headerlink" href="#auroraagent.modules.ovs.OpenVSwitch.ovs_schema" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.ovs.OpenVSwitch.show">
+<tt class="descname">show</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/ovs.html#OpenVSwitch.show"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.ovs.OpenVSwitch.show" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the output of the show command as a byte string.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.ovs.OpenVSwitch.start">
+<tt class="descname">start</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/ovs.html#OpenVSwitch.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.ovs.OpenVSwitch.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start required ovs daemons.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.ovs.OpenVSwitch.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/ovs.html#OpenVSwitch.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.ovs.OpenVSwitch.stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop all OVS daemons.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-auroraagent.modules.ovs_tc">
+<span id="ovs-tc-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">ovs_tc</span></tt> Module<a class="headerlink" href="#module-auroraagent.modules.ovs_tc" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="auroraagent.modules.ovs_tc.OvsTC">
+<em class="property">class </em><tt class="descclassname">auroraagent.modules.ovs_tc.</tt><tt class="descname">OvsTC</tt><a class="reference internal" href="_modules/auroraagent/modules/ovs_tc.html#OvsTC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.ovs_tc.OvsTC" title="Permalink to this definition">¶</a></dt>
+<dd><p>The ovs-tc class sets up ovs queues on bridge interfaces</p>
+<dl class="method">
+<dt id="auroraagent.modules.ovs_tc.OvsTC.kill_all">
+<tt class="descname">kill_all</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/ovs_tc.html#OvsTC.kill_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.ovs_tc.OvsTC.kill_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Kills all known vethd processes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.ovs_tc.OvsTC.start">
+<tt class="descname">start</tt><big>(</big><em>uplink=None</em>, <em>downlink=None</em>, <em>if_up=None</em>, <em>if_down=None</em>, <em>ovs_db_sock=None</em>, <em>name=None</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/ovs_tc.html#OvsTC.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.ovs_tc.OvsTC.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets up queues and using ovs-vsctl to limit rates to specified limits.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.ovs_tc.OvsTC.status">
+<tt class="descname">status</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/ovs_tc.html#OvsTC.status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.ovs_tc.OvsTC.status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether or not the given instance is running.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.ovs_tc.OvsTC.stop">
+<tt class="descname">stop</tt><big>(</big><em>if_up=None</em>, <em>if_down=None</em>, <em>ovs_db_sock=None</em>, <em>name=None</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/ovs_tc.html#OvsTC.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.ovs_tc.OvsTC.stop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-auroraagent.modules.tc">
+<span id="tc-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">tc</span></tt> Module<a class="headerlink" href="#module-auroraagent.modules.tc" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="auroraagent.modules.tc.Tc">
+<em class="property">class </em><tt class="descclassname">auroraagent.modules.tc.</tt><tt class="descname">Tc</tt><a class="reference internal" href="_modules/auroraagent/modules/tc.html#Tc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.tc.Tc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>The tc class configures and runs the tc program</p>
+<dl class="method">
+<dt id="auroraagent.modules.tc.Tc.kill_all">
+<tt class="descname">kill_all</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/tc.html#Tc.kill_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.tc.Tc.kill_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Kills all known vethd processes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.tc.Tc.start">
+<tt class="descname">start</tt><big>(</big><em>uplink=None</em>, <em>downlink=None</em>, <em>if_up=None</em>, <em>if_down=None</em>, <em>name=None</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/tc.html#Tc.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.tc.Tc.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets up qdiscs and classes using TC to limit rates to specified limits.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.tc.Tc.status">
+<tt class="descname">status</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/tc.html#Tc.status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.tc.Tc.status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether or not the given instance is running.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.tc.Tc.stop">
+<tt class="descname">stop</tt><big>(</big><em>if_up=None</em>, <em>if_down=None</em>, <em>name=None</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/tc.html#Tc.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.tc.Tc.stop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-auroraagent.modules.veth">
+<span id="veth-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">veth</span></tt> Module<a class="headerlink" href="#module-auroraagent.modules.veth" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="auroraagent.modules.veth.Veth">
+<em class="property">class </em><tt class="descclassname">auroraagent.modules.veth.</tt><tt class="descname">Veth</tt><a class="reference internal" href="_modules/auroraagent/modules/veth.html#Veth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.veth.Veth" title="Permalink to this definition">¶</a></dt>
+<dd><p>The veth class configures and runs the veth program,
+written by Nestor Pena.  The original website no longer exists;
+the only website still running appears to be
+<a class="reference external" href="http://www.geocities.ws/nestorjpg/veth/index.html">http://www.geocities.ws/nestorjpg/veth/index.html</a></p>
+<dl class="method">
+<dt id="auroraagent.modules.veth.Veth.kill_all">
+<tt class="descname">kill_all</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/veth.html#Veth.kill_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.veth.Veth.kill_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Kills all known vethd processes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.veth.Veth.start">
+<tt class="descname">start</tt><big>(</big><em>attach_to</em>, <em>name</em>, <em>mac=0</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/veth.html#Veth.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.veth.Veth.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts an instance of vethd. An exception will be thrown
+if the program fails to start.</p>
+<p>name = Name you want in the VIRTUAL device, for example: veth0
+attach_to = Name of the REAL device, for example: eth0, eth1
+mac = MAC address desired, like this: 00:11:22:33:44:55</p>
+<p>If mac is not specified, it is generated by the kernel.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.veth.Veth.status">
+<tt class="descname">status</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/veth.html#Veth.status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.veth.Veth.status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether or not the given instance is running.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.modules.veth.Veth.stop">
+<tt class="descname">stop</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/auroraagent/modules/veth.html#Veth.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.modules.veth.Veth.stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stops the process with given name, assuming it is a vethd process.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">modules Package</a><ul>
+<li><a class="reference internal" href="#module-auroraagent.modules.OpenWRTWifi"><tt class="docutils literal"><span class="pre">OpenWRTWifi</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-auroraagent.modules.capsulator"><tt class="docutils literal"><span class="pre">capsulator</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-auroraagent.modules.linux_bridge"><tt class="docutils literal"><span class="pre">linux_bridge</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-auroraagent.modules.ovs"><tt class="docutils literal"><span class="pre">ovs</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-auroraagent.modules.ovs_tc"><tt class="docutils literal"><span class="pre">ovs_tc</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-auroraagent.modules.tc"><tt class="docutils literal"><span class="pre">tc</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-auroraagent.modules.veth"><tt class="docutils literal"><span class="pre">veth</span></tt> Module</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="auroraagent.html"
+                        title="previous chapter">auroraagent Package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="auroraagent.test.html"
+                        title="next chapter">test Package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/auroraagent.modules.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="auroraagent.test.html" title="test Package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="auroraagent.html" title="auroraagent Package"
+             >previous</a> |</li>
+        <li><a href="index.html">auroraagent  documentation</a> &raquo;</li>
+          <li><a href="auroraagent.html" >auroraagent Package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Author.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
