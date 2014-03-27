@@ -50,7 +50,7 @@
     ],
     "TrafficAttributes": [
         {
-            "flavor":"ovs-tc",
+            "flavor":"ovs_tc",
             "attributes":
                 {
                     "uplink":"500000",

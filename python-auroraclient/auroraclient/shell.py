@@ -116,7 +116,7 @@ class AuroraConsole():
             print 'function: %s' % function
 
             #For add-slice and modify, we need to load the JSON file
-            if function == 'ap-slice-create' or function == 'ap-slice-modify':
+            if function == 'ap-slice-create':
                 if not (params['file'] or params['hint']):                
                     print 'Please specify a file argument or hint!'
                     return

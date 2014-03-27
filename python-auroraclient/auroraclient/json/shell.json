@@ -178,17 +178,6 @@
                 },
                 [
                     [
-                        "--ap",
-                        {
-                            "action":"store",
-                            "help":"List of access points",
-                            "nargs":"*",
-                            "default":null,
-                            "choices":null,
-                            "metavar":"ap"
-                        }
-                    ],
-                    [
                         "--filter",
                         {
                             "action":"store",
@@ -197,6 +186,50 @@
                             "default":null,
                             "choices":null,
                             "metavar":"filter"
+                        }
+                    ],
+                    [
+                        "--ssid",
+                        {
+                            "action":"store",
+                            "help":"New SSID for slice",
+                            "nargs":1,
+                            "default":null,
+                            "choices":null,
+                            "metavar":"ap"
+                        }
+                    ],
+                    [
+                        "--encrypt",
+                        {
+                            "action":"store",
+                            "help":"Encryption for slice",
+                            "nargs":1,
+                            "default":null,
+                            "choices":null,
+                            "metavar":"type/key"
+                        }
+                    ],
+                    [
+                        "--br",
+                        {
+                            "action":"store",
+                            "help":"Bridge controller address",
+                            "nargs":1,
+                            "default":null,
+                            "choices":null,
+                            "metavar":"controller"
+                        }
+                    ],
+                    [
+                        "--interface",
+                        {
+                            "action":"store",
+                            "help":"Capsulator configuration",
+                            "nargs":1,
+                            "default":null,
+                            "choices":null,
+                            "metavar":"tag:endpoint"
                         }
                     ],
                     [

@@ -133,7 +133,8 @@ class Dispatcher(object):
                 pass
             # Channel is not up again yet
             time.sleep(1)
-        self.LOGGER.info("Channel back up, dispatching...")
+            self.LOGGER.info("Channel back up...")
+        self._send_manager_up_status()
 
     def _stop_all_request_sent_timers(self):
         while self.requests_sent:
