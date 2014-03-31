@@ -14,6 +14,8 @@ import weakref
 
 import MySQLdb as mdb
 
+from aurora import config_db
+from aurora.exc import *
 from aurora.cls_logger import get_cls_logger
 from aurora.ap_provision import writer as provision
 from aurora.stop_thread import *
@@ -91,6 +93,29 @@ class APMonitor(object):
             self.LOGGER.debug("Stopping thread %s %s", ap_name, poller_thread)
             poller_thread.stop()
             poller_thread.join()
+
+    def _build_slice_id_ssid_map(self, config):
+        """Called from within process_response, this method will 
+        find the ap_slice_id's on an access point from its returned 
+        config, and will determine their associated SSID.
+
+        :param dict config: Configuration returned from access point
+        :rtype: dict
+
+        """
+
+        slice_id_ssid_map = {}
+        for ap_slice_id, slice_cfg in \
+                config["init_database"].iteritems():
+            slice_ssid = None
+            if ap_slice_id == "default_slice":
+                continue
+            for cfg in slice_cfg.get("RadioInterfaces", []):
+                if cfg.get("flavor") == "wifi_bss":
+                    slice_ssid = cfg["attributes"]["name"]
+                    break
+            slice_id_ssid_map[ap_slice_id] = slice_ssid
+        return slice_id_ssid_map
 
     def process_response(self, channel, method, props, body):
         """Processes any responses it sees, checking to see if the
@@ -189,18 +214,61 @@ class APMonitor(object):
         (have_request, entry) = self.dispatcher.have_request(props.correlation_id)
 
         if have_request is not None and entry is not None:
+            request_correlation_id = entry[0]
+            request_timer = entry[1]
+            request_subject = entry[2]
+
             # decoded_response = json.loads(body)
             self.LOGGER.debug('Printing received message')
             self.LOGGER.debug(message)
 
+            # For each slice in the returned message, determine its SSID
+            # to update the SQL database.
+            # self.LOGGER.debug("CONFIG::::")
+            # self.LOGGER.debug(json.dumps(config, indent=4))
+            #self.LOGGER.debug(pformat(config))
+            slice_id_ssid_map = self._build_slice_id_ssid_map(config)
+            # self.LOGGER.debug("Slice id to ssid mapping")
+            # self.LOGGER.debug(slice_id_ssid_map)
+
+
+
             # Set status, stop timer, delete record
             #print "entry[2]:",entry[2]
-            if entry is not None and entry[2] != 'admin':
-                self.set_status(None, entry[2], decoded_response['successful'], ap_name=ap_name)
-                self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
-
+            if entry is not None and request_subject != 'admin':
+                ap_slice_id = request_subject
+                self.set_status(None, ap_slice_id, 
+                                decoded_response['successful'], 
+                                ap_name=ap_name)
+                self.aurora_db.ap_update_hw_info(
+                    config['init_hardware_database'], 
+                    ap_name, region
+                )
+                
                 self.LOGGER.info("Updating config files...")
                 provision.update_last_known_config(ap_name, config)
+                self.LOGGER.info("Updating config_db for slice %s", 
+                                 ap_slice_id)
+                slice_cfg = config['init_database'].get(ap_slice_id)
+                slice_tenant = None
+                for tenant_id, slice_list in \
+                        config["init_user_id_database"].iteritems():
+                    if ap_slice_id in slice_list:
+                        slice_tenant = tenant_id
+                        break
+
+                try:
+                    # TODO(Mike) Don't save if request unsuccessful
+                    config_db.save_config(slice_cfg, 
+                                          ap_slice_id, 
+                                          slice_tenant)
+                except AuroraException as e:
+                    LOGGER.error(e.message)
+
+
+                # Update SSID for each slice
+                for ap_slice_id, slice_ssid in slice_id_ssid_map.iteritems():
+                    self.aurora_db.ap_slice_set_ssid(ap_slice_id, slice_ssid)
             else:
                 if message == 'AP reset':
                     self.set_status('AP reset', None, None, False, ap_name)
@@ -208,10 +276,14 @@ class APMonitor(object):
                 elif message == 'RESTARTING':
                     pass
                 else:
-                    self.set_status('slice_stats', ap_slice_stats=message["ap_slice_stats"])
-                    self.aurora_db.ap_update_hw_info(config['init_hardware_database'], ap_name, region)
+                    self.set_status('slice_stats', 
+                                    ap_slice_stats=message["ap_slice_stats"])
+                    self.aurora_db.ap_update_hw_info(
+                        config['init_hardware_database'], 
+                        ap_name, region
+                    )
 
-            self.dispatcher.remove_request(entry[0])
+            self.dispatcher.remove_request(request_correlation_id)
 
         else:
             self.LOGGER.info("Sending reset to '%s'", ap_name)
@@ -434,8 +506,10 @@ class APMonitor(object):
     def get_stats(self, ap):
         """Query the access point for slice stats."""
         # The unique ID is fixed to be all F's
-        self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'get_stats'}, ap)
-
+        try:
+            self.dispatcher.dispatch( { 'slice' : 'admin', 'command' : 'get_stats'}, ap)
+        except MessageSendAttemptWhileClosing as e:
+            self.LOGGER.warn(e.message)
 
 #for test
 #if __name__ == '__main__':

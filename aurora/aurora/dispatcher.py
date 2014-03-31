@@ -85,7 +85,6 @@ class Dispatcher(object):
     def _stop_connection(self):
         self._stop_all_request_sent_timers()
         try:
-            con_open = True
             del self.channel 
             self.LOGGER.warn("Connection state: %s",
                              self.connection.connection_state)
@@ -110,7 +109,7 @@ class Dispatcher(object):
                 printed_waiting = True
             
             try:
-                if self.connection.is_closed:
+                if self.connection.is_closed or self.connection.is_closing:
                     self.LOGGER.debug("Connection closed...")
                     break
             except AttributeError as e:
@@ -162,6 +161,7 @@ class Dispatcher(object):
             self._send_manager_up_status()
 
     def _send_manager_up_status(self):
+        self.aurora_db.ap_status_unknown()
         for ap in self.aurora_db.get_ap_list():
             self.dispatch({'command':'SYN'}, ap)
 
@@ -258,7 +258,16 @@ class Dispatcher(object):
                 ap_slice_id = config['slice']
             # Start a timeout countdown
             self.LOGGER.debug("ap_slice_id %s",ap_slice_id)
-            timer = threading.Timer(self.TIMEOUT, self.timeout_callback, args=(ap_slice_id,ap,unique_id))
+            
+            try:
+                timer = threading.Timer(self.TIMEOUT, 
+                                        self.timeout_callback, 
+                                        args=(ap_slice_id,ap,unique_id))
+            except AttributeError as e:
+                # Likely tried to start a timer while shutting down
+                # resulting in non-existance of timeout_callback 
+                self.LOGGER.warn(e.message)
+
             self.LOGGER.debug("Adding timer %s", timer)
             self.requests_sent.append((unique_id, timer, ap_slice_id))
             timer.start()

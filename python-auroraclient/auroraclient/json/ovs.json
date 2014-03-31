@@ -31,7 +31,7 @@
                 {
                     "name":"vswitch-br",
                     "interfaces":
-                        ["vwlan0","veth0"],
+                        ["vwlan0","tun0"],
                     "bridge_settings":
                         {
                             "controller":["tcp:10.5.8.3"]

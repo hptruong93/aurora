@@ -183,7 +183,7 @@ class OpenVSwitch:
     def delete_port(self, bridge, port):
         """Delete a port from the given bridge."""
         self.__exec_command(["del-port", bridge, port])
-        entry = self.database.get_entry("VirtBridges", bridge)
+        entry = self.database.get_entry("VirtualBridges", bridge)
         entry["attributes"]["interfaces"].remove(port)
     
     def modify_port(self, bridge, port, command, parameters=None):

@@ -23,19 +23,20 @@ def save_config(config, ap_slice_id, tenant_id):
 
     """
     LOGGER.debug("Saving config.")
-    assert type(config) is DictType
-    dir_path = get_file_path(ap_slice_id, tenant_id, dir_only=True)
-    if not os.path.exists(dir_path):
-        LOGGER.debug("Path %s doesn't exist, creating...", dir_path)
-        try:
-            os.makedirs(dir_path)
-        except os.error:
-            traceback.print_exc(file=sys.stdout)
-            raise CannotCreateTenantConfigDir(dir_path=dir_path)
-    file_path = get_file_path(ap_slice_id, tenant_id)
-    with open(file_path, 'w') as CONFIG_FILE:
-        LOGGER.debug("File: %s", CONFIG_FILE.name)
-        json.dump(config, CONFIG_FILE, indent=4)
+    if config is not None:
+        assert type(config) is DictType
+        dir_path = get_file_path(ap_slice_id, tenant_id, dir_only=True)
+        if not os.path.exists(dir_path):
+            LOGGER.debug("Path %s doesn't exist, creating...", dir_path)
+            try:
+                os.makedirs(dir_path)
+            except os.error:
+                traceback.print_exc(file=sys.stdout)
+                raise CannotCreateTenantConfigDir(dir_path=dir_path)
+        file_path = get_file_path(ap_slice_id, tenant_id)
+        with open(file_path, 'w') as CONFIG_FILE:
+            LOGGER.debug("File: %s", CONFIG_FILE.name)
+            json.dump(config, CONFIG_FILE, indent=4)
 
 def modify_config(ap_slice_id, config, tenant_id):
     """Replaces part of an existing configuration file with

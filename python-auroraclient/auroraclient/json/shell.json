@@ -207,7 +207,7 @@
                             "nargs":1,
                             "default":null,
                             "choices":null,
-                            "metavar":"type/key"
+                            "metavar":"type:key"
                         }
                     ],
                     [

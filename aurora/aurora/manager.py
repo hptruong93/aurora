@@ -331,143 +331,195 @@ class Manager(object):
         return response
 
     def ap_slice_modify(self, args, tenant_id, user_id, project_id):
+        """This method will take parameters from the user and modify
+        one or more given slices.  The slices can be passed either by
+        ap_slice_id or by a filter argument.
+
+        Valid choices for the command line include::
+
+            --ssid ap                  New SSID for slice
+            --encrypt type:key         Encryption for slice
+            --br controller            Bridge controller address
+            --interface tag:endpoint   Capsulator configuration
+            --file FILE                JSON config file
+
+        An abbreviated json with the modifications is generated.  As 
+        each section requires a 'name' argument on the agent side, the 
+        name of the interface/ssid is found from the configuration 
+        database.
+
+        :rtype: dict
+
+        """
+
         message = ""
+        response = {
+            "status":False, 
+            "message":message,
+        }
         config = None
-        ap_slice_id = args['ap-slice-modify'][0]
+        slices_to_modify = args['ap-slice-modify']
         if args['filter']:
-            # TODO(mike)
-            pass
-        if args['file'] is not None:
-            # Tenant must know what he is doing with the file
-            config = args['file']
-        else:
-            # Build our own config from given arguments, based
-            # on previous slice's configuration.
-            try:
-                slice_config = config_db.get_config(ap_slice_id, tenant_id)
-            except NoConfigExistsError as e:
-                self.LOGGER.warn(e.message)
+                # This will dictate the slices to modify - update 
+                # variable slices_to_modify
+                # TODO(mike)
+                pass
+        if len(slices_to_modify) == 0:
+            message += "No slices to modify."
+        for ap_slice_id in slices_to_modify:
+            
+            if args['file'] is not None:
+                # Tenant must know what he is doing with the file
+                config = args['file']
             else:
-                config = {}
+                # Build our own config from given arguments, based
+                # on previous slice's configuration.
+                self.LOGGER.debug("Checking slice ownership...")
+                if not self.aurora_db.wslice_belongs_to(tenant_id, 
+                                                        project_id, 
+                                                        ap_slice_id):
+                    message += "You have no slice %s" % ap_slice_id
+                    continue
 
-                prev_name = None
-                for conf in slice_config.get('RadioInterfaces', []):
-                    if conf.get('flavor') == 'wifi_bss':
-                        prev_name = conf.get('attributes', {}).get(
-                            'name'
-                        )
+                self.LOGGER.debug("OK!")
+                self.LOGGER.debug("Checking if slice deleted...")
+                if self.aurora_db.wslice_is_deleted(ap_slice_id):
+                    message += "Your slice is deleted: %s" % ap_slice_id
+                    continue
 
-                new_name = args.get('ssid')
-                if new_name is not None:
-                    new_name = new_name[0]
-                    config['RadioInterfaces'] = [
-                        {
-                            "attributes": {
-                                "name":prev_name,
-                                "new_name":new_name,
-                            },
-                            "flavor":"wifi_bss",
-                        },
-                    ]
+                self.LOGGER.debug("OK!")
+                try:
+                    slice_config = config_db.get_config(ap_slice_id, tenant_id)
+                except NoConfigExistsError as e:
+                    self.LOGGER.warn(e.message)
+                    message += e.message + '\n'
+                    continue
+                    
+                else:
+                    config = {}
 
-                encrypt = args.get('encrypt')
-                if encrypt is not None:
-                    encrypt = encrypt[0]
-                    encryption_type = encrypt.split(':')[0]
-                    key = encryption.split(':')[1]
-                    if config.get('RadioInterfaces') is not None:
-                        # new SSID already provided, add entry to
-                        # attributes
-                        if (encryption_type != '' or 
-                                encryption_type is not None):
-                            config['RadioInterfaces'][0]['attributes']['encryption_type'] = \
-                                encryption_type
-                        config['RadioInterfaces'][0]['attributes']['key'] = \
-                            key
-                    else:
+                    prev_name = None
+                    for conf in slice_config.get('RadioInterfaces', []):
+                        if conf.get('flavor') == 'wifi_bss':
+                            prev_name = conf.get('attributes', {}).get(
+                                'name'
+                            )
+
+                    new_name = args.get('ssid')
+                    if new_name is not None:
+                        new_name = new_name[0]
                         config['RadioInterfaces'] = [
                             {
                                 "attributes": {
                                     "name":prev_name,
-                                    "encryption_type":encryption_type,
-                                    "key":key,
+                                    "new_name":new_name,
                                 },
                                 "flavor":"wifi_bss",
                             },
                         ]
-                prev_name = None
-                for conf in slice_config.get('VirtualBridges', []):
-                    if conf.get('flavor') == 'ovs':
-                        prev_name = conf.get('attributes', {}).get(
-                            'name'
-                        )
 
-                controller_addr = args.get('br')
-                if controller_addr is not None:
-                    controller_addr = controller_addr[0]
-                    config['VirtualBridges'] = [
-                        {
-                            "attributes": {
-                                "bridge_settings": {
-                                    "controller":controller_addr
-                                }
-                            },
-                            "flavor":"ovs",
-                        }
-                    ]
+                    encrypt = args.get('encrypt')
+                    if encrypt is not None:
+                        encrypt = encrypt[0]
+                        encryption_type = encrypt.split(':')[0]
+                        key = encrypt.split(':')[1]
+                        if config.get('RadioInterfaces') is not None:
+                            # new SSID already provided, add entry to
+                            # attributes
+                            if (encryption_type != '' or 
+                                    encryption_type is not None):
+                                config['RadioInterfaces'][0]['attributes']['encryption_type'] = \
+                                    encryption_type
+                            config['RadioInterfaces'][0]['attributes']['key'] = \
+                                key
+                        else:
+                            config['RadioInterfaces'] = [
+                                {
+                                    "attributes": {
+                                        "name":prev_name,
+                                        "encryption_type":encryption_type,
+                                        "key":key,
+                                    },
+                                    "flavor":"wifi_bss",
+                                },
+                            ]
+                    prev_name = None
+                    for conf in slice_config.get('VirtualBridges', []):
+                        if conf.get('flavor') == 'ovs':
+                            prev_name = conf.get('attributes', {}).get(
+                                'name'
+                            )
+                            break
 
-                prev_name = None
-                for conf in slice_config.get('VirtualInterfaces', []):
-                    if conf.get('flavor') == 'capsulator':
-                        prev_name = conf.get('attributes', {}).get(
-                            'name'
-                        )
+                    controller_addr = args.get('br')
+                    if controller_addr is not None:
+                        controller_addr = controller_addr[0]
+                        config['VirtualBridges'] = [
+                            {
+                                "attributes": {
+                                    "name":prev_name,
+                                    "bridge_settings": {
+                                        "controller":controller_addr
+                                    }
+                                },
+                                "flavor":"ovs",
+                            }
+                        ]
 
-                capsulator_config = args.get('interface')
-                if capsulator_config is not None:
-                    capsulator_config = capsulator_config[0]
-                    tag = capsulator_config.split(':')[0]
-                    try:
-                        endpoint = capsulator_config.split(':')[1]
-                    except IndexError:
-                        endpoint = None
+                    prev_name = None
+                    for conf in slice_config.get('VirtualInterfaces', []):
+                        if conf.get('flavor') == 'capsulator':
+                            prev_name = conf.get('attributes', {}).get(
+                                'name'
+                            )
+                            break
 
-                    config['VirtualInterfaces'] = [
-                        {
-                            "attributes": {},
-                            "flavor":"capsulator"
-                        }
-                    ]
-                    if tag != '' and tag is not None:
-                        config['VirtualInterfaces'][0]['attributes']['tunnel_tag'] = \
-                            tag
-                    if endpoint != '' and endpoint is not None:
-                        config['VirtualInterfaces'][0]['attributes']['forward_to'] = \
-                            endpoint
+                    capsulator_config = args.get('interface')
+                    if capsulator_config is not None:
+                        capsulator_config = capsulator_config[0]
+                        tag = capsulator_config.split(':')[0]
+                        try:
+                            endpoint = capsulator_config.split(':')[1]
+                        except IndexError:
+                            endpoint = None
 
-        # Now we have a config for modify, pass it to agent.
-        config_modify = {
-            "slice":ap_slice_id, 
-            "command":"modify_slice", 
-            "user":user_id,
-            "config":config,
-        }
-        self.LOGGER.debug(json.dumps(config_modify, indent=4))
-        try:
-            ap_name = self.aurora_db.get_wslice_physical_ap(ap_slice_id)
-        except Exception as e:
-            message += e.message
-            response = {"status":False, "message":message}
-            return response
-        else:
-            self.dispatcher.dispatch(config_modify, ap_name)
-            message += "Modified %s on %s" % (ap_slice_id, ap_name)
+                        config['VirtualInterfaces'] = [
+                            {
+                                "attributes": {
+                                    "name":prev_name
+                                },
+                                "flavor":"capsulator"
+                            }
+                        ]
+                        if tag != '' and tag is not None:
+                            config['VirtualInterfaces'][0]['attributes']['tunnel_tag'] = \
+                                tag
+                        if endpoint != '' and endpoint is not None:
+                            config['VirtualInterfaces'][0]['attributes']['forward_to'] = \
+                                endpoint
+
+            # Now we have a config for modify, pass it to agent.
+            config_modify = {
+                "slice":ap_slice_id, 
+                "command":"modify_slice", 
+                "user":user_id,
+                "config":config,
+            }
+            self.LOGGER.debug(json.dumps(config_modify, indent=4))
+            try:
+                ap_name = self.aurora_db.get_wslice_physical_ap(ap_slice_id)
+            except Exception as e:
+                message += e.message + '\n'
+                continue
+            else:
+                self.dispatcher.dispatch(config_modify, ap_name)
+                message += "Modified %s on %s" % (ap_slice_id, ap_name)
 
         #return response
         response = {"status":True, "message":message}
         return response
 
-    def ap_slice_restart(self, args, tenant_id, user_id, project_id): #UNTESTED, RUN AT OWN RISK
+    def ap_slice_restart(self, args, tenant_id, user_id, project_id):
         slice_names = args['ap-slice-restart'] #Multiple Names
         message = ""
         response = {
@@ -503,7 +555,7 @@ class Manager(object):
             config_delete = {
                 "slice":ap_slice_id, 
                 "command":"delete_slice", 
-                "user":user_id,
+                "user":tenant_id,
             }
             error = Verify.verifyOK(tenant_id = tenant_id, request = config_delete)
             if error is not None:
@@ -521,6 +573,7 @@ class Manager(object):
                 "slice":ap_slice_id, 
                 "command":"restart_slice", 
                 "config":config,
+                "user":user_id,
             }
 
             # Passed all checks, restart slice
@@ -763,8 +816,10 @@ class Manager(object):
             #Dispatch (use slice_uuid as a message identifier)
             self.dispatcher.dispatch(json_entry, aplist[index], str(slice_uuid))
             try:
-                config_db.save_config(json_entry['config'], json_entry['slice'], tenant_id)
-            except AuroraException, e:
+                config_db.save_config(json_entry['config'], 
+                                      json_entry['slice'], 
+                                      tenant_id)
+            except AuroraException as e:
                 LOGGER.error(e.message)
 
         #Return response (message returns a list of uuids for created slices)

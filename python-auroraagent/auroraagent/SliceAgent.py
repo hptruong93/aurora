@@ -293,6 +293,8 @@ class SliceAgent:
                         for attribute_name, attribute in \
                                 new_configuration.get("attributes").iteritems():
                             it = item["attributes"].get(attribute_name)
+                            if it is None:
+                                continue
                             if type(it) is types.DictType:
                                 # Item to update is a dictionary, use dict's
                                 # update() method, which will only overwrite
@@ -309,11 +311,18 @@ class SliceAgent:
                                 if new_name is not None:
                                     item["attributes"]["name"] = new_name
                             else:
-                                it = attribute
+                                print "Updating %s: %s to %s" % (
+                                       attribute_name, it, attribute
+                                )
+                                item["attributes"][attribute_name] = attribute
+
 
         # FOR DEBUGGING
         print "Modified slice configuration"
         print json.dumps(slice_configuration, indent=4)
+
+        print "Current DB:"
+        print json.dumps(self.database.database, indent=4)
 
         if "RadioInterfaces" in config.keys():
             try:
@@ -338,16 +347,89 @@ class SliceAgent:
             # does not have to be restarted.  Check for bridge or port
             # settings.
             if "VirtualInterfaces" in config.keys():
-                # Delete bridge associated with slice
-                for bridge in slice_data['VirtualBridges']:
-                    try:
-                        self.v_bridges.delete_bridge(bridge['attributes']['name'])
-                    except Exception:
-                        print("Error: Unable to delete bridge " + bridge['attributes']['name'])
+                for interface_conf in config["VirtualInterfaces"]:
+                    port = interface_conf["attributes"]["name"]
+                    # Find full configuration
+                    full_interface_conf = None
+                    for conf in \
+                            slice_configuration["VirtualInterfaces"]:
+                        if conf["attributes"]["name"] == port:
+                            full_interface_conf = conf
+                            break
+
+                    associated_bridges = []
+                    # Remove port from bridges to which it is attached
+                    for bridge in slice_configuration['VirtualBridges']:
+                        if port not in bridge["attributes"]["interfaces"]:
+                            continue
+                        bridge_name = bridge['attributes']['name']
+                        try:
+                            self.v_bridges.delete_port_from_bridge(
+                                bridge_name,
+                                port
+                            )
+                            associated_bridges.append(bridge_name)
+                        except Exception:
+                            traceback.print_exc(file=sys.stdout)
+                            print("Error: Unable to remove port from bridge %s"
+                                % bridge_name)
+                            #self.restart_slice(slice)
+
+                    # Modify the interface
+                    if full_interface_conf is not None:
+                        try:
+                            self.v_interfaces.modify(
+                                port, 
+                                full_interface_conf["attributes"]
+                            )
+                        except Exception:
+                            traceback.print_exc(file=sys.stdout)
+                            print("Error: Unable to modify port %s"
+                                % port)
+                            #self.restart_slice(slice)
+
+                    # Add port to all previously found associated bridges
+                    for bridge_name in associated_bridges:
+                        try:
+                            self.v_bridges.add_port_to_bridge(
+                                bridge_name,
+                                port
+                            )
+                        except Exception:
+                            traceback.print_exc(file=sys.stdout)
+                            print("Error: Unable to add port to bridge %s"
+                                % bridge_name)
+                            #self.restart_slice(slice)
+
             if "VirtualBridges" in config.keys():
-                pass
+                for bridge_conf in config["VirtualBridges"]:
+                    bridge = bridge_conf["attributes"]["name"]
+                    # Find full configuration
+                    full_bridge_conf = None
+                    for conf in \
+                            slice_configuration["VirtualBridges"]:
+                        if conf["attributes"]["name"] == bridge:
+                            full_bridge_conf = conf
+                            break
+
+                    if full_bridge_conf is not None:
+                        for command, parameter in \
+                                full_bridge_conf["attributes"]["bridge_settings"].iteritems():
+                            try:
+                                self.v_bridges.modify_bridge(
+                                    bridge, 
+                                    command, 
+                                    parameter
+                                )
+                            except Exception:
+                                traceback.print_exc(file=sys.stdout)
+                                print("Error: Unable to modify bridge %s"
+                                    % bridge)
+
             if "TrafficAttributes" in config.keys():
-                pass
+                print "Modification of traffic attributes is not implemented"
+                raise NotImplementedError()
+
 
 
         # --OLD--
@@ -395,7 +477,8 @@ class SliceAgent:
                     )
                     break
 
-        userid = user or self.database.get_slice_user(slice)
+        userid = (user if (user != "default_user" and user is not None) else 
+                    self.database.get_slice_user(slice))
         slice_radio = slice_radio or self.database.get_slice_radio(slice)
         slice_config = {}
         # Populate slice_config for slices on radio in question

@@ -183,7 +183,27 @@ class AuroraDB(object):
                            WHERE ap_slice_id='%s'""" %
                        (ap_name, ap_slice_id)
                 )
-        except Exception, e:
+        except Exception as e:
+            traceback.print_exc(file=sys.stdout)
+
+    def ap_slice_set_ssid(self, ap_slice_id, new_ssid):
+        """Sets the physical_ap column entry for a slice.
+
+        :param str ap_slice_id:
+        :param str new_ssid:
+
+        """
+        try:
+            with self._database_connection() as db:
+                self.LOGGER.debug("Setting '%s' SSID: %s", 
+                                  ap_slice_id, new_ssid)
+                db.execute(
+                    """UPDATE ap_slice SET
+                               ap_slice_ssid='%s'
+                           WHERE ap_slice_id='%s'""" %
+                       (new_ssid, ap_slice_id)
+                )
+        except Exception as e:
             traceback.print_exc(file=sys.stdout)
 
 

@@ -125,10 +125,10 @@ class Database:
         owned by the user are ignored."""
         # Create user if necessary
         if user not in self.user_id_data:
-            self.create_user(user)
+            self.create_user(str(user))
         # Do not append if already listed
-        if slice not in self.user_id_data[user]:
-            self.user_id_data[user].append(slice)
+        if slice not in self.user_id_data[str(user)]:
+            self.user_id_data[str(user)].append(slice)
         
     def delete_slice_from_user(self, user, slice):
         """Delete the slice from the user.  Will
@@ -146,7 +146,7 @@ class Database:
         if he already exists."""
         # Don't want to overwrite existing user
         if user not in self.user_id_data:
-            self.user_id_data[user] = []
+            self.user_id_data[str(user)] = []
     
     def delete_user(self, user):
         """Delete the given user, and ignore any
@@ -161,7 +161,7 @@ class Database:
         """Create a new slice with a blank template."""
         # This is probably faster than using a template but having to do a deep copy
         self.database[slice] = { "VirtualInterfaces": [], "VirtualBridges": [], "RadioInterfaces" : [] }
-        self.add_slice_to_user(userid, slice)
+        self.add_slice_to_user(str(userid), slice)
     
     def delete_slice(self, slice):
         """Delete a slice and all associated information."""
@@ -242,7 +242,7 @@ class Database:
         for userid in self.get_user_list(prev):
             for slice_ in self.get_associated_slice(userid, prev):
                 if slice_ == slice:
-                    return userid
+                    return str(userid)
         raise exception.NoUserIDForSlice()
     
     def add_entry(self, section, flavor, info):

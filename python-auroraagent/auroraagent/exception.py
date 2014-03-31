@@ -83,3 +83,6 @@ class disabledError(AuroraException):
 
 class NoUserIDForSlice(AuroraException):
     message = "No user id was found for the slice in question."
+
+class NotImplementedError(AuroraException):
+    message = "Functionality has not been implemented."
