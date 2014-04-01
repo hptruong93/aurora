@@ -70,6 +70,7 @@ class Dispatcher(object):
 
     def _start_connection(self):
         self.channel = None
+        self.connection = None
         credentials = pika.PlainCredentials(self.username, self.password)
         self.connection = pika.SelectConnection(pika.ConnectionParameters(
                                                     host=self.host,
@@ -78,9 +79,23 @@ class Dispatcher(object):
                                                 self.on_connected)
         # Start ioloop, this will quit by itself when Dispatcher().stop() is run
         
-        self.listener = threading.Thread(target=self.connection.ioloop.start)
+        self.listener = threading.Thread(target=self.ioloop_thread_start_target)
         self.LOGGER.info("Starting pika listener %s", self.listener)
         self.listener.start()
+
+    def ioloop_thread_start_target(self):
+        if self.connection is None:
+            return
+        try:
+            self.connection.ioloop.start()
+        except IndexError as e:
+            # Something bad happened, likely "pop from an empty deque"
+            # This will cause the ioloop poller to die, and all further
+            # messages sent by the AP will no longer be received.  The
+            # result is that a timeout will occur on a sent message,
+            # and the AP will be marked as 'DOWN'.
+            self.LOGGER.warn(e.message)
+            self._restart_connection()
 
     def _stop_connection(self):
         self._stop_all_request_sent_timers()

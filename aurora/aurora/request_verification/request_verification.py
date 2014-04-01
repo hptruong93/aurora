@@ -19,6 +19,8 @@ GENERAL_CHECK = 'general_check'
 CREATE_SLICE = 'create_slice' #This is the command name appears in the request parsed by manager.py
 DELETE_SLICE = 'delete_slice' #This is the command name appears in manager.py
 
+AP_ETH_IFACE = 'eth0'
+
 #Base abstract class for all verifications
 class RequestVerification():
     __metaclass__ = ABCMeta
@@ -239,7 +241,9 @@ class AccessConflictVerification(RequestVerification):
 
                             interfaces = set([])
                             for interface in current_slice['VirtualInterfaces']:
-                                interfaces.add(interface['attributes']['attach_to'])
+                                iface_bind = interface['attributes']['attach_to']
+                                if iface_bind != AP_ETH_IFACE:
+                                    interfaces.add(iface_bind)
 
                             #Check if conflict
                             if not interfaces.isdisjoint(requested_interfaces):
