@@ -428,10 +428,10 @@ class Manager(object):
                             # attributes
                             if (encryption_type != '' or 
                                     encryption_type is not None):
-                                config['RadioInterfaces'][0]['attributes']['encryption_type'] = \
-                                    encryption_type
-                            config['RadioInterfaces'][0]['attributes']['key'] = \
-                                key
+                                config['RadioInterfaces'][0]['attributes']\
+                                    ['encryption_type'] = encryption_type
+                            config['RadioInterfaces'][0]['attributes']\
+                                ['key'] = key
                         else:
                             config['RadioInterfaces'] = [
                                 {
@@ -492,11 +492,11 @@ class Manager(object):
                             }
                         ]
                         if tag != '' and tag is not None:
-                            config['VirtualInterfaces'][0]['attributes']['tunnel_tag'] = \
-                                tag
+                            config['VirtualInterfaces'][0]['attributes']\
+                                    ['tunnel_tag'] = tag
                         if endpoint != '' and endpoint is not None:
-                            config['VirtualInterfaces'][0]['attributes']['forward_to'] = \
-                                endpoint
+                            config['VirtualInterfaces'][0]['attributes']\
+                                    ['forward_to'] = endpoint
 
             # Now we have a config for modify, pass it to agent.
             config_modify = {
@@ -513,7 +513,7 @@ class Manager(object):
                 continue
             else:
                 self.dispatcher.dispatch(config_modify, ap_name)
-                message += "Modified %s on %s" % (ap_slice_id, ap_name)
+                message += "Modified %s on %s\n" % (ap_slice_id, ap_name)
 
         #return response
         response = {"status":True, "message":message}
@@ -797,7 +797,11 @@ class Manager(object):
                     break
 
             # Add slice to MySQL DB
-            error = self.aurora_db.wslice_add(slice_uuid, ap_slice_ssid, tenant_id, aplist[index], project_id)
+            error = self.aurora_db.wslice_add(slice_uuid, 
+                                              ap_slice_ssid, 
+                                              tenant_id, 
+                                              aplist[index], 
+                                              project_id)
             if error is not None: #There is an error
                 message += error + "\n"
                 add_success = False

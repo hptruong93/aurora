@@ -125,8 +125,8 @@ class AuroraDB(object):
         self.LOGGER.info("Setting %s status 'DOWN'", ap_name)
         try:
             with self._database_connection() as db:
-                db.execute("UPDATE ap SET status='DOWN' WHERE name='%s'" %
-                                (ap_name))
+                db.execute("UPDATE ap SET status='DOWN' WHERE name='%s'" 
+                            % (ap_name))
         except mdb.Error as e:
             traceback.print_exc(file=sys.stdout)
 
@@ -144,8 +144,8 @@ class AuroraDB(object):
                 if ap_name is None:
                     db.execute("UPDATE ap SET status='UNKNOWN'")
                 else:
-                    db.execute("UPDATE ap SET status='UNKNOWN' WHERE name='%s'" %
-                                    (ap_name))
+                    db.execute("UPDATE ap SET status='UNKNOWN' WHERE name='%s'"
+                                % (ap_name))
 
         except mdb.Error as e:
             traceback.print_exc(file=sys.stdout)
@@ -726,7 +726,8 @@ class AuroraDB(object):
                 #Update to SQL database
                 to_execute = ( "UPDATE ap_slice SET wnet_id=NULL WHERE "
                                "ap_slice_id='%s' AND "
-                               "wnet_id='%s' AND tenant_id = '%s'" % (slice_id, wnet_id, tenant_id) )
+                               "wnet_id='%s' AND tenant_id = '%s'" % 
+                               (slice_id, wnet_id, tenant_id))
                 db.execute(to_execute)
                 return "%s: %s removed\n" % (wnet_name, slice_id)
                 #TODO: Add messaging
@@ -740,15 +741,17 @@ class AuroraDB(object):
         try:
             with self._database_connection() as db:
                 to_execute = ( "SELECT wnet_id FROM wnet WHERE "
-                               "name = '%s' AND tenant_id = '%s'" % (name, tenant_id) )
+                               "name='%s' AND tenant_id='%s'" % 
+                               (name, tenant_id) )
                 db.execute(to_execute)
                 wnet_id_tt = db.fetchall()
                 if len(wnet_id_tt) > 0:
                     return "You already own '%s'.\n" % name
                 else:
 
-                    to_execute = ( "INSERT INTO wnet VALUES ('%s', '%s', %s, %s)" %
-                                   (wnet_id, name, tenant_id, project_id) )
+                    to_execute = ("""INSERT INTO wnet VALUES 
+                                         ('%s', '%s', '%s', '%s')""" %
+                                   (wnet_id, name, tenant_id, project_id))
                     db.execute(to_execute)
                     return "Created '%s'.\n" % name
         except mdb.Error as e:
@@ -804,9 +807,10 @@ class AuroraDB(object):
     def wslice_add(self, slice_uuid, slice_ssid, tenant_id, physAP, project_id):
         try:
             with self._database_connection() as db:
-                to_execute = ( "INSERT INTO ap_slice VALUES ('%s', '%s', %s, '%s', %s, %s, '%s')" %
-                               (slice_uuid, slice_ssid, tenant_id, physAP,
-                                project_id, "NULL", "PENDING")
+                to_execute = ("""INSERT INTO ap_slice VALUES 
+                                     ('%s', '%s', '%s', '%s', '%s', %s, '%s')"""
+                               % (slice_uuid, slice_ssid, tenant_id, physAP,
+                                  project_id, "NULL", "PENDING")
                              )
                 db.execute(to_execute)
                 to_execute = ( "INSERT INTO metering SET ap_slice_id='%s'" % slice_uuid)
@@ -845,7 +849,8 @@ class AuroraDB(object):
         else:
             try:
                 with self._database_connection() as db:
-                    to_execute = "INSERT INTO tenant_tags VALUES (%s, '%s')" % (tag, ap_slice_id)
+                    to_execute = ("INSERT INTO tenant_tags VALUES ('%s', '%s')" 
+                                  % (tag, ap_slice_id))
                     db.execute(to_execute)
                     return "Added tag '%s' to ap_slice '%s'.\n" % (tag, ap_slice_id)
             except mdb.Error as e:
