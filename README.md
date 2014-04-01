@@ -57,3 +57,10 @@ if a user lets others use a radio he owns, and then deletes the radio and BSS,
 the BSS of the other users will be deleted as well.  At the moment, slice data
 is not updated when this happens (only the hardware data is updated), 
 so the other users must manually recreate their slices.
+
+Run the following commands to ignore changes to configuration files once
+running aurora-manager::
+
+    git update-index --assume-unchanged aurora/aurora/ap_provision/json/*.json
+    git update-index --assume-unchanged aurora/aurora/json/response.json
+
