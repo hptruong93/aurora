@@ -59,7 +59,7 @@ is not updated when this happens (only the hardware data is updated),
 so the other users must manually recreate their slices.
 
 Run the following commands to ignore changes to configuration files once
-running aurora-manager::
+running aurora-manager:
 
     git update-index --assume-unchanged aurora/aurora/ap_provision/json/*.json
     git update-index --assume-unchanged aurora/aurora/json/response.json
