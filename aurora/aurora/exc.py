@@ -67,6 +67,9 @@ class NoWnetExistsForTenantException(AuroraException):
 class APSliceAlreadyInWnetException(AuroraException):
     message = "AP Slice %(ap_slice_id)s already in '%(wnet)s'"
 
+class NoSliceExistsException(AuroraException):
+    message = "No slice %(ap_slice_id)s exists"
+
 #---------
 # Provision Server exceptions
 #

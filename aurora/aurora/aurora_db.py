@@ -916,8 +916,22 @@ class AuroraDB(object):
                 if physical_ap:
                     return physical_ap[0]
                 else:
-                    raise Exception("No slice '%s'\n" % ap_slice_id)
+                    raise NoSliceExistsException(ap_slice_id=ap_slice_id)
         except mdb.Error, e:
+            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
+            sys.exit(1)
+
+    def get_wslice_ssid(self, ap_slice_id):
+        try:
+            with self._database_connection() as db:
+                to_execute = ("""SELECT ap_slice_ssid FROM
+                                     ap_slice WHERE
+                                     ap_slice_id='%s'""" % ap_slice_id)
+                result = None
+                if db.execute(to_execute) == 1:
+                    result = db.fetchone()[0]
+                return result
+        except mdb.Error as e:
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
 
@@ -948,7 +962,7 @@ class AuroraDB(object):
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
 
-    def get_wnet_list(self, tenant_id, wnet_arg = None):
+    def get_wnet_list(self, tenant_id, wnet_arg=None):
         try:
             with self._database_connection() as db:
                 if tenant_id == 0:
@@ -960,14 +974,11 @@ class AuroraDB(object):
                                    (tenant_id, wnet_arg, tenant_id, wnet_arg) )
                 else:
                     to_execute = "SELECT * FROM wnet WHERE tenant_id = '%s'" % tenant_id
-                db.execute(to_execute)
+                num_results = db.execute(to_execute)
+                if num_results < 1:
+                    raise NoWnetExistsForTenantException(wnet=wnet_arg)
                 wnet_tt = db.fetchall()
-                if not wnet_tt:
-                    err_msg = "AuroraDB Error: No wnets available"
-                    if wnet_arg:
-                        err_msg += " by handle '%s'" % wnet_arg
-                    err_msg += ".\n"
-                    raise Exception(err_msg)
+                
                 #Prune through list
                 wnet_list = []
                 for (i, wnet_t) in enumerate(wnet_tt):
@@ -981,14 +992,21 @@ class AuroraDB(object):
             sys.exit(1)
         return wnet_list
 
-    def get_wnet_slices(self, wnet_arg, tenant_id):
+    def get_wnet_slices(self, wnet_arg, tenant_id, include_deleted=False):
         try:
             with self._database_connection() as db:
                 wnet_id = self.get_wnet_name_id(wnet_arg, tenant_id)['wnet_id']
 
-                #Get slices associated with this wnet
-                db.execute( "SELECT * FROM ap_slice WHERE "
-                             "wnet_id = '%s'" % wnet_id )
+                # Get slices associated with this wnet
+                if include_deleted:
+                    to_execute = ("SELECT * FROM ap_slice WHERE "
+                                  "wnet_id = '%s'" % wnet_id)
+                else:
+                    to_execute = ("""SELECT * FROM ap_slice WHERE 
+                                         wnet_id = '%s' AND 
+                                         status<>'DELETED' AND
+                                         status<>'DELETING'""" % wnet_id)
+                db.execute(to_execute)
                 slice_info_tt = db.fetchall()
 
                 #Prune through list

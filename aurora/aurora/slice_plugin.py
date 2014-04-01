@@ -44,16 +44,16 @@ class SlicePlugin(object):
                 self.LOGGER.warning(key+' not found. File might not parse correctly. Please check configuration and try again!')
                 
         #Add wrapper around json_list and return
-        return self._add_create_slice_wrapper(json_list, self.tag, self.user_id)
+        return self._add_create_slice_wrapper(json_list, self.tag, self.tenant_id)
                 
-    def _add_create_slice_wrapper(self, json_list, tag, user_id):
+    def _add_create_slice_wrapper(self, json_list, tag, tenant_id):
         """This method takes a json_list and puts each entry in the correct format (i.e. user, slice, command, config)
         for sending to the APs"""
         newlist = []
         for entry in json_list:
             tempdata = {}
             tempdata['config'] = entry
-            tempdata['user'] = user_id
+            tempdata['user'] = tenant_id
             tempdata['slice'] = tag
             tempdata['command'] = 'create_slice'
             newlist.append(tempdata)     

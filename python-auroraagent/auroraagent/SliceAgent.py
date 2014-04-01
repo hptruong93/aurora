@@ -580,6 +580,7 @@ class SliceAgent:
         # the three above if statements earlier
         return command(**info["args"])
 
+
     def execute(self, slice, command, config=None, user="default_user"):
         """The main entry point for any command coming from a remote
         server.  The command is analyzed and forwaded to the relevant
@@ -605,6 +606,8 @@ class SliceAgent:
             return self.__reset()
         elif command == "get_stats":
             return self.monitor.get_stats()
+        elif command == "sync_config":
+            return
         else:
             raise exception.CommandNotFound(command)
 

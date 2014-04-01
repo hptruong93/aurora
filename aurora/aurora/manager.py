@@ -288,7 +288,6 @@ class Manager(object):
             err_msg = " None"
             response = {"status":True, "message":err_msg}
             return response
-
         else:
             pt.add_column("Name", [])
             for attr in entry[1]:
@@ -359,7 +358,7 @@ class Manager(object):
         }
         config = None
         slices_to_modify = args['ap-slice-modify']
-        if args['filter']:
+        if args.get('filter') is not None:
                 # This will dictate the slices to modify - update 
                 # variable slices_to_modify
                 # TODO(mike)
@@ -368,7 +367,7 @@ class Manager(object):
             message += "No slices to modify."
         for ap_slice_id in slices_to_modify:
             
-            if args['file'] is not None:
+            if args.get('file') is not None:
                 # Tenant must know what he is doing with the file
                 config = args['file']
             else:
@@ -502,7 +501,7 @@ class Manager(object):
             config_modify = {
                 "slice":ap_slice_id, 
                 "command":"modify_slice", 
-                "user":user_id,
+                "user":tenant_id,
                 "config":config,
             }
             self.LOGGER.debug(json.dumps(config_modify, indent=4))
@@ -573,7 +572,7 @@ class Manager(object):
                 "slice":ap_slice_id, 
                 "command":"restart_slice", 
                 "config":config,
-                "user":user_id,
+                "user":tenant_id,
             }
 
             # Passed all checks, restart slice
@@ -851,7 +850,11 @@ class Manager(object):
             message += " None to delete\n"
 
         for ap_slice_id in ap_slice_list:
-            config = {"slice":ap_slice_id, "command":"delete_slice", "user":user_id}
+            config = {
+                "slice":ap_slice_id, 
+                "command":"delete_slice", 
+                "user":tenant_id
+            }
 
             my_slice = self.aurora_db.wslice_belongs_to(tenant_id, project_id, ap_slice_id)
             if not my_slice:
@@ -1193,7 +1196,7 @@ class Manager(object):
         config_delete = {
             "slice":ap_slice_id, 
             "command":"delete_slice", 
-            "user":user_id,
+            "user":tenant_id,
         }
         error = Verify.verifyOK(tenant_id = tenant_id, request = config_delete)
         if error is not None:
@@ -1211,7 +1214,7 @@ class Manager(object):
         config_create = {
             "slice":ap_slice_id, 
             "command":"create_slice", 
-            "user":user_id, 
+            "user":tenant_id, 
             "config":config,
         }
         error = Verify.verifyOK(new_ap, tenant_id, config_create)
@@ -1249,6 +1252,38 @@ class Manager(object):
         response = {"status":True, "message": message}
         return response
 
+    def ap_slice_sync_config(self, args, tenant_id, user_id, project_id):
+        message = ""
+        #TODO:Slice filter integration
+        slice_list_to_sync = args['ap-slice-sync-config']
+
+        for ap_slice_id in slice_list_to_sync:
+
+            my_slice = self.aurora_db.wslice_belongs_to(tenant_id, 
+                                                        project_id, 
+                                                        ap_slice_id)
+            if my_slice:
+                sync_config = {
+                    "slice":ap_slice_id,
+                    "command":"sync_config",
+                    "user":tenant_id,
+                }
+                try:
+                    physical_ap = self.aurora_db.get_wslice_physical_ap(
+                        ap_slice_id
+                    )
+                except NoSliceExistsException as e:
+                    message += e.message + '\n'
+                    continue
+                except Exception as e:
+                    traceback.print_exc(file=sys.stdout)
+                    continue
+                self.dispatcher.dispatch(sync_config, physical_ap)
+                message += ("Fetching current configuration from AP: %s" % 
+                    ap_slice_id)
+
+        response = {"status":True, "message":message}
+        return response
 
     def wnet_add_wslice(self, args, tenant_id, user_id, project_id):
         message = ""
@@ -1325,21 +1360,36 @@ class Manager(object):
         #TODO:Slice filter integration
         message = ""
         arg_name = args['wnet-remove-wslice'][0]
-        if not args['slice']:
+        arg_a = args['all']
+        if not args['slice'] and not arg_a:
             err_msg = "No slice specified.\n"
             response = {"status":False, "message":err_msg}
             return response
 
-        for arg_slice in args['slice']:
+        slices_to_remove = args.get('slice')
+        if arg_a:
+            slices_to_remove = []
+            wnet_slices_data = self.aurora_db.get_wnet_slices(arg_name, 
+                tenant_id
+            )
+            for ap_slice_data in wnet_slices_data:
+                slices_to_remove.append(ap_slice_data.get('ap_slice_id'))
+
+
+        for arg_slice in slices_to_remove:
             try:
-                my_slice = self.aurora_db.wslice_belongs_to(tenant_id, project_id, arg_slice)
-                my_wnet = self.aurora_db.wnet_belongs_to(tenant_id, project_id, arg_name)
+                my_slice = self.aurora_db.wslice_belongs_to(tenant_id, 
+                                                            project_id, 
+                                                            arg_slice)
+                my_wnet = self.aurora_db.wnet_belongs_to(tenant_id, 
+                                                         project_id, 
+                                                         arg_name)
 
                 if my_slice and my_wnet:
                     if not self.aurora_db.wslice_is_deleted(arg_slice):
                         message += self.aurora_db.wnet_remove_wslice(tenant_id, arg_slice, arg_name)
                     else:
-                        message += "Error: Cannot add deleted slice '%s'" % arg_slice
+                        message += "Error: Cannot remove deleted slice '%s'" % arg_slice
 
                 else:
                     if not my_slice:
@@ -1372,33 +1422,111 @@ class Manager(object):
             response = {"status":False, "message":e.message}
             return response
 
-        message = ""
+        pt = prettytable.PrettyTable()
+
+        try:
+            entry = wnet_to_print[0]
+        except IndexError as e:
+            err_msg = " None"
+            response = {"status":True, "message":err_msg}
+            return response
+        else:
+            for attr in entry:
+                pt.add_column(attr, [])
+
         for entry in wnet_to_print:
-            if not arg_i:
-                message += "%5s: %s\n" % ("Name", entry['name'])
-            else: #Print extra data
-                message += "%11s: %s\n" % ("Name", entry['name'])
-                for key,value in entry.iteritems():
-                    if key != 'name':
-                        message += "%11s: %s\n" % (key, value)
-                message += '\n'
-        #return response
+            table_row = []
+            for attr in entry:
+                table_row.append(entry[attr])
+            pt.add_row(table_row)
+
+        if arg_i:
+            message = pt.get_string()
+        else:
+            message = pt.get_string(fields=["name"])
+
         response = {"status":True, "message":message}
         return response
 
     def wnet_show(self, args, tenant_id, user_id, project_id):
         arg_i = args['i']
+        arg_a = args['all']
         arg_wnet = args['wnet-show'][0]
 
         try:
             wnet_to_print = self.aurora_db.get_wnet_list(tenant_id, arg_wnet)
-
-            slices_to_print = self.aurora_db.get_wnet_slices(arg_wnet, tenant_id)
+            if arg_a:
+                slices_to_print = self.aurora_db.get_wnet_slices(
+                    arg_wnet, 
+                    tenant_id,
+                    include_deleted=True
+            )
+            else:
+                slices_to_print = self.aurora_db.get_wnet_slices(
+                    arg_wnet, 
+                    tenant_id
+                )
+        except AuroraException as e:
+            response = {"status":False, "message":e.message}
+            return response
         except Exception as e:
             traceback.print_exc(file=sys.stdout)
             self.LOGGER.error(e)
             response = {"status":False, "message":e.message}
             return response
+
+        pt1 = prettytable.PrettyTable()
+
+        try:
+            entry = wnet_to_print[0]
+        except IndexError as e:
+            err_msg = " None"
+            response = {"status":True, "message":err_msg}
+            return response
+        else:
+            for attr in entry:
+                pt1.add_column(attr, [])
+
+        for entry in wnet_to_print:
+            table_row = []
+            for attr in entry:
+                table_row.append(entry[attr])
+            pt1.add_row(table_row)
+
+        message = pt1.get_string()
+        message += '\n\n'
+
+        pt2 = prettytable.PrettyTable()
+
+        try:
+            entry = slices_to_print[0]
+        except IndexError as e:
+            message += " No slices in wnet"
+        else:
+            for attr in entry:
+                pt2.add_column(attr, [])
+
+            for entry in slices_to_print:
+                table_row = []
+                for attr in entry:
+                    table_row.append(entry[attr])
+                pt2.add_row(table_row)
+
+            if arg_i:
+                message += pt2.get_string()
+            else:
+                message += pt2.get_string(
+                    fields=[
+                        "ap_slice_id",
+                        "ap_slice_ssid",
+                        "physical_ap",
+                        "status"
+                    ]
+                )
+
+        response = {"status":True, "message":message}
+        return response
+
 
         message = ""
         for entry in wnet_to_print:
@@ -1506,31 +1634,65 @@ class Manager(object):
         response = {"status":True, "message":message}
         return response
 
-    def wnet_remove_all(self, args, tenant_id, user_id, project_id):
-        """Method which changes wnet of all ap_slices associated with wnet_name to NULL
-        """
+    def wnet_update_ssid(self, args, tenant_id, user_id, project_id):
+        new_ssid = args['ssid'][0]
+        wnet = args['wnet-update-ssid'][0]
         message = ""
-        # args can contain multiple wnet names
-        for wnet_name in args['wnet-remove-all']:
-            wslices_dict = self._wnet_show_wslices(wnet_name, tenant_id)
-            #DEBUG
-            self.LOGGER.debug("wslices_dict:2: ")
-            self.LOGGER.debug(wslices_dict)
+        try:
+            wnet_slices_data = self.aurora_db.get_wnet_slices(wnet, tenant_id)
+        except Exception as e:
+            traceback.print_exc(file=sys.stdout)
+            response = {"status":False, "message":e.message}
+            return response
 
-            if wslices_dict["message"]:
-                # Either no wnet, or no ap_slices
-                self.LOGGER.debug('Appending dictionary message')
-                message += wslices_dict["message"]
+        wnet_slices = []
+        for slice_data in wnet_slices_data:
+            wnet_slices.append(slice_data['ap_slice_id'])
 
-            else:
-                # Disassociate slice from wnet in database (assign its wnet Null)
-                for slice_tuple in wslices_dict["ap_slices"]:
-                    slice_id = slice_tuple[0]
-                    self.aurora_db.wnet_remove_slice(tenant_id, slice_id, wnet_name)
-                    message += 'Slice with ap_slice_id \'' + slice_id + \
-                               '\' removed from wnet \'' + wnet_name + '\'\n'
+        # SSID's must be unique on an access point
+        ap_to_modify = []
+        slices_to_modify = []
+        for wnet_slice in wnet_slices:
+            # Check which access point wnet_slice is on, then verify
+            # that no other slices on that access point have the same
+            # ssid as new_ssid.  Also verify that, within the wnet,
+            # no two slices exist on the same AP.
+            try:
+                physical_ap = self.aurora_db.get_wslice_physical_ap(wnet_slice)
+            except NoSliceExistsException as e:
+                message += e.message + '\n'
+                continue
+            except Exception as e:
+                traceback.print_exc(file=sys.stdout)
+                continue
+            if physical_ap in ap_to_modify:
+                # Two wnet slices are on the same AP, cannot modify
+                message += "Two slices in the wnet are on the same AP\n"
+                response = {"status":False, "message":message}
+                return response
 
-        response = {"status":True, "message":message}
+            ap_to_modify.append(physical_ap)
+            for slice_on_ap in self.aurora_db.get_physical_ap_slices(
+                    physical_ap, not_deleted_only=True):
+                if self.aurora_db.get_wslice_ssid(slice_on_ap) == new_ssid:
+                    message += ("Slice on access point already has ssid %s\n" %
+                                new_ssid)
+                    response = {"status":False, "message":message}
+                    return response
+            slices_to_modify.append(wnet_slice)
+
+
+        response = self.ap_slice_modify(
+            {
+                'ap-slice-modify':slices_to_modify,
+                'ssid':[new_ssid,],
+            }, 
+            tenant_id, 
+            user_id, 
+            project_id
+        )
+        returned_message = response['message']
+        response['message'] = message + returned_message
         return response
 
     def wnet_add_tag(self, args, tenant_id, user_id, project_id):

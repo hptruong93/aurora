@@ -25,7 +25,7 @@ LOGGER = logging.getLogger(__name__)
 class Dispatcher(object):
 
     lock = None
-    TIMEOUT = 30
+    TIMEOUT = 45
     dispatch_count = 0
     status_closing = False
     def __init__(self, host, username, password, mysql_username, mysql_password, aurora_db):

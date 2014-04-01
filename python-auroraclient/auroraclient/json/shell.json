@@ -419,6 +419,20 @@
                 ]
             ],
             [
+                "ap-slice-sync-config",
+                {
+                    "action":"store",
+                    "help":"Update slice's configuration from current active on AP",
+                    "nargs":"+",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"slice"
+                },
+                [
+                    
+                ]
+            ],
+            [
                 "wnet-add-wslice",
                 {
                     "action":"store",
@@ -537,7 +551,7 @@
                             "help":"Expanded List",
                             "default":false
                         }
-                    ] 
+                    ]
                 ]
             ],
             [
@@ -561,7 +575,15 @@
                             "choices":null,
                             "metavar":"slices/tags"
                         }
-                    ]
+                    ],
+                    [
+                        ["-a", "--all"],
+                        {
+                            "action":"store_true",
+                            "help":"Remove all slices",
+                            "default":false
+                        }
+                    ] 
                 ]
             ],
             [
@@ -582,7 +604,15 @@
                             "help":"Expanded List",
                             "default":false
                         }
-                    ]
+                    ],
+                    [
+                        ["-a", "--all"],
+                        {
+                            "action":"store_true",
+                            "help":"Include deleted slices",
+                            "default":false
+                        }
+                    ] 
                 ]
             ],
             [
@@ -598,6 +628,31 @@
                 },
                 [
                     
+                ]
+            ],
+            [
+
+                "wnet-update-ssid",
+                {
+                    "action":"store",
+                    "help":"Updates the SSID of a group of wireless slices",
+                    "nargs":1,
+                    "default":null,
+                    "choices":null,
+                    "metavar":"wnet_name"
+                },
+                [
+                    [
+                        "--ssid",
+                        {
+                            "action":"store",
+                            "help":"New ssid for slices in wnet",
+                            "nargs":1,
+                            "default":null,
+                            "choices":null,
+                            "metavar":"SSID"
+                        }
+                    ]
                 ]
             ],
             [
