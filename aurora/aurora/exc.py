@@ -62,6 +62,9 @@ class InvalidAPNameTypeException(AuroraException):
     message = "Please enter a valid ap_name"
 
 class NoWnetExistsForTenantException(AuroraException):
+    message = "No wnets exist"
+
+class NoWnetNameExistsForTenantException(AuroraException):
     message = "Wnet %(wnet)s does not exist"
 
 class APSliceAlreadyInWnetException(AuroraException):
@@ -96,3 +99,12 @@ class KeyboardInterruptStopEvent(Exception):
 #
 class MessageSendAttemptWhileClosing(AuroraException):
     message = "Tried to dispatch while dispatcher is closing"
+
+class DispatchTimeout(AuroraException):
+    message = "A timeout occured during dispatch"
+
+class DispatchLockedForAPTimeout(DispatchTimeout):
+    message = "Timeout occured during dispatch for %(ap)s"
+
+class DispatchWaitForOpenChannelTimeout(DispatchTimeout):
+    message = "Timeout occured waiting for open channel during dispatch"

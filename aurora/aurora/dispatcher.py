@@ -24,8 +24,12 @@ LOGGER = logging.getLogger(__name__)
 
 class Dispatcher(object):
 
-    lock = None
+    lock = []
     TIMEOUT = 45
+    RESTART_TIMEOUT = 30
+    WAIT_TO_DISPATCH_TIMEOUT = 5
+    SPLIT_SECOND = 1
+    WAIT_TIME_INTERVAL = 0.25
     dispatch_count = 0
     status_closing = False
     def __init__(self, host, username, password, mysql_username, mysql_password, aurora_db):
@@ -37,11 +41,12 @@ class Dispatcher(object):
         self.host = host
         self.username = username
         self.password = password
-        Dispatcher.lock = False
+        Dispatcher.lock = []
         self.restarting_connection = False
         self.aurora_db = aurora_db
         self.timeout_callback = None
         self.response_callback = None
+        self.close_pollers_callback = None
         # Create list for requests sent out
         self.requests_sent = []
 
@@ -64,6 +69,9 @@ class Dispatcher(object):
 
     def set_response_callback(self, response_callback):
         self.response_callback = response_callback
+
+    def set_close_pollers_callback(self, close_pollers_callback):
+        self.close_pollers_callback = close_pollers_callback
 
     def start_connection(self):
         self._start_connection()
@@ -96,8 +104,12 @@ class Dispatcher(object):
             # and the AP will be marked as 'DOWN'.
             self.LOGGER.warn(e.message)
             self._restart_connection()
+        self.LOGGER.info("IOLoop is dying")
 
     def _stop_connection(self):
+        self.LOGGER.info("Calling %s", self.close_pollers_callback)
+        self.close_pollers_callback()
+        self.LOGGER.info("Stopping all request timers")
         self._stop_all_request_sent_timers()
         try:
             del self.channel 
@@ -105,7 +117,7 @@ class Dispatcher(object):
                              self.connection.connection_state)
             Dispatcher.status_closing = True
             self.connection.close()
-            Dispatcher.lock = False
+            Dispatcher.lock = []
         except AttributeError as e:
             self.LOGGER.debug("Connection already closed...")
             
@@ -115,14 +127,10 @@ class Dispatcher(object):
         self._stop_connection()
         self.listener.join()
 
-        # Dispatcher.lock = False
+        # Dispatcher.lock = []
         printed_waiting = False
-
+        self.LOGGER.info("Waiting for channel to close...")
         while True:
-            if not printed_waiting:
-                self.LOGGER.info("Waiting for channel to close...")
-                printed_waiting = True
-            
             try:
                 if self.connection.is_closed or self.connection.is_closing:
                     self.LOGGER.debug("Connection closed...")
@@ -135,19 +143,22 @@ class Dispatcher(object):
         self.restarting_connection = True
         self.LOGGER.info("Starting new connection...")
         self._start_connection()
-        printed_waiting = False
+        timeout_to_restart = self.RESTART_TIMEOUT
+        self.LOGGER.info("Waiting for channel to open...")
         while True:
-            if not printed_waiting:
-                self.LOGGER.info("Waiting for channel to open...")
-                printed_waiting = True
             try:
                 if self.connection.is_open and self.channel.is_open:
                     break
             except AttributeError as e:
+                self.LOGGER.warn("No channel: %s", e.message)
                 pass
             # Channel is not up again yet
             time.sleep(1)
-            self.LOGGER.info("Channel back up...")
+            if timeout_to_restart == 0:
+                # Wait 30 seconds for a restart, otherwise try again
+                return self._restart_connection()
+            timeout_to_restart -= 1
+        self.LOGGER.info("Channel back up...")
         self._send_manager_up_status()
 
     def _stop_all_request_sent_timers(self):
@@ -178,7 +189,12 @@ class Dispatcher(object):
     def _send_manager_up_status(self):
         self.aurora_db.ap_status_unknown()
         for ap in self.aurora_db.get_ap_list():
-            self.dispatch({'command':'SYN'}, ap)
+            try:
+                self.dispatch({'command':'SYN'}, ap)
+            except AuroraException as e:
+                self.LOGGER.warn(e.message)
+            except Exception as e:
+                traceback.print_exc(file=sys.stdout)
 
     def _start_pika_channel_open_monitor(self):
         self._pika_monitor_thread = StoppableThread(target=self._pika_monitor_loop)
@@ -221,33 +237,69 @@ class Dispatcher(object):
         self.LOGGER.debug(message)
 
         # Send JSON
-        # We attach a reply_to and correlation ID to tell the AP to send a message to the queue we create (randomly generated name) at init
-        # with the correlation id specified.  This means that
-        # we can see if our request executed successfully or not
+        # We attach a reply_to and correlation ID to tell the AP to send 
+        # a message to the queue we create (randomly generated name) at 
+        # init with the correlation id specified.  This means that we 
+        # can see if our request executed successfully or not 
         # See http://www.rabbitmq.com/tutorials/tutorial-six-python.html for more info
-        if Dispatcher.lock:
-            self.LOGGER.info("Locked, waiting...")
-            while Dispatcher.lock:
-                time.sleep(0.1)
-                pass
+        
+        # Errors happen if too many people try and publish and receive
+        # at the same time, thus a primitive lock for each access
+        # point is used.  The lock contains a list of access point
+        # names which are currently being dispatched to.  If another
+        # dispatch call is running, the list will have a non-zero
+        # length, but as long as we are not dispatching to the same
+        # access point we can continue.
+        wait_timer = 0
+        if ap in Dispatcher.lock:
+            self.LOGGER.info("Locked for %s, waiting...", ap)
+            wait_timer = 0
+            while ap in Dispatcher.lock:
+                if wait_timer > self.WAIT_TO_DISPATCH_TIMEOUT:
+                    raise DispatchLockedForAPTimeout(ap=ap)
+                wait_timer += self.WAIT_TIME_INTERVAL
+                time.sleep(self.WAIT_TIME_INTERVAL)
+
+        # For safety, in the case that another call to this method is 
+        # already executing, delay by a split second.
+        
 
         if Dispatcher.status_closing:
             raise MessageSendAttemptWhileClosing()
 
-        self.LOGGER.debug("Locking...")
-        Dispatcher.lock = True
+        self.LOGGER.debug("Locking for %s...", ap)
+        Dispatcher.lock.append(ap)
+
+        current_dispatch_calls = len(Dispatcher.lock) - 1
+        if current_dispatch_calls > 0:
+            # If others are using method, wait for some variable amount
+            # of time, dependent on how many others are using it.
+            time.sleep(self.SPLIT_SECOND*current_dispatch_calls)
 
         # Dispatch, catch if no channel exists
+        wait_timer = 0
         while True:
+            if wait_timer > self.WAIT_TO_DISPATCH_TIMEOUT:
+                raise DispatchWaitForOpenChannelTimeout()
             try:
                 if self.connection.is_open and self.channel.is_open:
                     break
             except AttributeError:
                 pass
-            time.sleep(0.25)
+            wait_timer += self.WAIT_TIME_INTERVAL
+            time.sleep(self.WAIT_TIME_INTERVAL)
         die_by_kb = False
         try:
-            self.channel.basic_publish(exchange='', routing_key=ap, body=message, properties=pika.BasicProperties(reply_to = self.callback_queue, correlation_id = unique_id, content_type="application/json"))
+            self.channel.basic_publish(
+                exchange='', 
+                routing_key=ap, 
+                body=message, 
+                properties=pika.BasicProperties(
+                    reply_to = self.callback_queue, 
+                    correlation_id = unique_id, 
+                    content_type="application/json"
+                )
+            )
         except IndexError as e:
             # Likely publishing the message didn't work
             self.LOGGER.warn(e.message)
@@ -292,8 +344,11 @@ class Dispatcher(object):
             else:
                 self.LOGGER.error("Cannot start nonexistant timer")
 
-        self.LOGGER.debug("Unlocking...")
-        Dispatcher.lock = False
+        self.LOGGER.debug("Unlocking for %s...", ap)
+        try:
+            Dispatcher.lock.remove(ap)
+        except ValueError as e:
+            self.LOGGER.warn("Tried to remove nonexistant ap_name from lock")
         if die_by_kb:
             raise KeyboardInterrupt()
 
@@ -314,6 +369,7 @@ class Dispatcher(object):
         del self.listener
         del self.timeout_callback
         del self.response_callback
+        del self.close_pollers_callback
 
     def _get_uuid_for_ap_syn(self, ap_syn):
         for request in self.requests_sent:

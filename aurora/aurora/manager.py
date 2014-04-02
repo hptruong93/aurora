@@ -256,8 +256,16 @@ class Manager(object):
                 self.LOGGER.warn(e)
                 message += e.message
             else:
-                self.dispatcher.dispatch({'command':'SYN'}, ap_name)
-                message += "%s added" % ap_name
+                try:
+                    self.dispatcher.dispatch({'command':'SYN'}, ap_name)
+                except AuroraException as e:
+                    message += e.message + '\n'
+                    self.LOGGER.warn(e.message)
+                except Exception as e:
+                    message += e.message + '\n'
+                    traceback.print_exc(file=sys.stdout)
+                else:
+                    message += "%s added" % ap_name
         response = {"status":True, "message":message}
         return response
 
@@ -511,8 +519,20 @@ class Manager(object):
                 message += e.message + '\n'
                 continue
             else:
-                self.dispatcher.dispatch(config_modify, ap_name)
-                message += "Modified %s on %s\n" % (ap_slice_id, ap_name)
+                try:
+                    self.aurora_db.ap_slice_status_pending(ap_slice_id)
+                except InvalidStatusUpdate as e:
+                    self.LOGGER.warn(e.message)
+                try:
+                    self.dispatcher.dispatch(config_modify, ap_name)
+                except AuroraException as e:
+                    message += e.message + '\n'
+                    self.LOGGER.warn(e.message)
+                except Exception as e:
+                    message += e.message + '\n'
+                    traceback.print_exc(file=sys.stdout)
+                else:
+                    message += "Modified %s on %s\n" % (ap_slice_id, ap_name)
 
         #return response
         response = {"status":True, "message":message}
@@ -581,8 +601,16 @@ class Manager(object):
                 self.aurora_db.ap_slice_status_pending(ap_slice_id)
             except InvalidStatusUpdate as e:
                 self.LOGGER.warn(e.message)
-            self.dispatcher.dispatch(config_restart, ap_name)
-            message += "Restarted %s on %s" % (ap_slice_id, ap_name)
+            try:
+                self.dispatcher.dispatch(config_restart, ap_name)
+            except AuroraException as e:
+                message += e.message + '\n'
+                self.LOGGER.warn(e.message)
+            except Exception as e:
+                message += e.message + '\n'
+                traceback.print_exc(file=sys.stdout)
+            else:
+                message += "Restarted %s on %s" % (ap_slice_id, ap_name)
 
         response = {
             "status":True, 
@@ -817,7 +845,16 @@ class Manager(object):
                                 tenant_id, user_id, project_id)
 
             #Dispatch (use slice_uuid as a message identifier)
-            self.dispatcher.dispatch(json_entry, aplist[index], str(slice_uuid))
+            try:
+                self.dispatcher.dispatch(json_entry, 
+                                         aplist[index], 
+                                         str(slice_uuid))
+            except AuroraException as e:
+                message += e.message + '\n'
+                self.LOGGER.warn(e.message)
+            except Exception as e:
+                message += e.message + '\n'
+                traceback.print_exc(file=sys.stdout)
             try:
                 config_db.save_config(json_entry['config'], 
                                       json_entry['slice'], 
@@ -890,7 +927,14 @@ class Manager(object):
             #Dispatch
             #Generate unique message id
             self.LOGGER.debug("Launching dispatcher")
-            self.dispatcher.dispatch(config, ap_name)
+            try:
+                self.dispatcher.dispatch(config, ap_name)
+            except AuroraException as e:
+                message += e.message + '\n'
+                self.LOGGER.warn(e.message)
+            except Exception as e:
+                message += e.message + '\n'
+                traceback.print_exc(file=sys.stdout)
             try:
                 config_db.delete_config(ap_slice_id, tenant_id)
             except AuroraException, e:
@@ -1223,11 +1267,26 @@ class Manager(object):
             return response
 
         # Passed all checks, delete slice from existing ap and create on new one
-        self.dispatcher.dispatch(config_delete, current_ap)
-        self.dispatcher.dispatch(config_create, new_ap)
-        self.aurora_db.ap_slice_set_physical_ap(ap_slice_id, new_ap)
-        self.aurora_db.ap_slice_status_pending(ap_slice_id)
-        message += "Moved %s from %s to %s" % (ap_slice_id, current_ap, new_ap)
+        try:
+            self.dispatcher.dispatch(config_delete, current_ap)
+        except AuroraException as e:
+            message += e.message + '\n'
+            self.LOGGER.warn(e.message)
+        except Exception as e:
+            message += e.message + '\n'
+            traceback.print_exc(file=sys.stdout)
+        try:
+            self.dispatcher.dispatch(config_create, new_ap)
+        except AuroraException as e:
+            message += e.message + '\n'
+            self.LOGGER.warn(e.message)
+        except Exception as e:
+            message += e.message + '\n'
+            traceback.print_exc(file=sys.stdout)
+        else:
+            self.aurora_db.ap_slice_set_physical_ap(ap_slice_id, new_ap)
+            self.aurora_db.ap_slice_status_pending(ap_slice_id)
+            message += "Moved %s from %s to %s" % (ap_slice_id, current_ap, new_ap)
 
         response = {
             "status":True, 
@@ -1278,9 +1337,17 @@ class Manager(object):
                 except Exception as e:
                     traceback.print_exc(file=sys.stdout)
                     continue
-                self.dispatcher.dispatch(sync_config, physical_ap)
-                message += ("Fetching current configuration from AP: %s" % 
-                    ap_slice_id)
+                try:
+                    self.dispatcher.dispatch(sync_config, physical_ap)
+                except AuroraException as e:
+                    message += e.message + '\n'
+                    self.LOGGER.warn(e.message)
+                except Exception as e:
+                    message += e.message + '\n'
+                    traceback.print_exc(file=sys.stdout)
+                else:
+                    message += ("Fetching current configuration from AP: %s" % 
+                        ap_slice_id)
 
         response = {"status":True, "message":message}
         return response
@@ -1693,6 +1760,22 @@ class Manager(object):
         )
         returned_message = response['message']
         response['message'] = message + returned_message
+        return response
+
+    def wnet_modify_name(self, args, tenant_id, user_id, project_id):
+        new_name = args['new_name'][0]
+        wnet_id = args['wnet-modify-name'][0]
+        message = ""
+
+        my_wnet = self.aurora_db.wnet_belongs_to(tenant_id, project_id, wnet_id)
+        if not my_wnet:
+            message += "Error: You have no wnet '%s'.\n" % wnet_id
+            response = {"status":False, "message":message}
+            return response
+
+        self.aurora_db.set_wnet_name(new_name, wnet_id, tenant_id)
+        message += "Changed %s to %s\n" % (wnet_id, new_name)
+        response = {"status":True, "message":message}
         return response
 
     def wnet_add_tag(self, args, tenant_id, user_id, project_id):

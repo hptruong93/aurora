@@ -197,12 +197,12 @@ class AuroraDB(object):
             with self._database_connection() as db:
                 self.LOGGER.debug("Setting '%s' SSID: %s", 
                                   ap_slice_id, new_ssid)
-                db.execute(
-                    """UPDATE ap_slice SET
+                to_execute = ("""UPDATE ap_slice SET
                                ap_slice_ssid='%s'
                            WHERE ap_slice_id='%s'""" %
-                       (new_ssid, ap_slice_id)
-                )
+                       (new_ssid.replace("'", "\\'"), ap_slice_id))
+                self.LOGGER.debug(to_execute)
+                db.execute(to_execute)
         except Exception as e:
             traceback.print_exc(file=sys.stdout)
 
@@ -387,12 +387,13 @@ class AuroraDB(object):
                             status != 'DOWN'):
                         raise InvalidACTIVEStatusUpdate(status=status)
 
-                    self.LOGGER.info("Setting status 'ACTIVE' for %s", ap_slice_id)
-                    to_execute = ("UPDATE ap_slice SET "
-                                          "status='ACTIVE' "
-                                      "WHERE ap_slice_id='%s'" % ap_slice_id)
-                    self.LOGGER.debug(to_execute)
-                    db.execute(to_execute)
+                    if status != 'ACTIVE':
+                        self.LOGGER.info("Setting status 'ACTIVE' for %s", ap_slice_id)
+                        to_execute = ("UPDATE ap_slice SET "
+                                              "status='ACTIVE' "
+                                          "WHERE ap_slice_id='%s'" % ap_slice_id)
+                        self.LOGGER.debug(to_execute)
+                        db.execute(to_execute)
         except mdb.Error as e:
             traceback.print_exc(file=sys.stdout)
         return True
@@ -611,7 +612,7 @@ class AuroraDB(object):
                     if wnet_name in tenant_wnets:
                         return True
             except mdb.Error as e:
-                    traceback.print_exc(file=sys.stdout)
+                traceback.print_exc(file=sys.stdout)
         return False
 
     def wslice_is_deleted(self, ap_slice_id):
@@ -973,10 +974,14 @@ class AuroraDB(object):
                                    "tenant_id = '%s' AND name = '%s'" %
                                    (tenant_id, wnet_arg, tenant_id, wnet_arg) )
                 else:
-                    to_execute = "SELECT * FROM wnet WHERE tenant_id = '%s'" % tenant_id
+                    to_execute = ("SELECT * FROM wnet WHERE tenant_id = '%s'" % 
+                                  tenant_id)
                 num_results = db.execute(to_execute)
                 if num_results < 1:
-                    raise NoWnetExistsForTenantException(wnet=wnet_arg)
+                    if wnet_arg is None:
+                        raise NoWnetExistsForTenantException()
+                    else:
+                        raise NoWnetNameExistsForTenantException(wnet=wnet_arg)
                 wnet_tt = db.fetchall()
                 
                 #Prune through list
@@ -1054,5 +1059,26 @@ class AuroraDB(object):
             self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
             sys.exit(1)
         return wnet_info
+
+    def set_wnet_name(self, new_name, wnet_id, tenant_id):
+        try:
+            with self._database_connection() as db:
+                if tenant_id != 0:
+                    wnet_id = self.get_wnet_name_id(
+                        wnet_id, 
+                        tenant_id
+                    )['wnet_id']
+                    to_execute = ("""UPDATE wnet SET name='%s' WHERE 
+                                        wnet_id='%s' AND tenant_id='%s'""" %
+                                    (new_name, wnet_id, tenant_id))
+                else:
+                    # Assume that wnet_id is actually an ID and not a name
+                    to_execute = ("""UPDATE wnet SET name='%s' WHERE 
+                                        wnet_id='%s'""" %
+                                    (new_name, wnet_id))
+                db.execute(to_execute)
+                
+        except mdb.Error as e:
+            traceback.print_exc(file=sys.stdout)
 
 
