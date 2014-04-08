@@ -4,7 +4,7 @@
             "flavor" : "wifi_bss",
             "attributes" : 
                 {
-                    "name" : "Medicine",
+                    "name" : "Caps v2",
                     "radio" : "radio0",
                     "if_name" : "wlan0-1",
                     "encryption_type":"wep-open",
@@ -17,9 +17,9 @@
             "flavor":"linux_bridge",
             "attributes":   
                 {
-                    "name":"linux-br-medicine-2",
+                    "name":"linux-br-2",
                     "interfaces":
-                        ["vwlan0-1","veth1"],
+                        ["vwlan0-1","tun1"],
                     "bridge_settings":{},
                     "port_settings":{}
                 }
@@ -27,12 +27,14 @@
     ], 
     "VirtualInterfaces": [
         {
-            "flavor":"veth",
+            "flavor":"capsulator",
             "attributes": 
                 {
                     "attach_to":"eth0",
-                    "name":"veth1",
-                    "mac":"01:00:00:00:00:20"
+                    "name":"tun1",
+                    "forward_to":"10.5.8.5",
+                    "tunnel_tag":"auto",
+                    "is_virtual":true
                 }
         },
         {
@@ -41,7 +43,7 @@
                 {
                     "attach_to":"wlan0-1",
                     "name":"vwlan0-1",
-                    "mac":"01:00:00:00:00:21"
+                    "mac":"00:00:00:00:00:31"
                 }
         }
     ]

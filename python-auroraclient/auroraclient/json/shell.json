@@ -18,6 +18,41 @@
                 ]
             ],
             [
+                "ap-add-tag",
+                {
+                    "action":"store",
+                    "help":"Add a tag to an AP",
+                    "nargs":"+",
+                    "default":null,
+                    "choices":null,
+                    "metavar":"slices/tags"
+                },
+                [
+                    [
+                        "--filter",
+                        {
+                            "action":"store",
+                            "help":"Filter arguments",
+                            "nargs":1,
+                            "default":null,
+                            "choices":null,
+                            "metavar":"filter"
+                        }
+                    ],
+                    [
+                        "--tag",
+                        {
+                            "action":"store",
+                            "help":"List of tags",
+                            "nargs":"+",
+                            "default":null,
+                            "choices":null,
+                            "metavar":"tags"
+                        }   
+                    ]
+                ]
+            ],
+            [
                 "ap-reset",
                 {
                     "action":"store",
@@ -321,7 +356,7 @@
                         {
                             "action":"store",
                             "help":"List of tags",
-                            "nargs":"*",
+                            "nargs":"+",
                             "default":null,
                             "choices":null,
                             "metavar":"tags"
@@ -356,7 +391,7 @@
                         {
                             "action":"store",
                             "help":"List of tags",
-                            "nargs":"*",
+                            "nargs":"+",
                             "default":null,
                             "choices":null,
                             "metavar":"tags"

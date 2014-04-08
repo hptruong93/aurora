@@ -113,7 +113,7 @@ class AuroraConsole():
             parser = AuroraArgumentParser()
             params = vars(parser.base_parser().parse_args(argv[1:]))
 
-            print 'function: %s' % function
+            #print 'function: %s' % function
 
             #For add-slice and modify, we need to load the JSON file
             if function == 'ap-slice-create':
@@ -161,7 +161,7 @@ class AuroraConsole():
                 'user_id':os.environ.get("AURORA_USER", -1),
             }
             ##FOR DEBUGGING PURPOSES
-            print json.dumps(to_send, indent=4)
+            #print json.dumps(to_send, indent=4)
             ##END DEBUG
             
             if to_send: #--help commands will not start the server

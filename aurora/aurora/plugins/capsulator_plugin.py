@@ -53,10 +53,16 @@ class CapsulatorPlugin(object):
         TuntagOffset = currentIndex + entryIndex #For Generation purposes, ensures a unique tuntag for each slice
         parsedEntry = copy.deepcopy(self.entryFormat)
         
+        auto_tunnel_tag = False
+        if entry['attributes'].get('tunnel_tag') == "auto":
+            auto_tunnel_tag = True
+            del entry['attributes']['tunnel_tag']
+
         #First, ensure all attributes that are not default are present
         for attr in self.attributes.keys():
-            if not self.attributes[attr]['default']:
-                if not attr in entry['attributes']:
+            if self.attributes[attr]['default'] is None:
+                if attr not in entry['attributes']:
+                    print "Attr: %s" % attr
                     err_msg = 'Error in json file, attributes do not match in capsulator Flavor (VirtualInterfaces)!'
                     print(err_msg)
                     raise Exception(err_msg + '\n')
@@ -107,4 +113,7 @@ class CapsulatorPlugin(object):
                 except Exception:
                     traceback.print_exc(file=sys.stdout)
             
+        if auto_tunnel_tag:
+            parsedEntry['attributes']['auto'] = True
+
         return parsedEntry

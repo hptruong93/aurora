@@ -1,5 +1,11 @@
-# Aurora Manager Functions
-# SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
+"""The manager module houses the bulk of the logic required to process
+commands received from a client.  
+
+"""
+# 2014
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &
+#              Mike Kobierski 
+#
 
 import json
 import logging
@@ -26,6 +32,16 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Manager(object):
+    """High level manager class for handling client requests.
+
+    Every client command has an associated handler in this Manager 
+    class.  Each handler is structured to take an argument dictionary,
+    as well as tenant_id, project_id, and user_id.  They should all 
+    return a dictionary with a boolean 'successful' to notify client 
+    if the query was handled without error, as well as a message with 
+    additional information.
+
+    """
     #Dispatcher variables
 
     MYSQL_HOST = 'localhost'
@@ -34,6 +50,17 @@ class Manager(object):
     MYSQL_DB = 'aurora' 
 
     def __init__(self):
+        """Sets up the environment which Manager will use to handle 
+        specific tasks.
+
+        Required components include a database handler, message 
+        dispatcher (AMQP), and AP Monitor to track access point status
+        information.
+
+        Additionally, an HTTP server is set up to provision initial 
+        AP configurations.
+
+        """
         self.LOGGER = get_cls_logger(self)
         self.LOGGER.info("Constructing Manager...")
 
@@ -68,19 +95,41 @@ class Manager(object):
 
 
     def stop(self):
+        """Stops the previously constructed service helpers."""
         self.apm.stop()
         self.dispatcher.stop()
         provision_srv.stop()
 
     def parseargs(self, function, args, tenant_id, user_id, project_id):
+        """Interface to the Manager's handler functions.
+
+        :param str function: Handler function to call
+        :param dict args: Generic dictionary passed to function
+        :param str tenant_id:
+        :param str user_id:
+        :param str project_id:
+        :rtype: dict
+
+        """
+
         # args is a generic dictionary passed to all functions (each function is responsible for parsing
         # their own arguments
         function = function.replace('-', '_') #For functions in python
         response = getattr(self, function)(args, tenant_id, user_id, project_id)
         return response
 
-    #STILL NEED TO IMPLEMENT TAG SEARCHING (location_tags table), maybe another connection with intersection?
     def ap_filter(self, args):
+        """A helper method for finding access points based on their 
+        SQL entries.  Example argument strings::
+
+            location=mcgill 
+            status=UP 
+            num_radio_free=1 
+
+        :param str args:
+        :rtype: list
+
+        """
         try:
             self.con = mdb.connect(self.mysql_host,
                                    self.mysql_username,
@@ -246,6 +295,11 @@ class Manager(object):
             return newList
 
     def ap_add(self, args, tenant_id, user_id, project_id):
+        """Adds an AP to the SQL database and dispatches a SYN message.
+
+        :rtype: dict
+
+        """
         message = ""
         for ap_name in args['ap-add']:
             self.LOGGER.info("Adding ap %s", ap_name)
@@ -269,7 +323,51 @@ class Manager(object):
         response = {"status":True, "message":message}
         return response
 
+    def ap_add_tag(self, args, tenant_id, user_id, project_id):
+        """Adds a location tag to an access point.
+
+        :rtype: dict
+
+        """
+        message = ""
+        if not args['tag']:
+            err_msg = 'Error: Please specify a tag with --tag\n'
+            self.LOGGER.error(err_msg)
+            response = {"status":False, "message": err_msg}
+            return response
+        else:
+            tags = args['tag']
+        #Get list of slice_ids
+        if args['filter']:
+            ap_names = []
+            args_filter = args['filter'][0]
+            ap_list = self.ap_filter(args_filter)
+            #Get list of slice_ids
+            for entry in ap_list:
+                ap_names.append(entry['name'])
+        else:
+            ap_names = args['ap-add-tag']
+
+        #Add tags
+        for ap_name in ap_names:
+            for tag in tags:
+                message += self.aurora_db.ap_add_tag(ap_name, tag)
+
+        #return response
+        response = {"status":True, "message":message}
+        return response
+
     def ap_reset(self, args, tenant_id, user_id, project_id):
+        """Resets an access point.
+
+        ..note::
+
+            This results in all the slices on the access point being 
+            removed - they can then be restarted using ap-slice-restart.
+
+        :rtype: dict
+
+        """
         ap_name = args['ap-reset'][0]
         message = "Resetting ap %s" % ap_name
         self.apm.reset_AP(ap_name)
@@ -277,6 +375,16 @@ class Manager(object):
         return response
 
     def ap_list(self, args, tenant_id, user_id, project_id):
+        """Returns a list to the client with nicely printed information 
+        about the available access points.
+
+        Some options are available::
+
+            -i: Additional information
+
+        :rtype: dict
+
+        """
         #TODO: Verify filter passes correctly
         if args['filter']:
             arg_filter = args['filter'][0]
@@ -318,6 +426,12 @@ class Manager(object):
         return response
 
     def ap_show(self, args, tenant_id, user_id, project_id):
+        """Returns more detailed information about an access point 
+        to the client.
+
+        :rtype: dict
+
+        """
         #TODO: Verify filter passes correctly
         arg_name = args['ap-show'][0]
         toPrint = self.ap_filter('name='+arg_name)
@@ -433,23 +547,36 @@ class Manager(object):
                         if config.get('RadioInterfaces') is not None:
                             # new SSID already provided, add entry to
                             # attributes
-                            if (encryption_type != '' or 
+                            if (encryption_type != '' and 
                                     encryption_type is not None):
                                 config['RadioInterfaces'][0]['attributes']\
                                     ['encryption_type'] = encryption_type
                             config['RadioInterfaces'][0]['attributes']\
                                 ['key'] = key
                         else:
-                            config['RadioInterfaces'] = [
-                                {
-                                    "attributes": {
-                                        "name":prev_name,
-                                        "encryption_type":encryption_type,
-                                        "key":key,
+                            if (encryption_type != '' and 
+                                    encryption_type is not None):
+                                config['RadioInterfaces'] = [
+                                    {
+                                        "attributes": {
+                                            "name":prev_name,
+                                            "encryption_type":encryption_type,
+                                            "key":key,
+                                        },
+                                        "flavor":"wifi_bss",
                                     },
-                                    "flavor":"wifi_bss",
-                                },
-                            ]
+                                ]
+                            else:
+                                config['RadioInterfaces'] = [
+                                    {
+                                        "attributes": {
+                                            "name":prev_name,
+                                            "key":key,
+                                        },
+                                        "flavor":"wifi_bss",
+                                    },
+                                ]
+
                     prev_name = None
                     for conf in slice_config.get('VirtualBridges', []):
                         if conf.get('flavor') == 'ovs':
@@ -539,6 +666,16 @@ class Manager(object):
         return response
 
     def ap_slice_restart(self, args, tenant_id, user_id, project_id):
+        """Restarts a slice on an access point.  
+
+        The configuration should be stored in the JSON configuration 
+        database kept by Manager - it is this configuration that is 
+        dispatched to the access point.
+
+        :rtype: dict
+
+        """
+
         slice_names = args['ap-slice-restart'] #Multiple Names
         message = ""
         response = {
@@ -549,7 +686,7 @@ class Manager(object):
         if args['filter']:
             slice_names = []
             args_filter = args['filter'][0]
-            slice_list = self.ap_slice_filter(args_filter)
+            slice_list = self.ap_slice_filter(args_filter, tenant_id)
             #Get list of slice_ids
             for entry in slice_list:
                 slice_names.append(slice_list['ap-slice-id'])
@@ -579,7 +716,8 @@ class Manager(object):
             error = Verify.verifyOK(tenant_id = tenant_id, request = config_delete)
             if error is not None:
                 message += error
-                continue
+                message += "Continuing anyway..."
+                #continue
 
             # Verify slice can be created on new AP
             try:
@@ -619,6 +757,11 @@ class Manager(object):
         return response
 
     def ap_slice_add_tag(self, args, tenant_id, user_id, project_id):
+        """Adds a tag to a slice in the database.
+
+        :rtype: dict
+
+        """
         message = ""
         if not args['tag']:
             err_msg = 'Error: Please specify a tag with --tag\n'
@@ -631,7 +774,8 @@ class Manager(object):
         if args['filter']:
             slice_names = []
             args_filter = args['filter'][0]
-            slice_list = self.ap_slice_filter(args_filter)
+            args_filter += "&status!DELETED"
+            slice_list = self.ap_slice_filter(args_filter, tenant_id)
             #Get list of slice_ids
             for entry in slice_list:
                 slice_names.append(entry['ap_slice_id'])
@@ -652,6 +796,11 @@ class Manager(object):
         return response
 
     def ap_slice_remove_tag(self, args, tenant_id, user_id, project_id):
+        """Removes a tag from a slice in the database.
+
+        :rtype: dict
+
+        """
         message = ""
         if not args['tag']:
             err_msg = 'Error: Please specify a tag with --tag\n'
@@ -664,7 +813,10 @@ class Manager(object):
         if args['filter']:
             slice_names = []
             args_filter = args['filter'][0]
-            slice_list = self.ap_slice_filter(args_filter) #TODO: Check this still works with filter
+            args_filter += "&status!DELETED"
+            #TODO: Check this still works with filter
+            slice_list = self.ap_slice_filter(args_filter, tenant_id) 
+
             #Get list of slice_ids
             for entry in slice_list:
                 slice_names.append(entry['ap_slice_id'])
@@ -685,6 +837,23 @@ class Manager(object):
         return response
 
     def ap_slice_create(self, args, tenant_id, user_id, project_id):
+        """Configures and dispatches the message required to create 
+        a slice on an access point.
+
+        The configuration can be passed to this function by a JSON file,
+        which will then be validated using a slice plugin.  The 
+        validated configuration will the be stored in a configuration 
+        database, in case it is required in the future.
+
+        Some slice data is writen to the SQL database to track its 
+        history and associated SSID, owner, and project.
+
+        The --hint option should give the user some help in choosing 
+        a good access point on which he can create his slice.
+
+        :rtype: dict
+
+        """
         message = ""
         self.LOGGER.debug(pformat(args))
 
@@ -867,6 +1036,15 @@ class Manager(object):
         return response
 
     def ap_slice_delete(self, args, tenant_id, user_id, project_id):
+        """Deletes a slice from an access point.
+
+        The associated slice configuration is also removed from the 
+        JSON configuration database.  The slice is marked as 'DELETED' 
+        in the ap_slice SQL table.
+
+        :rtype: dict
+
+        """
         #TODO: Remove tags associated with deleted slices
         message = ""
 
@@ -945,6 +1123,18 @@ class Manager(object):
         return response
 
     def ap_slice_filter(self, arg_filter, tenant_id):
+        """A helper method for finding wireless slices based on their 
+        SQL entries.  Example arg_filter strings::
+
+            location=mcgill 
+            status=ACTIVE
+            ap_slice_ssid=MySSID
+
+        :param str args:
+        :param str tenant_id:
+        :rtype: list
+
+        """
         # NOTE: LOCATION FILTERING IS HACKED BY APPENDING TO TENANT TAGS
         #       This means it is possible that by typing a location field,
         #       the user may get results that have the tagged value in
@@ -964,7 +1154,7 @@ class Manager(object):
                 with self.con:
                     cur = self.con.cursor()
 
-                    if tenant_id == 0:
+                    if tenant_id == "0" or tenant_id == 0:
                         to_execute = """SELECT * 
                             FROM 
                                 (SELECT ap_slice_id, total_mb_sent, total_active_duration
@@ -1104,7 +1294,7 @@ class Manager(object):
                     if len(expression) == 0:
                         expression = ''
 
-                    if tenant_id == 0:
+                    if tenant_id == "0" or tenant_id == 0:
                         cur.execute( ("""SELECT * 
                             FROM 
                                 (SELECT ap_slice_id, total_mb_sent, total_active_duration
@@ -1154,7 +1344,12 @@ class Manager(object):
                         for tag in tagList:
                             tagString += str(tag[0])+" "
                         newList[i]['tags'] = tagString
-
+                        cur.execute( "SELECT name FROM location_tags WHERE "
+                                     "ap_name = '%s'" % tempList[i][3] )
+                        tagList = cur.fetchall()
+                        for tag in tagList:
+                            tagString += str(tag[0])+" "
+                        newList[i]['tags'] = tagString
             except mdb.Error, e:
                 traceback.print_exc(file=sys.stdout)
                 # self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
@@ -1162,6 +1357,16 @@ class Manager(object):
         return newList
 
     def ap_slice_list(self, args, tenant_id, user_id, project_id):
+        """Returns a nicely printed table of slices owned by a tenant.
+
+        Some options are available::
+
+            -i: Additional information
+            -a: Include deleted slices
+
+        :rtype: dict
+
+        """
         message = ""
         if args['filter']:
             arg_filter = args['filter'][0]
@@ -1214,8 +1419,6 @@ class Manager(object):
         connected to the slice will have to reassociate with 
         the new access point.
 
-        :param dict args:
-        :param int tenant_id:
         :rtype: dict
 
         """
@@ -1295,6 +1498,11 @@ class Manager(object):
         return response
 
     def ap_slice_show(self, args, tenant_id, user_id, project_id):
+        """Shows more detailed information about a specific slice.
+
+        :rtype: dict
+
+        """
         message = ""
         for arg_id in args['ap-slice-show']:
             if self.aurora_db.wslice_belongs_to(tenant_id, project_id, arg_id):
@@ -1304,14 +1512,21 @@ class Manager(object):
                                           tenant_id, user_id, project_id)['message']
             else:
                 message += "Error: You have no slice '%s'.\n" % arg_id
-            #if arg_id == args['ap-slice-show'][-1]:
-            #   response = {"status":False, "message": message}
-            #  return response
 
         response = {"status":True, "message": message}
         return response
 
     def ap_slice_sync_config(self, args, tenant_id, user_id, project_id):
+        """Queries the access point for a slice and updates the 
+        JSON configuration database associated with that slice based 
+        on the received data.  
+
+        This ensures that the configuration database and the access 
+        point store the same information about slices.
+
+        :rtype: dict
+
+        """
         message = ""
         #TODO:Slice filter integration
         slice_list_to_sync = args['ap-slice-sync-config']
@@ -1353,6 +1568,11 @@ class Manager(object):
         return response
 
     def wnet_add_wslice(self, args, tenant_id, user_id, project_id):
+        """Adds a wireless slice to a wnet.
+
+        :rtype: dict
+
+        """
         message = ""
         #TODO:Slice filter integration
         arg_name = args['wnet-add-wslice'][0]
@@ -1387,6 +1607,11 @@ class Manager(object):
         return response
 
     def wnet_create(self, args, tenant_id, user_id, project_id):
+        """Creates a wnet.
+
+        :rtype: dict
+
+        """
         message = ""
         #Functionality is limited, placeholder for future expansions
         arg_name = args['wnet-create'][0]
@@ -1402,6 +1627,11 @@ class Manager(object):
         return response
 
     def wnet_delete(self, args, tenant_id, user_id, project_id):
+        """Deletes a wnet.
+
+        :rtype: dict
+
+        """
         arg_name = args['wnet-delete'][0]
 
         #Send to database
@@ -1416,6 +1646,13 @@ class Manager(object):
         return response
 
     def wnet_join_subnet(self, args, tenant_id, user_id, project_id):
+        """Joins a wnet to an existing subnet within SAVI.
+
+        ..warning::
+
+            Not implemented.
+
+        """
         #TODO AFTER SAVI INTEGRATION
         arg_netname = args['wnet-join-subnet'][0]
         arg_wnetname = args['wnet_name'][0]
@@ -1424,6 +1661,11 @@ class Manager(object):
         self.LOGGER.warning('NOT YET IMPLEMENTED')
 
     def wnet_remove_wslice(self, args, tenant_id, user_id, project_id):
+        """Removes a wireless slice from a wnet.
+
+        :rtype: dict
+
+        """
         #TODO:Slice filter integration
         message = ""
         arg_name = args['wnet-remove-wslice'][0]
@@ -1480,7 +1722,15 @@ class Manager(object):
         return response
 
     def wnet_list(self, args, tenant_id, user_id, project_id):
-        """Lists the wnets available to tenant"""
+        """Lists the wnets available to tenant.
+
+        Some options are available::
+
+            -i: Show additional information about each wnet
+
+        :rtype: dict
+
+        """
         arg_i = args['i']
         try:
             wnet_to_print = self.aurora_db.get_wnet_list(tenant_id)
@@ -1516,6 +1766,17 @@ class Manager(object):
         return response
 
     def wnet_show(self, args, tenant_id, user_id, project_id):
+        """Shows more detailed information about a wnet.  Also lists 
+        the slices associated with the wnet.
+
+        Some options are available::
+
+            -i: Additional information about the associated slices
+            -a: Include deleted slices
+
+        :rtype: dict
+
+        """
         arg_i = args['i']
         arg_a = args['all']
         arg_wnet = args['wnet-show'][0]
@@ -1616,92 +1877,18 @@ class Manager(object):
         response = {"status":True, "message":message}
         return response
 
-    def _wnet_show_wslices(self, wnet_name, tenant_id):
-        """Helper method for other wnet classes.
+    def wnet_update_ssid(self, args, tenant_id, user_id, project_id):
+        """Updates the SSID of slices within a wnet.  
 
-        Returns a dictionary containing::
-        
-            {   "message":<NoneType if successful, something
-                             if wnet doesn't exist>
-                "ap_slices":<NoneType if none, otherwise::
-                              a tuple of tuples with ap_slice
-                              info related to specified wnet_name>
-            }
+        SSIDs must be unique on each access point, thus the slices 
+        contained within a wnet must all be on different access points.  
+        Additionally, no access point may already be hosting an existing 
+        slice with the new ssid.
+
+        :rtype: dict
 
         """
-        return_dictionary = {}
-        #DEBUG
-        self.LOGGER.debug("wnet_name: %s", wnet_name)
 
-        try:
-           with mdb.connect(self.mysql_host,
-                            self.mysql_username,
-                            self.mysql_password,
-                            self.mysql_db) as db:
-                to_execute = "SELECT wnet_id FROM wnet WHERE tenant_id=\'" + str(tenant_id) + \
-                             "\' AND name=\'"+str(wnet_name)+"\'"
-                self.LOGGER.debug(to_execute)
-                db.execute(to_execute)
-                wnet_id = db.fetchone()
-                if not wnet_id:
-                    # Build return_dictionary
-                    return_dictionary["message"] = 'No wnet for tenant \'' + str(tenant_id) + \
-                                                    '\' with name \'' + str(wnet_name) + '\'.\n'
-                    return_dictionary["ap_slices"] = None
-
-                else:
-                    wnet_id = wnet_id[0]
-                    self.LOGGER.debug("wnet_id: %s" + str(wnet_id))
-
-                    to_execute = "SELECT * FROM ap_slice WHERE tenant_id=\'" + \
-                                  str(tenant_id) + "\' AND wnet_id=\'"+str(wnet_id)+"\'"
-                    self.LOGGER.debug(to_execute)
-                    db.execute(to_execute)
-                    all_slices_tuple = db.fetchall()
-                    self.LOGGER.debug("all_slices_tuple: ")
-                    self.LOGGER.debug(all_slices_tuple)
-
-                    # Build return_dictionary
-                    if all_slices_tuple:
-                        return_dictionary["message"] = None
-                        return_dictionary["ap_slices"] = all_slices_tuple
-                    else:
-                        return_dictionary["message"] = 'No ap_slices in wnet \'' + str(wnet_name) + \
-                                                        '\' for tenant_id \'' + str(tenant_id) + '\'.\n'
-                        return_dictionary["ap_slices"] = None
-
-        except mdb.Error, e:
-            traceback.print_exc(file=sys.stdout)
-            # self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
-            # sys.exit(1)
-
-        return return_dictionary
-
-    def wnet_show_wslices(self, args, tenant_id, user_id, project_id):
-        """Method which shows the wslices associated with wnet"""
-        message = ""
-        # args can contain multiple wnet names
-        for wnet_name in args['wnet-show-wslices']:
-            wslices_dict = self._wnet_show_wslices(wnet_name, tenant_id)
-            #DEBUG
-            self.LOGGER.debug("wslices_dict:1: ")
-            self.LOGGER.debug(wslices_dict)
-
-            if wslices_dict["message"]:
-                # Either no wnet, or no ap_slices
-                self.LOGGER.debug('Appending dictionary message')
-                message += wslices_dict["message"]
-
-            else:
-                message += 'wnet \'' + str(wnet_name) + '\' contains :\n'
-                for slice_tuple in wslices_dict["ap_slices"]:
-                    slice_id = slice_tuple[0]
-                    message += '\tslice with ap_slice_id \'' + slice_id + '\'\n'
-
-        response = {"status":True, "message":message}
-        return response
-
-    def wnet_update_ssid(self, args, tenant_id, user_id, project_id):
         new_ssid = args['ssid'][0]
         wnet = args['wnet-update-ssid'][0]
         message = ""
@@ -1763,13 +1950,27 @@ class Manager(object):
         return response
 
     def wnet_modify_name(self, args, tenant_id, user_id, project_id):
+        """Modifies the name given to a specific wnet.
+
+        :rtype: dict
+
+        """
         new_name = args['new_name'][0]
         wnet_id = args['wnet-modify-name'][0]
         message = ""
 
-        my_wnet = self.aurora_db.wnet_belongs_to(tenant_id, project_id, wnet_id)
+        my_wnet = self.aurora_db.wnet_belongs_to(tenant_id, 
+                                                 project_id, wnet_id)
+        
         if not my_wnet:
             message += "Error: You have no wnet '%s'.\n" % wnet_id
+            response = {"status":False, "message":message}
+            return response
+
+        new_wnet_exists = self.aurora_db.wnet_belongs_to(tenant_id, 
+                                                         project_id, new_name)
+        if new_wnet_exists:
+            message += "Error: You already have a wnet '%s'.\n" % wnet_id
             response = {"status":False, "message":message}
             return response
 
@@ -1779,115 +1980,86 @@ class Manager(object):
         return response
 
     def wnet_add_tag(self, args, tenant_id, user_id, project_id):
-        """Adds user-defined tags to a wnet"""
+        """Adds user-defined tags to a wnet.
+
+        :rtype: dict 
+
+        """
         message = ""
-        if not args['tag']:
+        if args['tag'] is None:
             message += "No tags specified.\n"
-        else:
+            response = {"status":False, "message":message}
+            return response
+
+        tags = args['tag']
+
         # Handle more than one wnet
-            for wnet_name in args['wnet-add-tag']:
-                wslices_dict = self._wnet_show_wslices(wnet_name, tenant_id)
-                self.LOGGER.debug("wslices_dict:3: ")
-                self.LOGGER.debug(wslices_dict)
+        for wnet_name in args['wnet-add-tag']:
+            my_wnet = self.aurora_db.wnet_belongs_to(tenant_id, project_id, 
+                                                     wnet_name)
+            if not my_wnet:
+                message += "Error: You have no wnet '%s'.\n" % wnet_id
+                response = {"status":False, "message":message}
+                return response
 
-                if wslices_dict["message"]:
-                    # Either no wnet, or no ap_slices
-                    self.LOGGER.debug('Appending dictionary message')
-                    message += wslices_dict["message"]
+            wnet_slices_data = self.aurora_db.get_wnet_slices(wnet_name, 
+                                                              tenant_id)
+            wnet_slices = []
+            for slice_data in wnet_slices_data:
+                wnet_slices.append(slice_data['ap_slice_id'])
 
-                else:
-                    # Add tags to sql table tenant_tags
-                    message += 'Modifying slices in \'' + str(wnet_name) + '\':\n'
-                    #TODO: Move to aurora_db
-                    try:
-                       with mdb.connect(self.mysql_host,
-                                        self.mysql_username,
-                                        self.mysql_password,
-                                        self.mysql_db) as db:
-                            for slice_tuple in wslices_dict["ap_slices"]:
-                                # For every slice in wnet
-                                slice_id = slice_tuple[0]
-                                message += '\tslice with ap_slice_id \'' + slice_id + '\'\n'
+            message += "Modifying slices in '%s'\n" % wnet_name
+            for ap_slice_id in wnet_slices:
+                for tag in tags:
+                    message += self.aurora_db.wslice_add_tag(ap_slice_id, tag)
 
-                                # Add (multiple) tags in MySQL db
-                                for tag in args['tag']:
-                                    to_execute = "REPLACE INTO tenant_tags VALUES (\'%s\', \'%s\')" \
-                                                 % (str(tag), str(slice_id))
-                                    self.LOGGER.debug(to_execute)
-                                    db.execute(to_execute)
+        # Build rest of message (Not required if efficiency is key)
+        message += "All slices now include tenant_tag(s) '"
+        message += "' '".join(tags)
+        message += "'.\n"
 
-                            # Build rest of message (Not required if efficiency is key)
-                            message += 'All slices now include tenant_tag(s) \''
-                            message += '\' \''.join(args['tag'])
-                            message += '\'.\n'
-
-
-                    except mdb.Error, e:
-                        traceback.print_exc(file=sys.stdout)
-                        # self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
-                        # sys.exit(1)
         response = {"status":True, "message":message}
         return response
 
     #Can move some of this functionality to aurora_db
     def wnet_remove_tag(self, args, tenant_id, user_id, project_id):
-        """Removes user-defined tags from a wnet"""
+        """Removes user-defined tags from a wnet.
+
+        :rtype: dict 
+
+        """
         message = ""
-        if not args['tag']:
+        if args['tag'] is None:
             message += "No tags specified.\n"
-        else:
+            response = {"status":False, "message":message}
+            return response
+        tags = args['tag']
+
         # Handle more than one wnet
-            for wnet_name in args['wnet-remove-tag']:
-                wslices_dict = self._wnet_show_wslices(wnet_name, tenant_id)
-                #DEBUG
-                self.LOGGER.debug("wslices_dict:3: ")
-                self.LOGGER.debug(wslices_dict)
+        for wnet_name in args['wnet-remove-tag']:
+            my_wnet = self.aurora_db.wnet_belongs_to(tenant_id, project_id, 
+                                                     wnet_name)
+            if not my_wnet:
+                message += "Error: You have no wnet '%s'.\n" % wnet_id
+                response = {"status":False, "message":message}
+                return response
 
-                if wslices_dict["message"]:
-                    # Either no wnet, or no ap_slices
-                    self.LOGGER.debug('Appending dictionary message')
-                    message += wslices_dict["message"]
+            wnet_slices_data = self.aurora_db.get_wnet_slices(wnet_name, 
+                                                              tenant_id)
+            wnet_slices = []
+            for slice_data in wnet_slices_data:
+                wnet_slices.append(slice_data['ap_slice_id'])
+            message += "Modifying slices in '%s'\n" % wnet_name
+            for ap_slice_id in wnet_slices:
+                for tag in tags:
+                    message += self.aurora_db.wslice_remove_tag(ap_slice_id, 
+                                                                tag)
 
-                else:
-                    # Add tags to sql table tenant_tags
-                    message += 'Modifying slices in \'' + str(wnet_name) + '\':\n'
-                    #TODO: Move to aurora_db
-                    try:
-                       with mdb.connect(self.mysql_host,
-                                        self.mysql_username,
-                                        self.mysql_password,
-                                        self.mysql_db) as db:
-                            for slice_tuple in wslices_dict["ap_slices"]:
-                                # For every slice in wnet
-                                slice_id = slice_tuple[0]
+        # Build rest of message (Not required if efficiency is key)
+        message += "All slices no longer include tenant_tag(s) '"
+        message += "' '".join(tags)
+        message += "'.\n"
 
-                                # Add (multiple) tags in MySQL db
-                                for tag in args['tag']:
-                                    to_execute = "SELECT name FROM tenant_tags WHERE ap_slice_id = \'" + \
-                                                 str(slice_id) + "\'"
-                                    db.execute(to_execute)
-                                    names = db.fetchall()
-                                    self.LOGGER.debug(names)
-                                    if names:
-                                        for name in names:
-                                            if name[0] == tag:
-                                                # This slice has a tag that matches, delete.
-                                                to_execute = "DELETE FROM tenant_tags WHERE " + \
-                                                             "name = \'%s\' AND ap_slice_id = \'%s\'" \
-                                                             % (str(tag), str(slice_id))
-                                                self.LOGGER.debug(to_execute)
-                                                db.execute(to_execute)
-                                                message += '\tslice with ap_slice_id \'' + \
-                                                           slice_id + '\'\n'
-
-                            # Build rest of message (Not required if efficiency is key)
-                            message += 'All slices no longer include tenant_tag(s) \''
-                            message += '\' \''.join(args['tag'])
-                            message += '\'.\n'
-                    except mdb.Error, e:
-                        traceback.print_exc(file=sys.stdout)
-                        # self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
-                        # sys.exit(1)
         response = {"status":True, "message":message}
         return response
 

@@ -24,7 +24,7 @@ class JSONSender():
             return
 
         if r.status_code == 200:
-            print 'Command sent.'
+            print 'Command sent.  ',
         else:
             print 'Unsuccessful.  Response: %s' % (r.status_code)
         
@@ -46,10 +46,10 @@ class JSONSender():
         message = dict_response['message']
         status = dict_response['status']
         if status:
-            print 'Returned message'
+            print 'Returned message:'
         else:
-            print 'Action failed'
-        print '-'*13
+            print 'Action failed:'
+        #print '-'*13
         print message
         return message
         

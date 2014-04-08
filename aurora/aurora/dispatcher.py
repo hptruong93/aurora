@@ -107,7 +107,6 @@ class Dispatcher(object):
         self.LOGGER.info("IOLoop is dying")
 
     def _stop_connection(self):
-        self.LOGGER.info("Calling %s", self.close_pollers_callback)
         self.close_pollers_callback()
         self.LOGGER.info("Stopping all request timers")
         self._stop_all_request_sent_timers()

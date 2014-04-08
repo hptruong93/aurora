@@ -1,9 +1,11 @@
-# mySQL Database Functions
-# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
+"""Collection of methods for adding, updating, deleting, 
+and querying the SQL database stored by Aurora Manager.
 
 """
-Collection of methods for adding, updating, deleting, and querying the database
-"""
+# 2014
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &
+#              Mike Kobierski 
+#
 
 import datetime
 import json
@@ -23,6 +25,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class AuroraDB(object):
+    """The AuroraDB class handles interaction with the SQL database."""
     #Default values in __init__ should potentially be omitted
 
     DEFAULT_MYSQL_HOST = 'localhost'
@@ -40,7 +43,7 @@ class AuroraDB(object):
         :param str mysql_host:
         :param str mysql_username:
         :param str mysql_password:
-        :param str mysql_db:
+        :param str mysql_db: 
 
         """
         self.LOGGER = get_cls_logger(self)
@@ -68,6 +71,7 @@ class AuroraDB(object):
     def _count_db_slices(self, radio_list):
         """Counts the number of slices in given a radio config
 
+        :param list radio_list:
         :returns: int - Number of slices
 
         """
@@ -95,6 +99,36 @@ class AuroraDB(object):
                 db.execute("""INSERT INTO ap SET name='%s'""" % ap_name)
         except mdb.Error as e:
             traceback.print_exc(file=sys.stdout)
+
+    def ap_add_tag(self, ap_name, tag):
+        """Adds a tag to an AP using the location_tags table.
+
+        ..note::
+
+            This method uses the old way of returning a string with 
+            the outcome.  A better way is to return Nothing in the 
+            successful case, and raise a customized exception in the 
+            case of an error.
+
+        :param str ap_name:
+        :param str tag:
+        :returns: str - Message containing more detailed information
+        """
+        if self.ap_has_tag(ap_name, tag):
+            return "Tag '%s' already exists for AP '%s'\n" % (tag, ap_name)
+        else:
+            try:
+                with self._database_connection() as db:
+                    to_execute = ("""REPLACE INTO location_tags VALUES 
+                                         ('%s', '%s')""" %
+                                         (tag, ap_name)
+                                 )
+                    db.execute(to_execute)
+                    return "Added tag '%s' to AP '%s'.\n" % (tag, ap_name)
+            except mdb.Error as e:
+                err_msg = "Error %d: %s\n" % (e.args[0], e.args[1])
+                self.LOGGER.error(err_msg)
+                return err_msg + '\n'
 
     def ap_status_up(self, ap_name=None):
         """Sets the status of an access point to 'UP'.
@@ -165,7 +199,8 @@ class AuroraDB(object):
         time = time - minutes * 60
         seconds = int(time)
         microseconds = int((time - seconds) * 1000000)
-        time_format = '%s:%s:%s.%s' % (str(hours), str(minutes), str(seconds), str(microseconds))
+        time_format = '%s:%s:%s.%s' % (str(hours), str(minutes), 
+                                       str(seconds), str(microseconds))
         return time_format
 
     def ap_slice_set_physical_ap(self, ap_slice_id, ap_name):
@@ -207,7 +242,8 @@ class AuroraDB(object):
             traceback.print_exc(file=sys.stdout)
 
 
-    def ap_slice_update_time_stats(self, ap_slice_id=None, ap_name=None, ap_down=False):
+    def ap_slice_update_time_stats(self, ap_slice_id=None, 
+                                   ap_name=None, ap_down=False):
         """Records the current time and calculates current and
         cumulative uptime for a slice on an access point.
 
@@ -224,32 +260,53 @@ class AuroraDB(object):
         :param str ap_slice_id: ID of the slice to update
         :param str ap_name: Name of the access point where the
                             slice resides
+        :param bool ap_down: Status of the AP in question
 
         """
-        self.LOGGER.debug("Updating time stats for %s", (ap_slice_id or ap_name))
+        self.LOGGER.debug("Updating time stats for %s", 
+                          (ap_slice_id or ap_name))
         if ap_name is not None:
-            slice_list = self.get_physical_ap_slices(ap_name, not_deleted_only=True)
+            slice_list = self.get_physical_ap_slices(ap_name, 
+                                                     not_deleted_only=True)
         else:
             slice_list = [ap_slice_id]
         self.LOGGER.debug("slice list: %s", slice_list)
         for s_id in slice_list:
             try:
                 with self._database_connection() as db:
-                    db.execute("SELECT last_time_activated, last_time_updated, total_active_duration FROM metering WHERE ap_slice_id='%s'" % s_id)
+                    db.execute(
+                        """SELECT last_time_activated, last_time_updated, 
+                                  total_active_duration FROM metering 
+                               WHERE ap_slice_id='%s'""" % s_id)
                     previous_time_stats = db.fetchone()
-                    self.LOGGER.debug("previous_time_stats: %s", previous_time_stats)
+                    self.LOGGER.debug("previous_time_stats: %s", 
+                                      previous_time_stats)
                     time_active = None
                     now = datetime.datetime.now()
-                    (last_time_activated, last_time_updated,
-                     current_active_duration, total_active_duration) = (None, None, None, None)
+
+                    (
+                        last_time_activated, 
+                        last_time_updated,
+                        current_active_duration, 
+                        total_active_duration
+                    ) = (None, None, None, None)
+
                     if previous_time_stats is not None:
-                        (last_time_activated, last_time_updated, total_active_duration) = previous_time_stats
+                        (
+                            last_time_activated, 
+                            last_time_updated, 
+                            total_active_duration
+                        ) = previous_time_stats
                     if last_time_activated is None and ap_down:
-                        # Slice was never activated and ap didn't respond, don't update stats
+                        # Slice was never activated and ap didn't 
+                        # respond, don't update stats
                         continue
                         
                     if last_time_activated is None:
-                        self.LOGGER.warn("No value for last time activated for slice %s", s_id)
+                        self.LOGGER.warn(
+                            "No value for last time activated for slice %s", 
+                            s_id
+                        )
                         self.LOGGER.info("Setting last time activated %s", now)
                         to_execute = ("""UPDATE metering SET
                                              last_time_activated='%s'
@@ -258,7 +315,9 @@ class AuroraDB(object):
                                      )
                         last_time_activated = now
                     else:
-                        current_active_duration = self._get_time_format(now - last_time_activated)
+                        current_active_duration = self._get_time_format(
+                            now - last_time_activated
+                        )
                         to_execute = ("""UPDATE metering SET 
                                              current_active_duration='%s'
                                              WHERE ap_slice_id='%s'""" % 
@@ -267,12 +326,20 @@ class AuroraDB(object):
                     self.LOGGER.debug(to_execute)
                     db.execute(to_execute)
                     if last_time_updated is None:
-                        self.LOGGER.warn("No value for last time updated for slice %s", s_id)
-                        self.LOGGER.info("Using value for last time activated %s", last_time_activated)
+                        self.LOGGER.warn(
+                            "No value for last time updated for slice %s", 
+                            s_id
+                        )
+                        self.LOGGER.info(
+                            "Using value for last time activated %s", 
+                            last_time_activated
+                        )
                         last_time_updated = last_time_activated
 
                     time_diff = now - last_time_updated
-                    total_active_duration = self._get_time_format(total_active_duration + time_diff)
+                    total_active_duration = self._get_time_format(
+                        total_active_duration + time_diff
+                    )
                     to_execute = ("""UPDATE metering SET 
                                          total_active_duration='%s',
                                          last_time_updated='%s'
@@ -330,9 +397,15 @@ class AuroraDB(object):
                 number_radio = hw_database["wifi_radio"]["number_radio"]
                 memory_mb = hw_database["memory_mb"]
                 free_disk = hw_database["free_disk"]
-                number_radio_free = hw_database["wifi_radio"]["number_radio_free"]
-                max_available_slices = int(hw_database["wifi_radio"]["max_bss_per_radio"])*int(number_radio)
-                current_slices = self._count_db_slices(hw_database["wifi_radio"]["radio_list"])
+                number_radio_free = \
+                    hw_database["wifi_radio"]["number_radio_free"]
+                max_available_slices = (
+                    int(hw_database["wifi_radio"]["max_bss_per_radio"])*
+                    int(number_radio)
+                )
+                current_slices = self._count_db_slices(
+                    hw_database["wifi_radio"]["radio_list"]
+                )
                 number_slice_free = int(max_available_slices) - current_slices
 
                 to_execute = (
@@ -340,7 +413,8 @@ class AuroraDB(object):
                                name='%s', region='%s', firmware='%s', 
                                version='%s', number_radio=%s, 
                                memory_mb=%s, free_disk=%s, 
-                               number_radio_free=%s, number_slice_free=%s, status='UP'
+                               number_radio_free=%s, number_slice_free=%s, 
+                               status='UP'
                            ON DUPLICATE KEY UPDATE 
                                name='%s', region='%s', firmware='%s', 
                                version='%s', number_radio=%s, 
@@ -359,6 +433,9 @@ class AuroraDB(object):
 
                 self.LOGGER.debug(to_execute)
                 db.execute(to_execute)
+
+                self.ap_add_tag(ap_name, region)
+
         except mdb.Error as e:
             traceback.print_exc(file=sys.stdout)
 
@@ -367,6 +444,7 @@ class AuroraDB(object):
 
         :param str ap_slice_id: Slice ID to set
         :raises: InvalidACTIVEStatusUpdate
+        :returns: bool - True on success
 
         """
         try:
@@ -403,11 +481,15 @@ class AuroraDB(object):
 
         :param str ap_slice_id: Slice ID to set
         :raises: InvalidPENDINGStatusUpdate, DOWNtoPENDINGStatusUpdateWarning
+        :returns: bool - True on success
 
         """
         try:
             with self._database_connection() as db:
-                num_results = db.execute("SELECT status FROM ap_slice WHERE ap_slice_id='%s'" % ap_slice_id)
+                num_results = db.execute(
+                    "SELECT status FROM ap_slice WHERE ap_slice_id='%s'" % 
+                    ap_slice_id
+                )
                 status = None
 
                 if num_results == 1:
@@ -421,7 +503,9 @@ class AuroraDB(object):
                             status != 'PENDING'):
                         raise InvalidPENDINGStatusUpdate(status=status)
 
-                    self.LOGGER.info("Setting status 'PENDING' for %s", ap_slice_id)
+                    self.LOGGER.info("Setting status 'PENDING' for %s", 
+                                     ap_slice_id
+                    )
                     to_execute = ("UPDATE ap_slice SET "
                                           "status='PENDING' "
                                       "WHERE ap_slice_id='%s'" % ap_slice_id)
@@ -432,7 +516,9 @@ class AuroraDB(object):
         return True
 
     def ap_syn_clean_deleting_status(self, ap_name):
-        """Invoked when manager receives a SYN message from an
+        """Cleans up slice statuses for slices deleted while an AP is offline.
+
+        Invoked when manager receives a SYN message from an
         access point indicating it is connecting.  Access points which
         connect to manager will not restart slices that are marked as
         'DELETING', therefore we should change their status to 
@@ -659,14 +745,48 @@ class AuroraDB(object):
             traceback.print_exc(file=sys.stdout)
         return False
 
+    def ap_has_tag(self, ap_name, tag):
+        """Determines whether a specific AP is marked with the given 
+        tag.
+
+        :param str ap_slice_id:
+        :param str tag:
+        :rtype: bool
+
+        """
+        try:
+            with self._database_connection() as db:
+                to_execute = ( "SELECT name FROM location_tags WHERE "
+                               "ap_name='%s'" % ap_name )
+                db.execute(to_execute)
+                ap_tags_tt = db.fetchall()
+                ap_tags = []
+                for tag_t in ap_tags_tt:
+                    ap_tags.append(tag_t[0])
+                if tag in ap_tags:
+                    return True
+        except mdb.Error as e:
+            traceback.print_exc(file=sys.stdout)
+        return False
+
     def wnet_add_wslice(self, tenant_id, slice_id, name):
-        """Adds an ap slice to a wnet.  Both slice and wnet 
+        """Adds an ap slice to a wnet.  Wnet must already exist for 
+        tenant.  Slice will not be added if it is already part of the 
+        wnet.
+
+        ..note::
+
+            This method uses the old way of returning a string with 
+            the outcome.  A better way is to return Nothing in the 
+            successful case, and raise a customized exception in the 
+            case of an error.
 
         :param int tenant_id:
         :param str slice_id:
         :param str name:
         :returns: str - Message for client
-        :raises: NoWnetExistsForTenantException, APSliceAlreadyInWnetException
+        :raises: NoWnetExistsForTenantException, 
+                 APSliceAlreadyInWnetException
 
         """
         try:
@@ -710,6 +830,22 @@ class AuroraDB(object):
             return err_msg + '\n'
 
     def wnet_remove_wslice(self, tenant_id, slice_id, name):
+        """Removes a wireless slice from a wnet.
+
+        ..note::
+
+            This method uses the old way of returning a string with 
+            the outcome.  A better way is to return Nothing in the 
+            successful case, and raise a customized exception in the 
+            case of an error.
+
+        :param str tenant_id:
+        :param str slice_id:
+        :param str name:
+        :returns: str - Message containing more detailed information
+        :raises: Exception
+
+        """
         #Update to SQL database
         try:
             with self._database_connection() as db:
@@ -738,6 +874,15 @@ class AuroraDB(object):
             return err_msg + '\n'
 
     def wnet_add(self, wnet_id, name, tenant_id, project_id):
+        """Add a new wnet to the database.
+
+        :param str wnet_id: UUID for the new wnet
+        :param str name: Name for the new wnet
+        :param str tenant_id:
+        :param str project_id:
+        :returns: str - Message with more detailed information
+
+        """
         #Update the SQL database
         try:
             with self._database_connection() as db:
@@ -761,7 +906,17 @@ class AuroraDB(object):
             return err_msg + '\n'
 
     def wnet_remove(self, wnet_arg, tenant_id):
-        #Update the SQL database, at this point we know the wnet exists under the specified tenant
+        """Deletes a wnet from the database and disassociates it from 
+        all slices previously added to the wnet.
+
+        :param str wnet_arg: Wnet name or ID
+        :param str tenant_id:
+        :returns: str - Message with additional information
+        :raises: Exception
+
+        """
+        # Update the SQL database, at this point we know the wnet exists 
+        # under the specified tenant
         #TODO: remove association from ap_slices
         try:
             with self._database_connection() as db:
@@ -776,26 +931,19 @@ class AuroraDB(object):
                 if tenant_id == 0:
                     to_execute = ( "SELECT ap_slice_id FROM ap_slice WHERE "
                                    "wnet_id = '%s'" % wnet_id )
-           #         to_execute_slice = ( "UPDATE ap_slice SET wnet_id = NULL WHERE "
-           #                              "wnet_id = '%s'" % wnet_id )
                     to_execute_wnet = ( "DELETE FROM wnet WHERE wnet_id = '%s'" % wnet_id )
                 else:
                     to_execute = ( "SELECT ap_slice_id FROM ap_slice WHERE "
                                    "wnet_id = '%s' AND tenant_id = '%s'" %
                                    (wnet_id, tenant_id) )
-           #         to_execute_slice = ( "UPDATE ap_slice SET wnet_id = NULL WHERE "
-           #                            "wnet_id = '%s' AND tenant_id = '%s'" %
-           #                            (wnet_id, tenant_id) )
                     to_execute_wnet = ( "DELETE FROM wnet WHERE wnet_id = '%s'"
                                         "AND tenant_id = '%s'" % (wnet_id, tenant_id) )
                 db.execute(to_execute)
                 slice_id_tt = db.fetchall()
                 if slice_id_tt:
-             #       message += "\nRemoving slices from '%s':" % wnet_arg
                     for slice_id_t in slice_id_tt:
                         message += self.wnet_remove_wslice(tenant_id, slice_id_t[0], wnet_id)
                     message += '\n'
-           #     db.execute(to_execute_slice)
                 message += "Deleting '%s'.\n" % wnet_arg
                 db.execute(to_execute_wnet)
 
@@ -805,29 +953,42 @@ class AuroraDB(object):
             return err_msg + '\n'
         return message
 
-    def wslice_add(self, slice_uuid, slice_ssid, tenant_id, physAP, project_id):
+    def wslice_add(self, slice_uuid, slice_ssid, 
+                   tenant_id, physAP, project_id):
+        """Adds a wireless slice to the database.
+
+        :param str slice_uuid:
+        :param str slice_ssid:
+        :param str tenant_id:
+        :param str physAP:
+        :param str project_id:
+        :returns: None on success, str on error
+
+        """
         try:
             with self._database_connection() as db:
                 to_execute = ("""INSERT INTO ap_slice VALUES 
-                                     ('%s', '%s', '%s', '%s', '%s', %s, '%s')"""
+                                    ('%s', '%s', '%s', '%s', '%s', %s, '%s')"""
                                % (slice_uuid, slice_ssid, tenant_id, physAP,
                                   project_id, "NULL", "PENDING")
                              )
                 db.execute(to_execute)
-                to_execute = ( "INSERT INTO metering SET ap_slice_id='%s'" % slice_uuid)
+                to_execute = ("INSERT INTO metering SET ap_slice_id='%s'" % 
+                              slice_uuid)
                 db.execute(to_execute)
-                #return "Adding slice %s on %s.\n" % (slice_uuid, physAP)
                 return None
-                #We the manager calling this method will generate this message after calling.
-                #Therefore it is not necessary to return a success notification. The message
-                #can be used for testing purposes.
-                #Return None when there is no problem instead.
         except mdb.Error as e:
             err_msg = "Error %d: %s" % (e.args[0], e.args[1])
             self.LOGGER.error(err_msg)
             return err_msg + '\n'
 
     def wslice_delete(self, slice_id):
+        """Removes a wireless slice from the database.
+
+        :param str slice_id:
+        :returns: str - Message with additional information
+
+        """
         #Update SQL database and JSON file
         #Remove tags
         try:
@@ -845,13 +1006,22 @@ class AuroraDB(object):
             return err_msg + '\n'
 
     def wslice_add_tag(self, ap_slice_id, tag):
+        """Adds a tag to a slice using tenant_tags table.
+
+        :param str ap_slice_id:
+        :param str tag:
+        :returns: str - Message with additional information
+
+        """
         if self.wslice_has_tag(ap_slice_id, tag):
             return "Tag '%s' already exists for ap_slice '%s'\n" % (tag, ap_slice_id)
         else:
             try:
                 with self._database_connection() as db:
-                    to_execute = ("INSERT INTO tenant_tags VALUES ('%s', '%s')" 
-                                  % (tag, ap_slice_id))
+                    to_execute = ("""REPLACE INTO tenant_tags VALUES 
+                                         ('%s', '%s')""" %
+                                         (tag, ap_slice_id)
+                                 )
                     db.execute(to_execute)
                     return "Added tag '%s' to ap_slice '%s'.\n" % (tag, ap_slice_id)
             except mdb.Error as e:
@@ -860,6 +1030,13 @@ class AuroraDB(object):
                 return err_msg + '\n'
 
     def wslice_remove_tag(self, ap_slice_id, tag):
+        """Removes a previously added tag from a slice.
+
+        :param str ap_slice_id:
+        :param str tag:
+        :returns: str - Message with additional information
+
+        """
         if self.wslice_has_tag(ap_slice_id, tag):
             try:
                 with self._database_connection() as db:
@@ -876,9 +1053,22 @@ class AuroraDB(object):
             return "Tag '%s' not found.\n" % (tag)
 
     def wnet_join(self, tenant_id, name):
+        """Tracks DB information related to joining a wnet with an 
+        existing subnet.
+
+        ..warning::
+
+            Not implemented.
+
+        """
         pass #TODO AFTER SAVI INTEGRATION
 
     def get_ap_list(self):
+        """Returns a list containing the names of all known APs.
+
+        :rtype: list
+
+        """
         try:
             with self._database_connection() as db:
                 db.execute("SELECT name FROM ap")
@@ -891,6 +1081,13 @@ class AuroraDB(object):
             sys.exit(1)
 
     def get_tenant_for_active_ap_slice(self, ap_slice_id):
+        """Gets the tenant_id of the tenant who created a slice.  The 
+        tenant_id is only returned if the slice is not deleted.  If 
+        no matching slice is found, None is returned.
+
+        :returns: str - tenant_id information
+
+        """
         try:
             with self._database_connection() as db:
                 to_execute = ("""SELECT tenant_id 
@@ -902,12 +1099,19 @@ class AuroraDB(object):
                 self.LOGGER.debug(to_execute)
                 num_lines = db.execute(to_execute)
                 if num_lines > 0:
-                    return int(db.fetchone()[0])
+                    return db.fetchone()[0]
         except mdb.Error as e:
             traceback.print_exc(file=sys.stdout)
         return
 
     def get_wslice_physical_ap(self, ap_slice_id):
+        """Returns the physical AP on which the AP slice is created.
+
+        :param str ap_slice_id:
+        :rtype: str
+        :raises: NoSliceExistsException
+
+        """
         try:
             with self._database_connection() as db:
                 to_execute = ( "SELECT physical_ap FROM ap_slice WHERE "
@@ -923,6 +1127,12 @@ class AuroraDB(object):
             sys.exit(1)
 
     def get_wslice_ssid(self, ap_slice_id):
+        """Returns the SSID of a given AP slice.
+
+        :param str ap_slice_id:
+        :rtype: str 
+
+        """
         try:
             with self._database_connection() as db:
                 to_execute = ("""SELECT ap_slice_ssid FROM
@@ -937,6 +1147,15 @@ class AuroraDB(object):
             sys.exit(1)
 
     def get_physical_ap_slices(self, ap_name, not_deleted_only=False):
+        """Returns a list of slices active on an access point.
+
+        :param str ap_name:
+        :param bool not_deleted_only: False for all slices, True if 
+                                      active / pending / down / etc. 
+                                      slices only.
+        :rtype: list
+
+        """
         try:
             with self._database_connection() as db:
                 if not_deleted_only:
@@ -964,9 +1183,18 @@ class AuroraDB(object):
             sys.exit(1)
 
     def get_wnet_list(self, tenant_id, wnet_arg=None):
+        """Returns the wnets available to this tenant.
+
+        :param str tenant_id:
+        :param str wnet_arg:
+        :rtype: list 
+        :raises: NoWnetExistsForTenantException, 
+                 NoWnetNameExistsForTenantException
+
+        """
         try:
             with self._database_connection() as db:
-                if tenant_id == 0:
+                if str(tenant_id) == "0":
                     to_execute = "SELECT * FROM wnet"
                 elif wnet_arg:
                     to_execute = ( "SELECT * FROM wnet WHERE "
@@ -998,6 +1226,15 @@ class AuroraDB(object):
         return wnet_list
 
     def get_wnet_slices(self, wnet_arg, tenant_id, include_deleted=False):
+        """Returns slice data associated with slices in a wnet.
+
+        :param str wnet_arg: Wnet ID or name 
+        :param str tenant_id:
+        :param bool include_deleted: Include deleted slices in returned 
+                                     list
+        :rtype: list 
+
+        """
         try:
             with self._database_connection() as db:
                 wnet_id = self.get_wnet_name_id(wnet_arg, tenant_id)['wnet_id']
@@ -1031,6 +1268,15 @@ class AuroraDB(object):
         return slice_list
 
     def get_wnet_name_id(self, wnet_arg, tenant_id):
+        """For a wnet given by either name or ID, return both ID and 
+        name.
+
+        :param str wnet_arg: Wnet ID or name 
+        :param str tenant_id:
+        :rtype: dict 
+        :raises: Exception
+
+        """
         try:
             with self._database_connection() as db:
                 wnet_info = {}
@@ -1061,6 +1307,13 @@ class AuroraDB(object):
         return wnet_info
 
     def set_wnet_name(self, new_name, wnet_id, tenant_id):
+        """Sets the name of a wnet name.
+
+        :param str new_name: New name for specified wnet 
+        :param str wnet_id: Wnet ID of the wnet to update 
+        :param str tenant_id:
+
+        """
         try:
             with self._database_connection() as db:
                 if tenant_id != 0:

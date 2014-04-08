@@ -1,4 +1,12 @@
-"""AP Monitor module to track ap status and received messages"""
+"""The AP Monitor module tracks AP status and processes
+received messages.
+
+"""
+# 2014
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &
+#              Mike Kobierski 
+#
+
 import collections
 import datetime
 import logging
@@ -33,6 +41,16 @@ class APMonitor(object):
     SLEEP_TIME = 45
     # TODO: Make function to determine if dispatcher still exists
     def __init__(self, dispatcher, aurora_db, host, username, password):
+        """Sets up and configures the environment required for message 
+        passing using AMQP.  
+
+        :param aurora.dispatcher.Dispatcher dispatcher:
+        :param aurora.aurora_db.AuroraDB aurora_db:
+        :param str host: RabbitMQ server IP 
+        :param str username: RabbitMQ username 
+        :param str password: RabbitMQ password 
+
+        """
         self.LOGGER = get_cls_logger(self)
         # Configure dispatcher
         self.dispatcher = dispatcher
@@ -62,6 +80,13 @@ class APMonitor(object):
         self.qd.start()
 
     def _watch_queue(self, stop_event=None):
+        """Target for the queue daemon.
+
+        Executes until stop_event is set.
+
+        :param threading.Event stop_event:
+
+        """
         while True:
             while len(self.timeout_queue) < 1 and not stop_event.is_set():
                 time.sleep(0.1)
@@ -75,26 +100,36 @@ class APMonitor(object):
             self._set_status(*args, **kwargs)
 
     def _add_call_to_queue(self, *args, **kwargs):
+        """Writes a set_status call to the queue.
+
+        :param args: Arguments for set_status 
+        :param kwargs: Keyword arguments for set_status 
+
+        """
         self.timeout_queue.append((args, kwargs))
 
     def stop(self):
-        """Stops threads created by AP Monitor
-
-        """
+        """Stops all threads created by AP Monitor."""
         self.close_all_poller_threads()
         self.qd.stop()
 
     def close_all_poller_threads(self):
+        """Stops all the AP poller threads created by AP Monitor."""
         self.LOGGER.debug("Closing all threads %s", self.poller_threads)
         for ap_name in self.poller_threads.keys():
             self._close_poller_thread(ap_name, 'admin')
 
     def _close_poller_thread(self, ap_name, unique_id):
+        """Stops a single AP poller thread by ap_name."""
         if ap_name in self.poller_threads and unique_id == 'admin':
             poller_thread = self.poller_threads.pop(ap_name)
             self.LOGGER.info("Stopping thread %s %s", ap_name, poller_thread)
             poller_thread.stop()
-            poller_thread.join()
+            try:
+                poller_thread.join()
+            except RuntimeError as e:
+                self.LOGGER.warn(e.message)
+
 
     def _build_slice_id_ssid_map(self, config):
         """Called from within process_response, this method will 
@@ -120,9 +155,18 @@ class APMonitor(object):
         return slice_id_ssid_map
 
     def process_response(self, channel, method, props, body):
-        """Processes any responses it sees, checking to see if the
-        correlation ID matches one sent.  If it does, the response
-        is displayed along with the request originally sent.
+        """Processes messages received from active access points.
+
+        The responses are checked against previously sent message to 
+        see if any correlation IDs match.  If yes, the response is 
+        displayed along with the request originally sent, and is then 
+        parsed to determine what the original message was.  The 
+        databases are updated accordingly.
+
+        :param pika.channel.Channel channel:
+        :param pika.frame.Method.method method:
+        :param pika.frame.Header.properties props:
+        :param str body:
 
         """
         # Basic Proof-of-Concept Implementation
@@ -147,6 +191,7 @@ class APMonitor(object):
         config = decoded_response['config']
         region = config['region']
         self.LOGGER.info("Receiving from %s...", ap_name)
+
         # Should wait for dispatcher to finish its dispatch method
         # before continuing.  It is possible to receive a response 
         # to a sent message before the message gets added to the
@@ -175,8 +220,7 @@ class APMonitor(object):
             self.dispatcher.remove_request(request_correlation_id)
         else:
             self.LOGGER.warn("No request found for reply %s", props.correlation_id)
-
-        # For 
+ 
         self.LOGGER.debug("Pika channel: %s",channel)
         self.LOGGER.debug("Pika method: %s", method)
         self.LOGGER.debug(repr(props))
@@ -284,9 +328,6 @@ class APMonitor(object):
                                               slice_tenant)
                 except AuroraException as e:
                     LOGGER.error(e.message)
-
-
-                # Update SSID for each slice
                 
             else:
                 if message == 'AP reset':
@@ -301,47 +342,36 @@ class APMonitor(object):
                         ap_name, region
                     )
 
-            
-
         else:
             self.LOGGER.info("Sending reset to '%s'", ap_name)
             # Reset the access point
             self.reset_AP(ap_name)
 
-
         # Regardless of content of message, acknowledge receipt of it
         channel.basic_ack(delivery_tag = method.delivery_tag)
 
     def timeout(self, ap_slice_id, ap_name, message_uuid=None):
-        """This code will execute when a response is not
-        received for the command associated with the unique_id
-        after a certain time period.  It modifies the database
-        to reflect the current status of the AP.
+        """This code will execute when a response is not received for 
+        the command associated with the unique_id after a certain time 
+        period.  It modifies the database to reflect the current status 
+        of the AP.
+
+        A timeout is serious: it is likely that the AP's OS has crashed, 
+        or at least aurora is no longer running.
+
+        :param str ap_slice_id:
+        :param str ap_name:
+        :param str message_uuid:
 
         """
         self.LOGGER.warn("A message timeout occured for %s (%s) %s",
                          ap_name, ap_slice_id, 
                          message_uuid if message_uuid is not None else '')
         if message_uuid is not None:
-            # dispatcher = self.dispatcher_ref()
-            # if dispatcher is None:
-            #     self.LOGGER.warning("Dispatcher has been deallocated")
-            # else:
-                # dispatcher.remove_request(message_uuid)
             self.dispatcher.remove_request(message_uuid)
-        self.LOGGER.debug("%s %s", type(ap_slice_id), ap_slice_id)
-        # A timeout is serious: it is likely that
-        # the AP's OS has crashed, or at least aurora is
-        # no longer running.
-        
-        #if unique_id != 'admin':
-        #    self.set_status(unique_id, success=False, ap_up=False, )
-        #else:
+
         self.set_status(None, ap_slice_id, success=False, 
                         ap_up=False, ap_name=ap_name)
-        #remove thread from the thread pool
-        
-        #self._close_poller_thread(ap_name, ap_slice_id)
 
         # In the future we might do something more with the unique_id besides
         # identifying the AP, like log it to a list of commands that cause
@@ -352,7 +382,7 @@ class APMonitor(object):
         # as deleted, down or failed, so there will not be any issue
 
     def update_records(self, message):
-        """Update the traffic information of ap_slice
+        """Update the traffic information of ap_slice.
 
         :param dict message: Message containing reported slice stats
 
@@ -380,8 +410,16 @@ class APMonitor(object):
                 traceback.print_exc(file=sys.stdout)
             
     def set_status(self, cmd_category, *args, **kwargs):
-        """This function's arguments used to look like 
-            unique_id, success, ap_up=True, ap_name=None
+        """Adds a call to the set_status queue, to be processes in order 
+        of set_status calls.
+
+        :param cmd_category: Determines which set_status method should 
+                             run, can be one of::
+        
+            [None, "AP reset", "slice_stats"]
+        
+        :param args: Arguments
+        :param kwargs: Keyword Arguments
 
         """
         self.LOGGER.debug("Adding set_status call to queue for (%s, %s)", 
@@ -394,7 +432,15 @@ class APMonitor(object):
         create slice, deleting -> deleted if deleting a slice, etc.
         If the ap_up variable is false, the access point
         is considered to be offline and in an unknown state,
-        so *all* slices are marked as such (down, failed, etc.).
+        so \*all\* slices are marked as such (down, failed, etc.).
+
+        :param cmd_category: Determines which set_status method should 
+                             run, can be one of::
+        
+            [None, "AP reset", "slice_stats"]
+        
+        :param args: Arguments
+        :param kwargs: Keyword Arguments
 
         """
         self.LOGGER.debug("Set status cmd category %s", cmd_category)
@@ -408,6 +454,12 @@ class APMonitor(object):
         return True
 
     def _set_status_stats(self, ap_slice_stats=None):
+        """Sets the stats returned from an access point for its 
+        associatd slices.
+
+        :param dict ap_slice_stats:
+
+        """
         try:
             self.update_records(ap_slice_stats)
         except:
@@ -415,6 +467,14 @@ class APMonitor(object):
 
     def _set_status_reset(self, unique_id, success,
                           ap_up=True, ap_name=None):
+        """Executed upon receipt or timeout of an AP reset message.
+
+        :param str unique_id:
+        :param bool success:
+        :param bool ap_up:
+        :param str ap_name:
+
+        """
         self.LOGGER.info("Processing AP reset")
         try:
             if ap_up:
@@ -428,7 +488,16 @@ class APMonitor(object):
 
     def _set_status_standard(self, unique_id, success, 
                              ap_up=True, ap_name=None):
-        # DEBUG
+        """The standard case for set status, this method takes care 
+        of marking slices active, updating time stats associated with 
+        them, and tracking AP status.
+
+        :param str unique_id:
+        :param bool success:
+        :param bool ap_up:
+        :param str ap_name:
+
+        """
         if unique_id != 'SYN' and unique_id is not None:
             self.LOGGER.info("Updating ap status for ID %s.", str(unique_id))
         else:
@@ -476,6 +545,9 @@ class APMonitor(object):
     def recreate_slices(self, ap, slice_list):
         """Recreats the slices on their access point.
 
+        This is different than restarting a slice, because the 
+        configuration is assumed to already exist on the AP in question.
+
         :param str ap: Name of the access point
         :param list slice_list: List of slices to recreate
 
@@ -519,9 +591,11 @@ class APMonitor(object):
 
     def poll_AP(self, ap_name, stop_event=None):
         """Poller thread target: sends the access point a message in a 
-        regular interval.
+        regular interval.  Stopped when stop_event is set, typically 
+        when an access point goes offline.
 
         :param str ap_name: Name of the access point
+        :param threading.Event stop_event:
 
         """
         #print "Timeout from Dispatcher", self.dispatcher.TIMEOUT
@@ -547,6 +621,8 @@ class APMonitor(object):
         """Reset the access point.  If there are serious issues, however,
         a restart may be required.
 
+        :param str ap:
+
         """
         self.aurora_db.ap_slice_update_time_stats(ap_name=ap, 
                                                   ap_down=True)
@@ -565,7 +641,11 @@ class APMonitor(object):
             traceback.print_exc(file=sys.stdout)
 
     def restart_AP(self, ap):
-        """Restart the access point, telling the OS to reboot."""
+        """Restart the access point, telling the OS to reboot.
+
+        :param str ap:
+
+        """
         # The unique ID is fixed to be all F's for resets/restarts.
         self.aurora_db.ap_slice_update_time_stats(ap_name=ap, 
                                                   ap_down=True)
@@ -585,7 +665,11 @@ class APMonitor(object):
             traceback.print_exc(file=sys.stdout)
 
     def get_stats(self, ap):
-        """Query the access point for slice stats."""
+        """Query the access point for slice stats.
+
+        :param str ap:
+
+        """
         try:
             self.dispatcher.dispatch(
                 {
