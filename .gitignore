@@ -38,6 +38,4 @@ nosetests.xml
 *~
 
 # Server specific jsons
-aurora/aurora/ap_provision/json/*.json
-aurora/aurora/json/response.json
 python-auroraclient/auroraclient/json/gen_config.json
