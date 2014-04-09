@@ -1,11 +1,12 @@
-"""The AP Monitor module tracks AP status and processes
-received messages.
-
-"""
 # 2014
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &
 #              Mike Kobierski 
 #
+"""The AP Monitor module tracks AP status and processes
+received messages.
+
+"""
+
 
 import collections
 import datetime
@@ -18,9 +19,6 @@ import time
 import traceback
 from types import *
 import uuid
-import weakref
-
-import MySQLdb as mdb
 
 from aurora import config_db
 from aurora.exc import *
@@ -35,9 +33,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class APMonitor(object):
-    """Handles AMQP response messages from access points.
-
-    """
+    """Handles AMQP response messages from access points."""
     SLEEP_TIME = 45
     # TODO: Make function to determine if dispatcher still exists
     def __init__(self, dispatcher, aurora_db, host, username, password):
@@ -200,7 +196,6 @@ class APMonitor(object):
             self.LOGGER.info("Locked for %s, waiting...", ap_name)
             while ap_name in self.dispatcher.lock:
                 time.sleep(0.1)
-                pass
 
         # First thing to do is cancel the timer, so an invalid timeout 
         # doesn't get triggered.
@@ -242,6 +237,7 @@ class APMonitor(object):
             self.aurora_db.ap_update_hw_info(config['init_hardware_database'], 
                                              ap_name, region)
             self.start_poller(ap_name)
+            channel.basic_ack(delivery_tag=method.delivery_tag)
             return
 
         elif message == 'SYN/ACK':
@@ -264,6 +260,7 @@ class APMonitor(object):
                 except AuroraException as e:
                     self.LOGGER.warn(e.message)
             self.start_poller(ap_name)
+            channel.basic_ack(delivery_tag=method.delivery_tag)
             return
 
 
@@ -281,6 +278,7 @@ class APMonitor(object):
                 self.LOGGER.error(e.message)
             self.LOGGER.debug("Last known config:")
             self.LOGGER.debug(pformat(config))
+            channel.basic_ack(delivery_tag=method.delivery_tag)
             return
 
         if request_timer is not None:
@@ -348,7 +346,7 @@ class APMonitor(object):
             self.reset_AP(ap_name)
 
         # Regardless of content of message, acknowledge receipt of it
-        channel.basic_ack(delivery_tag = method.delivery_tag)
+        channel.basic_ack(delivery_tag=method.delivery_tag)
 
     def timeout(self, ap_slice_id, ap_name, message_uuid=None):
         """This code will execute when a response is not received for 
@@ -414,10 +412,7 @@ class APMonitor(object):
         of set_status calls.
 
         :param cmd_category: Determines which set_status method should 
-                             run, can be one of::
-        
-            [None, "AP reset", "slice_stats"]
-        
+            run, can be one of ``[None, "AP reset", "slice_stats"]``
         :param args: Arguments
         :param kwargs: Keyword Arguments
 
@@ -435,10 +430,7 @@ class APMonitor(object):
         so \*all\* slices are marked as such (down, failed, etc.).
 
         :param cmd_category: Determines which set_status method should 
-                             run, can be one of::
-        
-            [None, "AP reset", "slice_stats"]
-        
+            run, can be one of ``[None, "AP reset", "slice_stats"]``
         :param args: Arguments
         :param kwargs: Keyword Arguments
 

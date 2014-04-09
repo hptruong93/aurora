@@ -1,20 +1,22 @@
 ap_provision Package
 ====================
 
-:mod:`ap_provision_reader` Module
----------------------------------
-
-.. automodule:: aurora.ap_provision.ap_provision_reader
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 :mod:`http_srv` Module
 ----------------------
 
 .. automodule:: aurora.ap_provision.http_srv
     :members:
     :undoc-members:
+    :private-members:
+    :show-inheritance:
+
+:mod:`reader` Module
+--------------------
+
+.. automodule:: aurora.ap_provision.reader
+    :members:
+    :undoc-members:
+    :private-members:
     :show-inheritance:
 
 :mod:`writer` Module
@@ -23,5 +25,6 @@ ap_provision Package
 .. automodule:: aurora.ap_provision.writer
     :members:
     :undoc-members:
+    :private-members:
     :show-inheritance:
 

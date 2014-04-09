@@ -49,7 +49,15 @@
           <div class="body">
             
   <h1>Source code for aurora.ap_monitor</h1><div class="highlight"><pre>
-<span class="sd">&quot;&quot;&quot;AP Monitor module to track ap status and received messages&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;The AP Monitor module tracks AP status and processes</span>
+<span class="sd">received messages.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c"># 2014</span>
+<span class="c"># SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &amp;</span>
+<span class="c">#              Mike Kobierski </span>
+<span class="c">#</span>
+
 <span class="kn">import</span> <span class="nn">collections</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -65,13 +73,15 @@
 
 <span class="kn">import</span> <span class="nn">MySQLdb</span> <span class="kn">as</span> <span class="nn">mdb</span>
 
-<span class="kn">from</span> <span class="nn">cls_logger</span> <span class="kn">import</span> <span class="n">get_cls_logger</span>
-<span class="kn">import</span> <span class="nn">ap_provision.writer</span> <span class="kn">as</span> <span class="nn">provision</span>
-<span class="kn">from</span> <span class="nn">stop_thread</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="c">#import dispatcher</span>
+<span class="kn">from</span> <span class="nn">aurora</span> <span class="kn">import</span> <span class="n">config_db</span>
+<span class="kn">from</span> <span class="nn">aurora.exc</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">aurora.cls_logger</span> <span class="kn">import</span> <span class="n">get_cls_logger</span>
+<span class="kn">from</span> <span class="nn">aurora.ap_provision</span> <span class="kn">import</span> <span class="n">writer</span> <span class="k">as</span> <span class="n">provision</span>
+<span class="kn">from</span> <span class="nn">aurora.stop_thread</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="n">KB</span> <span class="o">=</span> <span class="mi">1024</span><span class="o">**</span><span class="mi">1</span>
 <span class="n">MB</span> <span class="o">=</span> <span class="mi">1024</span><span class="o">**</span><span class="mi">2</span>
+
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
 
 
@@ -81,12 +91,24 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">SLEEP_TIME</span> <span class="o">=</span> <span class="mi">45</span>
     <span class="c"># TODO: Make function to determine if dispatcher still exists</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dispatcher</span><span class="p">,</span> <span class="n">aurora_db</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
+<div class="viewcode-block" id="APMonitor.__init__"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dispatcher</span><span class="p">,</span> <span class="n">aurora_db</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets up and configures the environment required for message </span>
+<span class="sd">        passing using AMQP.  </span>
+
+<span class="sd">        :param aurora.dispatcher.Dispatcher dispatcher:</span>
+<span class="sd">        :param aurora.aurora_db.AuroraDB aurora_db:</span>
+<span class="sd">        :param str host: RabbitMQ server IP </span>
+<span class="sd">        :param str username: RabbitMQ username </span>
+<span class="sd">        :param str password: RabbitMQ password </span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span> <span class="o">=</span> <span class="n">get_cls_logger</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="c"># Configure dispatcher</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span> <span class="o">=</span> <span class="n">dispatcher</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">set_timeout_callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">set_response_callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">process_response</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">set_close_pollers_callback</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">close_all_poller_threads</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">start_connection</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span> <span class="o">=</span> <span class="n">aurora_db</span>
@@ -96,16 +118,8 @@
         <span class="c"># To handle incoming status update requests, make a command queue</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">timeout_queue</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">deque</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_make_queue_daemon</span><span class="p">()</span>
-
-        <span class="c">#Connect to Aurora mySQL Database</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Connecting to SQLdb...&quot;</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">con</span> <span class="o">=</span> <span class="n">mdb</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="s">&#39;aurora&#39;</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">Error</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Error </span><span class="si">%d</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
-            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_make_queue_daemon</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="APMonitor._make_queue_daemon"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor._make_queue_daemon">[docs]</a>    <span class="k">def</span> <span class="nf">_make_queue_daemon</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Creates a queue daemon which watches for set_status calls</span>
 <span class="sd">        and adds them to a FIFO queue.  This ensures the _set_status</span>
 <span class="sd">        method does not get executed twice at the same time, which can</span>
@@ -115,8 +129,15 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Creating Queue Daemon...&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">qd</span> <span class="o">=</span> <span class="n">StoppableThread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_watch_queue</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">qd</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="APMonitor._watch_queue"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor._watch_queue">[docs]</a>    <span class="k">def</span> <span class="nf">_watch_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stop_event</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Target for the queue daemon.</span>
 
-    <span class="k">def</span> <span class="nf">_watch_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stop_event</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="sd">        Executes until stop_event is set.</span>
+
+<span class="sd">        :param threading.Event stop_event:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
             <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout_queue</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">stop_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
                 <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
@@ -124,36 +145,79 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Queue Daemon caught stop event&quot;</span><span class="p">)</span>
                 <span class="k">break</span>
             <span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout_queue</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Queue Daemon is calling _set_status()&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;args  : </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;kwargs: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Queue Daemon is calling _set_status(</span><span class="si">%s</span><span class="s">, </span><span class="si">%s</span><span class="s">)&quot;</span><span class="p">,</span>
+                <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span>
+            <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_set_status</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="APMonitor._add_call_to_queue"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor._add_call_to_queue">[docs]</a>    <span class="k">def</span> <span class="nf">_add_call_to_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Writes a set_status call to the queue.</span>
 
-    <span class="k">def</span> <span class="nf">_add_call_to_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">timeout_queue</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">))</span>
-
-<div class="viewcode-block" id="APMonitor.stop"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Stops threads created by AP Monitor</span>
+<span class="sd">        :param args: Arguments for set_status </span>
+<span class="sd">        :param kwargs: Keyword arguments for set_status </span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_close_all_poller_threads</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timeout_queue</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="APMonitor.stop"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Stops all threads created by AP Monitor.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close_all_poller_threads</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">qd</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
 </div>
-    <span class="k">def</span> <span class="nf">_close_all_poller_threads</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="APMonitor.close_all_poller_threads"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor.close_all_poller_threads">[docs]</a>    <span class="k">def</span> <span class="nf">close_all_poller_threads</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Stops all the AP poller threads created by AP Monitor.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Closing all threads </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">poller_threads</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">ap_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">poller_threads</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_close_poller_thread</span><span class="p">(</span><span class="n">ap_name</span><span class="p">,</span> <span class="s">&#39;admin&#39;</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_close_poller_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">,</span> <span class="n">unique_id</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="APMonitor._close_poller_thread"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor._close_poller_thread">[docs]</a>    <span class="k">def</span> <span class="nf">_close_poller_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">,</span> <span class="n">unique_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Stops a single AP poller thread by ap_name.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">ap_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">poller_threads</span> <span class="ow">and</span> <span class="n">unique_id</span> <span class="o">==</span> <span class="s">&#39;admin&#39;</span><span class="p">:</span>
             <span class="n">poller_thread</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">poller_threads</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Stopping thread </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">,</span> <span class="n">poller_thread</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Stopping thread </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">,</span> <span class="n">poller_thread</span><span class="p">)</span>
             <span class="n">poller_thread</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">poller_thread</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
 
+</div>
+<div class="viewcode-block" id="APMonitor._build_slice_id_ssid_map"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor._build_slice_id_ssid_map">[docs]</a>    <span class="k">def</span> <span class="nf">_build_slice_id_ssid_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Called from within process_response, this method will </span>
+<span class="sd">        find the ap_slice_id&#39;s on an access point from its returned </span>
+<span class="sd">        config, and will determine their associated SSID.</span>
+
+<span class="sd">        :param dict config: Configuration returned from access point</span>
+<span class="sd">        :rtype: dict</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">slice_id_ssid_map</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">ap_slice_id</span><span class="p">,</span> <span class="n">slice_cfg</span> <span class="ow">in</span> \
+                <span class="n">config</span><span class="p">[</span><span class="s">&quot;init_database&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="n">slice_ssid</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="k">if</span> <span class="n">ap_slice_id</span> <span class="o">==</span> <span class="s">&quot;default_slice&quot;</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">cfg</span> <span class="ow">in</span> <span class="n">slice_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;RadioInterfaces&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+                <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;flavor&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s">&quot;wifi_bss&quot;</span><span class="p">:</span>
+                    <span class="n">slice_ssid</span> <span class="o">=</span> <span class="n">cfg</span><span class="p">[</span><span class="s">&quot;attributes&quot;</span><span class="p">][</span><span class="s">&quot;name&quot;</span><span class="p">]</span>
+                    <span class="k">break</span>
+            <span class="n">slice_id_ssid_map</span><span class="p">[</span><span class="n">ap_slice_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">slice_ssid</span>
+        <span class="k">return</span> <span class="n">slice_id_ssid_map</span>
+</div>
 <div class="viewcode-block" id="APMonitor.process_response"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor.process_response">[docs]</a>    <span class="k">def</span> <span class="nf">process_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">body</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Processes any responses it sees, checking to see if the</span>
-<span class="sd">        correlation ID matches one sent.  If it does, the response</span>
-<span class="sd">        is displayed along with the request originally sent.</span>
+        <span class="sd">&quot;&quot;&quot;Processes messages received from active access points.</span>
+
+<span class="sd">        The responses are checked against previously sent message to </span>
+<span class="sd">        see if any correlation IDs match.  If yes, the response is </span>
+<span class="sd">        displayed along with the request originally sent, and is then </span>
+<span class="sd">        parsed to determine what the original message was.  The </span>
+<span class="sd">        databases are updated accordingly.</span>
+
+<span class="sd">        :param pika.channel.Channel channel:</span>
+<span class="sd">        :param pika.frame.Method.method method:</span>
+<span class="sd">        :param pika.frame.Header.properties props:</span>
+<span class="sd">        :param str body:</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c"># Basic Proof-of-Concept Implementation</span>
@@ -169,19 +233,7 @@
         <span class="c"># Check if we have a record of this ID</span>
         <span class="n">have_request</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="n">entry</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Receiving...&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Locked, waiting...&quot;</span><span class="p">)</span>
-            <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
-                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
-                <span class="k">pass</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;channel: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span><span class="n">channel</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;method: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">props</span><span class="p">))</span>
-        <span class="c">#self.LOGGER.debug(type(body))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">body</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">requests_sent: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">requests_sent</span><span class="p">)</span>
+        
 
         <span class="c"># Decode response</span>
         <span class="n">decoded_response</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
@@ -189,39 +241,79 @@
         <span class="n">ap_name</span> <span class="o">=</span> <span class="n">decoded_response</span><span class="p">[</span><span class="s">&#39;ap&#39;</span><span class="p">]</span>
         <span class="n">config</span> <span class="o">=</span> <span class="n">decoded_response</span><span class="p">[</span><span class="s">&#39;config&#39;</span><span class="p">]</span>
         <span class="n">region</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">&#39;region&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Receiving from </span><span class="si">%s</span><span class="s">...&quot;</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">)</span>
+
+        <span class="c"># Should wait for dispatcher to finish its dispatch method</span>
+        <span class="c"># before continuing.  It is possible to receive a response </span>
+        <span class="c"># to a sent message before the message gets added to the</span>
+        <span class="c"># requests_sent list.  Waiting here avoids needless AP reset.</span>
+        <span class="k">if</span> <span class="n">ap_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Locked for </span><span class="si">%s</span><span class="s">, waiting...&quot;</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">)</span>
+            <span class="k">while</span> <span class="n">ap_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+                <span class="k">pass</span>
+
+        <span class="c"># First thing to do is cancel the timer, so an invalid timeout </span>
+        <span class="c"># doesn&#39;t get triggered.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Sent requests: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">requests_sent</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">have_request</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">have_request</span><span class="p">(</span>
+            <span class="n">props</span><span class="o">.</span><span class="n">correlation_id</span>
+        <span class="p">)</span>
+        <span class="n">request_correlation_id</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">request_timer</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">request_subject</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">have_request</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">entry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">request_correlation_id</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">request_timer</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">request_subject</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Cancelling timer </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">request_timer</span><span class="p">)</span>
+            <span class="n">request_timer</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">remove_request</span><span class="p">(</span><span class="n">request_correlation_id</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;No request found for reply </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">props</span><span class="o">.</span><span class="n">correlation_id</span><span class="p">)</span>
+ 
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Pika channel: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span><span class="n">channel</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Pika method: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">props</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">body</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Sent requests: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">requests_sent</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="n">message</span> <span class="o">==</span> <span class="s">&#39;SYN&#39;</span><span class="p">:</span>
             <span class="c">#TODO: If previous message has been dispatched and we are waiting </span>
             <span class="c">#      for a response, cancel the timer and/or send the command again</span>
-            <span class="c"># AP has started, check if we need to restart slices</span>
+            <span class="c"># AP has started, check if we need to recreate slices</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> has connected...&quot;</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_status_up</span><span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">remove_request</span><span class="p">(</span><span class="n">ap_syn</span><span class="o">=</span><span class="n">ap_name</span><span class="p">)</span>
-            <span class="c"># Tell ap monitor, let it handle restart of slices</span>
-            <span class="c">#self.start_poller(ap_name)</span>
-            <span class="n">slices_to_restart</span> <span class="o">=</span> <span class="n">decoded_response</span><span class="p">[</span><span class="s">&#39;slices_to_restart&#39;</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">restart_slices</span><span class="p">(</span><span class="n">ap_name</span><span class="p">,</span> <span class="n">slices_to_restart</span><span class="p">)</span>
+
+            <span class="n">slices_to_recreate</span> <span class="o">=</span> <span class="n">decoded_response</span><span class="p">[</span><span class="s">&#39;slices_to_recreate&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">recreate_slices</span><span class="p">(</span><span class="n">ap_name</span><span class="p">,</span> <span class="n">slices_to_recreate</span><span class="p">)</span>
             <span class="n">provision</span><span class="o">.</span><span class="n">update_last_known_config</span><span class="p">(</span><span class="n">ap_name</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_update_hw_info</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;init_hardware_database&#39;</span><span class="p">],</span> <span class="n">ap_name</span><span class="p">,</span> <span class="n">region</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_syn_clean_deleting_status</span><span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_update_hw_info</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;init_hardware_database&#39;</span><span class="p">],</span> 
+                                             <span class="n">ap_name</span><span class="p">,</span> <span class="n">region</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">start_poller</span><span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
             <span class="k">return</span>
 
         <span class="k">elif</span> <span class="n">message</span> <span class="o">==</span> <span class="s">&#39;SYN/ACK&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> responded to &#39;SYN&#39; request&quot;</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">)</span>
-            <span class="c"># Cancel timers corresponding to &#39;SYN&#39; message</span>
-            <span class="p">(</span><span class="n">have_request</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">_have_request</span><span class="p">(</span><span class="n">props</span><span class="o">.</span><span class="n">correlation_id</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">have_request</span><span class="p">:</span>
-                <span class="n">entry</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">requests_sent</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Warning: No request for received &#39;SYN/ACK&#39; from </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">have_request</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Warning: No request for received &quot;</span> <span class="o">+</span>
+                                    <span class="s">&quot;&#39;SYN/ACK&#39; from </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">)</span>
+            
             <span class="n">provision</span><span class="o">.</span><span class="n">update_last_known_config</span><span class="p">(</span><span class="n">ap_name</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_status_up</span><span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_update_hw_info</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;init_hardware_database&#39;</span><span class="p">],</span> <span class="n">ap_name</span><span class="p">,</span> <span class="n">region</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_update_hw_info</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;init_hardware_database&#39;</span><span class="p">],</span> 
+                                             <span class="n">ap_name</span><span class="p">,</span> <span class="n">region</span><span class="p">)</span>
 
-            <span class="c">#ap_slice_list = map(lambda slice_: slice_ in config[&#39;init_database&#39;].keys() if slice_ != &#39;default_slice&#39;)</span>
-            <span class="c"># self.LOGGER.debug(&quot;Test map %s&quot;, test_map)</span>
-            <span class="k">for</span> <span class="n">ap_slice_id</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ap_slice_id</span> <span class="k">for</span> <span class="n">ap_slice_id</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s">&#39;init_database&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">ap_slice_id</span> <span class="o">!=</span> <span class="s">&#39;default_slice&#39;</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_slice_status_up</span><span class="p">(</span><span class="n">ap_slice_id</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_syn_clean_deleting_status</span><span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">ap_slice_id</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ap_slice_id</span> <span class="k">for</span> <span class="n">ap_slice_id</span> <span class="ow">in</span> \
+                    <span class="n">config</span><span class="p">[</span><span class="s">&#39;init_database&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> \
+                    <span class="n">ap_slice_id</span> <span class="o">!=</span> <span class="s">&#39;default_slice&#39;</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_slice_status_up</span><span class="p">(</span><span class="n">ap_slice_id</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">AuroraException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">start_poller</span><span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
             <span class="k">return</span>
 
@@ -230,8 +322,10 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> is shutting down...&quot;</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_update_hw_info</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;init_hardware_database&#39;</span><span class="p">],</span> <span class="n">ap_name</span><span class="p">,</span> <span class="n">region</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_status_down</span><span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_update_hw_info</span><span class="p">(</span>
+                    <span class="n">config</span><span class="p">[</span><span class="s">&#39;init_hardware_database&#39;</span><span class="p">],</span> 
+                    <span class="n">ap_name</span><span class="p">,</span> <span class="n">region</span><span class="p">)</span>
+                <span class="c"># self.aurora_db.ap_status_down(ap_name)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Updating config files...&quot;</span><span class="p">)</span>
                 <span class="n">provision</span><span class="o">.</span><span class="n">update_last_known_config</span><span class="p">(</span><span class="n">ap_name</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -240,68 +334,95 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">pformat</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
             <span class="k">return</span>
 
-        <span class="p">(</span><span class="n">have_request</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">_have_request</span><span class="p">(</span><span class="n">props</span><span class="o">.</span><span class="n">correlation_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">request_timer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c"># A request for this message existed</span>
 
-        <span class="k">if</span> <span class="n">have_request</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="c"># decoded_response = json.loads(body)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Printing received message&#39;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
 
-            <span class="c"># Set status, stop timer, delete record</span>
-            <span class="c">#print &quot;entry[2]:&quot;,entry[2]</span>
-            <span class="k">if</span> <span class="n">entry</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;admin&#39;</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">entry</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">decoded_response</span><span class="p">[</span><span class="s">&#39;successful&#39;</span><span class="p">],</span> <span class="n">ap_name</span><span class="o">=</span><span class="n">ap_name</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_update_hw_info</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;init_hardware_database&#39;</span><span class="p">],</span> <span class="n">ap_name</span><span class="p">,</span> <span class="n">region</span><span class="p">)</span>
+            <span class="c"># For each slice in the returned message, determine its SSID</span>
+            <span class="c"># to update the SQL database.  Update SSID for each slice.</span>
+            <span class="n">slice_id_ssid_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_slice_id_ssid_map</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">ap_slice_id</span><span class="p">,</span> <span class="n">slice_ssid</span> <span class="ow">in</span> <span class="n">slice_id_ssid_map</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_slice_set_ssid</span><span class="p">(</span><span class="n">ap_slice_id</span><span class="p">,</span> <span class="n">slice_ssid</span><span class="p">)</span>
 
+            <span class="c"># Set status</span>
+            <span class="k">if</span> <span class="n">request_subject</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">request_subject</span> <span class="o">!=</span> <span class="s">&#39;admin&#39;</span><span class="p">:</span>
+                <span class="n">ap_slice_id</span> <span class="o">=</span> <span class="n">request_subject</span>
+                <span class="n">successful</span> <span class="o">=</span> <span class="n">decoded_response</span><span class="p">[</span><span class="s">&#39;successful&#39;</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">,</span> 
+                                <span class="n">successful</span><span class="p">,</span> 
+                                <span class="n">ap_name</span><span class="o">=</span><span class="n">ap_name</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_update_hw_info</span><span class="p">(</span>
+                    <span class="n">config</span><span class="p">[</span><span class="s">&#39;init_hardware_database&#39;</span><span class="p">],</span> 
+                    <span class="n">ap_name</span><span class="p">,</span> <span class="n">region</span>
+                <span class="p">)</span>
+                
                 <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Updating config files...&quot;</span><span class="p">)</span>
                 <span class="n">provision</span><span class="o">.</span><span class="n">update_last_known_config</span><span class="p">(</span><span class="n">ap_name</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Updating config_db for slice </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> 
+                                 <span class="n">ap_slice_id</span><span class="p">)</span>
+                <span class="n">slice_cfg</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">&#39;init_database&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ap_slice_id</span><span class="p">)</span>
+                <span class="n">slice_tenant</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="k">for</span> <span class="n">tenant_id</span><span class="p">,</span> <span class="n">slice_list</span> <span class="ow">in</span> \
+                        <span class="n">config</span><span class="p">[</span><span class="s">&quot;init_user_id_database&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">ap_slice_id</span> <span class="ow">in</span> <span class="n">slice_list</span><span class="p">:</span>
+                        <span class="n">slice_tenant</span> <span class="o">=</span> <span class="n">tenant_id</span>
+                        <span class="k">break</span>
+
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c"># TODO(Mike) Don&#39;t save if request unsuccessful</span>
+                    <span class="k">if</span> <span class="n">successful</span><span class="p">:</span>
+                        <span class="n">config_db</span><span class="o">.</span><span class="n">save_config</span><span class="p">(</span><span class="n">slice_cfg</span><span class="p">,</span> 
+                                              <span class="n">ap_slice_id</span><span class="p">,</span> 
+                                              <span class="n">slice_tenant</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">AuroraException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+                
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">message</span> <span class="o">==</span> <span class="s">&#39;AP reset&#39;</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="s">&#39;AP reset&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">)</span>
-                    <span class="k">pass</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="s">&#39;AP reset&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">)</span>
                 <span class="k">elif</span> <span class="n">message</span> <span class="o">==</span> <span class="s">&#39;RESTARTING&#39;</span><span class="p">:</span>
                     <span class="k">pass</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="s">&#39;slice_stats&#39;</span><span class="p">,</span> <span class="n">ap_slice_stats</span><span class="o">=</span><span class="n">message</span><span class="p">[</span><span class="s">&quot;ap_slice_stats&quot;</span><span class="p">])</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_update_hw_info</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s">&#39;init_hardware_database&#39;</span><span class="p">],</span> <span class="n">ap_name</span><span class="p">,</span> <span class="n">region</span><span class="p">)</span>
-
-            <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">remove_request</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="s">&#39;slice_stats&#39;</span><span class="p">,</span> 
+                                    <span class="n">ap_slice_stats</span><span class="o">=</span><span class="n">message</span><span class="p">[</span><span class="s">&quot;ap_slice_stats&quot;</span><span class="p">])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_update_hw_info</span><span class="p">(</span>
+                        <span class="n">config</span><span class="p">[</span><span class="s">&#39;init_hardware_database&#39;</span><span class="p">],</span> 
+                        <span class="n">ap_name</span><span class="p">,</span> <span class="n">region</span>
+                    <span class="p">)</span>
 
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Sending reset to &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">)</span>
             <span class="c"># Reset the access point</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">reset_AP</span><span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
 
-
         <span class="c"># Regardless of content of message, acknowledge receipt of it</span>
         <span class="n">channel</span><span class="o">.</span><span class="n">basic_ack</span><span class="p">(</span><span class="n">delivery_tag</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">delivery_tag</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="APMonitor.timeout"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor.timeout">[docs]</a>    <span class="k">def</span> <span class="nf">timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">,</span> <span class="n">message_uuid</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;This code will execute when a response is not</span>
-<span class="sd">        received for the command associated with the unique_id</span>
-<span class="sd">        after a certain time period.  It modifies the database</span>
-<span class="sd">        to reflect the current status of the AP.</span>
+<div class="viewcode-block" id="APMonitor.timeout"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor.timeout">[docs]</a>    <span class="k">def</span> <span class="nf">timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">,</span> <span class="n">message_uuid</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This code will execute when a response is not received for </span>
+<span class="sd">        the command associated with the unique_id after a certain time </span>
+<span class="sd">        period.  It modifies the database to reflect the current status </span>
+<span class="sd">        of the AP.</span>
+
+<span class="sd">        A timeout is serious: it is likely that the AP&#39;s OS has crashed, </span>
+<span class="sd">        or at least aurora is no longer running.</span>
+
+<span class="sd">        :param str ap_slice_id:</span>
+<span class="sd">        :param str ap_name:</span>
+<span class="sd">        :param str message_uuid:</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;A message timeout occured for </span><span class="si">%s</span><span class="s"> (</span><span class="si">%s</span><span class="s">) </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span>
+                         <span class="n">ap_name</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">,</span> 
+                         <span class="n">message_uuid</span> <span class="k">if</span> <span class="n">message_uuid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">message_uuid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="c"># dispatcher = self.dispatcher_ref()</span>
-            <span class="c"># if dispatcher is None:</span>
-            <span class="c">#     self.LOGGER.warning(&quot;Dispatcher has been deallocated&quot;)</span>
-            <span class="c"># else:</span>
-                <span class="c"># dispatcher.remove_request(message_uuid)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">remove_request</span><span class="p">(</span><span class="n">message_uuid</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">ap_slice_id</span><span class="p">),</span> <span class="n">ap_slice_id</span><span class="p">)</span>
-        <span class="c"># A timeout is serious: it is likely that</span>
-        <span class="c"># the AP&#39;s OS has crashed, or at least aurora is</span>
-        <span class="c"># no longer running.</span>
-        
-        <span class="c">#if unique_id != &#39;admin&#39;:</span>
-        <span class="c">#    self.set_status(unique_id, success=False, ap_up=False, )</span>
-        <span class="c">#else:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">,</span> <span class="n">success</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">ap_up</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">ap_name</span><span class="o">=</span><span class="n">ap_name</span><span class="p">)</span>
-        <span class="c">#remove thread from the thread pool</span>
-        
-        <span class="c">#self._close_poller_thread(ap_name, ap_slice_id)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">,</span> <span class="n">success</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> 
+                        <span class="n">ap_up</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">ap_name</span><span class="o">=</span><span class="n">ap_name</span><span class="p">)</span>
 
         <span class="c"># In the future we might do something more with the unique_id besides</span>
         <span class="c"># identifying the AP, like log it to a list of commands that cause</span>
@@ -312,7 +433,7 @@
         <span class="c"># as deleted, down or failed, so there will not be any issue</span>
 </div>
 <div class="viewcode-block" id="APMonitor.update_records"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor.update_records">[docs]</a>    <span class="k">def</span> <span class="nf">update_records</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Update the traffic information of ap_slice</span>
+        <span class="sd">&quot;&quot;&quot;Update the traffic information of ap_slice.</span>
 
 <span class="sd">        :param dict message: Message containing reported slice stats</span>
 
@@ -325,49 +446,109 @@
                 <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
 
             <span class="k">try</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_slice_update_time_stats</span><span class="p">(</span><span class="n">ap_slice_id</span><span class="o">=</span><span class="n">ap_slice_id</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_slice_update_time_stats</span><span class="p">(</span>
+                    <span class="n">ap_slice_id</span><span class="o">=</span><span class="n">ap_slice_id</span>
+                <span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
 
             <span class="k">try</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_slice_update_mb_sent</span><span class="p">(</span><span class="n">ap_slice_id</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ap_slice_id</span><span class="p">))</span><span class="o">/</span><span class="n">MB</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_slice_update_mb_sent</span><span class="p">(</span>
+                    <span class="n">ap_slice_id</span><span class="p">,</span> 
+                    <span class="nb">float</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ap_slice_id</span><span class="p">))</span><span class="o">/</span><span class="n">MB</span>
+                <span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
             </div>
 <div class="viewcode-block" id="APMonitor.set_status"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor.set_status">[docs]</a>    <span class="k">def</span> <span class="nf">set_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cmd_category</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;This function&#39;s arguments used to look like </span>
-<span class="sd">            unique_id, success, ap_up=True, ap_name=None</span>
+        <span class="sd">&quot;&quot;&quot;Adds a call to the set_status queue, to be processes in order </span>
+<span class="sd">        of set_status calls.</span>
+
+<span class="sd">        :param cmd_category: Determines which set_status method should </span>
+<span class="sd">                             run, can be one of::</span>
+<span class="sd">        </span>
+<span class="sd">            [None, &quot;AP reset&quot;, &quot;slice_stats&quot;]</span>
+<span class="sd">        </span>
+<span class="sd">        :param args: Arguments</span>
+<span class="sd">        :param kwargs: Keyword Arguments</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Adding set_status call to queue for (</span><span class="si">%s</span><span class="s">, </span><span class="si">%s</span><span class="s">)&quot;</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Adding set_status call to queue for (</span><span class="si">%s</span><span class="s">, </span><span class="si">%s</span><span class="s">)&quot;</span><span class="p">,</span> 
+                          <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_add_call_to_queue</span><span class="p">(</span><span class="n">cmd_category</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </div>
-    <span class="k">def</span> <span class="nf">_set_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cmd_category</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="APMonitor._set_status"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor._set_status">[docs]</a>    <span class="k">def</span> <span class="nf">_set_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cmd_category</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sets the status of the associated request in the</span>
 <span class="sd">        database based on the previous status, i.e. pending -&gt; active if</span>
 <span class="sd">        create slice, deleting -&gt; deleted if deleting a slice, etc.</span>
 <span class="sd">        If the ap_up variable is false, the access point</span>
 <span class="sd">        is considered to be offline and in an unknown state,</span>
-<span class="sd">        so *all* slices are marked as such (down, failed, etc.).</span>
+<span class="sd">        so \*all\* slices are marked as such (down, failed, etc.).</span>
+
+<span class="sd">        :param cmd_category: Determines which set_status method should </span>
+<span class="sd">                             run, can be one of::</span>
+<span class="sd">        </span>
+<span class="sd">            [None, &quot;AP reset&quot;, &quot;slice_stats&quot;]</span>
+<span class="sd">        </span>
+<span class="sd">        :param args: Arguments</span>
+<span class="sd">        :param kwargs: Keyword Arguments</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Set status cmd category </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">cmd_category</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">cmd_category</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_set_status_standard</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">cmd_category</span> <span class="ow">is</span> <span class="s">&#39;AP reset&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_set_status_standard</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">cmd_category</span> <span class="ow">is</span> <span class="s">&#39;slice_stats&#39;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">cmd_category</span> <span class="o">==</span> <span class="s">&#39;AP reset&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_set_status_reset</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">cmd_category</span> <span class="o">==</span> <span class="s">&#39;slice_stats&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_set_status_stats</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="bp">True</span>
+</div>
+<div class="viewcode-block" id="APMonitor._set_status_stats"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor._set_status_stats">[docs]</a>    <span class="k">def</span> <span class="nf">_set_status_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_slice_stats</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the stats returned from an access point for its </span>
+<span class="sd">        associatd slices.</span>
 
-    <span class="k">def</span> <span class="nf">_set_status_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_slice_stats</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="sd">        :param dict ap_slice_stats:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">update_records</span><span class="p">(</span><span class="n">ap_slice_stats</span><span class="p">)</span>
         <span class="k">except</span><span class="p">:</span>
             <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="APMonitor._set_status_reset"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor._set_status_reset">[docs]</a>    <span class="k">def</span> <span class="nf">_set_status_reset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unique_id</span><span class="p">,</span> <span class="n">success</span><span class="p">,</span>
+                          <span class="n">ap_up</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">ap_name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Executed upon receipt or timeout of an AP reset message.</span>
 
-    <span class="k">def</span> <span class="nf">_set_status_standard</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unique_id</span><span class="p">,</span> <span class="n">success</span><span class="p">,</span> <span class="n">ap_up</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">ap_name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="c"># DEBUG</span>
+<span class="sd">        :param str unique_id:</span>
+<span class="sd">        :param bool success:</span>
+<span class="sd">        :param bool ap_up:</span>
+<span class="sd">        :param str ap_name:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Processing AP reset&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ap_up</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_status_up</span><span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_status_down</span><span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_down_slice_status_update</span><span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="APMonitor._set_status_standard"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor._set_status_standard">[docs]</a>    <span class="k">def</span> <span class="nf">_set_status_standard</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unique_id</span><span class="p">,</span> <span class="n">success</span><span class="p">,</span> 
+                             <span class="n">ap_up</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">ap_name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The standard case for set status, this method takes care </span>
+<span class="sd">        of marking slices active, updating time stats associated with </span>
+<span class="sd">        them, and tracking AP status.</span>
+
+<span class="sd">        :param str unique_id:</span>
+<span class="sd">        :param bool success:</span>
+<span class="sd">        :param bool ap_up:</span>
+<span class="sd">        :param str ap_name:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">unique_id</span> <span class="o">!=</span> <span class="s">&#39;SYN&#39;</span> <span class="ow">and</span> <span class="n">unique_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Updating ap status for ID </span><span class="si">%s</span><span class="s">.&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">unique_id</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
@@ -390,45 +571,55 @@
         <span class="c">#   else if slice is deleting, mark deleted (will be when we reinitialize)</span>
         <span class="c">#   else if slice is pending, mark failed</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="c"># Access point is up - we are receiving individual packets</span>
             <span class="k">if</span> <span class="n">ap_up</span><span class="p">:</span>
+                <span class="c"># Access point is up - we are receiving individual packets</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_status_up</span><span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_up_slice_status_update</span><span class="p">(</span><span class="n">unique_id</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">,</span> <span class="n">success</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_slice_update_time_stats</span><span class="p">(</span><span class="n">ap_slice_id</span><span class="o">=</span><span class="n">unique_id</span><span class="p">)</span>
-            <span class="c"># Access point down, mark all slices and failed/down</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_up_slice_status_update</span><span class="p">(</span><span class="n">unique_id</span><span class="p">,</span> 
+                                                         <span class="n">ap_name</span><span class="p">,</span> <span class="n">success</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_slice_update_time_stats</span><span class="p">(</span>
+                    <span class="n">ap_slice_id</span><span class="o">=</span><span class="n">unique_id</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
+                <span class="c"># Access point down, mark all slices and failed/down</span>
                 <span class="k">if</span> <span class="n">ap_name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                    <span class="n">ap_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">get_wslice_physical_ap</span><span class="p">(</span><span class="n">ap_slice_id</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_slice_update_time_stats</span><span class="p">(</span><span class="n">ap_name</span><span class="o">=</span><span class="n">ap_name</span><span class="p">)</span>
+                    <span class="n">ap_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">get_wslice_physical_ap</span><span class="p">(</span>
+                        <span class="n">ap_slice_id</span>
+                    <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_slice_update_time_stats</span><span class="p">(</span><span class="n">ap_name</span><span class="o">=</span><span class="n">ap_name</span><span class="p">,</span> 
+                                                          <span class="n">ap_down</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_status_down</span><span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_down_slice_status_update</span><span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_close_poller_thread</span><span class="p">(</span><span class="n">ap_name</span><span class="p">,</span> <span class="s">&#39;admin&#39;</span><span class="p">)</span>
 
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="APMonitor.recreate_slices"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor.recreate_slices">[docs]</a>    <span class="k">def</span> <span class="nf">recreate_slices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap</span><span class="p">,</span> <span class="n">slice_list</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Recreats the slices on their access point.</span>
 
-<div class="viewcode-block" id="APMonitor.restart_slices"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor.restart_slices">[docs]</a>    <span class="k">def</span> <span class="nf">restart_slices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap</span><span class="p">,</span> <span class="n">slice_list</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Restarts the slices on their access point.</span>
+<span class="sd">        This is different than restarting a slice, because the </span>
+<span class="sd">        configuration is assumed to already exist on the AP in question.</span>
 
 <span class="sd">        :param str ap: Name of the access point</span>
-<span class="sd">        :param list slice_list: List of slices to restart</span>
+<span class="sd">        :param list slice_list: List of slices to recreate</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">ap_slice_id</span> <span class="ow">in</span> <span class="n">slice_list</span><span class="p">:</span>
-                <span class="n">user_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">get_user_for_active_ap_slice</span><span class="p">(</span><span class="n">ap_slice_id</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Returned user id </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">user_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-                    <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span> <span class="ow">is</span> <span class="n">IntType</span><span class="p">,</span><span class="s">&quot;Need user_id to be IntType&quot;</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> for tenant </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Restarting </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">)</span>
+                <span class="n">tenant_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">get_tenant_for_active_ap_slice</span><span class="p">(</span>
+                    <span class="n">ap_slice_id</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Returned tenant id </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">tenant_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> for tenant </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> 
+                                     <span class="n">ap_slice_id</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Recreating </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">dispatch</span><span class="p">({</span><span class="s">&#39;slice&#39;</span><span class="p">:</span> <span class="n">ap_slice_id</span><span class="p">,</span>
-                                              <span class="s">&#39;command&#39;</span><span class="p">:</span> <span class="s">&#39;restart_slice&#39;</span><span class="p">,</span>
-                                              <span class="s">&#39;user&#39;</span><span class="p">:</span> <span class="n">user_id</span>
+                                              <span class="s">&#39;command&#39;</span><span class="p">:</span> <span class="s">&#39;recreate_slice&#39;</span><span class="p">,</span>
+                                              <span class="s">&#39;user&#39;</span><span class="p">:</span> <span class="n">tenant_id</span>
                                              <span class="p">},</span>
                                              <span class="n">ap</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;No active slice </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">slice_id</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;No active slice </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
 </div>
@@ -438,55 +629,110 @@
 <span class="sd">        :param str ap_name: Name of the access point</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c">#poller_thread = thread(ThreadClass, self)</span>
-        <span class="n">poller_thread</span> <span class="o">=</span> <span class="n">TimerThread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">poll_AP</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">ap_name</span><span class="p">,))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Starting poller on thread </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">poller_thread</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">poller_threads</span><span class="p">[</span><span class="n">ap_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">poller_thread</span>
-        <span class="n">poller_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="n">poller_thread</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">poller_threads</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">poller_thread</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">poller_thread</span> <span class="o">=</span> <span class="n">TimerThread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">poll_AP</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">ap_name</span><span class="p">,))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Starting poller for </span><span class="si">%s</span><span class="s"> on thread </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> 
+                             <span class="n">ap_name</span><span class="p">,</span> <span class="n">poller_thread</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">poller_threads</span><span class="p">[</span><span class="n">ap_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">poller_thread</span>
+            <span class="n">poller_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Poller thread for </span><span class="si">%s</span><span class="s"> exists as </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> 
+                             <span class="n">ap_name</span><span class="p">,</span> <span class="n">poller_thread</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="APMonitor.poll_AP"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor.poll_AP">[docs]</a>    <span class="k">def</span> <span class="nf">poll_AP</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">,</span> <span class="n">stop_event</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Poller thread target: sends the access point a message in a </span>
-<span class="sd">        regular interval.</span>
+<span class="sd">        regular interval.  Stopped when stop_event is set, typically </span>
+<span class="sd">        when an access point goes offline.</span>
 
 <span class="sd">        :param str ap_name: Name of the access point</span>
+<span class="sd">        :param threading.Event stop_event:</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c">#print &quot;Timeout from Dispatcher&quot;, self.dispatcher.TIMEOUT</span>
+        <span class="n">STOP_EVENT_CHECK_INTERVAL</span> <span class="o">=</span> <span class="mf">0.2</span>
         <span class="n">own_thread</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">poller_threads</span><span class="p">[</span><span class="n">ap_name</span><span class="p">]</span>
         <span class="k">while</span> <span class="n">ap_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">poller_threads</span><span class="p">:</span>
-            <span class="c">#time.sleep(APMonitor.SLEEP_TIME)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> thread is </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">,</span> <span class="n">own_thread</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">get_stats</span><span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
-            <span class="c"># dispatcher = self.dispatcher_ref()</span>
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">TIMEOUT</span> <span class="o">+</span> <span class="mi">5</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_stats</span><span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">AuroraException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">TIMEOUT</span> <span class="o">+</span> <span class="mi">5</span><span class="p">)</span><span class="o">/</span><span class="n">STOP_EVENT_CHECK_INTERVAL</span><span class="p">)):</span>
                 <span class="k">if</span> <span class="n">stop_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Caught stop event for </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">own_thread</span><span class="p">)</span>
                     <span class="k">break</span>
-                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">STOP_EVENT_CHECK_INTERVAL</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">stop_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Poller thread for </span><span class="si">%s</span><span class="s"> is dying now&quot;</span> <span class="o">%</span> <span class="n">ap_name</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Poller thread for </span><span class="si">%s</span><span class="s"> is dying now&quot;</span> <span class="o">%</span> 
+                                   <span class="n">ap_name</span><span class="p">)</span>
                 <span class="k">break</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> thread is </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">,</span> <span class="n">own_thread</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="APMonitor.reset_AP"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor.reset_AP">[docs]</a>    <span class="k">def</span> <span class="nf">reset_AP</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Reset the access point.  If there are serious issues, however,</span>
 <span class="sd">        a restart may be required.</span>
 
+<span class="sd">        :param str ap:</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c"># The unique ID is fixed to be all F&#39;s for resets/restarts.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span> <span class="p">{</span> <span class="s">&#39;slice&#39;</span> <span class="p">:</span> <span class="s">&#39;admin&#39;</span><span class="p">,</span> <span class="s">&#39;command&#39;</span> <span class="p">:</span> <span class="s">&#39;reset&#39;</span> <span class="p">}</span> <span class="p">,</span> <span class="n">ap</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_slice_update_time_stats</span><span class="p">(</span><span class="n">ap_name</span><span class="o">=</span><span class="n">ap</span><span class="p">,</span> 
+                                                  <span class="n">ap_down</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_down_slice_status_update</span><span class="p">(</span><span class="n">ap</span><span class="p">)</span> 
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s">&#39;slice&#39;</span><span class="p">:</span><span class="s">&#39;admin&#39;</span><span class="p">,</span> 
+                    <span class="s">&#39;command&#39;</span><span class="p">:</span><span class="s">&#39;reset&#39;</span>
+                <span class="p">},</span> 
+                <span class="n">ap</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">AuroraException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="APMonitor.restart_AP"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor.restart_AP">[docs]</a>    <span class="k">def</span> <span class="nf">restart_AP</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Restart the access point, telling the OS to reboot.</span>
 
+<span class="sd">        :param str ap:</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c"># The unique ID is fixed to be all F&#39;s for resets/restarts.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span> <span class="p">{</span> <span class="s">&#39;slice&#39;</span> <span class="p">:</span> <span class="s">&#39;admin&#39;</span><span class="p">,</span> <span class="s">&#39;command&#39;</span> <span class="p">:</span> <span class="s">&#39;restart&#39;</span> <span class="p">}</span> <span class="p">,</span> <span class="n">ap</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_slice_update_time_stats</span><span class="p">(</span><span class="n">ap_name</span><span class="o">=</span><span class="n">ap</span><span class="p">,</span> 
+                                                  <span class="n">ap_down</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_status_down</span><span class="p">(</span><span class="n">ap</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aurora_db</span><span class="o">.</span><span class="n">ap_down_slice_status_update</span><span class="p">(</span><span class="n">ap</span><span class="p">)</span> 
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s">&#39;slice&#39;</span><span class="p">:</span><span class="s">&#39;admin&#39;</span><span class="p">,</span> 
+                    <span class="s">&#39;command&#39;</span><span class="p">:</span><span class="s">&#39;restart&#39;</span>
+                <span class="p">},</span>
+                <span class="n">ap_name</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">AuroraException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="APMonitor.get_stats"><a class="viewcode-back" href="../../aurora.html#aurora.ap_monitor.APMonitor.get_stats">[docs]</a>    <span class="k">def</span> <span class="nf">get_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Query the access point for slice stats.&quot;&quot;&quot;</span>
-        <span class="c"># The unique ID is fixed to be all F&#39;s</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span> <span class="p">{</span> <span class="s">&#39;slice&#39;</span> <span class="p">:</span> <span class="s">&#39;admin&#39;</span><span class="p">,</span> <span class="s">&#39;command&#39;</span> <span class="p">:</span> <span class="s">&#39;get_stats&#39;</span><span class="p">},</span> <span class="n">ap</span><span class="p">)</span>
+        <span class="sd">&quot;&quot;&quot;Query the access point for slice stats.</span>
 
+<span class="sd">        :param str ap:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s">&#39;slice&#39;</span><span class="p">:</span><span class="s">&#39;admin&#39;</span><span class="p">,</span> 
+                    <span class="s">&#39;command&#39;</span><span class="p">:</span><span class="s">&#39;get_stats&#39;</span>
+                <span class="p">},</span> 
+                <span class="n">ap</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">AuroraException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
 
 <span class="c">#for test</span>
 <span class="c">#if __name__ == &#39;__main__&#39;:</span>

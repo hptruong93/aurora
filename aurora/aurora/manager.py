@@ -1,11 +1,12 @@
-"""The manager module houses the bulk of the logic required to process
-commands received from a client.  
-
-"""
 # 2014
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &
 #              Mike Kobierski 
 #
+"""The manager module houses the bulk of the logic required to process
+commands received from a client.  
+
+"""
+
 
 import json
 import logging
@@ -68,6 +69,8 @@ class Manager(object):
         host = 'localhost'
         username = 'outside_world'
         password = 'wireless_access'
+        manager_queue = 'AuroraManager'
+
         self.mysql_host = self.MYSQL_HOST #host
         self.mysql_username = self.MYSQL_USERNAME #'root'
         self.mysql_password = self.MYSQL_PASSWORD #'supersecret'
@@ -84,7 +87,8 @@ class Manager(object):
                                               password,
                                               self.mysql_username,
                                               self.mysql_password,
-                                              self.aurora_db)
+                                              self.aurora_db,
+                                              queue=manager_queue)
 
         self.apm = ap_monitor.APMonitor(self.dispatcher, self.aurora_db, self.mysql_host, self.mysql_username, self.mysql_password)
 
@@ -360,10 +364,10 @@ class Manager(object):
     def ap_reset(self, args, tenant_id, user_id, project_id):
         """Resets an access point.
 
-        ..note::
+        .. note::
 
             This results in all the slices on the access point being 
-            removed - they can then be restarted using ap-slice-restart.
+            removed -- they can then be restarted using ap-slice-restart.
 
         :rtype: dict
 
@@ -378,9 +382,9 @@ class Manager(object):
         """Returns a list to the client with nicely printed information 
         about the available access points.
 
-        Some options are available::
+        Some options are available:
 
-            -i: Additional information
+        -i   Additional information
 
         :rtype: dict
 
@@ -456,13 +460,15 @@ class Manager(object):
         one or more given slices.  The slices can be passed either by
         ap_slice_id or by a filter argument.
 
-        Valid choices for the command line include::
+        Valid choices for the command line include:
 
-            --ssid ap                  New SSID for slice
-            --encrypt type:key         Encryption for slice
-            --br controller            Bridge controller address
-            --interface tag:endpoint   Capsulator configuration
-            --file FILE                JSON config file
+        --interface <tag:endpoint>  Capsulator configuration
+        --encrypt <type:key>             Encryption for slice
+        --ssid <ap>                      New SSID for slice
+        --br <controller>                Bridge controller address
+
+        
+        --file <FILE>                    JSON config file
 
         An abbreviated json with the modifications is generated.  As 
         each section requires a 'name' argument on the agent side, the 
@@ -848,7 +854,7 @@ class Manager(object):
         Some slice data is writen to the SQL database to track its 
         history and associated SSID, owner, and project.
 
-        The --hint option should give the user some help in choosing 
+        The ``--hint`` option should give the user some help in choosing 
         a good access point on which he can create his slice.
 
         :rtype: dict
@@ -1359,10 +1365,10 @@ class Manager(object):
     def ap_slice_list(self, args, tenant_id, user_id, project_id):
         """Returns a nicely printed table of slices owned by a tenant.
 
-        Some options are available::
+        Some options are available:
 
-            -i: Additional information
-            -a: Include deleted slices
+        -i    Additional information
+        -a    Include deleted slices
 
         :rtype: dict
 
@@ -1648,7 +1654,7 @@ class Manager(object):
     def wnet_join_subnet(self, args, tenant_id, user_id, project_id):
         """Joins a wnet to an existing subnet within SAVI.
 
-        ..warning::
+        .. warning::
 
             Not implemented.
 
@@ -1724,9 +1730,9 @@ class Manager(object):
     def wnet_list(self, args, tenant_id, user_id, project_id):
         """Lists the wnets available to tenant.
 
-        Some options are available::
+        Some options are available:
 
-            -i: Show additional information about each wnet
+        -i    Show additional information about each wnet
 
         :rtype: dict
 
@@ -1769,10 +1775,10 @@ class Manager(object):
         """Shows more detailed information about a wnet.  Also lists 
         the slices associated with the wnet.
 
-        Some options are available::
+        Some options are available:
 
-            -i: Additional information about the associated slices
-            -a: Include deleted slices
+        -i    Additional information about the associated slices
+        -a    Include deleted slices
 
         :rtype: dict
 

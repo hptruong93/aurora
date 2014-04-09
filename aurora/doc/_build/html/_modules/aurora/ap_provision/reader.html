@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>aurora.ap_provision.ap_provision_reader &mdash; aurora  documentation</title>
+    <title>aurora.ap_provision.reader &mdash; aurora  documentation</title>
     
     <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -48,7 +48,7 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <h1>Source code for aurora.ap_provision.ap_provision_reader</h1><div class="highlight"><pre>
+  <h1>Source code for aurora.ap_provision.reader</h1><div class="highlight"><pre>
 <span class="kn">import</span> <span class="nn">glob</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -59,18 +59,16 @@
 <span class="c">#This module provides an API to read ap_provision</span>
 
 <span class="c">#Get all physical_ap</span>
-<span class="k">def</span> <span class="nf">_get_physical_ap_info</span><span class="p">():</span>
+<div class="viewcode-block" id="_get_physical_ap_info"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.reader._get_physical_ap_info">[docs]</a><span class="k">def</span> <span class="nf">_get_physical_ap_info</span><span class="p">():</span>
     <span class="n">output</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">current_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
-    <span class="n">provision_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">__file__</span><span class="p">))</span> <span class="c">#Change if file is moved somewhere else</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">provision_dir</span><span class="p">)</span>
-    <span class="k">for</span> <span class="nb">file</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s">&quot;*.json&quot;</span><span class="p">):</span>
+    <span class="n">provision_json_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">__file__</span><span class="p">)),</span><span class="s">&#39;json&#39;</span><span class="p">)</span> <span class="c">#Change if file is moved somewhere else</span>
+    <span class="k">for</span> <span class="nb">file</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">provision_json_dir</span><span class="p">,</span> <span class="s">&quot;*.json&quot;</span><span class="p">)):</span>
         <span class="n">content</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="nb">file</span><span class="p">))</span>
         <span class="n">output</span><span class="p">[</span><span class="n">content</span><span class="p">[</span><span class="s">&#39;queue&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">content</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">current_dir</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">output</span>
-
-<div class="viewcode-block" id="get_physical_ap_info"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.ap_provision_reader.get_physical_ap_info">[docs]</a><span class="k">def</span> <span class="nf">get_physical_ap_info</span><span class="p">(</span><span class="n">physical_ap</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="get_physical_ap_info"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.reader.get_physical_ap_info">[docs]</a><span class="k">def</span> <span class="nf">get_physical_ap_info</span><span class="p">(</span><span class="n">physical_ap</span><span class="p">):</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_get_physical_ap_info</span><span class="p">()[</span><span class="n">physical_ap</span><span class="p">]</span>
     <span class="k">except</span> <span class="ne">KeyError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
@@ -78,7 +76,7 @@
 
 <span class="c">#Return a dictionary containing all information about a slice, given what physical_ap the slice is in</span>
 <span class="c">#Return None if nothing is found</span></div>
-<div class="viewcode-block" id="get_slice"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.ap_provision_reader.get_slice">[docs]</a><span class="k">def</span> <span class="nf">get_slice</span><span class="p">(</span><span class="n">slice_id</span><span class="p">,</span> <span class="n">physical_ap</span><span class="p">):</span>
+<div class="viewcode-block" id="get_slice"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.reader.get_slice">[docs]</a><span class="k">def</span> <span class="nf">get_slice</span><span class="p">(</span><span class="n">slice_id</span><span class="p">,</span> <span class="n">physical_ap</span><span class="p">):</span>
     <span class="n">ap</span> <span class="o">=</span> <span class="n">get_physical_ap_info</span><span class="p">(</span><span class="n">physical_ap</span><span class="p">)</span>
     <span class="k">for</span> <span class="nb">slice</span> <span class="ow">in</span> <span class="n">ap</span><span class="p">[</span><span class="s">&#39;last_known_config&#39;</span><span class="p">][</span><span class="s">&#39;init_database&#39;</span><span class="p">]:</span>
         <span class="k">if</span> <span class="n">slice_id</span> <span class="o">==</span> <span class="nb">slice</span><span class="p">:</span>
@@ -86,61 +84,61 @@
     <span class="k">return</span> <span class="bp">None</span>
 
 <span class="c">#Return a dictionary containing all information about all slices in a certain ap</span></div>
-<div class="viewcode-block" id="get_slices"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.ap_provision_reader.get_slices">[docs]</a><span class="k">def</span> <span class="nf">get_slices</span><span class="p">(</span><span class="n">ap_info</span><span class="p">):</span>
+<div class="viewcode-block" id="get_slices"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.reader.get_slices">[docs]</a><span class="k">def</span> <span class="nf">get_slices</span><span class="p">(</span><span class="n">ap_info</span><span class="p">):</span>
     <span class="n">output</span> <span class="o">=</span> <span class="n">ap_info</span><span class="p">[</span><span class="s">&#39;last_known_config&#39;</span><span class="p">][</span><span class="s">&#39;init_database&#39;</span><span class="p">]</span>
     <span class="n">output</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&quot;default_slice&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">output</span>
 
 <span class="c">#Get how many slice there are in the current ap</span></div>
-<div class="viewcode-block" id="get_slice_count"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.ap_provision_reader.get_slice_count">[docs]</a><span class="k">def</span> <span class="nf">get_slice_count</span><span class="p">(</span><span class="n">physical_ap_info</span><span class="p">):</span>
+<div class="viewcode-block" id="get_slice_count"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.reader.get_slice_count">[docs]</a><span class="k">def</span> <span class="nf">get_slice_count</span><span class="p">(</span><span class="n">physical_ap_info</span><span class="p">):</span>
     <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">physical_ap_info</span><span class="p">[</span><span class="s">&#39;last_known_config&#39;</span><span class="p">][</span><span class="s">&#39;init_database&#39;</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span>
 
 <span class="c">#Get the radio interface given the flavor</span>
 <span class="c">#Return None if no interface with flavor exists</span></div>
-<div class="viewcode-block" id="get_radio_interface"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.ap_provision_reader.get_radio_interface">[docs]</a><span class="k">def</span> <span class="nf">get_radio_interface</span><span class="p">(</span><span class="nb">slice</span><span class="p">,</span> <span class="n">flavor</span><span class="p">):</span>
+<div class="viewcode-block" id="get_radio_interface"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.reader.get_radio_interface">[docs]</a><span class="k">def</span> <span class="nf">get_radio_interface</span><span class="p">(</span><span class="nb">slice</span><span class="p">,</span> <span class="n">flavor</span><span class="p">):</span>
     <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="nb">slice</span><span class="p">[</span><span class="s">&#39;RadioInterfaces&#39;</span><span class="p">]:</span>
         <span class="k">if</span> <span class="n">interface</span><span class="p">[</span><span class="s">&#39;flavor&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">flavor</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">interface</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">]</span>
     <span class="k">return</span> <span class="bp">None</span>
 </div>
-<div class="viewcode-block" id="get_radio_wifi_bss"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.ap_provision_reader.get_radio_wifi_bss">[docs]</a><span class="k">def</span> <span class="nf">get_radio_wifi_bss</span><span class="p">(</span><span class="nb">slice</span><span class="p">):</span>
+<div class="viewcode-block" id="get_radio_wifi_bss"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.reader.get_radio_wifi_bss">[docs]</a><span class="k">def</span> <span class="nf">get_radio_wifi_bss</span><span class="p">(</span><span class="nb">slice</span><span class="p">):</span>
     <span class="n">interface</span> <span class="o">=</span> <span class="n">get_radio_interface</span><span class="p">(</span><span class="nb">slice</span><span class="p">,</span> <span class="s">&#39;wifi_bss&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">interface</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">interface</span><span class="p">[</span><span class="s">&#39;radio&#39;</span><span class="p">]</span>
     <span class="k">return</span> <span class="bp">None</span>
 </div>
-<div class="viewcode-block" id="get_radio_wifi_radio"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.ap_provision_reader.get_radio_wifi_radio">[docs]</a><span class="k">def</span> <span class="nf">get_radio_wifi_radio</span><span class="p">(</span><span class="nb">slice</span><span class="p">):</span>
+<div class="viewcode-block" id="get_radio_wifi_radio"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.reader.get_radio_wifi_radio">[docs]</a><span class="k">def</span> <span class="nf">get_radio_wifi_radio</span><span class="p">(</span><span class="nb">slice</span><span class="p">):</span>
     <span class="n">interface</span> <span class="o">=</span> <span class="n">get_radio_interface</span><span class="p">(</span><span class="nb">slice</span><span class="p">,</span> <span class="s">&#39;wifi_radio&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">interface</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">interface</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]</span>
     <span class="k">return</span> <span class="bp">None</span>
 </div>
-<div class="viewcode-block" id="get_rate_up"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.ap_provision_reader.get_rate_up">[docs]</a><span class="k">def</span> <span class="nf">get_rate_up</span><span class="p">(</span><span class="nb">slice</span><span class="p">):</span>
+<div class="viewcode-block" id="get_uplink"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.reader.get_uplink">[docs]</a><span class="k">def</span> <span class="nf">get_uplink</span><span class="p">(</span><span class="nb">slice</span><span class="p">):</span>
     <span class="n">sum_up</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">slice</span><span class="p">[</span><span class="s">&#39;TrafficAttributes&#39;</span><span class="p">]:</span>
-            <span class="n">sum_up</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="s">&#39;rate_up&#39;</span><span class="p">])</span>
+            <span class="n">sum_up</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="s">&#39;uplink&#39;</span><span class="p">])</span>
     <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="c">#Well this slice does not have any traffic info associated with it</span>
         <span class="k">pass</span>
     <span class="k">return</span> <span class="n">sum_up</span>
 </div>
-<div class="viewcode-block" id="get_rate_down"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.ap_provision_reader.get_rate_down">[docs]</a><span class="k">def</span> <span class="nf">get_rate_down</span><span class="p">(</span><span class="nb">slice</span><span class="p">):</span>
+<div class="viewcode-block" id="get_downlink"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.reader.get_downlink">[docs]</a><span class="k">def</span> <span class="nf">get_downlink</span><span class="p">(</span><span class="nb">slice</span><span class="p">):</span>
     <span class="n">sum_down</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">slice</span><span class="p">[</span><span class="s">&#39;TrafficAttributes&#39;</span><span class="p">]:</span>
-            <span class="n">sum_down</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="s">&#39;rate_down&#39;</span><span class="p">])</span>
+            <span class="n">sum_down</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="s">&#39;downlink&#39;</span><span class="p">])</span>
     <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="c">#Well this slice does not have any traffic info associated with it</span>
         <span class="k">pass</span>
     <span class="k">return</span> <span class="n">sum_down</span>    
 
 <span class="c">#Radio name: radio0, radio1, ... radio10</span></div>
-<span class="k">def</span> <span class="nf">_get_radio_number</span><span class="p">(</span><span class="n">radio_name</span><span class="p">):</span>
+<div class="viewcode-block" id="_get_radio_number"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.reader._get_radio_number">[docs]</a><span class="k">def</span> <span class="nf">_get_radio_number</span><span class="p">(</span><span class="n">radio_name</span><span class="p">):</span>
     <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">radio_name</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s">&#39;radio&#39;</span><span class="p">)])</span>
-
-<div class="viewcode-block" id="get_number_slice_on_radio"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.ap_provision_reader.get_number_slice_on_radio">[docs]</a><span class="k">def</span> <span class="nf">get_number_slice_on_radio</span><span class="p">(</span><span class="n">physical_ap_info</span><span class="p">,</span> <span class="n">radio_name</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="get_number_slice_on_radio"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.reader.get_number_slice_on_radio">[docs]</a><span class="k">def</span> <span class="nf">get_number_slice_on_radio</span><span class="p">(</span><span class="n">physical_ap_info</span><span class="p">,</span> <span class="n">radio_name</span><span class="p">):</span>
     <span class="n">slices</span> <span class="o">=</span> <span class="n">physical_ap_info</span><span class="p">[</span><span class="s">&#39;last_known_config&#39;</span><span class="p">][</span><span class="s">&#39;init_database&#39;</span><span class="p">]</span>
     <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
 

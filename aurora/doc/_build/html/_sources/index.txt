@@ -1,5 +1,5 @@
 .. aurora documentation master file, created by
-   sphinx-quickstart on Tue Mar 11 15:07:42 2014.
+   sphinx-quickstart on Wed Apr  9 10:19:29 2014.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 

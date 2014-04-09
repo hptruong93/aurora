@@ -52,10 +52,15 @@
 <span class="c"># Capsulator Flavor Plugin for slice_plugin</span>
 <span class="c"># SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith</span>
 <span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">glob</span>
 <span class="kn">import</span> <span class="nn">importlib</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">types</span>
+
+<span class="kn">from</span> <span class="nn">aurora.exc</span> <span class="kn">import</span> <span class="o">*</span>
 
 
 <div class="viewcode-block" id="CapsulatorPlugin"><a class="viewcode-back" href="../../../aurora.plugins.html#aurora.plugins.capsulator_plugin.CapsulatorPlugin">[docs]</a><span class="k">class</span> <span class="nc">CapsulatorPlugin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -73,30 +78,42 @@
         
 <div class="viewcode-block" id="CapsulatorPlugin.default_tuntag"><a class="viewcode-back" href="../../../aurora.plugins.html#aurora.plugins.capsulator_plugin.CapsulatorPlugin.default_tuntag">[docs]</a>    <span class="k">def</span> <span class="nf">default_tuntag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c">#Load tenant slice database</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">JFILE</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;/../json/apslice-&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tenant_id</span><span class="p">)</span><span class="o">+</span><span class="s">&#39;.json&#39;</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span>
-            <span class="n">APlist</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">JFILE</span><span class="p">)</span>
-            <span class="n">JFILE</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-        <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
-            <span class="k">print</span><span class="p">(</span><span class="s">&#39;Error opening file!&#39;</span><span class="p">)</span>
-            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        
-        <span class="c">#Get starting tunnel_tag numbers, for generation</span>
+        <span class="n">config_db_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">__file__</span><span class="p">))),</span>
+                                     <span class="s">&#39;config_db&#39;</span><span class="p">,</span>
+                                     <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tenant_id</span><span class="p">))</span>
+
         <span class="n">ttlist</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">APlist</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="n">entry</span><span class="p">[</span><span class="s">&#39;VirtualInterfaces&#39;</span><span class="p">]:</span>
-                <span class="k">if</span> <span class="s">&#39;tunnel_tag&#39;</span> <span class="ow">in</span> <span class="n">interface</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">]:</span>
-                    <span class="n">ttlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">interface</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="s">&#39;tunnel_tag&#39;</span><span class="p">]))</span>
+        <span class="k">for</span> <span class="n">file_</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config_db_dir</span><span class="p">,</span> <span class="s">&quot;*.json&quot;</span><span class="p">)):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">content</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">file_</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="n">content</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;VirtualInterfaces&#39;</span><span class="p">,</span><span class="bp">None</span><span class="p">):</span>
+                    <span class="n">ttlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="nb">int</span><span class="p">(</span><span class="n">interface</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                                <span class="s">&#39;attributes&#39;</span><span class="p">,{}</span>
+                            <span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                                <span class="s">&#39;tunnel_tag&#39;</span><span class="p">,</span> <span class="mi">0</span>
+                            <span class="p">)</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">ttlist</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
 </div>
 <div class="viewcode-block" id="CapsulatorPlugin.parse"><a class="viewcode-back" href="../../../aurora.plugins.html#aurora.plugins.capsulator_plugin.CapsulatorPlugin.parse">[docs]</a>    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">numSlice</span><span class="p">,</span> <span class="n">currentIndex</span><span class="p">,</span> <span class="n">entryIndex</span><span class="p">):</span>
         <span class="n">TuntagOffset</span> <span class="o">=</span> <span class="n">currentIndex</span> <span class="o">+</span> <span class="n">entryIndex</span> <span class="c">#For Generation purposes, ensures a unique tuntag for each slice</span>
         <span class="n">parsedEntry</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entryFormat</span><span class="p">)</span>
         
+        <span class="n">auto_tunnel_tag</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;tunnel_tag&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s">&quot;auto&quot;</span><span class="p">:</span>
+            <span class="n">auto_tunnel_tag</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">del</span> <span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="s">&#39;tunnel_tag&#39;</span><span class="p">]</span>
+
         <span class="c">#First, ensure all attributes that are not default are present</span>
         <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">attributes</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="n">attr</span><span class="p">][</span><span class="s">&#39;default&#39;</span><span class="p">]:</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="n">attr</span><span class="p">][</span><span class="s">&#39;default&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">attr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">]:</span>
+                    <span class="k">print</span> <span class="s">&quot;Attr: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">attr</span>
                     <span class="n">err_msg</span> <span class="o">=</span> <span class="s">&#39;Error in json file, attributes do not match in capsulator Flavor (VirtualInterfaces)!&#39;</span>
                     <span class="k">print</span><span class="p">(</span><span class="n">err_msg</span><span class="p">)</span>
                     <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">err_msg</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
@@ -104,11 +121,11 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">]:</span>
                     <span class="n">parsedEntry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="n">attr</span><span class="p">][</span><span class="s">&#39;default&#39;</span><span class="p">]</span>
-        
-        <span class="k">print</span> <span class="s">&quot;numSlice:&quot;</span><span class="p">,</span><span class="n">numSlice</span>
-  <span class="c">#      print entry[&#39;attributes&#39;][key]</span>
-                     
-        <span class="c">#Loop through the attributes</span>
+
+        <span class="c">#print &quot;numSlice:&quot;,numSlice</span>
+        <span class="c">#print entry[&#39;attributes&#39;][key]</span>
+
+        <span class="c"># Loop through the attributes</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">attributes</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">]:</span> <span class="c">#Default</span>
                 <span class="n">parsedEntry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s">&#39;default&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">TuntagOffset</span><span class="p">)</span>
@@ -118,27 +135,38 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">parsedEntry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">])</span>
             <span class="k">else</span><span class="p">:</span> <span class="c">#List entry, check for cases</span>
-                <span class="c">#Case 1, single AP</span>
-                <span class="k">if</span> <span class="n">numSlice</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="n">parsedEntry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c"># Case 1, single AP</span>
+                    <span class="k">if</span> <span class="n">numSlice</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">])</span> <span class="ow">is</span> <span class="n">types</span><span class="o">.</span><span class="n">IntType</span><span class="p">:</span>
+                            <span class="n">parsedEntry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">])</span>
+                        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                            <span class="n">parsedEntry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="n">InvalidCapsulatorConfigurationException</span><span class="p">()</span>
+
+                    <span class="c"># Case 2, multiple APs</span>
+                    <span class="k">elif</span> <span class="n">numSlice</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]):</span>
+                        <span class="n">parsedEntry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">][</span><span class="n">currentIndex</span><span class="p">])</span>
+                    
+                    <span class="c"># Case 3, Empty list, we need to generate (will need to use init loaded json information)</span>
+                    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">parsedEntry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s">&#39;default&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">TuntagOffset</span><span class="p">)</span>
+                    
+                    <span class="c"># Case 4, error in data</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">print</span> <span class="n">numSlice</span>
+                        <span class="k">print</span> <span class="nb">len</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">])</span>
+                        <span class="n">err_msg</span> <span class="o">=</span> <span class="s">&#39;Error in json file, please check that the tunnel_tags match the number of APs!&#39;</span>
+                    <span class="c">#    print(err_msg)</span>
+                        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">err_msg</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+                  <span class="c">#      sys.exit(-1) #Maybe implement an exception?</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
             
-                <span class="c">#Case 2, multiple APs</span>
-                <span class="k">elif</span> <span class="n">numSlice</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]):</span>
-                    <span class="n">parsedEntry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">][</span><span class="n">currentIndex</span><span class="p">])</span>
-                
-                <span class="c">#Case 3, Empty list, we need to generate (will need to use init loaded json information)</span>
-                <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">parsedEntry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s">&#39;default&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">TuntagOffset</span><span class="p">)</span>
-                
-                <span class="c">#Case 4, error in data</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">print</span> <span class="n">numSlice</span>
-                    <span class="k">print</span> <span class="nb">len</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">])</span>
-                    <span class="n">err_msg</span> <span class="o">=</span> <span class="s">&#39;Error in json file, please check that the tunnel_tags match the number of APs!&#39;</span>
-                <span class="c">#    print(err_msg)</span>
-                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">err_msg</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
-              <span class="c">#      sys.exit(-1) #Maybe implement an exception?</span>
-            
+        <span class="k">if</span> <span class="n">auto_tunnel_tag</span><span class="p">:</span>
+            <span class="n">parsedEntry</span><span class="p">[</span><span class="s">&#39;attributes&#39;</span><span class="p">][</span><span class="s">&#39;auto&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
         <span class="k">return</span> <span class="n">parsedEntry</span></div></div>
 </pre></div>
 

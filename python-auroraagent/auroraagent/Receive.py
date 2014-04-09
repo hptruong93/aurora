@@ -38,7 +38,9 @@ class Receive():
     only this file need be executed on the machine - it will import
     the rest of Aurora and pass the commands along."""
     
-    def __init__(self, region, queue, config, rabbitmq_host, rabbitmq_username, rabbitmq_password, rabbitmq_reply_queue):
+    def __init__(self, region, queue, config, 
+                 rabbitmq_host, rabbitmq_username, 
+                 rabbitmq_password, rabbitmq_reply_queue):
         """Connects to RabbitMQ and initializes Aurora locally."""
         
         # Run Pika logger so that error messages get printed
@@ -66,14 +68,19 @@ class Receive():
     def on_channel_open(self, new_channel):
         """Called when our channel has opened"""
         self.channel = new_channel
-        # Queue set to delete if this consumer dies, to be volatile (RabbitMQ dies -> takes queue with it)
-        # and to not require acknowledgements.  All of these are useful if you want to preserve messages,
-        # but it is likely that any preserved messages will take longer than the timeout on the manager
-        # to be delivered and processed (i.e. OS reboot, RabbitMQ restart, etc.) and will put the AP
-        # into some state unknown to the manager.  Thus, we discard them if anything ever goes wrong
+        # Queue set to delete if this consumer dies, to be volatile 
+        # (RabbitMQ dies -> takes queue with it) and to not require 
+        # acknowledgements.  All of these are useful if you want to 
+        # preserve messages, but it is likely that any preserved 
+        # messages will take longer than the timeout on the manager 
+        # to be delivered and processed (i.e. OS reboot, RabbitMQ 
+        # restart, etc.) and will put the AP into some state 
+        # unknown to the manager.  Thus, we discard them if anything 
+        # ever goes wrong
 
         # Note: no_ack set in on_queue_declared
-        self.channel.queue_declare(queue=self.queue, durable=False, callback=self.on_queue_declared,
+        self.channel.queue_declare(queue=self.queue, durable=False, 
+                                   callback=self.on_queue_declared,
                                    auto_delete=True)
 
     # Step #4

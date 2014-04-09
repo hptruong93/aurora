@@ -99,6 +99,9 @@
 </div>
 <div class="viewcode-block" id="InvalidACTIVEStatusUpdate"><a class="viewcode-back" href="../../aurora.html#aurora.exc.InvalidACTIVEStatusUpdate">[docs]</a><span class="k">class</span> <span class="nc">InvalidACTIVEStatusUpdate</span><span class="p">(</span><span class="n">InvalidStatusUpdate</span><span class="p">):</span>
     <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;Cannot change status </span><span class="si">%(status)s</span><span class="s"> to &#39;ACTIVE&#39;&quot;</span>
+</div>
+<div class="viewcode-block" id="DOWNtoPENDINGStatusUpdateWarning"><a class="viewcode-back" href="../../aurora.html#aurora.exc.DOWNtoPENDINGStatusUpdateWarning">[docs]</a><span class="k">class</span> <span class="nc">DOWNtoPENDINGStatusUpdateWarning</span><span class="p">(</span><span class="n">InvalidStatusUpdate</span><span class="p">):</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;Slice </span><span class="si">%(ap_slice_id)s</span><span class="s"> is &#39;DOWN&#39;, not updating to &#39;PENDING&#39;&quot;</span>
 
 <span class="c">#---------</span>
 <span class="c"># Aurora DB related exceptions</span>
@@ -110,10 +113,52 @@
     <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;Please enter a valid ap_name&quot;</span>
 </div>
 <div class="viewcode-block" id="NoWnetExistsForTenantException"><a class="viewcode-back" href="../../aurora.html#aurora.exc.NoWnetExistsForTenantException">[docs]</a><span class="k">class</span> <span class="nc">NoWnetExistsForTenantException</span><span class="p">(</span><span class="n">AuroraException</span><span class="p">):</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;No wnets exist&quot;</span>
+</div>
+<div class="viewcode-block" id="NoWnetNameExistsForTenantException"><a class="viewcode-back" href="../../aurora.html#aurora.exc.NoWnetNameExistsForTenantException">[docs]</a><span class="k">class</span> <span class="nc">NoWnetNameExistsForTenantException</span><span class="p">(</span><span class="n">AuroraException</span><span class="p">):</span>
     <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;Wnet </span><span class="si">%(wnet)s</span><span class="s"> does not exist&quot;</span>
 </div>
 <div class="viewcode-block" id="APSliceAlreadyInWnetException"><a class="viewcode-back" href="../../aurora.html#aurora.exc.APSliceAlreadyInWnetException">[docs]</a><span class="k">class</span> <span class="nc">APSliceAlreadyInWnetException</span><span class="p">(</span><span class="n">AuroraException</span><span class="p">):</span>
-    <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;AP Slice </span><span class="si">%(ap_slice_id)s</span><span class="s"> already in &#39;</span><span class="si">%(wnet)s</span><span class="s">&#39;&quot;</span></div>
+    <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;AP Slice </span><span class="si">%(ap_slice_id)s</span><span class="s"> already in &#39;</span><span class="si">%(wnet)s</span><span class="s">&#39;&quot;</span>
+</div>
+<div class="viewcode-block" id="NoSliceExistsException"><a class="viewcode-back" href="../../aurora.html#aurora.exc.NoSliceExistsException">[docs]</a><span class="k">class</span> <span class="nc">NoSliceExistsException</span><span class="p">(</span><span class="n">AuroraException</span><span class="p">):</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;No slice </span><span class="si">%(ap_slice_id)s</span><span class="s"> exists&quot;</span>
+
+<span class="c">#---------</span>
+<span class="c"># Provision Server exceptions</span>
+<span class="c">#</span></div>
+<div class="viewcode-block" id="RequestInvalidConfigFileNameException"><a class="viewcode-back" href="../../aurora.html#aurora.exc.RequestInvalidConfigFileNameException">[docs]</a><span class="k">class</span> <span class="nc">RequestInvalidConfigFileNameException</span><span class="p">(</span><span class="n">AuroraException</span><span class="p">):</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;File names outside directory not permitted&quot;</span>
+
+<span class="c">#---------</span>
+<span class="c"># Slice plugin exceptions</span>
+<span class="c">#</span></div>
+<div class="viewcode-block" id="InvalidCapsulatorConfigurationException"><a class="viewcode-back" href="../../aurora.html#aurora.exc.InvalidCapsulatorConfigurationException">[docs]</a><span class="k">class</span> <span class="nc">InvalidCapsulatorConfigurationException</span><span class="p">(</span><span class="n">AuroraException</span><span class="p">):</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;The capsulator configuration given is invalid&quot;</span>
+
+<span class="c">#---------</span>
+<span class="c"># Manager related exceptions</span>
+<span class="c">#</span></div>
+<div class="viewcode-block" id="NoSliceConfigFileException"><a class="viewcode-back" href="../../aurora.html#aurora.exc.NoSliceConfigFileException">[docs]</a><span class="k">class</span> <span class="nc">NoSliceConfigFileException</span><span class="p">(</span><span class="n">AuroraException</span><span class="p">):</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;No slice configuration file found&quot;</span>
+</div>
+<div class="viewcode-block" id="KeyboardInterruptStopEvent"><a class="viewcode-back" href="../../aurora.html#aurora.exc.KeyboardInterruptStopEvent">[docs]</a><span class="k">class</span> <span class="nc">KeyboardInterruptStopEvent</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;Stopping webserver&quot;</span>
+
+<span class="c">#---------</span>
+<span class="c"># Dispatcher related exceptions</span>
+<span class="c">#</span></div>
+<div class="viewcode-block" id="MessageSendAttemptWhileClosing"><a class="viewcode-back" href="../../aurora.html#aurora.exc.MessageSendAttemptWhileClosing">[docs]</a><span class="k">class</span> <span class="nc">MessageSendAttemptWhileClosing</span><span class="p">(</span><span class="n">AuroraException</span><span class="p">):</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;Tried to dispatch while dispatcher is closing&quot;</span>
+</div>
+<div class="viewcode-block" id="DispatchTimeout"><a class="viewcode-back" href="../../aurora.html#aurora.exc.DispatchTimeout">[docs]</a><span class="k">class</span> <span class="nc">DispatchTimeout</span><span class="p">(</span><span class="n">AuroraException</span><span class="p">):</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;A timeout occured during dispatch&quot;</span>
+</div>
+<div class="viewcode-block" id="DispatchLockedForAPTimeout"><a class="viewcode-back" href="../../aurora.html#aurora.exc.DispatchLockedForAPTimeout">[docs]</a><span class="k">class</span> <span class="nc">DispatchLockedForAPTimeout</span><span class="p">(</span><span class="n">DispatchTimeout</span><span class="p">):</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;Timeout occured during dispatch for </span><span class="si">%(ap)s</span><span class="s">&quot;</span>
+</div>
+<div class="viewcode-block" id="DispatchWaitForOpenChannelTimeout"><a class="viewcode-back" href="../../aurora.html#aurora.exc.DispatchWaitForOpenChannelTimeout">[docs]</a><span class="k">class</span> <span class="nc">DispatchWaitForOpenChannelTimeout</span><span class="p">(</span><span class="n">DispatchTimeout</span><span class="p">):</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;Timeout occured waiting for open channel during dispatch&quot;</span></div>
 </pre></div>
 
           </div>

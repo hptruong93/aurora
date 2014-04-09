@@ -49,9 +49,12 @@
           <div class="body">
             
   <h1>Source code for aurora.request_verification.request_verify_API</h1><div class="highlight"><pre>
-<span class="kn">import</span> <span class="nn">request_verification</span> <span class="kn">as</span> <span class="nn">verify_agent</span>
-<span class="kn">import</span> <span class="nn">verification_exception</span> <span class="kn">as</span> <span class="nn">exceptions</span>
-<span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+
+<span class="kn">from</span> <span class="nn">aurora.request_verification</span> <span class="kn">import</span> <span class="n">request_verification</span> <span class="k">as</span> <span class="n">verify_agent</span>
+<span class="kn">from</span> <span class="nn">aurora.request_verification</span> <span class="kn">import</span> <span class="n">verification_exception</span> <span class="k">as</span> <span class="n">exceptions</span>
+
 
 <div class="viewcode-block" id="RequestVerifier"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.request_verify_API.RequestVerifier">[docs]</a><span class="k">class</span> <span class="nc">RequestVerifier</span><span class="p">():</span>
     <span class="c">#The command names must be identical to the method calling</span>
@@ -129,8 +132,8 @@
                 <span class="s">&quot;TrafficAttributes&quot;</span><span class="p">:</span> <span class="p">[</span>
                     <span class="p">{</span>       
                         <span class="s">&quot;attributes&quot;</span><span class="p">:</span> <span class="p">{</span>
-                            <span class="s">&quot;rate_down&quot;</span><span class="p">:</span> <span class="s">&quot;1000000&quot;</span><span class="p">,</span>
-                            <span class="s">&quot;rate_up&quot;</span><span class="p">:</span> <span class="s">&quot;1000000&quot;</span><span class="p">,</span>
+                            <span class="s">&quot;downlink&quot;</span><span class="p">:</span> <span class="s">&quot;1000000&quot;</span><span class="p">,</span>
+                            <span class="s">&quot;uplink&quot;</span><span class="p">:</span> <span class="s">&quot;1000000&quot;</span><span class="p">,</span>
                             <span class="s">&quot;if_up&quot;</span><span class="p">:</span> <span class="s">&quot;veth2&quot;</span><span class="p">,</span>
                             <span class="s">&quot;if_down&quot;</span><span class="p">:</span> <span class="s">&quot;vwlan0-2&quot;</span><span class="p">,</span>
                             <span class="s">&quot;name&quot;</span><span class="p">:</span> <span class="s">&quot;veth2vwlan0-2&quot;</span>

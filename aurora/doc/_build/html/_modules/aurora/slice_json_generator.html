@@ -58,7 +58,7 @@
 
 <div class="viewcode-block" id="SliceJSONGenerator"><a class="viewcode-back" href="../../aurora.html#aurora.slice_json_generator.SliceJSONGenerator">[docs]</a><span class="k">class</span> <span class="nc">SliceJSONGenerator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+<div class="viewcode-block" id="SliceJSONGenerator.__init__"><a class="viewcode-back" href="../../aurora.html#aurora.slice_json_generator.SliceJSONGenerator.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
         <span class="c">#Initialize outside dictionary and populate</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s">&#39;VirtualInterfaces&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -67,7 +67,7 @@
         <span class="c">#Initialize function dictionary</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">addVI</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">listVI</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">delVI</span><span class="p">,</span> <span class="mi">4</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">addVB</span><span class="p">,</span> <span class="mi">5</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">listVB</span><span class="p">,</span> <span class="mi">6</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">delVB</span><span class="p">,</span> <span class="mi">7</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">printConfig</span><span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-    
+    </div>
 <div class="viewcode-block" id="SliceJSONGenerator.generate"><a class="viewcode-back" href="../../aurora.html#aurora.slice_json_generator.SliceJSONGenerator.generate">[docs]</a>    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
         <span class="n">exitLoop</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="k">while</span> <span class="ow">not</span> <span class="n">exitLoop</span><span class="p">:</span>

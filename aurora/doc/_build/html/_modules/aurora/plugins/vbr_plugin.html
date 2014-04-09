@@ -62,8 +62,8 @@
     
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tenant_id</span> <span class="o">=</span> <span class="n">tenant_id</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">flavors</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;ovs&#39;</span><span class="p">:</span><span class="s">&#39;core.plugins.ovs_plugin.OVSPlugin&#39;</span><span class="p">,</span>
-                        <span class="s">&#39;linux_bridge&#39;</span><span class="p">:</span><span class="s">&#39;core.plugins.linux_bridge_plugin.LinuxBridgePlugin&#39;</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flavors</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;ovs&#39;</span><span class="p">:</span><span class="s">&#39;aurora.plugins.ovs_plugin.OVSPlugin&#39;</span><span class="p">,</span>
+                        <span class="s">&#39;linux_bridge&#39;</span><span class="p">:</span><span class="s">&#39;aurora.plugins.linux_bridge_plugin.LinuxBridgePlugin&#39;</span><span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="p">[{</span><span class="s">&#39;flavor&#39;</span><span class="p">:</span><span class="s">&#39;linux_bridge&#39;</span><span class="p">,</span>
                          <span class="s">&#39;attributes&#39;</span><span class="p">:{</span><span class="s">&#39;name&#39;</span><span class="p">:</span><span class="s">&#39;linux_bridge&#39;</span><span class="p">,</span>
                                        <span class="s">&#39;interfaces&#39;</span><span class="p">:[],</span>

@@ -1,6 +1,11 @@
+#!/usr/bin/python -tt
+# 2014
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &
+#              Mike Kobierski 
+#
 """Module containing threads which can run a continuous
 loop until a stop event is thrown.  Thread target code must
-have a keyword argument for stop_event and must check
+have a keyword argument for ``stop_event`` and must check
 it periodically eg.::
 
     if stop_event.is_set(): break

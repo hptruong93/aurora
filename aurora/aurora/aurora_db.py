@@ -1,12 +1,11 @@
-"""Collection of methods for adding, updating, deleting, 
-and querying the SQL database stored by Aurora Manager.
-
-"""
 # 2014
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &
 #              Mike Kobierski 
 #
+"""Collection of methods for adding, updating, deleting, 
+and querying the SQL database stored by Aurora Manager.
 
+"""
 import datetime
 import json
 import logging
@@ -62,7 +61,7 @@ class AuroraDB(object):
         """Returns a handle for MySQL database access using 
         credentials assigned when AuroraDB instance was created.
 
-        :rtype: MySQLdb.Connection()
+        :rtype: MySQLdb.Connection
 
         """
         return mdb.connect(self.mysql_host, self.mysql_username,
@@ -103,7 +102,7 @@ class AuroraDB(object):
     def ap_add_tag(self, ap_name, tag):
         """Adds a tag to an AP using the location_tags table.
 
-        ..note::
+        .. note::
 
             This method uses the old way of returning a string with 
             the outcome.  A better way is to return Nothing in the 
@@ -186,7 +185,7 @@ class AuroraDB(object):
 
     def _get_time_format(self, time):
         """Helper method to create a standardized time format.
-        Input parameter is a :clsas:`datetime.timedelta`.
+        Input parameter is a :class:`datetime.timedelta`.
 
         :param :class:`datetime.timedelta` time:
         :rtype: str
@@ -774,7 +773,7 @@ class AuroraDB(object):
         tenant.  Slice will not be added if it is already part of the 
         wnet.
 
-        ..note::
+        .. note::
 
             This method uses the old way of returning a string with 
             the outcome.  A better way is to return Nothing in the 
@@ -832,7 +831,7 @@ class AuroraDB(object):
     def wnet_remove_wslice(self, tenant_id, slice_id, name):
         """Removes a wireless slice from a wnet.
 
-        ..note::
+        .. note::
 
             This method uses the old way of returning a string with 
             the outcome.  A better way is to return Nothing in the 
@@ -1056,7 +1055,7 @@ class AuroraDB(object):
         """Tracks DB information related to joining a wnet with an 
         existing subnet.
 
-        ..warning::
+        .. warning::
 
             Not implemented.
 

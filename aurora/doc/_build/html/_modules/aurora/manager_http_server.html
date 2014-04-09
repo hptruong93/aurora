@@ -54,14 +54,19 @@
 <span class="kn">import</span> <span class="nn">BaseHTTPServer</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
 <span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
 
-<span class="kn">import</span> <span class="nn">cls_logger</span>
-<span class="kn">import</span> <span class="nn">manager</span>
+<span class="kn">from</span> <span class="nn">aurora</span> <span class="kn">import</span> <span class="n">cls_logger</span>
+<span class="kn">from</span> <span class="nn">aurora</span> <span class="kn">import</span> <span class="n">manager</span>
+<span class="kn">from</span> <span class="nn">aurora.exc</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
 
+
+<span class="n">CLIENT_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">__file__</span><span class="p">))</span>
 
 <div class="viewcode-block" id="NewConnectionHandler"><a class="viewcode-back" href="../../aurora.html#aurora.manager_http_server.NewConnectionHandler">[docs]</a><span class="k">class</span> <span class="nc">NewConnectionHandler</span><span class="p">(</span><span class="n">BaseHTTPServer</span><span class="o">.</span><span class="n">BaseHTTPRequestHandler</span><span class="p">):</span>
     <span class="n">server_version</span><span class="o">=</span> <span class="s">&quot;Aurora/0.2&quot;</span>
@@ -69,7 +74,7 @@
 
     <span class="c"># Override __init__ to instantiate Manager, pass along parameters:</span>
     <span class="c"># BaseHTTPServer.BaseHTTPRequestHandler(request, client_address, server)</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<div class="viewcode-block" id="NewConnectionHandler.__init__"><a class="viewcode-back" href="../../aurora.html#aurora.manager_http_server.NewConnectionHandler.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span> <span class="o">=</span> <span class="n">cls_logger</span><span class="o">.</span><span class="n">get_cls_logger</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">NewConnectionHandler</span><span class="o">.</span><span class="n">MANAGER</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Error: No manager to handle request.&quot;</span><span class="p">)</span>
@@ -77,7 +82,7 @@
         <span class="c">#print &quot;\nConstructing NewConnectionHandler using&quot;, NewConnectionHandler.MANAGER</span>
         <span class="n">BaseHTTPServer</span><span class="o">.</span><span class="n">BaseHTTPRequestHandler</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
     
-    <span class="c"># __del__ does not override anything</span>
+    <span class="c"># __del__ does not override anything</span></div>
     <span class="k">def</span> <span class="nf">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c">#print &quot;Destructing NewConnectionHandler&quot;</span>
         <span class="k">pass</span>
@@ -88,7 +93,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">end_headers</span><span class="p">()</span>
         
         <span class="c">#Open response file</span>
-        <span class="n">RESPONSEFILE</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s">&#39;core/json/response.json&#39;</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span>
+        <span class="n">RESPONSEFILE</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">CLIENT_DIR</span><span class="p">,</span> <span class="s">&#39;json/response.json&#39;</span><span class="p">),</span> <span class="s">&#39;r&#39;</span><span class="p">)</span>
         <span class="n">response</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">RESPONSEFILE</span><span class="p">)</span>
         
         <span class="bp">self</span><span class="o">.</span><span class="n">wfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
@@ -98,7 +103,7 @@
         <span class="n">default_response</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">default_response</span><span class="p">[</span><span class="s">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="n">default_response</span><span class="p">[</span><span class="s">&#39;message&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s">&#39;core/json/response.json&#39;</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">RESPONSE_FILE</span><span class="p">:</span> 
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">CLIENT_DIR</span><span class="p">,</span> <span class="s">&#39;json/response.json&#39;</span><span class="p">),</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">RESPONSE_FILE</span><span class="p">:</span> 
             <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">default_response</span><span class="p">,</span> <span class="n">RESPONSE_FILE</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
         
         <span class="c"># Parse the form data posted</span>
@@ -109,14 +114,27 @@
         <span class="c"># Begin the response</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">send_response</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">end_headers</span><span class="p">()</span>
+
+        <span class="n">function</span> <span class="o">=</span> <span class="n">JSONfile</span><span class="p">[</span><span class="s">&#39;function&#39;</span><span class="p">]</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="n">JSONfile</span><span class="p">[</span><span class="s">&#39;parameters&#39;</span><span class="p">]</span>
+
+        <span class="c"># The following are used to determine who is creating a slice.</span>
+        <span class="c"># Defaults are all -1</span>
+        <span class="n">tenant_id</span> <span class="o">=</span> <span class="n">JSONfile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;tenant_id&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">project_id</span> <span class="o">=</span> <span class="n">JSONfile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;project_id&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">user_id</span> <span class="o">=</span> <span class="n">JSONfile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;user_id&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="o">-</span><span class="mi">1</span>
         
         <span class="c">#Send to manager.py</span>
         <span class="c">#Format of response: {&quot;status&quot;:(true of false) ,&quot;message&quot;:&quot;string if necessary&quot;}</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="n">NewConnectionHandler</span><span class="o">.</span><span class="n">MANAGER</span><span class="o">.</span><span class="n">parseargs</span><span class="p">(</span><span class="n">JSONfile</span><span class="p">[</span><span class="s">&#39;function&#39;</span><span class="p">],</span> <span class="n">JSONfile</span><span class="p">[</span><span class="s">&#39;parameters&#39;</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s">&#39;message&#39;</span><span class="p">])</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="n">NewConnectionHandler</span><span class="o">.</span><span class="n">MANAGER</span><span class="o">.</span><span class="n">parseargs</span><span class="p">(</span>
+                <span class="n">function</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">,</span>
+                <span class="n">user_id</span><span class="p">,</span> <span class="n">project_id</span>
+        <span class="p">)</span>
+
 
         <span class="c">#Save response to file</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s">&#39;core/json/response.json&#39;</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">RESPONSE_FILE</span><span class="p">:</span> 
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">CLIENT_DIR</span><span class="p">,</span> <span class="s">&#39;json/response.json&#39;</span><span class="p">),</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">RESPONSE_FILE</span><span class="p">:</span> 
             <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">RESPONSE_FILE</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
     
     <span class="c"># Sends a document, unused</span></div>
@@ -148,7 +166,24 @@
         <span class="n">BaseHTTPServer</span><span class="o">.</span><span class="n">HTTPServer</span><span class="o">.</span><span class="n">server_close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> 
 </div></div>
 <div class="viewcode-block" id="main"><a class="viewcode-back" href="../../aurora.html#aurora.manager_http_server.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
-    <span class="n">cls_logger</span><span class="o">.</span><span class="n">set_up_root_logger</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+    <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">level</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s">&quot;DEBUG&quot;</span><span class="p">:</span>
+            <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span>
+        <span class="k">elif</span> <span class="n">level</span> <span class="o">==</span> <span class="s">&quot;INFO&quot;</span><span class="p">:</span>
+            <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span>
+        <span class="k">elif</span> <span class="n">level</span> <span class="o">==</span> <span class="s">&quot;WARN&quot;</span> <span class="ow">or</span> <span class="n">level</span> <span class="o">==</span> <span class="s">&quot;WARNING&quot;</span><span class="p">:</span>
+            <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">WARN</span>
+        <span class="k">elif</span> <span class="n">level</span> <span class="o">==</span> <span class="s">&quot;ERROR&quot;</span><span class="p">:</span>
+            <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span>
+        <span class="k">elif</span> <span class="n">level</span> <span class="o">==</span> <span class="s">&quot;CRITICAL&quot;</span><span class="p">:</span>
+            <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">CRITICAL</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span>
+
+    <span class="c"># print level</span>
+    <span class="n">cls_logger</span><span class="o">.</span><span class="n">set_up_root_logger</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">level</span><span class="p">)</span>
     
     <span class="n">handler_class</span><span class="o">=</span><span class="n">NewConnectionHandler</span>
     <span class="n">server_address</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="mi">5554</span><span class="p">)</span>
@@ -156,8 +191,8 @@
         <span class="n">msrvr</span> <span class="o">=</span> <span class="n">ManagerServer</span><span class="p">(</span><span class="n">server_address</span><span class="p">,</span> <span class="n">handler_class</span><span class="p">)</span>
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Starting webserver...&quot;</span><span class="p">)</span>
         <span class="n">msrvr</span><span class="o">.</span><span class="n">serve_forever</span><span class="p">()</span>
-
-    <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+        
+    <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">,</span> <span class="n">KeyboardInterruptStopEvent</span><span class="p">:</span>
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Shutting down webserver...&quot;</span><span class="p">)</span>
         <span class="n">msrvr</span><span class="o">.</span><span class="n">server_close</span><span class="p">()</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>

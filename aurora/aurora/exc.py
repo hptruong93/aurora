@@ -1,3 +1,10 @@
+#!/usr/bin/python -tt
+# 2014
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &
+#              Mike Kobierski 
+#
+"""TODO(Mike): Docstring"""
+
 #---------
 # Base Exception for Aurora program
 #

@@ -49,12 +49,14 @@
           <div class="body">
             
   <h1>Source code for aurora.aurora_db</h1><div class="highlight"><pre>
-<span class="c"># mySQL Database Functions</span>
-<span class="c"># SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith</span>
+<span class="sd">&quot;&quot;&quot;Collection of methods for adding, updating, deleting, </span>
+<span class="sd">and querying the SQL database stored by Aurora Manager.</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Collection of methods for adding, updating, deleting, and querying the database</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="c"># 2014</span>
+<span class="c"># SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &amp;</span>
+<span class="c">#              Mike Kobierski </span>
+<span class="c">#</span>
 
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">json</span>
@@ -67,13 +69,14 @@
 
 <span class="kn">import</span> <span class="nn">MySQLdb</span> <span class="kn">as</span> <span class="nn">mdb</span>
 
-<span class="kn">from</span> <span class="nn">cls_logger</span> <span class="kn">import</span> <span class="n">get_cls_logger</span>
-<span class="kn">from</span> <span class="nn">exc</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">aurora.cls_logger</span> <span class="kn">import</span> <span class="n">get_cls_logger</span>
+<span class="kn">from</span> <span class="nn">aurora.exc</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="AuroraDB"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB">[docs]</a><span class="k">class</span> <span class="nc">AuroraDB</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The AuroraDB class handles interaction with the SQL database.&quot;&quot;&quot;</span>
     <span class="c">#Default values in __init__ should potentially be omitted</span>
 
     <span class="n">DEFAULT_MYSQL_HOST</span> <span class="o">=</span> <span class="s">&#39;localhost&#39;</span>
@@ -81,7 +84,7 @@
     <span class="n">DEFAULT_MYSQL_PASSWORD</span> <span class="o">=</span> <span class="s">&#39;supersecret&#39;</span>
     <span class="n">DEFAULT_MYSQL_DB</span> <span class="o">=</span> <span class="s">&#39;aurora&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+<div class="viewcode-block" id="AuroraDB.__init__"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                  <span class="n">mysql_host</span> <span class="o">=</span> <span class="n">DEFAULT_MYSQL_HOST</span><span class="p">,</span>
                  <span class="n">mysql_username</span> <span class="o">=</span> <span class="n">DEFAULT_MYSQL_USERNAME</span><span class="p">,</span>
                  <span class="n">mysql_password</span> <span class="o">=</span> <span class="n">DEFAULT_MYSQL_PASSWORD</span><span class="p">,</span>
@@ -91,7 +94,7 @@
 <span class="sd">        :param str mysql_host:</span>
 <span class="sd">        :param str mysql_username:</span>
 <span class="sd">        :param str mysql_password:</span>
-<span class="sd">        :param str mysql_db:</span>
+<span class="sd">        :param str mysql_db: </span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span> <span class="o">=</span> <span class="n">get_cls_logger</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -102,11 +105,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">mysql_username</span> <span class="o">=</span> <span class="n">mysql_username</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mysql_password</span> <span class="o">=</span> <span class="n">mysql_password</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mysql_db</span> <span class="o">=</span> <span class="n">mysql_db</span>
-
+</div>
     <span class="k">def</span> <span class="nf">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Destructing AuroraDB...&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_database_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="AuroraDB._database_connection"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB._database_connection">[docs]</a>    <span class="k">def</span> <span class="nf">_database_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns a handle for MySQL database access using </span>
 <span class="sd">        credentials assigned when AuroraDB instance was created.</span>
 
@@ -115,10 +118,11 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">mdb</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mysql_host</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mysql_username</span><span class="p">,</span>
                            <span class="bp">self</span><span class="o">.</span><span class="n">mysql_password</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mysql_db</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_count_db_slices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">radio_list</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="AuroraDB._count_db_slices"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB._count_db_slices">[docs]</a>    <span class="k">def</span> <span class="nf">_count_db_slices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">radio_list</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Counts the number of slices in given a radio config</span>
 
+<span class="sd">        :param list radio_list:</span>
 <span class="sd">        :returns: int - Number of slices</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -126,7 +130,7 @@
         <span class="k">for</span> <span class="n">radio</span> <span class="ow">in</span> <span class="n">radio_list</span><span class="p">:</span>
             <span class="n">current_slices</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">radio</span><span class="p">[</span><span class="s">&quot;bss_list&quot;</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">current_slices</span>
-
+</div>
 <div class="viewcode-block" id="AuroraDB.ap_add"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.ap_add">[docs]</a>    <span class="k">def</span> <span class="nf">ap_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Adds an access point to the MySQL database.</span>
 
@@ -146,6 +150,36 @@
                 <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;&quot;&quot;INSERT INTO ap SET name=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;&quot;&quot;</span> <span class="o">%</span> <span class="n">ap_name</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="AuroraDB.ap_add_tag"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.ap_add_tag">[docs]</a>    <span class="k">def</span> <span class="nf">ap_add_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">,</span> <span class="n">tag</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Adds a tag to an AP using the location_tags table.</span>
+
+<span class="sd">        ..note::</span>
+
+<span class="sd">            This method uses the old way of returning a string with </span>
+<span class="sd">            the outcome.  A better way is to return Nothing in the </span>
+<span class="sd">            successful case, and raise a customized exception in the </span>
+<span class="sd">            case of an error.</span>
+
+<span class="sd">        :param str ap_name:</span>
+<span class="sd">        :param str tag:</span>
+<span class="sd">        :returns: str - Message containing more detailed information</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ap_has_tag</span><span class="p">(</span><span class="n">ap_name</span><span class="p">,</span> <span class="n">tag</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s">&quot;Tag &#39;</span><span class="si">%s</span><span class="s">&#39; already exists for AP &#39;</span><span class="si">%s</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
+                    <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;&quot;&quot;REPLACE INTO location_tags VALUES </span>
+<span class="s">                                         (&#39;</span><span class="si">%s</span><span class="s">&#39;, &#39;</span><span class="si">%s</span><span class="s">&#39;)&quot;&quot;&quot;</span> <span class="o">%</span>
+                                         <span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">)</span>
+                                 <span class="p">)</span>
+                    <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="s">&quot;Added tag &#39;</span><span class="si">%s</span><span class="s">&#39; to AP &#39;</span><span class="si">%s</span><span class="s">&#39;.</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">err_msg</span> <span class="o">=</span> <span class="s">&quot;Error </span><span class="si">%d</span><span class="s">: </span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err_msg</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">err_msg</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
 </div>
 <div class="viewcode-block" id="AuroraDB.ap_status_up"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.ap_status_up">[docs]</a>    <span class="k">def</span> <span class="nf">ap_status_up</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sets the status of an access point to &#39;UP&#39;.</span>
@@ -176,8 +210,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Setting </span><span class="si">%s</span><span class="s"> status &#39;DOWN&#39;&quot;</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
-                <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;UPDATE ap SET status=&#39;DOWN&#39; WHERE name=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span>
-                                <span class="p">(</span><span class="n">ap_name</span><span class="p">))</span>
+                <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;UPDATE ap SET status=&#39;DOWN&#39; WHERE name=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> 
+                            <span class="o">%</span> <span class="p">(</span><span class="n">ap_name</span><span class="p">))</span>
         <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
 </div>
@@ -195,13 +229,13 @@
                 <span class="k">if</span> <span class="n">ap_name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                     <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;UPDATE ap SET status=&#39;UNKNOWN&#39;&quot;</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;UPDATE ap SET status=&#39;UNKNOWN&#39; WHERE name=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span>
-                                    <span class="p">(</span><span class="n">ap_name</span><span class="p">))</span>
+                    <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;UPDATE ap SET status=&#39;UNKNOWN&#39; WHERE name=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span>
+                                <span class="o">%</span> <span class="p">(</span><span class="n">ap_name</span><span class="p">))</span>
 
         <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
 </div>
-    <span class="k">def</span> <span class="nf">_get_time_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
+<div class="viewcode-block" id="AuroraDB._get_time_format"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB._get_time_format">[docs]</a>    <span class="k">def</span> <span class="nf">_get_time_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Helper method to create a standardized time format.</span>
 <span class="sd">        Input parameter is a :clsas:`datetime.timedelta`.</span>
 
@@ -216,9 +250,10 @@
         <span class="n">time</span> <span class="o">=</span> <span class="n">time</span> <span class="o">-</span> <span class="n">minutes</span> <span class="o">*</span> <span class="mi">60</span>
         <span class="n">seconds</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>
         <span class="n">microseconds</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">time</span> <span class="o">-</span> <span class="n">seconds</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000000</span><span class="p">)</span>
-        <span class="n">time_format</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">hours</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">minutes</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">seconds</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">microseconds</span><span class="p">))</span>
+        <span class="n">time_format</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">hours</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">minutes</span><span class="p">),</span> 
+                                       <span class="nb">str</span><span class="p">(</span><span class="n">seconds</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">microseconds</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">time_format</span>
-
+</div>
 <div class="viewcode-block" id="AuroraDB.ap_slice_set_physical_ap"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.ap_slice_set_physical_ap">[docs]</a>    <span class="k">def</span> <span class="nf">ap_slice_set_physical_ap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sets the physical_ap column entry for a slice.</span>
 
@@ -234,11 +269,32 @@
 <span class="sd">                           WHERE ap_slice_id=&#39;%s&#39;&quot;&quot;&quot;</span> <span class="o">%</span>
                        <span class="p">(</span><span class="n">ap_name</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">)</span>
                 <span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="AuroraDB.ap_slice_set_ssid"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.ap_slice_set_ssid">[docs]</a>    <span class="k">def</span> <span class="nf">ap_slice_set_ssid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">,</span> <span class="n">new_ssid</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the physical_ap column entry for a slice.</span>
+
+<span class="sd">        :param str ap_slice_id:</span>
+<span class="sd">        :param str new_ssid:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Setting &#39;</span><span class="si">%s</span><span class="s">&#39; SSID: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> 
+                                  <span class="n">ap_slice_id</span><span class="p">,</span> <span class="n">new_ssid</span><span class="p">)</span>
+                <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;&quot;&quot;UPDATE ap_slice SET</span>
+<span class="s">                               ap_slice_ssid=&#39;</span><span class="si">%s</span><span class="s">&#39;</span>
+<span class="s">                           WHERE ap_slice_id=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;&quot;&quot;</span> <span class="o">%</span>
+                       <span class="p">(</span><span class="n">new_ssid</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s">&quot;</span><span class="se">\\</span><span class="s">&#39;&quot;</span><span class="p">),</span> <span class="n">ap_slice_id</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
+                <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
 
 </div>
-<div class="viewcode-block" id="AuroraDB.ap_slice_update_time_stats"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.ap_slice_update_time_stats">[docs]</a>    <span class="k">def</span> <span class="nf">ap_slice_update_time_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ap_name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="AuroraDB.ap_slice_update_time_stats"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.ap_slice_update_time_stats">[docs]</a>    <span class="k">def</span> <span class="nf">ap_slice_update_time_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> 
+                                   <span class="n">ap_name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ap_down</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Records the current time and calculates current and</span>
 <span class="sd">        cumulative uptime for a slice on an access point.</span>
 
@@ -255,28 +311,53 @@
 <span class="sd">        :param str ap_slice_id: ID of the slice to update</span>
 <span class="sd">        :param str ap_name: Name of the access point where the</span>
 <span class="sd">                            slice resides</span>
+<span class="sd">        :param bool ap_down: Status of the AP in question</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Updating time stats for </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">ap_slice_id</span> <span class="ow">or</span> <span class="n">ap_name</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Updating time stats for </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> 
+                          <span class="p">(</span><span class="n">ap_slice_id</span> <span class="ow">or</span> <span class="n">ap_name</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">ap_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">slice_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_physical_ap_slices</span><span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
+            <span class="n">slice_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_physical_ap_slices</span><span class="p">(</span><span class="n">ap_name</span><span class="p">,</span> 
+                                                     <span class="n">not_deleted_only</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">slice_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">ap_slice_id</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;slice list: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">slice_list</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">s_id</span> <span class="ow">in</span> <span class="n">slice_list</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
-                    <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;SELECT last_time_activated, last_time_updated, total_active_duration FROM metering WHERE ap_slice_id=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">s_id</span><span class="p">)</span>
+                    <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                        <span class="sd">&quot;&quot;&quot;SELECT last_time_activated, last_time_updated, </span>
+<span class="sd">                                  total_active_duration FROM metering </span>
+<span class="sd">                               WHERE ap_slice_id=&#39;%s&#39;&quot;&quot;&quot;</span> <span class="o">%</span> <span class="n">s_id</span><span class="p">)</span>
                     <span class="n">previous_time_stats</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;previous_time_stats: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">previous_time_stats</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;previous_time_stats: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> 
+                                      <span class="n">previous_time_stats</span><span class="p">)</span>
                     <span class="n">time_active</span> <span class="o">=</span> <span class="bp">None</span>
                     <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
-                    <span class="p">(</span><span class="n">last_time_activated</span><span class="p">,</span> <span class="n">last_time_updated</span><span class="p">,</span>
-                     <span class="n">current_active_duration</span><span class="p">,</span> <span class="n">total_active_duration</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+                    <span class="p">(</span>
+                        <span class="n">last_time_activated</span><span class="p">,</span> 
+                        <span class="n">last_time_updated</span><span class="p">,</span>
+                        <span class="n">current_active_duration</span><span class="p">,</span> 
+                        <span class="n">total_active_duration</span>
+                    <span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
                     <span class="k">if</span> <span class="n">previous_time_stats</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-                        <span class="p">(</span><span class="n">last_time_activated</span><span class="p">,</span> <span class="n">last_time_updated</span><span class="p">,</span> <span class="n">total_active_duration</span><span class="p">)</span> <span class="o">=</span> <span class="n">previous_time_stats</span>
+                        <span class="p">(</span>
+                            <span class="n">last_time_activated</span><span class="p">,</span> 
+                            <span class="n">last_time_updated</span><span class="p">,</span> 
+                            <span class="n">total_active_duration</span>
+                        <span class="p">)</span> <span class="o">=</span> <span class="n">previous_time_stats</span>
+                    <span class="k">if</span> <span class="n">last_time_activated</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">ap_down</span><span class="p">:</span>
+                        <span class="c"># Slice was never activated and ap didn&#39;t </span>
+                        <span class="c"># respond, don&#39;t update stats</span>
+                        <span class="k">continue</span>
+                        
                     <span class="k">if</span> <span class="n">last_time_activated</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;No value for last time activated for slice </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">s_id</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                            <span class="s">&quot;No value for last time activated for slice </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> 
+                            <span class="n">s_id</span>
+                        <span class="p">)</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Setting last time activated </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
                         <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;&quot;&quot;UPDATE metering SET</span>
 <span class="s">                                             last_time_activated=&#39;</span><span class="si">%s</span><span class="s">&#39;</span>
@@ -285,7 +366,9 @@
                                      <span class="p">)</span>
                         <span class="n">last_time_activated</span> <span class="o">=</span> <span class="n">now</span>
                     <span class="k">else</span><span class="p">:</span>
-                        <span class="n">current_active_duration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_time_format</span><span class="p">(</span><span class="n">now</span> <span class="o">-</span> <span class="n">last_time_activated</span><span class="p">)</span>
+                        <span class="n">current_active_duration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_time_format</span><span class="p">(</span>
+                            <span class="n">now</span> <span class="o">-</span> <span class="n">last_time_activated</span>
+                        <span class="p">)</span>
                         <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;&quot;&quot;UPDATE metering SET </span>
 <span class="s">                                             current_active_duration=&#39;</span><span class="si">%s</span><span class="s">&#39;</span>
 <span class="s">                                             WHERE ap_slice_id=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;&quot;&quot;</span> <span class="o">%</span> 
@@ -294,12 +377,20 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
                     <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">last_time_updated</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;No value for last time updated for slice </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">s_id</span><span class="p">)</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Using value for last time activated </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">last_time_activated</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                            <span class="s">&quot;No value for last time updated for slice </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> 
+                            <span class="n">s_id</span>
+                        <span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                            <span class="s">&quot;Using value for last time activated </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> 
+                            <span class="n">last_time_activated</span>
+                        <span class="p">)</span>
                         <span class="n">last_time_updated</span> <span class="o">=</span> <span class="n">last_time_activated</span>
 
                     <span class="n">time_diff</span> <span class="o">=</span> <span class="n">now</span> <span class="o">-</span> <span class="n">last_time_updated</span>
-                    <span class="n">total_active_duration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_time_format</span><span class="p">(</span><span class="n">total_active_duration</span> <span class="o">+</span> <span class="n">time_diff</span><span class="p">)</span>
+                    <span class="n">total_active_duration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_time_format</span><span class="p">(</span>
+                        <span class="n">total_active_duration</span> <span class="o">+</span> <span class="n">time_diff</span>
+                    <span class="p">)</span>
                     <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;&quot;&quot;UPDATE metering SET </span>
 <span class="s">                                         total_active_duration=&#39;</span><span class="si">%s</span><span class="s">&#39;,</span>
 <span class="s">                                         last_time_updated=&#39;</span><span class="si">%s</span><span class="s">&#39;</span>
@@ -357,9 +448,15 @@
                 <span class="n">number_radio</span> <span class="o">=</span> <span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;wifi_radio&quot;</span><span class="p">][</span><span class="s">&quot;number_radio&quot;</span><span class="p">]</span>
                 <span class="n">memory_mb</span> <span class="o">=</span> <span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;memory_mb&quot;</span><span class="p">]</span>
                 <span class="n">free_disk</span> <span class="o">=</span> <span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;free_disk&quot;</span><span class="p">]</span>
-                <span class="n">number_radio_free</span> <span class="o">=</span> <span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;wifi_radio&quot;</span><span class="p">][</span><span class="s">&quot;number_radio_free&quot;</span><span class="p">]</span>
-                <span class="n">max_available_slices</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;wifi_radio&quot;</span><span class="p">][</span><span class="s">&quot;max_bss_per_radio&quot;</span><span class="p">])</span><span class="o">*</span><span class="nb">int</span><span class="p">(</span><span class="n">number_radio</span><span class="p">)</span>
-                <span class="n">current_slices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count_db_slices</span><span class="p">(</span><span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;wifi_radio&quot;</span><span class="p">][</span><span class="s">&quot;radio_list&quot;</span><span class="p">])</span>
+                <span class="n">number_radio_free</span> <span class="o">=</span> \
+                    <span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;wifi_radio&quot;</span><span class="p">][</span><span class="s">&quot;number_radio_free&quot;</span><span class="p">]</span>
+                <span class="n">max_available_slices</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;wifi_radio&quot;</span><span class="p">][</span><span class="s">&quot;max_bss_per_radio&quot;</span><span class="p">])</span><span class="o">*</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="n">number_radio</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">current_slices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count_db_slices</span><span class="p">(</span>
+                    <span class="n">hw_database</span><span class="p">[</span><span class="s">&quot;wifi_radio&quot;</span><span class="p">][</span><span class="s">&quot;radio_list&quot;</span><span class="p">]</span>
+                <span class="p">)</span>
                 <span class="n">number_slice_free</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">max_available_slices</span><span class="p">)</span> <span class="o">-</span> <span class="n">current_slices</span>
 
                 <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span>
@@ -367,7 +464,8 @@
 <span class="sd">                               name=&#39;%s&#39;, region=&#39;%s&#39;, firmware=&#39;%s&#39;, </span>
 <span class="sd">                               version=&#39;%s&#39;, number_radio=%s, </span>
 <span class="sd">                               memory_mb=%s, free_disk=%s, </span>
-<span class="sd">                               number_radio_free=%s, number_slice_free=%s, status=&#39;UP&#39;</span>
+<span class="sd">                               number_radio_free=%s, number_slice_free=%s, </span>
+<span class="sd">                               status=&#39;UP&#39;</span>
 <span class="sd">                           ON DUPLICATE KEY UPDATE </span>
 <span class="sd">                               name=&#39;%s&#39;, region=&#39;%s&#39;, firmware=&#39;%s&#39;, </span>
 <span class="sd">                               version=&#39;%s&#39;, number_radio=%s, </span>
@@ -386,6 +484,9 @@
 
                 <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
                 <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">ap_add_tag</span><span class="p">(</span><span class="n">ap_name</span><span class="p">,</span> <span class="n">region</span><span class="p">)</span>
+
         <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
 </div>
@@ -394,6 +495,7 @@
 
 <span class="sd">        :param str ap_slice_id: Slice ID to set</span>
 <span class="sd">        :raises: InvalidACTIVEStatusUpdate</span>
+<span class="sd">        :returns: bool - True on success</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
@@ -403,45 +505,93 @@
 
                 <span class="k">if</span> <span class="n">num_results</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                     <span class="n">status</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="s">&#39;FAILED&#39;</span><span class="p">:</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">ap_slice_status_pending</span><span class="p">(</span><span class="n">ap_slice_id</span><span class="p">)</span>
+                            <span class="n">status</span> <span class="o">=</span> <span class="s">&#39;PENDING&#39;</span>
+                        <span class="k">except</span> <span class="n">AuroraException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
                     <span class="k">if</span> <span class="p">(</span><span class="n">status</span> <span class="o">!=</span> <span class="s">&#39;ACTIVE&#39;</span> <span class="ow">and</span>
                             <span class="n">status</span> <span class="o">!=</span> <span class="s">&#39;PENDING&#39;</span> <span class="ow">and</span>
                             <span class="n">status</span> <span class="o">!=</span> <span class="s">&#39;DOWN&#39;</span><span class="p">):</span>
                         <span class="k">raise</span> <span class="n">InvalidACTIVEStatusUpdate</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">)</span>
 
-                    <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Setting status &#39;ACTIVE&#39; for </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">)</span>
-                    <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;UPDATE ap_slice SET &quot;</span>
-                                          <span class="s">&quot;status=&#39;ACTIVE&#39; &quot;</span>
-                                      <span class="s">&quot;WHERE ap_slice_id=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">ap_slice_id</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
-                    <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">status</span> <span class="o">!=</span> <span class="s">&#39;ACTIVE&#39;</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Setting status &#39;ACTIVE&#39; for </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">)</span>
+                        <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;UPDATE ap_slice SET &quot;</span>
+                                              <span class="s">&quot;status=&#39;ACTIVE&#39; &quot;</span>
+                                          <span class="s">&quot;WHERE ap_slice_id=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">ap_slice_id</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
+                        <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">True</span>
 </div>
 <div class="viewcode-block" id="AuroraDB.ap_slice_status_pending"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.ap_slice_status_pending">[docs]</a>    <span class="k">def</span> <span class="nf">ap_slice_status_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sets status to &#39;PENDING&#39; for given ap_slice_id.</span>
 
 <span class="sd">        :param str ap_slice_id: Slice ID to set</span>
-<span class="sd">        :raises: InvalidPENDINGStatusUpdate</span>
+<span class="sd">        :raises: InvalidPENDINGStatusUpdate, DOWNtoPENDINGStatusUpdateWarning</span>
+<span class="sd">        :returns: bool - True on success</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
-                <span class="n">num_results</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;SELECT status FROM ap_slice WHERE ap_slice_id=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">ap_slice_id</span><span class="p">)</span>
+                <span class="n">num_results</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                    <span class="s">&quot;SELECT status FROM ap_slice WHERE ap_slice_id=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> 
+                    <span class="n">ap_slice_id</span>
+                <span class="p">)</span>
                 <span class="n">status</span> <span class="o">=</span> <span class="bp">None</span>
 
                 <span class="k">if</span> <span class="n">num_results</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                     <span class="n">status</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="s">&#39;DOWN&#39;</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">DOWNtoPENDINGStatusUpdateWarning</span><span class="p">(</span>
+                            <span class="n">ap_slice_id</span><span class="o">=</span><span class="n">ap_slice_id</span>
+                        <span class="p">)</span>
                     <span class="k">if</span> <span class="p">(</span><span class="n">status</span> <span class="o">!=</span> <span class="s">&#39;ACTIVE&#39;</span> <span class="ow">and</span>
-                            <span class="n">status</span> <span class="o">!=</span> <span class="s">&#39;FAILED&#39;</span><span class="p">):</span>
+                            <span class="n">status</span> <span class="o">!=</span> <span class="s">&#39;FAILED&#39;</span> <span class="ow">and</span>
+                            <span class="n">status</span> <span class="o">!=</span> <span class="s">&#39;PENDING&#39;</span><span class="p">):</span>
                         <span class="k">raise</span> <span class="n">InvalidPENDINGStatusUpdate</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">)</span>
 
-                    <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Setting status &#39;PENDING&#39; for </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Setting status &#39;PENDING&#39; for </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> 
+                                     <span class="n">ap_slice_id</span>
+                    <span class="p">)</span>
                     <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;UPDATE ap_slice SET &quot;</span>
                                           <span class="s">&quot;status=&#39;PENDING&#39; &quot;</span>
                                       <span class="s">&quot;WHERE ap_slice_id=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">ap_slice_id</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
                     <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">True</span>
+</div>
+<div class="viewcode-block" id="AuroraDB.ap_syn_clean_deleting_status"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.ap_syn_clean_deleting_status">[docs]</a>    <span class="k">def</span> <span class="nf">ap_syn_clean_deleting_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Cleans up slice statuses for slices deleted while an AP is offline.</span>
+
+<span class="sd">        Invoked when manager receives a SYN message from an</span>
+<span class="sd">        access point indicating it is connecting.  Access points which</span>
+<span class="sd">        connect to manager will not restart slices that are marked as</span>
+<span class="sd">        &#39;DELETING&#39;, therefore we should change their status to </span>
+<span class="sd">        &#39;DELETED&#39; to confirm they no longer exist.</span>
+
+<span class="sd">        :param str ap_name:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
+                <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;&quot;&quot;UPDATE ap_slice SET</span>
+<span class="s">                                     status=</span>
+<span class="s">                                         CASE status</span>
+<span class="s">                                             WHEN &#39;DELETING&#39; THEN &#39;DELETED&#39;</span>
+<span class="s">                                         ELSE status END</span>
+<span class="s">                                     WHERE</span>
+<span class="s">                                         physical_ap=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;&quot;&quot;</span> <span class="o">%</span>
+                                 <span class="n">ap_name</span>
+                             <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
+                <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">ERROR</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="AuroraDB.ap_up_slice_status_update"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.ap_up_slice_status_update">[docs]</a>    <span class="k">def</span> <span class="nf">ap_up_slice_status_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">,</span> <span class="n">success</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
@@ -457,6 +607,9 @@
         <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
+                <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;&quot;&quot;SELECT status FROM ap_slice</span>
+<span class="s">                                  WHERE ap_slice_id=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;&quot;&quot;</span> <span class="o">%</span> <span class="n">ap_slice_id</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;status = </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">db</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
                 <span class="k">if</span> <span class="n">success</span><span class="p">:</span>
                     <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;&quot;&quot;UPDATE metering, ap_slice SET </span>
 <span class="s">                                         metering.last_time_activated=</span>
@@ -473,11 +626,15 @@
 <span class="s">                                             NULL</span>
 <span class="s">                                         WHERE </span>
 <span class="s">                                             metering.ap_slice_id=&#39;</span><span class="si">%s</span><span class="s">&#39; AND</span>
+<span class="s">                                             ap_slice.ap_slice_id=&#39;</span><span class="si">%s</span><span class="s">&#39; AND</span>
 <span class="s">                                             ap_slice.physical_ap=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;&quot;&quot;</span> <span class="o">%</span>
-                                     <span class="p">(</span><span class="n">now</span><span class="p">,</span> <span class="n">now</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">)</span>
+                                     <span class="p">(</span><span class="n">now</span><span class="p">,</span> <span class="n">now</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">)</span>
                                  <span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
                     <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
+                <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;&quot;&quot;SELECT last_time_activated FROM metering </span>
+<span class="s">                                  WHERE ap_slice_id=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;&quot;&quot;</span> <span class="o">%</span> <span class="n">ap_slice_id</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;new last_time_activated = </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">db</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
 
@@ -592,7 +749,7 @@
                     <span class="k">if</span> <span class="n">wnet_name</span> <span class="ow">in</span> <span class="n">tenant_wnets</span><span class="p">:</span>
                         <span class="k">return</span> <span class="bp">True</span>
             <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                    <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+                <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">False</span>
 </div>
 <div class="viewcode-block" id="AuroraDB.wslice_is_deleted"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.wslice_is_deleted">[docs]</a>    <span class="k">def</span> <span class="nf">wslice_is_deleted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">):</span>
@@ -639,14 +796,48 @@
             <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">False</span>
 </div>
+<div class="viewcode-block" id="AuroraDB.ap_has_tag"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.ap_has_tag">[docs]</a>    <span class="k">def</span> <span class="nf">ap_has_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">,</span> <span class="n">tag</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Determines whether a specific AP is marked with the given </span>
+<span class="sd">        tag.</span>
+
+<span class="sd">        :param str ap_slice_id:</span>
+<span class="sd">        :param str tag:</span>
+<span class="sd">        :rtype: bool</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
+                <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span> <span class="s">&quot;SELECT name FROM location_tags WHERE &quot;</span>
+                               <span class="s">&quot;ap_name=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">ap_name</span> <span class="p">)</span>
+                <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
+                <span class="n">ap_tags_tt</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+                <span class="n">ap_tags</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">tag_t</span> <span class="ow">in</span> <span class="n">ap_tags_tt</span><span class="p">:</span>
+                    <span class="n">ap_tags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tag_t</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">ap_tags</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">False</span>
+</div>
 <div class="viewcode-block" id="AuroraDB.wnet_add_wslice"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.wnet_add_wslice">[docs]</a>    <span class="k">def</span> <span class="nf">wnet_add_wslice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">,</span> <span class="n">slice_id</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Adds an ap slice to a wnet.  Both slice and wnet </span>
+        <span class="sd">&quot;&quot;&quot;Adds an ap slice to a wnet.  Wnet must already exist for </span>
+<span class="sd">        tenant.  Slice will not be added if it is already part of the </span>
+<span class="sd">        wnet.</span>
+
+<span class="sd">        ..note::</span>
+
+<span class="sd">            This method uses the old way of returning a string with </span>
+<span class="sd">            the outcome.  A better way is to return Nothing in the </span>
+<span class="sd">            successful case, and raise a customized exception in the </span>
+<span class="sd">            case of an error.</span>
 
 <span class="sd">        :param int tenant_id:</span>
 <span class="sd">        :param str slice_id:</span>
 <span class="sd">        :param str name:</span>
 <span class="sd">        :returns: str - Message for client</span>
-<span class="sd">        :raises: NoWnetExistsForTenantException, APSliceAlreadyInWnetException</span>
+<span class="sd">        :raises: NoWnetExistsForTenantException, </span>
+<span class="sd">                 APSliceAlreadyInWnetException</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
@@ -690,6 +881,22 @@
             <span class="k">return</span> <span class="n">err_msg</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
 </div>
 <div class="viewcode-block" id="AuroraDB.wnet_remove_wslice"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.wnet_remove_wslice">[docs]</a>    <span class="k">def</span> <span class="nf">wnet_remove_wslice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">,</span> <span class="n">slice_id</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Removes a wireless slice from a wnet.</span>
+
+<span class="sd">        ..note::</span>
+
+<span class="sd">            This method uses the old way of returning a string with </span>
+<span class="sd">            the outcome.  A better way is to return Nothing in the </span>
+<span class="sd">            successful case, and raise a customized exception in the </span>
+<span class="sd">            case of an error.</span>
+
+<span class="sd">        :param str tenant_id:</span>
+<span class="sd">        :param str slice_id:</span>
+<span class="sd">        :param str name:</span>
+<span class="sd">        :returns: str - Message containing more detailed information</span>
+<span class="sd">        :raises: Exception</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c">#Update to SQL database</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
@@ -707,7 +914,8 @@
                 <span class="c">#Update to SQL database</span>
                 <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span> <span class="s">&quot;UPDATE ap_slice SET wnet_id=NULL WHERE &quot;</span>
                                <span class="s">&quot;ap_slice_id=&#39;</span><span class="si">%s</span><span class="s">&#39; AND &quot;</span>
-                               <span class="s">&quot;wnet_id=&#39;</span><span class="si">%s</span><span class="s">&#39; AND tenant_id = &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">slice_id</span><span class="p">,</span> <span class="n">wnet_id</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">)</span> <span class="p">)</span>
+                               <span class="s">&quot;wnet_id=&#39;</span><span class="si">%s</span><span class="s">&#39; AND tenant_id = &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> 
+                               <span class="p">(</span><span class="n">slice_id</span><span class="p">,</span> <span class="n">wnet_id</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">))</span>
                 <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
                 <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s"> removed</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">wnet_name</span><span class="p">,</span> <span class="n">slice_id</span><span class="p">)</span>
                 <span class="c">#TODO: Add messaging</span>
@@ -717,19 +925,30 @@
             <span class="k">return</span> <span class="n">err_msg</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
 </div>
 <div class="viewcode-block" id="AuroraDB.wnet_add"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.wnet_add">[docs]</a>    <span class="k">def</span> <span class="nf">wnet_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wnet_id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">,</span> <span class="n">project_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a new wnet to the database.</span>
+
+<span class="sd">        :param str wnet_id: UUID for the new wnet</span>
+<span class="sd">        :param str name: Name for the new wnet</span>
+<span class="sd">        :param str tenant_id:</span>
+<span class="sd">        :param str project_id:</span>
+<span class="sd">        :returns: str - Message with more detailed information</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c">#Update the SQL database</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
                 <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span> <span class="s">&quot;SELECT wnet_id FROM wnet WHERE &quot;</span>
-                               <span class="s">&quot;name = &#39;</span><span class="si">%s</span><span class="s">&#39; AND tenant_id = &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">)</span> <span class="p">)</span>
+                               <span class="s">&quot;name=&#39;</span><span class="si">%s</span><span class="s">&#39; AND tenant_id=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> 
+                               <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">)</span> <span class="p">)</span>
                 <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
                 <span class="n">wnet_id_tt</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">wnet_id_tt</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="k">return</span> <span class="s">&quot;You already own &#39;</span><span class="si">%s</span><span class="s">&#39;.</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">name</span>
                 <span class="k">else</span><span class="p">:</span>
 
-                    <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span> <span class="s">&quot;INSERT INTO wnet VALUES (&#39;</span><span class="si">%s</span><span class="s">&#39;, &#39;</span><span class="si">%s</span><span class="s">&#39;, </span><span class="si">%s</span><span class="s">, </span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span>
-                                   <span class="p">(</span><span class="n">wnet_id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">,</span> <span class="n">project_id</span><span class="p">)</span> <span class="p">)</span>
+                    <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;&quot;&quot;INSERT INTO wnet VALUES </span>
+<span class="s">                                         (&#39;</span><span class="si">%s</span><span class="s">&#39;, &#39;</span><span class="si">%s</span><span class="s">&#39;, &#39;</span><span class="si">%s</span><span class="s">&#39;, &#39;</span><span class="si">%s</span><span class="s">&#39;)&quot;&quot;&quot;</span> <span class="o">%</span>
+                                   <span class="p">(</span><span class="n">wnet_id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">,</span> <span class="n">project_id</span><span class="p">))</span>
                     <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
                     <span class="k">return</span> <span class="s">&quot;Created &#39;</span><span class="si">%s</span><span class="s">&#39;.</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">name</span>
         <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -738,7 +957,17 @@
             <span class="k">return</span> <span class="n">err_msg</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
 </div>
 <div class="viewcode-block" id="AuroraDB.wnet_remove"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.wnet_remove">[docs]</a>    <span class="k">def</span> <span class="nf">wnet_remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wnet_arg</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">):</span>
-        <span class="c">#Update the SQL database, at this point we know the wnet exists under the specified tenant</span>
+        <span class="sd">&quot;&quot;&quot;Deletes a wnet from the database and disassociates it from </span>
+<span class="sd">        all slices previously added to the wnet.</span>
+
+<span class="sd">        :param str wnet_arg: Wnet name or ID</span>
+<span class="sd">        :param str tenant_id:</span>
+<span class="sd">        :returns: str - Message with additional information</span>
+<span class="sd">        :raises: Exception</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Update the SQL database, at this point we know the wnet exists </span>
+        <span class="c"># under the specified tenant</span>
         <span class="c">#TODO: remove association from ap_slices</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
@@ -753,26 +982,19 @@
                 <span class="k">if</span> <span class="n">tenant_id</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span> <span class="s">&quot;SELECT ap_slice_id FROM ap_slice WHERE &quot;</span>
                                    <span class="s">&quot;wnet_id = &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">wnet_id</span> <span class="p">)</span>
-           <span class="c">#         to_execute_slice = ( &quot;UPDATE ap_slice SET wnet_id = NULL WHERE &quot;</span>
-           <span class="c">#                              &quot;wnet_id = &#39;%s&#39;&quot; % wnet_id )</span>
                     <span class="n">to_execute_wnet</span> <span class="o">=</span> <span class="p">(</span> <span class="s">&quot;DELETE FROM wnet WHERE wnet_id = &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">wnet_id</span> <span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span> <span class="s">&quot;SELECT ap_slice_id FROM ap_slice WHERE &quot;</span>
                                    <span class="s">&quot;wnet_id = &#39;</span><span class="si">%s</span><span class="s">&#39; AND tenant_id = &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span>
                                    <span class="p">(</span><span class="n">wnet_id</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">)</span> <span class="p">)</span>
-           <span class="c">#         to_execute_slice = ( &quot;UPDATE ap_slice SET wnet_id = NULL WHERE &quot;</span>
-           <span class="c">#                            &quot;wnet_id = &#39;%s&#39; AND tenant_id = &#39;%s&#39;&quot; %</span>
-           <span class="c">#                            (wnet_id, tenant_id) )</span>
                     <span class="n">to_execute_wnet</span> <span class="o">=</span> <span class="p">(</span> <span class="s">&quot;DELETE FROM wnet WHERE wnet_id = &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span>
                                         <span class="s">&quot;AND tenant_id = &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">wnet_id</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">)</span> <span class="p">)</span>
                 <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
                 <span class="n">slice_id_tt</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
                 <span class="k">if</span> <span class="n">slice_id_tt</span><span class="p">:</span>
-             <span class="c">#       message += &quot;\nRemoving slices from &#39;%s&#39;:&quot; % wnet_arg</span>
                     <span class="k">for</span> <span class="n">slice_id_t</span> <span class="ow">in</span> <span class="n">slice_id_tt</span><span class="p">:</span>
                         <span class="n">message</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wnet_remove_wslice</span><span class="p">(</span><span class="n">tenant_id</span><span class="p">,</span> <span class="n">slice_id_t</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">wnet_id</span><span class="p">)</span>
                     <span class="n">message</span> <span class="o">+=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
-           <span class="c">#     db.execute(to_execute_slice)</span>
                 <span class="n">message</span> <span class="o">+=</span> <span class="s">&quot;Deleting &#39;</span><span class="si">%s</span><span class="s">&#39;.</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">wnet_arg</span>
                 <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute_wnet</span><span class="p">)</span>
 
@@ -782,28 +1004,42 @@
             <span class="k">return</span> <span class="n">err_msg</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
         <span class="k">return</span> <span class="n">message</span>
 </div>
-<div class="viewcode-block" id="AuroraDB.wslice_add"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.wslice_add">[docs]</a>    <span class="k">def</span> <span class="nf">wslice_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">slice_uuid</span><span class="p">,</span> <span class="n">slice_ssid</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">,</span> <span class="n">physAP</span><span class="p">,</span> <span class="n">project_id</span><span class="p">):</span>
+<div class="viewcode-block" id="AuroraDB.wslice_add"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.wslice_add">[docs]</a>    <span class="k">def</span> <span class="nf">wslice_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">slice_uuid</span><span class="p">,</span> <span class="n">slice_ssid</span><span class="p">,</span> 
+                   <span class="n">tenant_id</span><span class="p">,</span> <span class="n">physAP</span><span class="p">,</span> <span class="n">project_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Adds a wireless slice to the database.</span>
+
+<span class="sd">        :param str slice_uuid:</span>
+<span class="sd">        :param str slice_ssid:</span>
+<span class="sd">        :param str tenant_id:</span>
+<span class="sd">        :param str physAP:</span>
+<span class="sd">        :param str project_id:</span>
+<span class="sd">        :returns: None on success, str on error</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
-                <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span> <span class="s">&quot;INSERT INTO ap_slice VALUES (&#39;</span><span class="si">%s</span><span class="s">&#39;, &#39;</span><span class="si">%s</span><span class="s">&#39;, </span><span class="si">%s</span><span class="s">, &#39;</span><span class="si">%s</span><span class="s">&#39;, </span><span class="si">%s</span><span class="s">, </span><span class="si">%s</span><span class="s">, &#39;</span><span class="si">%s</span><span class="s">&#39;)&quot;</span> <span class="o">%</span>
-                               <span class="p">(</span><span class="n">slice_uuid</span><span class="p">,</span> <span class="n">slice_ssid</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">,</span> <span class="n">physAP</span><span class="p">,</span>
-                                <span class="n">project_id</span><span class="p">,</span> <span class="s">&quot;NULL&quot;</span><span class="p">,</span> <span class="s">&quot;PENDING&quot;</span><span class="p">)</span>
+                <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;&quot;&quot;INSERT INTO ap_slice VALUES </span>
+<span class="s">                                    (&#39;</span><span class="si">%s</span><span class="s">&#39;, &#39;</span><span class="si">%s</span><span class="s">&#39;, &#39;</span><span class="si">%s</span><span class="s">&#39;, &#39;</span><span class="si">%s</span><span class="s">&#39;, &#39;</span><span class="si">%s</span><span class="s">&#39;, </span><span class="si">%s</span><span class="s">, &#39;</span><span class="si">%s</span><span class="s">&#39;)&quot;&quot;&quot;</span>
+                               <span class="o">%</span> <span class="p">(</span><span class="n">slice_uuid</span><span class="p">,</span> <span class="n">slice_ssid</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">,</span> <span class="n">physAP</span><span class="p">,</span>
+                                  <span class="n">project_id</span><span class="p">,</span> <span class="s">&quot;NULL&quot;</span><span class="p">,</span> <span class="s">&quot;PENDING&quot;</span><span class="p">)</span>
                              <span class="p">)</span>
                 <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
-                <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span> <span class="s">&quot;INSERT INTO metering SET ap_slice_id=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">slice_uuid</span><span class="p">)</span>
+                <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;INSERT INTO metering SET ap_slice_id=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> 
+                              <span class="n">slice_uuid</span><span class="p">)</span>
                 <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
-                <span class="c">#return &quot;Adding slice %s on %s.\n&quot; % (slice_uuid, physAP)</span>
                 <span class="k">return</span> <span class="bp">None</span>
-                <span class="c">#We the manager calling this method will generate this message after calling.</span>
-                <span class="c">#Therefore it is not necessary to return a success notification. The message</span>
-                <span class="c">#can be used for testing purposes.</span>
-                <span class="c">#Return None when there is no problem instead.</span>
         <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">err_msg</span> <span class="o">=</span> <span class="s">&quot;Error </span><span class="si">%d</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err_msg</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">err_msg</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
 </div>
 <div class="viewcode-block" id="AuroraDB.wslice_delete"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.wslice_delete">[docs]</a>    <span class="k">def</span> <span class="nf">wslice_delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">slice_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Removes a wireless slice from the database.</span>
+
+<span class="sd">        :param str slice_id:</span>
+<span class="sd">        :returns: str - Message with additional information</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c">#Update SQL database and JSON file</span>
         <span class="c">#Remove tags</span>
         <span class="k">try</span><span class="p">:</span>
@@ -821,12 +1057,22 @@
             <span class="k">return</span> <span class="n">err_msg</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
 </div>
 <div class="viewcode-block" id="AuroraDB.wslice_add_tag"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.wslice_add_tag">[docs]</a>    <span class="k">def</span> <span class="nf">wslice_add_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">,</span> <span class="n">tag</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Adds a tag to a slice using tenant_tags table.</span>
+
+<span class="sd">        :param str ap_slice_id:</span>
+<span class="sd">        :param str tag:</span>
+<span class="sd">        :returns: str - Message with additional information</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wslice_has_tag</span><span class="p">(</span><span class="n">ap_slice_id</span><span class="p">,</span> <span class="n">tag</span><span class="p">):</span>
             <span class="k">return</span> <span class="s">&quot;Tag &#39;</span><span class="si">%s</span><span class="s">&#39; already exists for ap_slice &#39;</span><span class="si">%s</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
-                    <span class="n">to_execute</span> <span class="o">=</span> <span class="s">&quot;INSERT INTO tenant_tags VALUES (</span><span class="si">%s</span><span class="s">, &#39;</span><span class="si">%s</span><span class="s">&#39;)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">)</span>
+                    <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;&quot;&quot;REPLACE INTO tenant_tags VALUES </span>
+<span class="s">                                         (&#39;</span><span class="si">%s</span><span class="s">&#39;, &#39;</span><span class="si">%s</span><span class="s">&#39;)&quot;&quot;&quot;</span> <span class="o">%</span>
+                                         <span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">)</span>
+                                 <span class="p">)</span>
                     <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
                     <span class="k">return</span> <span class="s">&quot;Added tag &#39;</span><span class="si">%s</span><span class="s">&#39; to ap_slice &#39;</span><span class="si">%s</span><span class="s">&#39;.</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">)</span>
             <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -835,6 +1081,13 @@
                 <span class="k">return</span> <span class="n">err_msg</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
 </div>
 <div class="viewcode-block" id="AuroraDB.wslice_remove_tag"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.wslice_remove_tag">[docs]</a>    <span class="k">def</span> <span class="nf">wslice_remove_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">,</span> <span class="n">tag</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Removes a previously added tag from a slice.</span>
+
+<span class="sd">        :param str ap_slice_id:</span>
+<span class="sd">        :param str tag:</span>
+<span class="sd">        :returns: str - Message with additional information</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wslice_has_tag</span><span class="p">(</span><span class="n">ap_slice_id</span><span class="p">,</span> <span class="n">tag</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
@@ -851,9 +1104,22 @@
             <span class="k">return</span> <span class="s">&quot;Tag &#39;</span><span class="si">%s</span><span class="s">&#39; not found.</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tag</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="AuroraDB.wnet_join"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.wnet_join">[docs]</a>    <span class="k">def</span> <span class="nf">wnet_join</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Tracks DB information related to joining a wnet with an </span>
+<span class="sd">        existing subnet.</span>
+
+<span class="sd">        ..warning::</span>
+
+<span class="sd">            Not implemented.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span> <span class="c">#TODO AFTER SAVI INTEGRATION</span>
 </div>
 <div class="viewcode-block" id="AuroraDB.get_ap_list"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.get_ap_list">[docs]</a>    <span class="k">def</span> <span class="nf">get_ap_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a list containing the names of all known APs.</span>
+
+<span class="sd">        :rtype: list</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
                 <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;SELECT name FROM ap&quot;</span><span class="p">)</span>
@@ -865,7 +1131,14 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Error </span><span class="si">%d</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
             <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="AuroraDB.get_user_for_active_ap_slice"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.get_user_for_active_ap_slice">[docs]</a>    <span class="k">def</span> <span class="nf">get_user_for_active_ap_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">):</span>
+<div class="viewcode-block" id="AuroraDB.get_tenant_for_active_ap_slice"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.get_tenant_for_active_ap_slice">[docs]</a>    <span class="k">def</span> <span class="nf">get_tenant_for_active_ap_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Gets the tenant_id of the tenant who created a slice.  The </span>
+<span class="sd">        tenant_id is only returned if the slice is not deleted.  If </span>
+<span class="sd">        no matching slice is found, None is returned.</span>
+
+<span class="sd">        :returns: str - tenant_id information</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
                 <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;&quot;&quot;SELECT tenant_id </span>
@@ -877,12 +1150,19 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
                 <span class="n">num_lines</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">num_lines</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="k">return</span> <span class="n">db</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
         <span class="k">return</span>
 </div>
 <div class="viewcode-block" id="AuroraDB.get_wslice_physical_ap"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.get_wslice_physical_ap">[docs]</a>    <span class="k">def</span> <span class="nf">get_wslice_physical_ap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the physical AP on which the AP slice is created.</span>
+
+<span class="sd">        :param str ap_slice_id:</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        :raises: NoSliceExistsException</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
                 <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span> <span class="s">&quot;SELECT physical_ap FROM ap_slice WHERE &quot;</span>
@@ -892,19 +1172,57 @@
                 <span class="k">if</span> <span class="n">physical_ap</span><span class="p">:</span>
                     <span class="k">return</span> <span class="n">physical_ap</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;No slice &#39;</span><span class="si">%s</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">ap_slice_id</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">NoSliceExistsException</span><span class="p">(</span><span class="n">ap_slice_id</span><span class="o">=</span><span class="n">ap_slice_id</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">Error</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Error </span><span class="si">%d</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
             <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="AuroraDB.get_physical_ap_slices"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.get_physical_ap_slices">[docs]</a>    <span class="k">def</span> <span class="nf">get_physical_ap_slices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">):</span>
+<div class="viewcode-block" id="AuroraDB.get_wslice_ssid"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.get_wslice_ssid">[docs]</a>    <span class="k">def</span> <span class="nf">get_wslice_ssid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_slice_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the SSID of a given AP slice.</span>
+
+<span class="sd">        :param str ap_slice_id:</span>
+<span class="sd">        :rtype: str </span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
-                <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;&quot;&quot;SELECT ap_slice_id</span>
-<span class="s">                                     FROM ap_slice</span>
-<span class="s">                                     WHERE physical_ap=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;&quot;&quot;</span> <span class="o">%</span>
-                                 <span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
-                             <span class="p">)</span>
+                <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;&quot;&quot;SELECT ap_slice_ssid FROM</span>
+<span class="s">                                     ap_slice WHERE</span>
+<span class="s">                                     ap_slice_id=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;&quot;&quot;</span> <span class="o">%</span> <span class="n">ap_slice_id</span><span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="k">if</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">return</span> <span class="n">result</span>
+        <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Error </span><span class="si">%d</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="AuroraDB.get_physical_ap_slices"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.get_physical_ap_slices">[docs]</a>    <span class="k">def</span> <span class="nf">get_physical_ap_slices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ap_name</span><span class="p">,</span> <span class="n">not_deleted_only</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a list of slices active on an access point.</span>
+
+<span class="sd">        :param str ap_name:</span>
+<span class="sd">        :param bool not_deleted_only: False for all slices, True if </span>
+<span class="sd">                                      active / pending / down / etc. </span>
+<span class="sd">                                      slices only.</span>
+<span class="sd">        :rtype: list</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">not_deleted_only</span><span class="p">:</span>
+                    <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;&quot;&quot;SELECT ap_slice_id</span>
+<span class="s">                                         FROM ap_slice</span>
+<span class="s">                                         WHERE physical_ap=&#39;</span><span class="si">%s</span><span class="s">&#39; AND </span>
+<span class="s">                                             status&lt;&gt;&#39;DELETED&#39; AND</span>
+<span class="s">                                             status&lt;&gt;&#39;DELETING&#39;&quot;&quot;&quot;</span> <span class="o">%</span>
+                                     <span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
+                                 <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;&quot;&quot;SELECT ap_slice_id</span>
+<span class="s">                                         FROM ap_slice</span>
+<span class="s">                                         WHERE physical_ap=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;&quot;&quot;</span> <span class="o">%</span>
+                                     <span class="p">(</span><span class="n">ap_name</span><span class="p">)</span>
+                                 <span class="p">)</span>
                 <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
                 <span class="n">slice_list</span> <span class="o">=</span> <span class="p">[]</span>
@@ -915,10 +1233,19 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Error </span><span class="si">%d</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
             <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="AuroraDB.get_wnet_list"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.get_wnet_list">[docs]</a>    <span class="k">def</span> <span class="nf">get_wnet_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">,</span> <span class="n">wnet_arg</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="AuroraDB.get_wnet_list"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.get_wnet_list">[docs]</a>    <span class="k">def</span> <span class="nf">get_wnet_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">,</span> <span class="n">wnet_arg</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the wnets available to this tenant.</span>
+
+<span class="sd">        :param str tenant_id:</span>
+<span class="sd">        :param str wnet_arg:</span>
+<span class="sd">        :rtype: list </span>
+<span class="sd">        :raises: NoWnetExistsForTenantException, </span>
+<span class="sd">                 NoWnetNameExistsForTenantException</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">tenant_id</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">tenant_id</span><span class="p">)</span> <span class="o">==</span> <span class="s">&quot;0&quot;</span><span class="p">:</span>
                     <span class="n">to_execute</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM wnet&quot;</span>
                 <span class="k">elif</span> <span class="n">wnet_arg</span><span class="p">:</span>
                     <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span> <span class="s">&quot;SELECT * FROM wnet WHERE &quot;</span>
@@ -926,15 +1253,16 @@
                                    <span class="s">&quot;tenant_id = &#39;</span><span class="si">%s</span><span class="s">&#39; AND name = &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span>
                                    <span class="p">(</span><span class="n">tenant_id</span><span class="p">,</span> <span class="n">wnet_arg</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">,</span> <span class="n">wnet_arg</span><span class="p">)</span> <span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">to_execute</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM wnet WHERE tenant_id = &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">tenant_id</span>
-                <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
+                    <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;SELECT * FROM wnet WHERE tenant_id = &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> 
+                                  <span class="n">tenant_id</span><span class="p">)</span>
+                <span class="n">num_results</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">num_results</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">wnet_arg</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">NoWnetExistsForTenantException</span><span class="p">()</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">NoWnetNameExistsForTenantException</span><span class="p">(</span><span class="n">wnet</span><span class="o">=</span><span class="n">wnet_arg</span><span class="p">)</span>
                 <span class="n">wnet_tt</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">wnet_tt</span><span class="p">:</span>
-                    <span class="n">err_msg</span> <span class="o">=</span> <span class="s">&quot;AuroraDB Error: No wnets available&quot;</span>
-                    <span class="k">if</span> <span class="n">wnet_arg</span><span class="p">:</span>
-                        <span class="n">err_msg</span> <span class="o">+=</span> <span class="s">&quot; by handle &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">wnet_arg</span>
-                    <span class="n">err_msg</span> <span class="o">+=</span> <span class="s">&quot;.</span><span class="se">\n</span><span class="s">&quot;</span>
-                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">err_msg</span><span class="p">)</span>
+                
                 <span class="c">#Prune through list</span>
                 <span class="n">wnet_list</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">wnet_t</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">wnet_tt</span><span class="p">):</span>
@@ -948,14 +1276,30 @@
             <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">wnet_list</span>
 </div>
-<div class="viewcode-block" id="AuroraDB.get_wnet_slices"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.get_wnet_slices">[docs]</a>    <span class="k">def</span> <span class="nf">get_wnet_slices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wnet_arg</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">):</span>
+<div class="viewcode-block" id="AuroraDB.get_wnet_slices"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.get_wnet_slices">[docs]</a>    <span class="k">def</span> <span class="nf">get_wnet_slices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wnet_arg</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">,</span> <span class="n">include_deleted</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns slice data associated with slices in a wnet.</span>
+
+<span class="sd">        :param str wnet_arg: Wnet ID or name </span>
+<span class="sd">        :param str tenant_id:</span>
+<span class="sd">        :param bool include_deleted: Include deleted slices in returned </span>
+<span class="sd">                                     list</span>
+<span class="sd">        :rtype: list </span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
                 <span class="n">wnet_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_wnet_name_id</span><span class="p">(</span><span class="n">wnet_arg</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">)[</span><span class="s">&#39;wnet_id&#39;</span><span class="p">]</span>
 
-                <span class="c">#Get slices associated with this wnet</span>
-                <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span> <span class="s">&quot;SELECT * FROM ap_slice WHERE &quot;</span>
-                             <span class="s">&quot;wnet_id = &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">wnet_id</span> <span class="p">)</span>
+                <span class="c"># Get slices associated with this wnet</span>
+                <span class="k">if</span> <span class="n">include_deleted</span><span class="p">:</span>
+                    <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;SELECT * FROM ap_slice WHERE &quot;</span>
+                                  <span class="s">&quot;wnet_id = &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">wnet_id</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;&quot;&quot;SELECT * FROM ap_slice WHERE </span>
+<span class="s">                                         wnet_id = &#39;</span><span class="si">%s</span><span class="s">&#39; AND </span>
+<span class="s">                                         status&lt;&gt;&#39;DELETED&#39; AND</span>
+<span class="s">                                         status&lt;&gt;&#39;DELETING&#39;&quot;&quot;&quot;</span> <span class="o">%</span> <span class="n">wnet_id</span><span class="p">)</span>
+                <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
                 <span class="n">slice_info_tt</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
 
                 <span class="c">#Prune through list</span>
@@ -975,6 +1319,15 @@
         <span class="k">return</span> <span class="n">slice_list</span>
 </div>
 <div class="viewcode-block" id="AuroraDB.get_wnet_name_id"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.get_wnet_name_id">[docs]</a>    <span class="k">def</span> <span class="nf">get_wnet_name_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wnet_arg</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;For a wnet given by either name or ID, return both ID and </span>
+<span class="sd">        name.</span>
+
+<span class="sd">        :param str wnet_arg: Wnet ID or name </span>
+<span class="sd">        :param str tenant_id:</span>
+<span class="sd">        :rtype: dict </span>
+<span class="sd">        :raises: Exception</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
                 <span class="n">wnet_info</span> <span class="o">=</span> <span class="p">{}</span>
@@ -1003,6 +1356,34 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Error </span><span class="si">%d</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
             <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">wnet_info</span>
+</div>
+<div class="viewcode-block" id="AuroraDB.set_wnet_name"><a class="viewcode-back" href="../../aurora.html#aurora.aurora_db.AuroraDB.set_wnet_name">[docs]</a>    <span class="k">def</span> <span class="nf">set_wnet_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_name</span><span class="p">,</span> <span class="n">wnet_id</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the name of a wnet name.</span>
+
+<span class="sd">        :param str new_name: New name for specified wnet </span>
+<span class="sd">        :param str wnet_id: Wnet ID of the wnet to update </span>
+<span class="sd">        :param str tenant_id:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_database_connection</span><span class="p">()</span> <span class="k">as</span> <span class="n">db</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">tenant_id</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">wnet_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_wnet_name_id</span><span class="p">(</span>
+                        <span class="n">wnet_id</span><span class="p">,</span> 
+                        <span class="n">tenant_id</span>
+                    <span class="p">)[</span><span class="s">&#39;wnet_id&#39;</span><span class="p">]</span>
+                    <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;&quot;&quot;UPDATE wnet SET name=&#39;</span><span class="si">%s</span><span class="s">&#39; WHERE </span>
+<span class="s">                                        wnet_id=&#39;</span><span class="si">%s</span><span class="s">&#39; AND tenant_id=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;&quot;&quot;</span> <span class="o">%</span>
+                                    <span class="p">(</span><span class="n">new_name</span><span class="p">,</span> <span class="n">wnet_id</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c"># Assume that wnet_id is actually an ID and not a name</span>
+                    <span class="n">to_execute</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;&quot;&quot;UPDATE wnet SET name=&#39;</span><span class="si">%s</span><span class="s">&#39; WHERE </span>
+<span class="s">                                        wnet_id=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;&quot;&quot;</span> <span class="o">%</span>
+                                    <span class="p">(</span><span class="n">new_name</span><span class="p">,</span> <span class="n">wnet_id</span><span class="p">))</span>
+                <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">to_execute</span><span class="p">)</span>
+                
+        <span class="k">except</span> <span class="n">mdb</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
 </pre></div></div></div>
 
           </div>

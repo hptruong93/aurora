@@ -58,7 +58,7 @@
 
 
 <div class="viewcode-block" id="get_json_files"><a class="viewcode-back" href="../../../aurora.ap_provision.html#aurora.ap_provision.writer.get_json_files">[docs]</a><span class="k">def</span> <span class="nf">get_json_files</span><span class="p">():</span>
-    <span class="n">provision_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span> <span class="o">+</span> <span class="s">&quot;/core/ap_provision&quot;</span>
+    <span class="n">provision_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">__file__</span><span class="p">)),</span> <span class="s">&#39;json&#39;</span><span class="p">)</span>
     <span class="n">paths</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">provision_dir</span><span class="p">)</span>
     <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
@@ -84,15 +84,18 @@
         <span class="k">if</span> <span class="n">prev_config</span><span class="p">[</span><span class="s">&#39;queue&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">ap</span><span class="p">:</span>
             <span class="n">ap_config_name</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">name</span>
             <span class="k">break</span>
-    <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">F</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">F</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">UnboundLocalError</span><span class="p">:</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;WARNING: No accessible files in ap_provision&quot;</span><span class="p">)</span>
     <span class="n">F</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
     <span class="k">del</span> <span class="n">F</span>
     <span class="n">prev_config</span><span class="p">[</span><span class="s">&#39;last_known_config&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">config</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">prev_config</span>
-    <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
+    <span class="c">#LOGGER.debug(json.dumps(config, indent=4))</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">ap_config_name</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">F</span><span class="p">:</span>
         <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-        <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> updated for </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">ap</span><span class="p">)</span></div>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Provision config updated for </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ap</span><span class="p">)</span></div>
 </pre></div>
 
           </div>

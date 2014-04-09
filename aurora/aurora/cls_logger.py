@@ -1,4 +1,9 @@
-"""LOGGER importer module for class use"""
+# 2014
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &
+#              Mike Kobierski 
+#
+"""LOGGER importer module for class use."""
+
 import logging
 import string
 
@@ -9,7 +14,7 @@ MAX_WIDTH_LIMIT = 30
 class_loggers = []
 
 class CustomFormatter(logging.Formatter):
-    """Extends logging.Formatter class with a custom formatting method"""
+    """Extends logging.Formatter class with a custom formatting method."""
 
     max_width = MAX_WIDTH
     max_width_limit = MAX_WIDTH_LIMIT
@@ -18,7 +23,8 @@ class CustomFormatter(logging.Formatter):
         """Normalizes a given mapping of module and class name lengths,
         zeroing values above self.max_width_limit.
 
-        :param list width_map: List containing lengths of logger name strings
+        :param list width_map: List containing lengths of logger 
+                               name mistrings
         :rtype: list
 
         """
@@ -31,14 +37,13 @@ class CustomFormatter(logging.Formatter):
         return return_map
 
     def format(self, record):
-        """Formats the logged message to include a tag with the calling module
-        and class name with the tag length no longer than specified 
-        self.max_width_limit.  Also tracks which classes are calling the
-        format function, if it is a new class the class name is added to 
-        class_loggers list.
-        Note: 'core.' is removed from all module names if it exists
+        """Formats the logged message to include a tag with the 
+        calling module and class name with the tag length no longer 
+        than specified self.max_width_limit.  Also tracks which 
+        classes are calling the format function, if it is a new 
+        class the class name is added to class_loggers list.::
 
-        [module_name----ClassName] Logged Message
+            [module_name----ClassName] Logged Message
 
         :param LogRecord record: LogRecord with log information
         :rtype: str
@@ -57,7 +62,8 @@ class CustomFormatter(logging.Formatter):
             max_width = mod_width
         else:
             try:
-                width_map = map(lambda mod_cls_name: len(mod_cls_name), class_loggers)
+                width_map = map(lambda mod_cls_name: len(mod_cls_name),
+                                class_loggers)
             except ValueError:
                 pass
             else:
@@ -72,15 +78,17 @@ class CustomFormatter(logging.Formatter):
         if self.max_width > 0 and self.max_width > mod_width:
             cls_width = self.max_width - mod_width
 
-        return '[{0:-<{mod_width}}{1:->{cls_width}}]  {2}'.format(mod_name, 
-                                                                  cls_name, 
-                                                                  record.message,
-                                                                  mod_width=mod_width, 
-                                                                  cls_width=cls_width)
+        return '[{0:-<{mod_width}}{1:->{cls_width}}]  {2}'.format(
+            mod_name, 
+            cls_name, 
+            record.message,
+            mod_width=mod_width, 
+            cls_width=cls_width
+        )
 
 def setup_handler():
-    """Sets up a StreamHandler on the root logger and assigns it a custom
-    formatter.
+    """Sets up a StreamHandler on the root logger and assigns it a 
+    custom formatter.
 
     :rtype: logging.StreamHandler
 
@@ -91,10 +99,12 @@ def setup_handler():
     return handler
 
 def set_up_root_logger(level=None):
-    """Sets up the root logger with a handler created by setup_handler() method.
-    Sets root logging level to provided level arg, defaults is WARN
+    """Sets up the root logger with a handler created by 
+    setup_handler() method. Sets root logging level to provided 
+    level arg, defaults is WARN
 
-    :param logging.level level: Desired level of logging, specified in logging module
+    :param logging.level level: Desired level of logging, specified 
+                                in logging module
 
     """
     stream_handler = setup_handler()
@@ -105,7 +115,8 @@ def set_up_root_logger(level=None):
         logging.root.setLevel(level)
 
 def get_cls_logger(cls):
-    """Assign a logger to a class only if no prior logger has been assigned
+    """Assign a logger to a class only if no prior logger has 
+    been assigned
 
     :param class cls: Class to which LOGGER should be assigned
     :rtype: logging.Logger
@@ -115,9 +126,17 @@ def get_cls_logger(cls):
         cls.__class__.LOGGER
     except AttributeError:
         cls.__class__.LOGGER = None
-    mod_cls_name = '%s.%s' % (cls.__module__.replace('core.',''), cls.__class__.__name__)
+    mod_cls_name = '%s.%s' % (
+        cls.__module__.replace('core.',''), 
+        cls.__class__.__name__
+    )
     if cls.__class__.LOGGER is None:
-        cls.__class__.LOGGER = logging.getLogger('%s.%s' % (cls.__module__, cls.__class__.__name__))
+        cls.__class__.LOGGER = logging.getLogger(
+            '%s.%s' % (
+                cls.__module__, 
+                cls.__class__.__name__
+            )
+        )
     elif cls.__class__.LOGGER.name != mod_cls_name:
         cls.__class__.LOGGER = logging.getLogger(mod_cls_name)
     class_loggers.append(mod_cls_name)

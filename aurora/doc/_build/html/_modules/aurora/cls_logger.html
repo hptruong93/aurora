@@ -49,17 +49,23 @@
           <div class="body">
             
   <h1>Source code for aurora.cls_logger</h1><div class="highlight"><pre>
-<span class="sd">&quot;&quot;&quot;LOGGER importer module for class use&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;LOGGER importer module for class use.&quot;&quot;&quot;</span>
+<span class="c"># 2014</span>
+<span class="c"># SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &amp;</span>
+<span class="c">#              Mike Kobierski </span>
+<span class="c">#</span>
+
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">string</span>
 
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
 <span class="n">MAX_WIDTH</span> <span class="o">=</span> <span class="mi">0</span>
 <span class="n">MAX_WIDTH_LIMIT</span> <span class="o">=</span> <span class="mi">30</span>
 
 <span class="n">class_loggers</span> <span class="o">=</span> <span class="p">[]</span>
 
 <div class="viewcode-block" id="CustomFormatter"><a class="viewcode-back" href="../../aurora.html#aurora.cls_logger.CustomFormatter">[docs]</a><span class="k">class</span> <span class="nc">CustomFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Extends logging.Formatter class with a custom formatting method&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Extends logging.Formatter class with a custom formatting method.&quot;&quot;&quot;</span>
 
     <span class="n">max_width</span> <span class="o">=</span> <span class="n">MAX_WIDTH</span>
     <span class="n">max_width_limit</span> <span class="o">=</span> <span class="n">MAX_WIDTH_LIMIT</span>
@@ -68,7 +74,8 @@
         <span class="sd">&quot;&quot;&quot;Normalizes a given mapping of module and class name lengths,</span>
 <span class="sd">        zeroing values above self.max_width_limit.</span>
 
-<span class="sd">        :param list width_map: List containing lengths of logger name strings</span>
+<span class="sd">        :param list width_map: List containing lengths of logger </span>
+<span class="sd">                               name mistrings</span>
 <span class="sd">        :rtype: list</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -81,14 +88,13 @@
         <span class="k">return</span> <span class="n">return_map</span>
 </div>
 <div class="viewcode-block" id="CustomFormatter.format"><a class="viewcode-back" href="../../aurora.html#aurora.cls_logger.CustomFormatter.format">[docs]</a>    <span class="k">def</span> <span class="nf">format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Formats the logged message to include a tag with the calling module</span>
-<span class="sd">        and class name with the tag length no longer than specified </span>
-<span class="sd">        self.max_width_limit.  Also tracks which classes are calling the</span>
-<span class="sd">        format function, if it is a new class the class name is added to </span>
-<span class="sd">        class_loggers list.</span>
-<span class="sd">        Note: &#39;core.&#39; is removed from all module names if it exists</span>
+        <span class="sd">&quot;&quot;&quot;Formats the logged message to include a tag with the </span>
+<span class="sd">        calling module and class name with the tag length no longer </span>
+<span class="sd">        than specified self.max_width_limit.  Also tracks which </span>
+<span class="sd">        classes are calling the format function, if it is a new </span>
+<span class="sd">        class the class name is added to class_loggers list.::</span>
 
-<span class="sd">        [module_name----ClassName] Logged Message</span>
+<span class="sd">            [module_name----ClassName] Logged Message</span>
 
 <span class="sd">        :param LogRecord record: LogRecord with log information</span>
 <span class="sd">        :rtype: str</span>
@@ -107,7 +113,8 @@
             <span class="n">max_width</span> <span class="o">=</span> <span class="n">mod_width</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">width_map</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">mod_cls_name</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">mod_cls_name</span><span class="p">),</span> <span class="n">class_loggers</span><span class="p">)</span>
+                <span class="n">width_map</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">mod_cls_name</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">mod_cls_name</span><span class="p">),</span>
+                                <span class="n">class_loggers</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
                 <span class="k">pass</span>
             <span class="k">else</span><span class="p">:</span>
@@ -122,15 +129,17 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_width</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_width</span> <span class="o">&gt;</span> <span class="n">mod_width</span><span class="p">:</span>
             <span class="n">cls_width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_width</span> <span class="o">-</span> <span class="n">mod_width</span>
 
-        <span class="k">return</span> <span class="s">&#39;[{0:-&lt;{mod_width}}{1:-&gt;{cls_width}}]  {2}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mod_name</span><span class="p">,</span> 
-                                                                  <span class="n">cls_name</span><span class="p">,</span> 
-                                                                  <span class="n">record</span><span class="o">.</span><span class="n">message</span><span class="p">,</span>
-                                                                  <span class="n">mod_width</span><span class="o">=</span><span class="n">mod_width</span><span class="p">,</span> 
-                                                                  <span class="n">cls_width</span><span class="o">=</span><span class="n">cls_width</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&#39;[{0:-&lt;{mod_width}}{1:-&gt;{cls_width}}]  {2}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">mod_name</span><span class="p">,</span> 
+            <span class="n">cls_name</span><span class="p">,</span> 
+            <span class="n">record</span><span class="o">.</span><span class="n">message</span><span class="p">,</span>
+            <span class="n">mod_width</span><span class="o">=</span><span class="n">mod_width</span><span class="p">,</span> 
+            <span class="n">cls_width</span><span class="o">=</span><span class="n">cls_width</span>
+        <span class="p">)</span>
 </div></div>
 <div class="viewcode-block" id="setup_handler"><a class="viewcode-back" href="../../aurora.html#aurora.cls_logger.setup_handler">[docs]</a><span class="k">def</span> <span class="nf">setup_handler</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;Sets up a StreamHandler on the root logger and assigns it a custom</span>
-<span class="sd">    formatter.</span>
+    <span class="sd">&quot;&quot;&quot;Sets up a StreamHandler on the root logger and assigns it a </span>
+<span class="sd">    custom formatter.</span>
 
 <span class="sd">    :rtype: logging.StreamHandler</span>
 
@@ -141,20 +150,24 @@
     <span class="k">return</span> <span class="n">handler</span>
 </div>
 <div class="viewcode-block" id="set_up_root_logger"><a class="viewcode-back" href="../../aurora.html#aurora.cls_logger.set_up_root_logger">[docs]</a><span class="k">def</span> <span class="nf">set_up_root_logger</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Sets up the root logger with a handler created by setup_handler() method.</span>
-<span class="sd">    Sets root logging level to provided level arg, defaults is WARN</span>
+    <span class="sd">&quot;&quot;&quot;Sets up the root logger with a handler created by </span>
+<span class="sd">    setup_handler() method. Sets root logging level to provided </span>
+<span class="sd">    level arg, defaults is WARN</span>
 
-<span class="sd">    :param logging.level level: Desired level of logging, specified in logging module</span>
+<span class="sd">    :param logging.level level: Desired level of logging, specified </span>
+<span class="sd">                                in logging module</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">stream_handler</span> <span class="o">=</span> <span class="n">setup_handler</span><span class="p">()</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">handlers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stream_handler</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Setting logging level to </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">level</span><span class="p">)</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="get_cls_logger"><a class="viewcode-back" href="../../aurora.html#aurora.cls_logger.get_cls_logger">[docs]</a><span class="k">def</span> <span class="nf">get_cls_logger</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Assign a logger to a class only if no prior logger has been assigned</span>
+    <span class="sd">&quot;&quot;&quot;Assign a logger to a class only if no prior logger has </span>
+<span class="sd">    been assigned</span>
 
 <span class="sd">    :param class cls: Class to which LOGGER should be assigned</span>
 <span class="sd">    :rtype: logging.Logger</span>
@@ -164,9 +177,17 @@
         <span class="n">cls</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">LOGGER</span>
     <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">LOGGER</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">mod_cls_name</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">__module__</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;core.&#39;</span><span class="p">,</span><span class="s">&#39;&#39;</span><span class="p">),</span> <span class="n">cls</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
+    <span class="n">mod_cls_name</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">__module__</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;core.&#39;</span><span class="p">,</span><span class="s">&#39;&#39;</span><span class="p">),</span> 
+        <span class="n">cls</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span>
+    <span class="p">)</span>
     <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">LOGGER</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">cls</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">__module__</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">))</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span>
+            <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="n">cls</span><span class="o">.</span><span class="n">__module__</span><span class="p">,</span> 
+                <span class="n">cls</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
     <span class="k">elif</span> <span class="n">cls</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="n">mod_cls_name</span><span class="p">:</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">mod_cls_name</span><span class="p">)</span>
     <span class="n">class_loggers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mod_cls_name</span><span class="p">)</span>

@@ -57,26 +57,27 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
 
-<span class="kn">from</span> <span class="nn">cls_logger</span> <span class="kn">import</span> <span class="n">get_cls_logger</span>
+<span class="kn">from</span> <span class="nn">aurora.cls_logger</span> <span class="kn">import</span> <span class="n">get_cls_logger</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="SlicePlugin"><a class="viewcode-back" href="../../aurora.html#aurora.slice_plugin.SlicePlugin">[docs]</a><span class="k">class</span> <span class="nc">SlicePlugin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="SlicePlugin.__init__"><a class="viewcode-back" href="../../aurora.html#aurora.slice_plugin.SlicePlugin.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="c">#To add later: RadioInterfaces</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span> <span class="o">=</span> <span class="n">get_cls_logger</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;VirtualInterfaces&#39;</span><span class="p">:</span><span class="s">&#39;core.plugins.vif_plugin.VirtualInterfacePlugin&#39;</span><span class="p">,</span>
-                        <span class="s">&#39;VirtualBridges&#39;</span><span class="p">:</span><span class="s">&#39;core.plugins.vbr_plugin.VirtualBridgePlugin&#39;</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;VirtualInterfaces&#39;</span><span class="p">:</span><span class="s">&#39;aurora.plugins.vif_plugin.VirtualInterfacePlugin&#39;</span><span class="p">,</span>
+                        <span class="s">&#39;VirtualBridges&#39;</span><span class="p">:</span><span class="s">&#39;aurora.plugins.vbr_plugin.VirtualBridgePlugin&#39;</span><span class="p">}</span>
         
         <span class="bp">self</span><span class="o">.</span><span class="n">tenant_id</span> <span class="o">=</span> <span class="n">tenant_id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span> <span class="o">=</span> <span class="n">user_id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tag</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">if</span> <span class="n">tag</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">tag</span> <span class="o">=</span> <span class="n">tag</span>
-        
+        </div>
 <div class="viewcode-block" id="SlicePlugin.parse_create_slice"><a class="viewcode-back" href="../../aurora.html#aurora.slice_plugin.SlicePlugin.parse_create_slice">[docs]</a>    <span class="k">def</span> <span class="nf">parse_create_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">numSlice</span><span class="p">,</span> <span class="n">json_list</span><span class="p">):</span>
         <span class="c">#Loop through values in plugin</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span><span class="p">:</span>
@@ -88,25 +89,26 @@
                     <span class="k">try</span><span class="p">:</span>
                         <span class="n">json_list</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">newmodule</span><span class="p">,</span> <span class="n">class_name</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">tenant_id</span><span class="p">)</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">numSlice</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="c">#i is the current index</span>
                     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
                         <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span> <span class="c">#Make default</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">key</span><span class="o">+</span><span class="s">&#39; not found. File might not parse correctly. Please check configuration and try again!&#39;</span><span class="p">)</span>
                 
         <span class="c">#Add wrapper around json_list and return</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_create_slice_wrapper</span><span class="p">(</span><span class="n">json_list</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_create_slice_wrapper</span><span class="p">(</span><span class="n">json_list</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tenant_id</span><span class="p">)</span>
                 </div>
-    <span class="k">def</span> <span class="nf">_add_create_slice_wrapper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">json_list</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+<div class="viewcode-block" id="SlicePlugin._add_create_slice_wrapper"><a class="viewcode-back" href="../../aurora.html#aurora.slice_plugin.SlicePlugin._add_create_slice_wrapper">[docs]</a>    <span class="k">def</span> <span class="nf">_add_create_slice_wrapper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">json_list</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;This method takes a json_list and puts each entry in the correct format (i.e. user, slice, command, config)</span>
 <span class="sd">        for sending to the APs&quot;&quot;&quot;</span>
         <span class="n">newlist</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">json_list</span><span class="p">:</span>
             <span class="n">tempdata</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="n">tempdata</span><span class="p">[</span><span class="s">&#39;config&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">entry</span>
-            <span class="n">tempdata</span><span class="p">[</span><span class="s">&#39;user&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">user_id</span>
+            <span class="n">tempdata</span><span class="p">[</span><span class="s">&#39;user&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tenant_id</span>
             <span class="n">tempdata</span><span class="p">[</span><span class="s">&#39;slice&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag</span>
             <span class="n">tempdata</span><span class="p">[</span><span class="s">&#39;command&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;create_slice&#39;</span>
             <span class="n">newlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tempdata</span><span class="p">)</span>     
-        <span class="k">return</span> <span class="n">newlist</span></div>
+        <span class="k">return</span> <span class="n">newlist</span></div></div>
 </pre></div>
 
           </div>

@@ -49,116 +49,118 @@
           <div class="body">
             
   <h1>Source code for aurora.request_verification.verification_exception</h1><div class="highlight"><pre>
-<span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">exc</span> <span class="k">as</span> <span class="n">exception</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABCMeta</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">from</span> <span class="nn">aurora</span> <span class="kn">import</span> <span class="n">exc</span> <span class="k">as</span> <span class="n">exception</span>
+
 
 <span class="c">#Base abstract class for all exception raised (when conflict detected)</span>
 <div class="viewcode-block" id="VerificationException"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.VerificationException">[docs]</a><span class="k">class</span> <span class="nc">VerificationException</span><span class="p">(</span><span class="n">exception</span><span class="o">.</span><span class="n">AuroraException</span><span class="p">):</span>
     <span class="n">__metaclass__</span> <span class="o">=</span> <span class="n">ABCMeta</span>
     
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="VerificationException._handle_exception"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.VerificationException._handle_exception">[docs]</a>    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c">#Tell the client about the problem here or resolve internally</span>
         <span class="k">pass</span>
 
-<span class="c">#This exception is raised when the verifier cannot find a key in the request. It would provide the client the name of the missing key</span></div>
+<span class="c">#This exception is raised when the verifier cannot find a key in the request. It would provide the client the name of the missing key</span></div></div>
 <div class="viewcode-block" id="MissingKeyInRequest"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.MissingKeyInRequest">[docs]</a><span class="k">class</span> <span class="nc">MissingKeyInRequest</span><span class="p">(</span><span class="n">VerificationException</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;not_provided&quot;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">MissingKeyInRequest</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
     
-    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="MissingKeyInRequest._handle_exception"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.MissingKeyInRequest._handle_exception">[docs]</a>    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s">&#39;Key </span><span class="se">\&#39;</span><span class="s">&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\&#39;</span><span class="s"> could not be found. Please check request!&#39;</span>
 
 <span class="c">#This exception is raised when the verifier cannot find the ap mentioned in the request, either in the database or the</span>
-<span class="c">#provision folder of manager</span></div>
+<span class="c">#provision folder of manager</span></div></div>
 <div class="viewcode-block" id="NoSuchAPExists"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.NoSuchAPExists">[docs]</a><span class="k">class</span> <span class="nc">NoSuchAPExists</span><span class="p">(</span><span class="n">VerificationException</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;not_provided&quot;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">NoSuchAPExists</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
     
-    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="NoSuchAPExists._handle_exception"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.NoSuchAPExists._handle_exception">[docs]</a>    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s">&quot;Cannot find any AP named </span><span class="se">\&#39;</span><span class="s">&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">+</span> <span class="s">&quot;</span><span class="se">\&#39;</span><span class="s">&quot;</span>
 
 <span class="c">#This exception is raised when the verifier cannot find the slice mentioned in the request, either in the database or the</span>
-<span class="c">#provision folder of manager</span></div>
+<span class="c">#provision folder of manager</span></div></div>
 <div class="viewcode-block" id="NoSuchSliceExists"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.NoSuchSliceExists">[docs]</a><span class="k">class</span> <span class="nc">NoSuchSliceExists</span><span class="p">(</span><span class="n">VerificationException</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;not_provided&quot;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">NoSuchSliceExists</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
     
-    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="NoSuchSliceExists._handle_exception"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.NoSuchSliceExists._handle_exception">[docs]</a>    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s">&quot;Cannot find any slice named </span><span class="se">\&#39;</span><span class="s">&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">+</span> <span class="s">&quot;</span><span class="se">\&#39;</span><span class="s">&quot;</span>
 
-<span class="c">#This exception is raised when an AP is having, or is requested to have more than 4n ap slices with n is the AP&#39;s number of radios</span></div>
+<span class="c">#This exception is raised when an AP is having, or is requested to have more than 4n ap slices with n is the AP&#39;s number of radios</span></div></div>
 <div class="viewcode-block" id="NoAvailableSpaceLeftInAP"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.NoAvailableSpaceLeftInAP">[docs]</a><span class="k">class</span> <span class="nc">NoAvailableSpaceLeftInAP</span><span class="p">(</span><span class="n">VerificationException</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;&quot;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">NoAvailableSpaceLeftInAP</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
     
-    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="NoAvailableSpaceLeftInAP._handle_exception"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.NoAvailableSpaceLeftInAP._handle_exception">[docs]</a>    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span>
 
 <span class="c">#This exception is raised when the client&#39;s operation would result in:</span>
 <span class="c">#	There would be two configurations for one radio</span>
-<span class="c">#	There would be no configuration for the radio which a slice will be created on/ has existing slices</span></div>
+<span class="c">#	There would be no configuration for the radio which a slice will be created on/ has existing slices</span></div></div>
 <div class="viewcode-block" id="RadioConfigInvalid"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.RadioConfigInvalid">[docs]</a><span class="k">class</span> <span class="nc">RadioConfigInvalid</span><span class="p">(</span><span class="n">VerificationException</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;&quot;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">RadioConfigInvalid</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="RadioConfigInvalid._handle_exception"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.RadioConfigInvalid._handle_exception">[docs]</a>    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span>
 
 <span class="c">#This exception is raised when the client attempts to create a new slice and provide an invalid number of Bridge</span>
-<span class="c">#The number of Bridge expected is one.</span></div>
+<span class="c">#The number of Bridge expected is one.</span></div></div>
 <div class="viewcode-block" id="BridgeNumberInvalid"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.BridgeNumberInvalid">[docs]</a><span class="k">class</span> <span class="nc">BridgeNumberInvalid</span><span class="p">(</span><span class="n">VerificationException</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;&quot;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">BridgeNumberInvalid</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="BridgeNumberInvalid._handle_exception"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.BridgeNumberInvalid._handle_exception">[docs]</a>    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span>
 
 <span class="c">#This exception is raised when the client attempts to create a new slice and provide an invalid number of VirtualInterface</span>
-<span class="c">#The number of VirtualInterfaces expected is two.</span></div>
+<span class="c">#The number of VirtualInterfaces expected is two.</span></div></div>
 <div class="viewcode-block" id="VirtualInterfaceNumberInvalid"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.VirtualInterfaceNumberInvalid">[docs]</a><span class="k">class</span> <span class="nc">VirtualInterfaceNumberInvalid</span><span class="p">(</span><span class="n">VerificationException</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;&quot;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">VirtualInterfaceNumberInvalid</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="VirtualInterfaceNumberInvalid._handle_exception"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.VirtualInterfaceNumberInvalid._handle_exception">[docs]</a>    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span>    
 
 <span class="c">#This exception is raised when a client attempts to create a new slice with bridge/ virtual interface similar to another client</span>
-<span class="c">#Different client should have different bridge and virtual interfaces.</span></div>
+<span class="c">#Different client should have different bridge and virtual interfaces.</span></div></div>
 <div class="viewcode-block" id="AccessConflict"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.AccessConflict">[docs]</a><span class="k">class</span> <span class="nc">AccessConflict</span><span class="p">(</span><span class="n">VerificationException</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;&quot;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">AccessConflict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="AccessConflict._handle_exception"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.AccessConflict._handle_exception">[docs]</a>    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span>
 
-<span class="c">#This exception is raised when a client attempts to specify a bandwidth greater than the ap&#39;s capacity (this value is determined through practical observation. See other documents).</span></div>
+<span class="c">#This exception is raised when a client attempts to specify a bandwidth greater than the ap&#39;s capacity (this value is determined through practical observation. See other documents).</span></div></div>
 <div class="viewcode-block" id="InsufficientBandwidth"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.InsufficientBandwidth">[docs]</a><span class="k">class</span> <span class="nc">InsufficientBandwidth</span><span class="p">(</span><span class="n">VerificationException</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;&quot;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">InsufficientBandwidth</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="InsufficientBandwidth._handle_exception"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.InsufficientBandwidth._handle_exception">[docs]</a>    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span>
 
 <span class="c">#This exception is raised when a client attempts to delete a slice while there are more than 1 slice in the ap, and that</span>
-<span class="c">#the deleting slice is the main slice that contains radio configuration.</span></div>
+<span class="c">#the deleting slice is the main slice that contains radio configuration.</span></div></div>
 <div class="viewcode-block" id="IllegalSliceDeletion"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.IllegalSliceDeletion">[docs]</a><span class="k">class</span> <span class="nc">IllegalSliceDeletion</span><span class="p">(</span><span class="n">VerificationException</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;&quot;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">IllegalSliceDeletion</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span></div>
+<div class="viewcode-block" id="IllegalSliceDeletion._handle_exception"><a class="viewcode-back" href="../../../aurora.request_verification.html#aurora.request_verification.verification_exception.IllegalSliceDeletion._handle_exception">[docs]</a>    <span class="k">def</span> <span class="nf">_handle_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span></div></div>
 </pre></div>
 
           </div>
