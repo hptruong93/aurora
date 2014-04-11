@@ -510,7 +510,7 @@ credentials assigned when AuroraDB instance was created.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">MySQLdb.Connection</td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><tt class="xref py py-class docutils literal"><span class="pre">MySQLdb.Connection</span></tt></td>
 </tr>
 </tbody>
 </table>
@@ -1330,14 +1330,32 @@ with the given tag.</p>
 <em class="property">class </em><tt class="descclassname">aurora.cls_logger.</tt><tt class="descname">CustomFormatter</tt><big>(</big><em>fmt=None</em>, <em>datefmt=None</em><big>)</big><a class="reference internal" href="_modules/aurora/cls_logger.html#CustomFormatter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.cls_logger.CustomFormatter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/2.7/library/logging.html#logging.Formatter" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">logging.Formatter</span></tt></a></p>
 <p>Extends logging.Formatter class with a custom formatting method.</p>
+<p>Usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">aurora</span> <span class="kn">import</span> <span class="n">cls_logger</span>
+<span class="k">class</span> <span class="nc">A</span><span class="p">():</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span> <span class="o">=</span> <span class="n">cls_logger</span><span class="o">.</span><span class="n">get_cls_logger</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">hello_world</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># String substitutions work</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> World!&quot;</span><span class="p">,</span> <span class="s">&quot;Hello&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">cls_logger</span><span class="o">.</span><span class="n">set_up_root_logger</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">A</span><span class="p">()</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">hello_world</span><span class="p">()</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;This works too.&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
 <dl class="method">
 <dt id="aurora.cls_logger.CustomFormatter.format">
 <tt class="descname">format</tt><big>(</big><em>record</em><big>)</big><a class="reference internal" href="_modules/aurora/cls_logger.html#CustomFormatter.format"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.cls_logger.CustomFormatter.format" title="Permalink to this definition">¶</a></dt>
 <dd><p>Formats the logged message to include a tag with the 
 calling module and class name with the tag length no longer 
-than specified self.max_width_limit.  Also tracks which 
+than specified <tt class="docutils literal"><span class="pre">self.max_width_limit</span></tt>.  Also tracks which 
 classes are calling the format function, if it is a new 
-class the class name is added to class_loggers list.:</p>
+class the class name is added to <tt class="docutils literal"><span class="pre">class_loggers</span></tt> list.:</p>
 <div class="highlight-python"><pre>[module_name----ClassName] Logged Message</pre>
 </div>
 <table class="docutils field-list" frame="void" rules="none">
@@ -1366,7 +1384,7 @@ class the class name is added to class_loggers list.:</p>
 <dt id="aurora.cls_logger.CustomFormatter.normalize">
 <tt class="descname">normalize</tt><big>(</big><em>width_map</em><big>)</big><a class="reference internal" href="_modules/aurora/cls_logger.html#CustomFormatter.normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.cls_logger.CustomFormatter.normalize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Normalizes a given mapping of module and class name lengths,
-zeroing values above self.max_width_limit.</p>
+zeroing values above <tt class="docutils literal"><span class="pre">self.max_width_limit</span></tt>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1393,7 +1411,7 @@ been assigned</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>cls</strong> (<em>class</em>) &#8211; Class to which LOGGER should be assigned</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">logging.Logger</td>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2.7/library/logging.html#logging.Logger" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">logging.Logger</span></tt></a></td>
 </tr>
 </tbody>
 </table>
@@ -1409,8 +1427,7 @@ level arg, defaults is WARN</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>level</strong> (<em>logging.level</em>) &#8211; Desired level of logging, specified 
-in logging module</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>level</strong> (int &#8211; <a class="reference external" href="https://docs.python.org/2/library/logging.html#logging-levels">logging.level</a>) &#8211; Desired level of logging, specified in logging module</td>
 </tr>
 </tbody>
 </table>
@@ -1425,7 +1442,7 @@ custom formatter.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">logging.StreamHandler</td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2.7/library/logging.handlers.html#logging.StreamHandler" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">logging.StreamHandler</span></tt></a></td>
 </tr>
 </tbody>
 </table>
@@ -1871,7 +1888,8 @@ future reference by access points in AP provision database.</p>
 <dd><p>Removes a request from the requests sent list and cancels 
 the associated timer.  If ap_syn is set, all requests for that 
 AP are removed and their timers cancelled &#8211; at this point it 
-is known that the AP will not respond to any of them.</p>
+is known that the AP will not respond to any of the previously 
+issued messages.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1955,10 +1973,15 @@ stop the pika channel monitor thread.</p>
 
 </dd></dl>
 
+<dl class="function">
+<dt id="aurora.dispatcher.main">
+<tt class="descclassname">aurora.dispatcher.</tt><tt class="descname">main</tt><big>(</big><big>)</big><a class="headerlink" href="#aurora.dispatcher.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 <div class="section" id="module-aurora.exc">
 <span id="exc-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">exc</span></tt> Module<a class="headerlink" href="#module-aurora.exc" title="Permalink to this headline">¶</a></h2>
-<p>TODO(Mike): Docstring</p>
+<p>Module containing exceptions for use in Aurora Manager.</p>
 <dl class="exception">
 <dt id="aurora.exc.APSliceAlreadyInWnetException">
 <em class="property">exception </em><tt class="descclassname">aurora.exc.</tt><tt class="descname">APSliceAlreadyInWnetException</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/aurora/exc.html#APSliceAlreadyInWnetException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.exc.APSliceAlreadyInWnetException" title="Permalink to this definition">¶</a></dt>
@@ -1971,6 +1994,12 @@ stop the pika channel monitor thread.</p>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
 <p>Base class for exceptions in Aurora.
 Inherit it and define info to use it.</p>
+<p>An inherited class should include an overridden <tt class="docutils literal"><span class="pre">message</span></tt>, which
+can contain key word arguments such as <tt class="docutils literal"><span class="pre">%(kw)s</span></tt>.  These will be 
+substituted upon raising your exception:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">raise</span> <span class="n">MyAuroraException</span><span class="p">(</span><span class="n">kw</span><span class="o">=</span><span class="s">&quot;my keyword string&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="exception">
@@ -2705,20 +2734,28 @@ slice with the new ssid.</p>
 </div>
 <div class="section" id="module-aurora.manager_http_server">
 <span id="manager-http-server-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">manager_http_server</span></tt> Module<a class="headerlink" href="#module-aurora.manager_http_server" title="Permalink to this headline">¶</a></h2>
+<p>Simple Manager HTTP Server for communicating JSON configuration 
+files between Aurora Manager and Client.</p>
+<p>A possible entry point for starting manager is <a class="reference internal" href="#aurora.manager_http_server.main" title="aurora.manager_http_server.main"><tt class="xref py py-func docutils literal"><span class="pre">main()</span></tt></a>.</p>
 <dl class="class">
 <dt id="aurora.manager_http_server.ManagerServer">
 <em class="property">class </em><tt class="descclassname">aurora.manager_http_server.</tt><tt class="descname">ManagerServer</tt><big>(</big><em>server_address</em>, <em>RequestHandlerClass</em>, <em>bind_and_activate=True</em><big>)</big><a class="reference internal" href="_modules/aurora/manager_http_server.html#ManagerServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.manager_http_server.ManagerServer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/2.7/library/basehttpserver.html#BaseHTTPServer.HTTPServer" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">BaseHTTPServer.HTTPServer</span></tt></a></p>
-<p>Builds upon HTTPServer and also sets up and tears down single Manager() instance</p>
+<p>Builds upon <a class="reference external" href="https://docs.python.org/2.7/library/basehttpserver.html#BaseHTTPServer.HTTPServer" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">BaseHTTPServer.HTTPServer</span></tt></a>.</p>
+<p>Includes a logger, instantiates a <a class="reference internal" href="#aurora.manager.Manager" title="aurora.manager.Manager"><tt class="xref py py-class docutils literal"><span class="pre">aurora.manager.Manager</span></tt></a> 
+instance and stores a static reference for it in 
+<tt class="docutils literal"><span class="pre">self.RequestHandlerClass</span></tt>.  Also handles cleanup on exit.</p>
 <dl class="method">
 <dt id="aurora.manager_http_server.ManagerServer.serve_forever">
 <tt class="descname">serve_forever</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/aurora/manager_http_server.html#ManagerServer.serve_forever"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.manager_http_server.ManagerServer.serve_forever" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Run to start the ManagerServer.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="aurora.manager_http_server.ManagerServer.server_close">
 <tt class="descname">server_close</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/aurora/manager_http_server.html#ManagerServer.server_close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.manager_http_server.ManagerServer.server_close" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Run to close the ManagerServer.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -2726,6 +2763,17 @@ slice with the new ssid.</p>
 <dt id="aurora.manager_http_server.NewConnectionHandler">
 <em class="property">class </em><tt class="descclassname">aurora.manager_http_server.</tt><tt class="descname">NewConnectionHandler</tt><big>(</big><em>*args</em><big>)</big><a class="reference internal" href="_modules/aurora/manager_http_server.html#NewConnectionHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.manager_http_server.NewConnectionHandler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/2.7/library/basehttpserver.html#BaseHTTPServer.BaseHTTPRequestHandler" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">BaseHTTPServer.BaseHTTPRequestHandler</span></tt></a></p>
+<p>Handles client HTTP requests.</p>
+<p>A new NewConnectionHandler is created for every incoming 
+connection received by <a class="reference internal" href="#aurora.manager_http_server.ManagerServer" title="aurora.manager_http_server.ManagerServer"><tt class="xref py py-class docutils literal"><span class="pre">ManagerServer</span></tt></a>.  The handler 
+defines the behavior upon receipt of a GET or POST HTTP message.
+The communication structure is such that a client will first post 
+a message containing a configuration JSON which be passed to 
+<a class="reference internal" href="#aurora.manager.Manager" title="aurora.manager.Manager"><tt class="xref py py-class docutils literal"><span class="pre">aurora.manager.Manager</span></tt></a>, and will then follow up with a 
+GET request for feedback about execution of the issued command.</p>
+<p>Only one instance of <a class="reference internal" href="#aurora.manager.Manager" title="aurora.manager.Manager"><tt class="xref py py-class docutils literal"><span class="pre">aurora.manager.Manager</span></tt></a> will be 
+created, and a handle for this instance is stored in 
+<tt class="docutils literal"><span class="pre">NewConnectionHandler.MANAGER</span></tt>.</p>
 <dl class="attribute">
 <dt id="aurora.manager_http_server.NewConnectionHandler.MANAGER">
 <tt class="descname">MANAGER</tt><em class="property"> = None</em><a class="headerlink" href="#aurora.manager_http_server.NewConnectionHandler.MANAGER" title="Permalink to this definition">¶</a></dt>
@@ -2734,22 +2782,55 @@ slice with the new ssid.</p>
 <dl class="method">
 <dt id="aurora.manager_http_server.NewConnectionHandler.__init__">
 <tt class="descname">__init__</tt><big>(</big><em>*args</em><big>)</big><a class="reference internal" href="_modules/aurora/manager_http_server.html#NewConnectionHandler.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.manager_http_server.NewConnectionHandler.__init__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Verifies an <a class="reference internal" href="#aurora.manager.Manager" title="aurora.manager.Manager"><tt class="xref py py-class docutils literal"><span class="pre">aurora.manager.Manager</span></tt></a> instance exists 
+to handle client requests.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>args</strong> (<em>args</em>) &#8211; Arguments to set up 
+<a class="reference external" href="https://docs.python.org/2.7/library/basehttpserver.html#BaseHTTPServer.BaseHTTPRequestHandler" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">BaseHTTPServer.BaseHTTPRequestHandler</span></tt></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="aurora.manager_http_server.NewConnectionHandler.do_GET">
 <tt class="descname">do_GET</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/aurora/manager_http_server.html#NewConnectionHandler.do_GET"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.manager_http_server.NewConnectionHandler.do_GET" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Handles a GET request.</p>
+<p>Sends a 200-OK response with the data from the response file.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="aurora.manager_http_server.NewConnectionHandler.do_POST">
 <tt class="descname">do_POST</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/aurora/manager_http_server.html#NewConnectionHandler.do_POST"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.manager_http_server.NewConnectionHandler.do_POST" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Handles a POST request.</p>
+<p>Parses some aspects of the request to determine what function 
+is being requested, as well as which tenant, project, and user 
+the request belongs to.  Passes the command to 
+<a class="reference internal" href="#aurora.manager.Manager.parseargs" title="aurora.manager.Manager.parseargs"><tt class="xref py py-func docutils literal"><span class="pre">aurora.manager.Manager.parseargs()</span></tt></a>, and stores the 
+returned response.  This response will later be relayed back to 
+the client by a client GET request.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="aurora.manager_http_server.NewConnectionHandler.sendPage">
 <tt class="descname">sendPage</tt><big>(</big><em>type</em>, <em>body</em><big>)</big><a class="reference internal" href="_modules/aurora/manager_http_server.html#NewConnectionHandler.sendPage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.manager_http_server.NewConnectionHandler.sendPage" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Sends a page to a client.  Unused at the moment.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>type</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Type of data being sent ex. <tt class="docutils literal"><span class="pre">'application/json'</span></tt></li>
+<li><strong>body</strong> &#8211; Data to send to client.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="aurora.manager_http_server.NewConnectionHandler.server_version">
@@ -2761,11 +2842,31 @@ slice with the new ssid.</p>
 <dl class="function">
 <dt id="aurora.manager_http_server.main">
 <tt class="descclassname">aurora.manager_http_server.</tt><tt class="descname">main</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/aurora/manager_http_server.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.manager_http_server.main" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>An entry point for launching Aurora Manager.</p>
+<p>Sets up root-level logger.  Assigns a the request handler class.
+Starts the HTTP server <a class="reference internal" href="#aurora.manager_http_server.ManagerServer" title="aurora.manager_http_server.ManagerServer"><tt class="xref py py-class docutils literal"><span class="pre">ManagerServer</span></tt></a>.  Performs some basic
+error handling and outputs tracebacks.</p>
+<p>The logging level can be specified from command line arguments.</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#module-aurora.shell" title="aurora.shell"><tt class="xref py py-mod docutils literal"><span class="pre">aurora.shell</span></tt></a></p>
+</div>
+</dd></dl>
 
 </div>
 <div class="section" id="module-aurora.shell">
 <span id="shell-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">shell</span></tt> Module<a class="headerlink" href="#module-aurora.shell" title="Permalink to this headline">¶</a></h2>
+<p>Intended entry point for Aurora Manager.</p>
+<p>Usage:</p>
+<div class="highlight-python"><pre>$ python shell.py &lt;DEBUG|INFO|WARNING|ERROR|CRITICAL&gt;</pre>
+</div>
+<p>or:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;/path/to/aurora/package/dir&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">aurora.shell</span> <span class="kn">import</span> <span class="n">main</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
 <dl class="function">
 <dt id="aurora.shell.main">
 <tt class="descclassname">aurora.shell.</tt><tt class="descname">main</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/aurora/shell.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.shell.main" title="Permalink to this definition">¶</a></dt>
@@ -2774,6 +2875,10 @@ slice with the new ssid.</p>
 </div>
 <div class="section" id="module-aurora.shell_local">
 <span id="shell-local-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">shell_local</span></tt> Module<a class="headerlink" href="#module-aurora.shell_local" title="Permalink to this headline">¶</a></h2>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Out of date and unused!  Use at own risk.</p>
+</div>
 <p>Command-line interface to the Aurora API
 Uses a JSON file for commands:</p>
 <div class="highlight-python"><pre>Format:[
@@ -2809,6 +2914,77 @@ Uses a JSON file for commands:</p>
 </div>
 <div class="section" id="module-aurora.slice_json_generator">
 <span id="slice-json-generator-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">slice_json_generator</span></tt> Module<a class="headerlink" href="#module-aurora.slice_json_generator" title="Permalink to this headline">¶</a></h2>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Out of date and unused!  Use at own risk.</p>
+</div>
+<p>Module for generating a JSON configuration.  To be compatible with 
+Aurora Manager v0.2 and later, follow the structure of this functional
+JSON configuration:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s">&quot;VirtualWIFI&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s">&quot;flavor&quot;</span> <span class="p">:</span> <span class="s">&quot;wifi_radio&quot;</span><span class="p">,</span>
+            <span class="s">&quot;attributes&quot;</span> <span class="p">:</span> 
+                <span class="p">{</span>
+                    <span class="s">&quot;name&quot;</span> <span class="p">:</span> <span class="s">&quot;radio0&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;channel&quot;</span> <span class="p">:</span> <span class="s">&quot;1&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;txpower&quot;</span> <span class="p">:</span> <span class="s">&quot;20&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;disabled&quot;</span> <span class="p">:</span> <span class="s">&quot;0&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;country&quot;</span> <span class="p">:</span> <span class="s">&quot;CA&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;hwmode&quot;</span> <span class="p">:</span> <span class="s">&quot;abg&quot;</span>   
+                <span class="p">}</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s">&quot;flavor&quot;</span> <span class="p">:</span> <span class="s">&quot;wifi_bss&quot;</span><span class="p">,</span>
+            <span class="s">&quot;attributes&quot;</span> <span class="p">:</span> 
+                <span class="p">{</span>
+                    <span class="s">&quot;name&quot;</span> <span class="p">:</span> <span class="s">&quot;NetworkSSID&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;radio&quot;</span> <span class="p">:</span> <span class="s">&quot;radio0&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;if_name&quot;</span> <span class="p">:</span> <span class="s">&quot;wlan0&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;encryption_type&quot;</span><span class="p">:</span><span class="s">&quot;wep-open&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;key&quot;</span><span class="p">:</span><span class="s">&quot;00000&quot;</span>
+                <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">],</span> 
+    <span class="s">&quot;VirtualBridges&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s">&quot;flavor&quot;</span><span class="p">:</span><span class="s">&quot;linux_bridge&quot;</span><span class="p">,</span>
+            <span class="s">&quot;attributes&quot;</span><span class="p">:</span>   
+                <span class="p">{</span>
+                    <span class="s">&quot;name&quot;</span><span class="p">:</span><span class="s">&quot;linux-br&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;interfaces&quot;</span><span class="p">:</span>
+                        <span class="p">[</span><span class="s">&quot;vwlan0&quot;</span><span class="p">,</span><span class="s">&quot;tun0&quot;</span><span class="p">],</span>
+                    <span class="s">&quot;bridge_settings&quot;</span><span class="p">:{},</span>
+                    <span class="s">&quot;port_settings&quot;</span><span class="p">:{}</span>
+                <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">],</span> 
+    <span class="s">&quot;VirtualInterfaces&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s">&quot;flavor&quot;</span><span class="p">:</span><span class="s">&quot;capsulator&quot;</span><span class="p">,</span>
+            <span class="s">&quot;attributes&quot;</span><span class="p">:</span> 
+                <span class="p">{</span>
+                    <span class="s">&quot;attach_to&quot;</span><span class="p">:</span><span class="s">&quot;eth0&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;name&quot;</span><span class="p">:</span><span class="s">&quot;tun0&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;forward_to&quot;</span><span class="p">:</span><span class="s">&quot;10.0.0.1&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;tunnel_tag&quot;</span><span class="p">:</span><span class="s">&quot;auto&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;is_virtual&quot;</span><span class="p">:</span><span class="n">true</span>
+                <span class="p">}</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s">&quot;flavor&quot;</span><span class="p">:</span><span class="s">&quot;veth&quot;</span><span class="p">,</span>
+            <span class="s">&quot;attributes&quot;</span><span class="p">:</span> 
+                <span class="p">{</span>
+                    <span class="s">&quot;attach_to&quot;</span><span class="p">:</span><span class="s">&quot;wlan0&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;name&quot;</span><span class="p">:</span><span class="s">&quot;vwlan0&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;mac&quot;</span><span class="p">:</span><span class="s">&quot;00:00:00:00:00:01&quot;</span>
+                <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 <dl class="class">
 <dt id="aurora.slice_json_generator.SliceJSONGenerator">
 <em class="property">class </em><tt class="descclassname">aurora.slice_json_generator.</tt><tt class="descname">SliceJSONGenerator</tt><big>(</big><em>filename</em><big>)</big><a class="reference internal" href="_modules/aurora/slice_json_generator.html#SliceJSONGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.slice_json_generator.SliceJSONGenerator" title="Permalink to this definition">¶</a></dt>
@@ -2863,10 +3039,17 @@ Uses a JSON file for commands:</p>
 </div>
 <div class="section" id="module-aurora.slice_plugin">
 <span id="slice-plugin-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">slice_plugin</span></tt> Module<a class="headerlink" href="#module-aurora.slice_plugin" title="Permalink to this headline">¶</a></h2>
+<p>This module is responsible for building the configuration JSON 
+which will be dispatched to the aurora agent.</p>
+<p>Slice Plugins: For parsing VirtualInterfaces, 
+VirtualBridges, and RadioInterfaces</p>
 <dl class="class">
 <dt id="aurora.slice_plugin.SlicePlugin">
 <em class="property">class </em><tt class="descclassname">aurora.slice_plugin.</tt><tt class="descname">SlicePlugin</tt><big>(</big><em>tenant_id</em>, <em>user_id</em>, <em>tag=None</em><big>)</big><a class="reference internal" href="_modules/aurora/slice_plugin.html#SlicePlugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.slice_plugin.SlicePlugin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Slice plugin class responsible for splitting and parsing slice 
+configurations if the configuration target is multiple access 
+points.</p>
 <dl class="method">
 <dt id="aurora.slice_plugin.SlicePlugin.__init__">
 <tt class="descname">__init__</tt><big>(</big><em>tenant_id</em>, <em>user_id</em>, <em>tag=None</em><big>)</big><a class="reference internal" href="_modules/aurora/slice_plugin.html#SlicePlugin.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.slice_plugin.SlicePlugin.__init__" title="Permalink to this definition">¶</a></dt>
@@ -2875,45 +3058,94 @@ Uses a JSON file for commands:</p>
 <dl class="method">
 <dt id="aurora.slice_plugin.SlicePlugin._add_create_slice_wrapper">
 <tt class="descname">_add_create_slice_wrapper</tt><big>(</big><em>json_list</em>, <em>tag</em>, <em>tenant_id</em><big>)</big><a class="reference internal" href="_modules/aurora/slice_plugin.html#SlicePlugin._add_create_slice_wrapper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.slice_plugin.SlicePlugin._add_create_slice_wrapper" title="Permalink to this definition">¶</a></dt>
-<dd><p>This method takes a json_list and puts each entry in the correct format (i.e. user, slice, command, config)
-for sending to the APs</p>
+<dd><p>This method takes a json_list and puts each entry in 
+the correct format (i.e. user, slice, command, config) for 
+sending to the APs.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>json_list</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; List of configuration jsons</li>
+<li><strong>tag</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Warning &#8211; let this parameter be assigned by
+<a class="reference internal" href="#aurora.manager.Manager.ap_slice_create" title="aurora.manager.Manager.ap_slice_create"><tt class="xref py py-func docutils literal"><span class="pre">ap_slice_create</span></tt></a></li>
+<li><strong>tenant_id</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Tenant ID for the slice</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">list of JSON configurations to be dispatched</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="aurora.slice_plugin.SlicePlugin.parse_create_slice">
 <tt class="descname">parse_create_slice</tt><big>(</big><em>data</em>, <em>numSlice</em>, <em>json_list</em><big>)</big><a class="reference internal" href="_modules/aurora/slice_plugin.html#SlicePlugin.parse_create_slice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.slice_plugin.SlicePlugin.parse_create_slice" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Parses the sections in <tt class="docutils literal"><span class="pre">self.plugins</span></tt> from the 
+configuration JSON passed in <tt class="docutils literal"><span class="pre">data</span></tt>.  Uses the modules in 
+aurora.plugins.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; Data for a slice passed from client</li>
+<li><strong>numSlice</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; Number of slices in this create command</li>
+<li><strong>json_list</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; List outline for parsed data</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">list of JSON configurations to be dispatched</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 </dd></dl>
 
 </div>
 <div class="section" id="module-aurora.sqldb_create">
 <span id="sqldb-create-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">sqldb_create</span></tt> Module<a class="headerlink" href="#module-aurora.sqldb_create" title="Permalink to this headline">¶</a></h2>
-<p>A Quick Script for creating the aurora database tables/schema</p>
+<p>A Quick Script for creating the Aurora database tables/schema.</p>
 <dl class="class">
 <dt id="aurora.sqldb_create.SQLDBCreate">
 <em class="property">class </em><tt class="descclassname">aurora.sqldb_create.</tt><tt class="descname">SQLDBCreate</tt><a class="reference internal" href="_modules/aurora/sqldb_create.html#SQLDBCreate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.sqldb_create.SQLDBCreate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Class responsible for setting up SQL connection, database, and 
+tables.</p>
 <dl class="method">
 <dt id="aurora.sqldb_create.SQLDBCreate.__init__">
 <tt class="descname">__init__</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/aurora/sqldb_create.html#SQLDBCreate.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.sqldb_create.SQLDBCreate.__init__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Step 0: Connecto to mySQL.  Uses <tt class="xref py py-mod docutils literal"><span class="pre">MySQLdb</span></tt> <tt class="xref py py-mod docutils literal"><span class="pre">mysqldb</span></tt></p>
+</dd></dl>
 
 <dl class="method">
 <dt id="aurora.sqldb_create.SQLDBCreate.close">
 <tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/aurora/sqldb_create.html#SQLDBCreate.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.sqldb_create.SQLDBCreate.close" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Step 3: Close connection.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="aurora.sqldb_create.SQLDBCreate.create_database">
 <tt class="descname">create_database</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/aurora/sqldb_create.html#SQLDBCreate.create_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.sqldb_create.SQLDBCreate.create_database" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Step 1: Create the database.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="aurora.sqldb_create.SQLDBCreate.create_tables">
 <tt class="descname">create_tables</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/aurora/sqldb_create.html#SQLDBCreate.create_tables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.sqldb_create.SQLDBCreate.create_tables" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Step 2: Create the tables.</p>
+</dd></dl>
 
+</dd></dl>
+
+<dl class="function">
+<dt id="aurora.sqldb_create.main">
+<tt class="descclassname">aurora.sqldb_create.</tt><tt class="descname">main</tt><big>(</big><big>)</big><a class="headerlink" href="#aurora.sqldb_create.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interface for setting up the aurora database and tables.</p>
 </dd></dl>
 
 </div>
@@ -2923,34 +3155,66 @@ for sending to the APs</p>
 loop until a stop event is thrown.  Thread target code must
 have a keyword argument for <tt class="docutils literal"><span class="pre">stop_event</span></tt> and must check
 it periodically eg.:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">if</span> <span class="n">stop_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span> <span class="k">break</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">aurora.stop_thread</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="k">def</span> <span class="nf">my_target</span><span class="p">(</span><span class="n">my_arg</span><span class="p">,</span> <span class="n">stop_event</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">print</span> <span class="s">&quot;Your arg: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">my_arg</span>
+    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">stop_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+            <span class="k">break</span>
+        <span class="k">print</span> <span class="s">&quot;Iteration </span><span class="si">%s</span><span class="s">.&quot;</span> <span class="o">%</span> <span class="n">i</span> 
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">t</span> <span class="o">=</span> <span class="n">StoppableThread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">my_target</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="s">&quot;This is some arg&quot;</span><span class="p">,))</span>
+<span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">3.5</span><span class="p">)</span>
+<span class="n">t</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+<span class="n">t</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
 </pre></div>
 </div>
 <dl class="class">
 <dt id="aurora.stop_thread.StoppableThread">
 <em class="property">class </em><tt class="descclassname">aurora.stop_thread.</tt><tt class="descname">StoppableThread</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/aurora/stop_thread.html#StoppableThread"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.stop_thread.StoppableThread" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/2.7/library/threading.html#threading.Thread" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">threading.Thread</span></tt></a></p>
-<p>Thread class with a stop method to terminate timers
-that have been started</p>
+<p>Thread class with a stop method to any started threads 
+which have target callable executing a continuous loop.</p>
 <dl class="method">
 <dt id="aurora.stop_thread.StoppableThread.__init__">
 <tt class="descname">__init__</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/aurora/stop_thread.html#StoppableThread.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.stop_thread.StoppableThread.__init__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Sets up kwargs for stoppable thread.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="aurora.stop_thread.StoppableThread.add_stop_argument">
 <tt class="descname">add_stop_argument</tt><big>(</big><em>kwargs</em><big>)</big><a class="reference internal" href="_modules/aurora/stop_thread.html#StoppableThread.add_stop_argument"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.stop_thread.StoppableThread.add_stop_argument" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Adds the <tt class="docutils literal"><span class="pre">'stop_event'</span></tt> argument to the keyword args 
+passed to the thread target.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; Keyword arguments to pass to target</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">dict &#8211; Keyword arguments including <tt class="docutils literal"><span class="pre">'stop_event'</span></tt></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="aurora.stop_thread.StoppableThread.stop">
 <tt class="descname">stop</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/aurora/stop_thread.html#StoppableThread.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.stop_thread.StoppableThread.stop" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Sets the stop event flag</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="aurora.stop_thread.StoppableThread.stopped">
 <tt class="descname">stopped</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/aurora/stop_thread.html#StoppableThread.stopped"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.stop_thread.StoppableThread.stopped" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Check whether a thread has been stopped.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -2958,6 +3222,7 @@ that have been started</p>
 <dt id="aurora.stop_thread.TimerThread">
 <em class="property">class </em><tt class="descclassname">aurora.stop_thread.</tt><tt class="descname">TimerThread</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/aurora/stop_thread.html#TimerThread"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.stop_thread.TimerThread" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#aurora.stop_thread.StoppableThread" title="aurora.stop_thread.StoppableThread"><tt class="xref py py-class docutils literal"><span class="pre">aurora.stop_thread.StoppableThread</span></tt></a></p>
+<p>Same as <a class="reference internal" href="#aurora.stop_thread.StoppableThread" title="aurora.stop_thread.StoppableThread"><tt class="xref py py-class docutils literal"><span class="pre">StoppableThread</span></tt></a>.</p>
 </dd></dl>
 
 </div>

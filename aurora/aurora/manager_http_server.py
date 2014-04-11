@@ -1,4 +1,13 @@
-# Simple Manager HTTP Server for receiving JSON files (Adapted from Micheal Smith's Code)
+# 2014
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &
+#              Mike Kobierski 
+#
+"""Simple Manager HTTP Server for communicating JSON configuration 
+files between Aurora Manager and Client.
+
+A possible entry point for starting manager is :func:`main()`.
+
+"""
 
 import BaseHTTPServer
 import json
@@ -18,17 +27,39 @@ LOGGER = logging.getLogger(__name__)
 CLIENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+    """Handles client HTTP requests.
+
+    A new NewConnectionHandler is created for every incoming 
+    connection received by :class:`ManagerServer`.  The handler 
+    defines the behavior upon receipt of a GET or POST HTTP message.
+    The communication structure is such that a client will first post 
+    a message containing a configuration JSON which be passed to 
+    :class:`aurora.manager.Manager`, and will then follow up with a 
+    GET request for feedback about execution of the issued command.
+
+    Only one instance of :class:`aurora.manager.Manager` will be 
+    created, and a handle for this instance is stored in 
+    ``NewConnectionHandler.MANAGER``.
+
+    """
     server_version= "Aurora/0.2"
     MANAGER = None
 
     # Override __init__ to instantiate Manager, pass along parameters:
-    # BaseHTTPServer.BaseHTTPRequestHandler(request, client_address, server)
+    # BaseHTTPServer.BaseHTTPRequestHandler(request, client_address, 
+    #                                       server)
     def __init__(self, *args):
+        """Verifies an :class:`aurora.manager.Manager` instance exists 
+        to handle client requests.
+
+        :param args args: Arguments to set up 
+            :class:`BaseHTTPServer.BaseHTTPRequestHandler`
+
+        """
         self.LOGGER = cls_logger.get_cls_logger(self)
         if NewConnectionHandler.MANAGER == None:
             self.LOGGER.info("Error: No manager to handle request.")
             sys.exit(1)
-        #print "\nConstructing NewConnectionHandler using", NewConnectionHandler.MANAGER
         BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, *args)
     
     # __del__ does not override anything
@@ -37,23 +68,41 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         pass
         
     def do_GET(self):
+        """Handles a GET request.
+
+        Sends a 200-OK response with the data from the response file.
+
+        """
         self.send_response(200)
         self.send_header("Content-type", "application/json")
         self.end_headers()
         
         #Open response file
-        RESPONSEFILE = open(os.path.join(CLIENT_DIR, 'json/response.json'), 'r')
+        RESPONSEFILE = open(os.path.join(CLIENT_DIR, 'json/response.json'), 
+                            'r')
         response = json.load(RESPONSEFILE)
         
         self.wfile.write(response)
     
     def do_POST(self):
+        """Handles a POST request.
+
+        Parses some aspects of the request to determine what function 
+        is being requested, as well as which tenant, project, and user 
+        the request belongs to.  Passes the command to 
+        :func:`aurora.manager.Manager.parseargs`, and stores the 
+        returned response.  This response will later be relayed back to 
+        the client by a client GET request.
+
+        """
         # Clear previous response file (if exists)
         default_response = {}
         default_response['status'] = False
         default_response['message'] = ""
-        with open(os.path.join(CLIENT_DIR, 'json/response.json'), 'w') as RESPONSE_FILE: 
-            json.dump(default_response, RESPONSE_FILE, sort_keys=True, indent=4)
+        with open(os.path.join(CLIENT_DIR, 'json/response.json'), 
+                  'w') as RESPONSE_FILE: 
+            json.dump(default_response, RESPONSE_FILE, 
+                      sort_keys=True, indent=4)
         
         # Parse the form data posted
         data_string = self.rfile.read(int(self.headers['Content-Length']))
@@ -73,9 +122,9 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         project_id = JSONfile.get('project_id') or -1
         user_id = JSONfile.get('user_id') or -1
         
-        #Send to manager.py
-        #Format of response: {"status":(true of false) ,"message":"string if necessary"}
-
+        # Send to manager.py
+        # Format of response: 
+        # {"status":(true of false) ,"message":"string if necessary"}
         response = NewConnectionHandler.MANAGER.parseargs(
                 function, parameters, tenant_id,
                 user_id, project_id
@@ -83,11 +132,18 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
         #Save response to file
-        with open(os.path.join(CLIENT_DIR, 'json/response.json'), 'w') as RESPONSE_FILE: 
+        with open(os.path.join(CLIENT_DIR, 'json/response.json'), 
+                  'w') as RESPONSE_FILE: 
             json.dump(response, RESPONSE_FILE, sort_keys=True, indent=4)
     
     # Sends a document, unused
     def sendPage( self, type, body ):
+        """Sends a page to a client.  Unused at the moment.
+
+        :param str type: Type of data being sent ex. ``'application/json'``
+        :param body: Data to send to client.
+
+        """
         self.send_response( 200 )
         self.send_header( "Content-type", type )
         self.send_header( "Content-length", str(len(body)) )
@@ -95,19 +151,28 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.wfile.write( body )
         
 class ManagerServer(BaseHTTPServer.HTTPServer):
-    """Builds upon HTTPServer and also sets up and tears down single Manager() instance"""
+    """Builds upon :class:`BaseHTTPServer.HTTPServer`.
+
+    Includes a logger, instantiates a :class:`aurora.manager.Manager` 
+    instance and stores a static reference for it in 
+    ``self.RequestHandlerClass``.  Also handles cleanup on exit.
+
+    """
     def serve_forever(self):
+        """Run to start the ManagerServer."""
         self.LOGGER = cls_logger.get_cls_logger(self)
 
-        # Manager is now in server instance's scope, will be deconstructed
-        # upon interrupt
+        # Manager is now in server instance's scope, will be 
+        # deconstructed upon interrupt. 
         self.manager = manager.Manager()
-        # When initialized, handler_class from main is stored in RequestHandlerClass
+
+        # When initialized, handler_class from main is stored in 
+        # RequestHandlerClass
         self.RequestHandlerClass.MANAGER = self.manager
-        #self.LOGGER.debug(self.RequestHandlerClass.MANAGER)
         BaseHTTPServer.HTTPServer.serve_forever(self)
     
     def server_close(self):
+        """Run to close the ManagerServer."""
         # Delete all references to manager so it destructs
         self.manager.stop()
         del self.manager, self.RequestHandlerClass.MANAGER
@@ -115,6 +180,17 @@ class ManagerServer(BaseHTTPServer.HTTPServer):
         BaseHTTPServer.HTTPServer.server_close(self) 
 
 def main():
+    """An entry point for launching Aurora Manager.
+
+    Sets up root-level logger.  Assigns a the request handler class.
+    Starts the HTTP server :class:`ManagerServer`.  Performs some basic
+    error handling and outputs tracebacks.
+
+    The logging level can be specified from command line arguments.
+
+    .. seealso:: :mod:`aurora.shell`
+
+    """
     level = logging.INFO
     if len(sys.argv) > 1:
         level = sys.argv[1]

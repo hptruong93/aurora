@@ -89,7 +89,7 @@
 <span class="sd">    only this file need be executed on the machine - it will import</span>
 <span class="sd">    the rest of Aurora and pass the commands along.&quot;&quot;&quot;</span>
     
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">region</span><span class="p">,</span> <span class="n">queue</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">rabbitmq_host</span><span class="p">,</span> <span class="n">rabbitmq_username</span><span class="p">,</span> <span class="n">rabbitmq_password</span><span class="p">,</span> <span class="n">rabbitmq_reply_queue</span><span class="p">):</span>
+<div class="viewcode-block" id="Receive.__init__"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Receive.Receive.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">region</span><span class="p">,</span> <span class="n">queue</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">rabbitmq_host</span><span class="p">,</span> <span class="n">rabbitmq_username</span><span class="p">,</span> <span class="n">rabbitmq_password</span><span class="p">,</span> <span class="n">rabbitmq_reply_queue</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Connects to RabbitMQ and initializes Aurora locally.&quot;&quot;&quot;</span>
         
         <span class="c"># Run Pika logger so that error messages get printed</span>
@@ -107,7 +107,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="n">pika</span><span class="o">.</span><span class="n">SelectConnection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_connected</span><span class="p">)</span>
 
     
-    <span class="c"># Step #2</span>
+    <span class="c"># Step #2</span></div>
 <div class="viewcode-block" id="Receive.on_connected"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Receive.Receive.on_connected">[docs]</a>    <span class="k">def</span> <span class="nf">on_connected</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Called when we are fully connected to RabbitMQ&quot;&quot;&quot;</span>
         <span class="c"># Open a channel</span>

@@ -66,7 +66,7 @@
     <span class="c"># Network class will receive packet -&gt; decode -&gt;</span>
     <span class="c"># send command and config to the execute() method in this file</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+<div class="viewcode-block" id="SliceAgent.__init__"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.SliceAgent.SliceAgent.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
         <span class="c"># config is a dictionary containing</span>
         <span class="c"># base configuration information. It should be passed to classes</span>
         <span class="c"># that need the data; they can each take what they need</span>
@@ -82,7 +82,7 @@
 
         <span class="c"># Clean up on exit</span>
         <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__reset</span><span class="p">)</span>
-
+</div>
 <div class="viewcode-block" id="SliceAgent.create_slice"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.SliceAgent.SliceAgent.create_slice">[docs]</a>    <span class="k">def</span> <span class="nf">create_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">slice</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Create a slice with the given configuration.</span>
 <span class="sd">        Will raise exceptions if errors are encountered.&quot;&quot;&quot;</span>

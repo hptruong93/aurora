@@ -26,7 +26,14 @@ sys.path.insert(0, os.path.abspath('../auroraagent'))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode',
+              'sphinx.ext.intersphinx']
+
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/2.7/', None),
+    'pika': ('http://pika.readthedocs.org/en/latest', None),
+    'MySQLdb': ('http://mysqldb.readthedocs.org/en/latest/', None),
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -284,3 +291,16 @@ epub_copyright = u'2014, Author'
 
 # Allow duplicate toc entries.
 #epub_tocdup = True
+
+autodoc_default_flags = ['members', 'undoc-members', 'private-members', 
+                         'show-inheritance']
+
+def autodoc_skip_member(app, what, name, obj, skip, options):
+    if what == "exception" and name == "message":
+        return True
+    if what == "class" and name == "__init__":
+        return False
+    return skip
+
+def setup(app):
+    app.connect('autodoc-skip-member', autodoc_skip_member)

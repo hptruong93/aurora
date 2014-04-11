@@ -1,7 +1,12 @@
-# Aurora-client Shell
-# SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
+# 2014
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &
+#              Mike Kobierski 
+#
+""".. warning::
+    
+    Out of date and unused!  Use at own risk.
 
-"""Command-line interface to the Aurora API
+Command-line interface to the Aurora API
 Uses a JSON file for commands::
     
     Format:[

@@ -44,7 +44,7 @@
                 {
                     "attach_to":"eth0",
                     "name":"tun0",
-                    "forward_to":"10.5.8.5",
+                    "forward_to":"10.5.8.4",
                     "tunnel_tag":"auto",
                     "is_virtual":true
                 }

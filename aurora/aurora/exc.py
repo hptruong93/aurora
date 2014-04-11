@@ -1,16 +1,23 @@
-#!/usr/bin/python -tt
 # 2014
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &
 #              Mike Kobierski 
 #
-"""TODO(Mike): Docstring"""
+"""Module containing exceptions for use in Aurora Manager."""
 
 #---------
 # Base Exception for Aurora program
 #
 class AuroraException(Exception):
     """Base class for exceptions in Aurora.
-    Inherit it and define info to use it."""
+    Inherit it and define info to use it.
+
+    An inherited class should include an overridden ``message``, which
+    can contain key word arguments such as ``%(kw)s``.  These will be 
+    substituted upon raising your exception::
+
+        raise MyAuroraException(kw="my keyword string")
+
+    """
     
     # Based on OpenStack Nova exception setup
     # https://github.com/openstack/nova/blob/master/nova/exception.py

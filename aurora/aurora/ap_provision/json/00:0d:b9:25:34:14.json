@@ -18,7 +18,7 @@
     "rabbitmq_host": "10.5.8.3", 
     "region": "mcgill", 
     "queue": "HP-AP", 
-    "rabbitmq_reply_queue": "amq.gen-NM653iQ9czbCFAE_GQ4joA", 
+    "rabbitmq_reply_queue": "AuroraManager", 
     "default_config": {
         "init_hardware_database": {
             "wifi_radio": {

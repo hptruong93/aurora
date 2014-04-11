@@ -73,11 +73,11 @@
 
     <span class="n">WIRELESS_FILE_PATH</span> <span class="o">=</span> <span class="s">&quot;/etc/config/wireless&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">database</span><span class="p">):</span>
+<div class="viewcode-block" id="OpenWRTWifi.__init__"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.OpenWRTWifi.OpenWRTWifi.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">database</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">change_pending</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
-
+</div>
 <div class="viewcode-block" id="OpenWRTWifi.setup"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.OpenWRTWifi.OpenWRTWifi.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;This method removes any existing wireless configuration, subsequently</span>
 <span class="sd">        detecting and adding any radios available to Aurora for use.&quot;&quot;&quot;</span>

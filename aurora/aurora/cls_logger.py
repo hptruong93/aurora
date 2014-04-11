@@ -14,14 +14,34 @@ MAX_WIDTH_LIMIT = 30
 class_loggers = []
 
 class CustomFormatter(logging.Formatter):
-    """Extends logging.Formatter class with a custom formatting method."""
+    """Extends logging.Formatter class with a custom formatting method.
+
+    Usage::
+
+        import logging
+        from aurora import cls_logger
+        class A():
+            def __init__(self):
+                self.LOGGER = cls_logger.get_cls_logger(self)
+
+            def hello_world(self):
+                # String substitutions work
+                self.LOGGER.info("%s World!", "Hello")
+
+        def main():
+            cls_logger.set_up_root_logger(level=logging.INFO)
+            a = A()
+            a.hello_world()
+            a.LOGGER.warn("This works too.")
+
+    """
 
     max_width = MAX_WIDTH
     max_width_limit = MAX_WIDTH_LIMIT
 
     def normalize(self, width_map):
         """Normalizes a given mapping of module and class name lengths,
-        zeroing values above self.max_width_limit.
+        zeroing values above ``self.max_width_limit``.
 
         :param list width_map: List containing lengths of logger 
                                name mistrings
@@ -39,9 +59,9 @@ class CustomFormatter(logging.Formatter):
     def format(self, record):
         """Formats the logged message to include a tag with the 
         calling module and class name with the tag length no longer 
-        than specified self.max_width_limit.  Also tracks which 
+        than specified ``self.max_width_limit``.  Also tracks which 
         classes are calling the format function, if it is a new 
-        class the class name is added to class_loggers list.::
+        class the class name is added to ``class_loggers`` list.::
 
             [module_name----ClassName] Logged Message
 
@@ -90,7 +110,7 @@ def setup_handler():
     """Sets up a StreamHandler on the root logger and assigns it a 
     custom formatter.
 
-    :rtype: logging.StreamHandler
+    :rtype: :class:`logging.StreamHandler`
 
     """
     formatter = CustomFormatter()
@@ -103,9 +123,9 @@ def set_up_root_logger(level=None):
     setup_handler() method. Sets root logging level to provided 
     level arg, defaults is WARN
 
-    :param logging.level level: Desired level of logging, specified 
-                                in logging module
-
+    :param level: Desired level of logging, specified in logging module
+    :type level: int -- `logging.level \
+       <https://docs.python.org/2/library/logging.html#logging-levels>`_
     """
     stream_handler = setup_handler()
     logging.root.handlers.append(stream_handler)
@@ -119,7 +139,7 @@ def get_cls_logger(cls):
     been assigned
 
     :param class cls: Class to which LOGGER should be assigned
-    :rtype: logging.Logger
+    :rtype: :class:`logging.Logger`
 
     """
     try:

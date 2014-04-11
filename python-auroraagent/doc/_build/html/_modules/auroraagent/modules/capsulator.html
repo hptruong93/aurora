@@ -60,12 +60,12 @@
     <span class="c"># Number of times to retry starting capsulator if it fails</span>
     <span class="n">retry_attempts</span> <span class="o">=</span> <span class="mi">2</span>
     
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Capsulator.__init__"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.capsulator.Capsulator.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c"># Keep track of all created instances</span>
         <span class="c"># Inside the dictionary is a list</span>
         <span class="c"># Format: [ capsulator interface name, process instance ]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">process_list</span> <span class="o">=</span> <span class="p">{}</span>
-
+</div>
 <div class="viewcode-block" id="Capsulator.start"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.capsulator.Capsulator.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attach_to</span><span class="p">,</span> <span class="n">forward_to</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">tunnel_tag</span><span class="p">,</span> <span class="n">is_virtual</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Starts an instance of capsulator.  Please note that incorrect configuration</span>
 <span class="sd">        can cause the program to fail to start, and an exception may NOT be </span>

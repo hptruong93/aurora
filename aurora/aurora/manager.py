@@ -959,11 +959,21 @@ class Manager(object):
 
         # Send to plugin for parsing
         try:
-            json_list = slice_plugin.SlicePlugin(tenant_id,
-                                    user_id,
-                                    arg_tag).parse_create_slice(arg_file,
-                                                                len(aplist),
-                                                                json_list)
+            # arg_tag is not used correctly here, though this is 
+            # untested.  Kept in case its omission creates issues.
+            # json_list = slice_plugin.SlicePlugin(tenant_id,
+            #                         user_id,
+            #                         arg_tag).parse_create_slice(arg_file,
+            #                                                     len(aplist),
+            #                                                     json_list)
+            json_list = slice_plugin.SlicePlugin(
+                tenant_id,
+                user_id
+            ).parse_create_slice(
+                arg_file,
+                len(aplist),
+                json_list
+            )
 
         except Exception as e:
             self.LOGGER.error(e.message)

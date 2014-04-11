@@ -106,7 +106,7 @@
     
     <span class="n">DEFAULT_RADIO</span> <span class="o">=</span> <span class="s">&quot;radio0&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+<div class="viewcode-block" id="Database.__init__"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
         <span class="c"># Create intial database from template</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">database</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">&quot;default_config&quot;</span><span class="p">][</span><span class="s">&quot;init_database&quot;</span><span class="p">]</span>
         <span class="k">if</span> <span class="s">&quot;init_database&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;last_known_config&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
@@ -122,7 +122,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_ACTIVE_SLICE</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">&quot;default_config&quot;</span><span class="p">][</span><span class="s">&quot;default_active_slice&quot;</span><span class="p">]</span>
         
         <span class="bp">self</span><span class="o">.</span><span class="n">hw_database</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s">&quot;default_config&quot;</span><span class="p">][</span><span class="s">&quot;init_hardware_database&quot;</span><span class="p">]</span>
-    
+    </div>
 <div class="viewcode-block" id="Database.backup_current_config"><a class="viewcode-back" href="../../auroraagent.html#auroraagent.Database.Database.backup_current_config">[docs]</a>    <span class="k">def</span> <span class="nf">backup_current_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Stores the current configuration in the backup </span>
 <span class="sd">        database, prev_database, prev_user_id_data.</span>

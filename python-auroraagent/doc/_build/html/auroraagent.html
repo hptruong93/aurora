@@ -66,17 +66,20 @@
 <em class="property">class </em><tt class="descclassname">auroraagent.Database.</tt><tt class="descname">Database</tt><big>(</big><em>config</em><big>)</big><a class="reference internal" href="_modules/auroraagent/Database.html#Database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.Database.Database" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generic database for all class data.
 Format for slice data:</p>
-<div class="highlight-python"><pre>{
-"slice_name": {
-    "section": [
-        {
-            "some_attribute": {
-                "att1": "p1", 
-                "name": "p2"
-            }, 
-            "other_attribute": "veth"
-        }, 
-}</pre>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s">&quot;slice_name&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s">&quot;section&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s">&quot;some_attribute&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s">&quot;att1&quot;</span><span class="p">:</span> <span class="s">&quot;p1&quot;</span><span class="p">,</span> 
+                    <span class="s">&quot;name&quot;</span><span class="p">:</span> <span class="s">&quot;p2&quot;</span>
+                <span class="p">},</span> 
+                <span class="s">&quot;other_attribute&quot;</span><span class="p">:</span> <span class="s">&quot;veth&quot;</span>
+            <span class="p">},</span>
+        <span class="p">]</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
 </div>
 <p>Every entry is expected to have a &#8220;name&#8221; field, unique on the device where 
 this code is run.  For a number of entries, interface names
@@ -89,20 +92,23 @@ entire entries by using get_entry, which provides a reference that can be
 modified.</p>
 <p>For the &#8216;hardware&#8217; data, the format is different. Ex.:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
-<span class="s">&quot;firmware&quot;</span><span class="p">:</span><span class="s">&quot;openwrt&quot;</span><span class="p">,</span>
-<span class="s">&quot;firmware_version&quot;</span><span class="p">:</span><span class="s">&quot;r37630&quot;</span><span class="p">,</span>
-<span class="s">&quot;aurora_version&quot;</span><span class="p">:</span><span class="s">&quot;0.1&quot;</span><span class="p">,</span>
-<span class="s">&quot;memory_mb&quot;</span><span class="p">:</span><span class="s">&quot;256&quot;</span><span class="p">,</span>
-<span class="s">&quot;wifi_radio&quot;</span><span class="p">:</span>
-  <span class="p">{</span>
-      <span class="s">&quot;number_radio&quot;</span><span class="p">:</span><span class="s">&quot;1&quot;</span><span class="p">,</span>
-      <span class="s">&quot;number_radio_free&quot;</span><span class="p">:</span><span class="s">&quot;1&quot;</span><span class="p">,</span>
-      <span class="s">&quot;radio_list&quot;</span><span class="p">:</span>
-          <span class="p">[</span>
-              <span class="p">{</span>
-                  <span class="s">&quot;name&quot;</span><span class="p">:</span> <span class="s">&quot;radio0&quot;</span><span class="p">,</span>
-                  <span class="s">&quot;bss_list&quot;</span><span class="p">:[</span><span class="o">...</span><span class="p">]</span>
-                  <span class="p">}]}}</span>
+    <span class="s">&quot;firmware&quot;</span><span class="p">:</span><span class="s">&quot;openwrt&quot;</span><span class="p">,</span>
+    <span class="s">&quot;firmware_version&quot;</span><span class="p">:</span><span class="s">&quot;r37630&quot;</span><span class="p">,</span>
+    <span class="s">&quot;aurora_version&quot;</span><span class="p">:</span><span class="s">&quot;0.1&quot;</span><span class="p">,</span>
+    <span class="s">&quot;memory_mb&quot;</span><span class="p">:</span><span class="s">&quot;256&quot;</span><span class="p">,</span>
+    <span class="s">&quot;wifi_radio&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s">&quot;number_radio&quot;</span><span class="p">:</span><span class="s">&quot;1&quot;</span><span class="p">,</span>
+        <span class="s">&quot;number_radio_free&quot;</span><span class="p">:</span><span class="s">&quot;1&quot;</span><span class="p">,</span>
+        <span class="s">&quot;radio_list&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s">&quot;name&quot;</span><span class="p">:</span> <span class="s">&quot;radio0&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;bss_list&quot;</span><span class="p">:[</span><span class="o">...</span><span class="p">]</span>
+                <span class="p">}</span>
+            <span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 <p>The details of what goes in the  radio list
@@ -113,6 +119,11 @@ to the object.</p>
 <dl class="attribute">
 <dt id="auroraagent.Database.Database.DEFAULT_RADIO">
 <tt class="descname">DEFAULT_RADIO</tt><em class="property"> = 'radio0'</em><a class="headerlink" href="#auroraagent.Database.Database.DEFAULT_RADIO" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.Database.Database.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>config</em><big>)</big><a class="reference internal" href="_modules/auroraagent/Database.html#Database.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.Database.Database.__init__" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -188,8 +199,8 @@ for the slice containing the main_bss.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>config</strong> (<em>dict</em>) &#8211; </li>
-<li><strong>radio</strong> (<em>str</em>) &#8211; </li>
+<li><strong>config</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; </li>
+<li><strong>radio</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; </li>
 </ul>
 </td>
 </tr>
@@ -231,7 +242,7 @@ Raises exception.EntryNotFound if the entry does not exist.</p>
 
 <dl class="method">
 <dt id="auroraagent.Database.Database.get_slice_data">
-<tt class="descname">get_slice_data</tt><big>(</big><em>slice</em><big>)</big><a class="reference internal" href="_modules/auroraagent/Database.html#Database.get_slice_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.Database.Database.get_slice_data" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">get_slice_data</tt><big>(</big><em>slice</em>, <em>prev=False</em><big>)</big><a class="reference internal" href="_modules/auroraagent/Database.html#Database.get_slice_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.Database.Database.get_slice_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a (deep) copy of the contents of the slice.</p>
 </dd></dl>
 
@@ -251,7 +262,7 @@ found, SliceRadioNotFound is raised.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>slice</strong> (<em>string</em>) &#8211; </td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>slice</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/string.html#string" title="(in Python v2.7)"><em>string</em></a>) &#8211; </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">string</td>
 </tr>
@@ -457,6 +468,76 @@ add_entry or delete_entry.</p>
 <dd><p>The Monitor class tracks slice data usage and access point
 hardware info, such as available memory and free disk space</p>
 <dl class="method">
+<dt id="auroraagent.Monitor.Monitor.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>database</em><big>)</big><a class="reference internal" href="_modules/auroraagent/Monitor.html#Monitor.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.Monitor.Monitor.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.Monitor.Monitor._get_ap_slice_stats">
+<tt class="descname">_get_ap_slice_stats</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/auroraagent/Monitor.html#Monitor._get_ap_slice_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.Monitor.Monitor._get_ap_slice_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sums bytes transmitted and received for each slice,
+returns a dict containing their traffic usage.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">dict</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.Monitor.Monitor._get_interface_name">
+<tt class="descname">_get_interface_name</tt><big>(</big><em>slice_data</em><big>)</big><a class="reference internal" href="_modules/auroraagent/Monitor.html#Monitor._get_interface_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.Monitor.Monitor._get_interface_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the name of the interface on the wireless
+side of a slice&#8217;s virtual bridge - typically this
+interface will have a name similar to wlan0.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>slice_data</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; Slice configuration from database</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">string</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.Monitor.Monitor._get_memory_stats">
+<tt class="descname">_get_memory_stats</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/auroraagent/Monitor.html#Monitor._get_memory_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.Monitor.Monitor._get_memory_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetches memory statistics from /proc/meminfo using 
+regular expressions to parse output.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">dict</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.Monitor.Monitor._get_network_traffic">
+<tt class="descname">_get_network_traffic</tt><big>(</big><em>interface</em><big>)</big><a class="reference internal" href="_modules/auroraagent/Monitor.html#Monitor._get_network_traffic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.Monitor.Monitor._get_network_traffic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the transmitted and received bytes for a 
+given interface.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>interface</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/string.html#string" title="(in Python v2.7)"><em>string</em></a>) &#8211; </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">tuple</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="auroraagent.Monitor.Monitor.get_stats">
 <tt class="descname">get_stats</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/auroraagent/Monitor.html#Monitor.get_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.Monitor.Monitor.get_stats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetches stats for the ap slices on this access point,
@@ -487,6 +568,12 @@ received message content to SliceAgent.</p>
 commands, which it executes.  During normal use,
 only this file need be executed on the machine - it will import
 the rest of Aurora and pass the commands along.</p>
+<dl class="method">
+<dt id="auroraagent.Receive.Receive.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>region</em>, <em>queue</em>, <em>config</em>, <em>rabbitmq_host</em>, <em>rabbitmq_username</em>, <em>rabbitmq_password</em>, <em>rabbitmq_reply_queue</em><big>)</big><a class="reference internal" href="_modules/auroraagent/Receive.html#Receive.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.Receive.Receive.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connects to RabbitMQ and initializes Aurora locally.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="auroraagent.Receive.Receive.handle_delivery">
 <tt class="descname">handle_delivery</tt><big>(</big><em>channel</em>, <em>method</em>, <em>header</em>, <em>body</em><big>)</big><a class="reference internal" href="_modules/auroraagent/Receive.html#Receive.handle_delivery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.Receive.Receive.handle_delivery" title="Permalink to this definition">¶</a></dt>
@@ -533,6 +620,16 @@ and returns data or an error message if needed.</p>
 <dd><p>The Slice Agent is the high level interface to the creation,
 modification and deletion of slices.</p>
 <dl class="method">
+<dt id="auroraagent.SliceAgent.SliceAgent._SliceAgent__reset">
+<tt class="descname">_SliceAgent__reset</tt><big>(</big><big>)</big><a class="headerlink" href="#auroraagent.SliceAgent.SliceAgent._SliceAgent__reset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.SliceAgent.SliceAgent.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>config</em><big>)</big><a class="reference internal" href="_modules/auroraagent/SliceAgent.html#SliceAgent.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.SliceAgent.SliceAgent.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="auroraagent.SliceAgent.SliceAgent.create_slice">
 <tt class="descname">create_slice</tt><big>(</big><em>slice</em>, <em>user</em>, <em>config</em><big>)</big><a class="reference internal" href="_modules/auroraagent/SliceAgent.html#SliceAgent.create_slice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.SliceAgent.SliceAgent.create_slice" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a slice with the given configuration.
@@ -574,8 +671,34 @@ this limitation will be much easier to address.  Changing a
 slice SSID is easy - as long as the slice is not the main_bss.  
 If it is, uci must be used to reconfigure it, meaning all 
 slices will be destructed and recreated.</p>
+<p>SSID modification of slice with current SSID &#8220;MAIN&#8221; would
+look like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s">&quot;RadioInterfaces&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s">&quot;flavor&quot;</span> <span class="p">:</span> <span class="s">&quot;wifi_bss&quot;</span><span class="p">,</span>
+            <span class="s">&quot;attributes&quot;</span> <span class="p">:</span> 
+                <span class="p">{</span>
+                    <span class="s">&quot;name&quot;</span> <span class="p">:</span> <span class="s">&quot;MAIN&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;new_name&quot;</span><span class="p">:</span> <span class="s">&quot;MAIN MOD&quot;</span>
+                <span class="p">}</span>
+        <span class="p">},</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 <p>For modifications to bridges and interfaces, slices should not 
 have to be restarted.</p>
+<p>Modifying a virtual interface, such as changing the tunnel 
+endpoint for a capsulator link, requires deleting the interface
+and creating a new instance of it.  In order to delete the
+interface, the bridges associated with it must be deleted and
+reconstructed, or at least have the port disassociated with them
+so it can be removed and recreated.</p>
+<p>Modifying a virtual bridge is the next step, as all interfaces
+will now have been recreated.</p>
+<p>Modifying QOS values will be the last step, and will happen only
+once all bridges and interfaces are successfully modified.</p>
 <p>In case something goes wrong, backups of each slice are taken
 and are stored in self.database.prev_database - this way
 they can be recreated from their last known good configuration.</p>
@@ -644,6 +767,46 @@ specfic parameters necessary.</p>
 <dl class="attribute">
 <dt id="auroraagent.VirtualBridges.VirtualBridges.MODULE_JSON_FILE">
 <tt class="descname">MODULE_JSON_FILE</tt><em class="property"> = '/home/ubuntu/Lab838/Aurora/aurora/python-auroraagent/auroraagent/modules.json'</em><a class="headerlink" href="#auroraagent.VirtualBridges.VirtualBridges.MODULE_JSON_FILE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualBridges.VirtualBridges._VirtualBridges__get_entry">
+<tt class="descname">_VirtualBridges__get_entry</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#auroraagent.VirtualBridges.VirtualBridges._VirtualBridges__get_entry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualBridges.VirtualBridges._VirtualBridges__get_flavor">
+<tt class="descname">_VirtualBridges__get_flavor</tt><big>(</big><em>bridge</em><big>)</big><a class="headerlink" href="#auroraagent.VirtualBridges.VirtualBridges._VirtualBridges__get_flavor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualBridges.VirtualBridges._VirtualBridges__get_module">
+<tt class="descname">_VirtualBridges__get_module</tt><big>(</big><em>flavor</em><big>)</big><a class="headerlink" href="#auroraagent.VirtualBridges.VirtualBridges._VirtualBridges__get_module" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualBridges.VirtualBridges._VirtualBridges__get_module_used">
+<tt class="descname">_VirtualBridges__get_module_used</tt><big>(</big><em>bridge</em><big>)</big><a class="headerlink" href="#auroraagent.VirtualBridges.VirtualBridges._VirtualBridges__get_module_used" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualBridges.VirtualBridges._VirtualBridges__load_module">
+<tt class="descname">_VirtualBridges__load_module</tt><big>(</big><em>flavor</em><big>)</big><a class="headerlink" href="#auroraagent.VirtualBridges.VirtualBridges._VirtualBridges__load_module" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualBridges.VirtualBridges._VirtualBridges__unload_all_modules">
+<tt class="descname">_VirtualBridges__unload_all_modules</tt><big>(</big><big>)</big><a class="headerlink" href="#auroraagent.VirtualBridges.VirtualBridges._VirtualBridges__unload_all_modules" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualBridges.VirtualBridges._VirtualBridges__unload_module">
+<tt class="descname">_VirtualBridges__unload_module</tt><big>(</big><em>flavor</em><big>)</big><a class="headerlink" href="#auroraagent.VirtualBridges.VirtualBridges._VirtualBridges__unload_module" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualBridges.VirtualBridges.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>database</em><big>)</big><a class="reference internal" href="_modules/auroraagent/VirtualBridges.html#VirtualBridges.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.VirtualBridges.VirtualBridges.__init__" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -724,6 +887,46 @@ It will load appropriate modules to process any requests.</p>
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="auroraagent.VirtualInterfaces.VirtualInterfaces._VirtualInterfaces__add_entry">
+<tt class="descname">_VirtualInterfaces__add_entry</tt><big>(</big><em>flavor</em>, <em>arguments</em><big>)</big><a class="headerlink" href="#auroraagent.VirtualInterfaces.VirtualInterfaces._VirtualInterfaces__add_entry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualInterfaces.VirtualInterfaces._VirtualInterfaces__del_entry">
+<tt class="descname">_VirtualInterfaces__del_entry</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#auroraagent.VirtualInterfaces.VirtualInterfaces._VirtualInterfaces__del_entry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualInterfaces.VirtualInterfaces._VirtualInterfaces__get_entry">
+<tt class="descname">_VirtualInterfaces__get_entry</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#auroraagent.VirtualInterfaces.VirtualInterfaces._VirtualInterfaces__get_entry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualInterfaces.VirtualInterfaces._VirtualInterfaces__get_module">
+<tt class="descname">_VirtualInterfaces__get_module</tt><big>(</big><em>flavor</em><big>)</big><a class="headerlink" href="#auroraagent.VirtualInterfaces.VirtualInterfaces._VirtualInterfaces__get_module" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualInterfaces.VirtualInterfaces._VirtualInterfaces__load_module">
+<tt class="descname">_VirtualInterfaces__load_module</tt><big>(</big><em>flavor</em><big>)</big><a class="headerlink" href="#auroraagent.VirtualInterfaces.VirtualInterfaces._VirtualInterfaces__load_module" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualInterfaces.VirtualInterfaces._VirtualInterfaces__unload_all_modules">
+<tt class="descname">_VirtualInterfaces__unload_all_modules</tt><big>(</big><big>)</big><a class="headerlink" href="#auroraagent.VirtualInterfaces.VirtualInterfaces._VirtualInterfaces__unload_all_modules" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualInterfaces.VirtualInterfaces._VirtualInterfaces__unload_module">
+<tt class="descname">_VirtualInterfaces__unload_module</tt><big>(</big><em>flavor</em><big>)</big><a class="headerlink" href="#auroraagent.VirtualInterfaces.VirtualInterfaces._VirtualInterfaces__unload_module" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualInterfaces.VirtualInterfaces.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>database</em><big>)</big><a class="reference internal" href="_modules/auroraagent/VirtualInterfaces.html#VirtualInterfaces.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.VirtualInterfaces.VirtualInterfaces.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="auroraagent.VirtualInterfaces.VirtualInterfaces.check_interface">
 <tt class="descname">check_interface</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/auroraagent/VirtualInterfaces.html#VirtualInterfaces.check_interface"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.VirtualInterfaces.VirtualInterfaces.check_interface" title="Permalink to this definition">¶</a></dt>
 <dd><p>Checks to see if an instance has died, and removes it if so.</p>
@@ -787,6 +990,46 @@ It will load appropriate modules to process any requests.</p>
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="auroraagent.VirtualTC.VirtualTC._VirtualTC__add_entry">
+<tt class="descname">_VirtualTC__add_entry</tt><big>(</big><em>flavor</em>, <em>arguments</em><big>)</big><a class="headerlink" href="#auroraagent.VirtualTC.VirtualTC._VirtualTC__add_entry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualTC.VirtualTC._VirtualTC__del_entry">
+<tt class="descname">_VirtualTC__del_entry</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#auroraagent.VirtualTC.VirtualTC._VirtualTC__del_entry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualTC.VirtualTC._VirtualTC__get_entry">
+<tt class="descname">_VirtualTC__get_entry</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#auroraagent.VirtualTC.VirtualTC._VirtualTC__get_entry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualTC.VirtualTC._VirtualTC__get_module">
+<tt class="descname">_VirtualTC__get_module</tt><big>(</big><em>flavor</em><big>)</big><a class="headerlink" href="#auroraagent.VirtualTC.VirtualTC._VirtualTC__get_module" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualTC.VirtualTC._VirtualTC__load_module">
+<tt class="descname">_VirtualTC__load_module</tt><big>(</big><em>flavor</em><big>)</big><a class="headerlink" href="#auroraagent.VirtualTC.VirtualTC._VirtualTC__load_module" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualTC.VirtualTC._VirtualTC__unload_all_modules">
+<tt class="descname">_VirtualTC__unload_all_modules</tt><big>(</big><big>)</big><a class="headerlink" href="#auroraagent.VirtualTC.VirtualTC._VirtualTC__unload_all_modules" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualTC.VirtualTC._VirtualTC__unload_module">
+<tt class="descname">_VirtualTC__unload_module</tt><big>(</big><em>flavor</em><big>)</big><a class="headerlink" href="#auroraagent.VirtualTC.VirtualTC._VirtualTC__unload_module" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualTC.VirtualTC.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>database</em><big>)</big><a class="reference internal" href="_modules/auroraagent/VirtualTC.html#VirtualTC.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.VirtualTC.VirtualTC.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="auroraagent.VirtualTC.VirtualTC.create">
 <tt class="descname">create</tt><big>(</big><em>flavor</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/auroraagent/VirtualTC.html#VirtualTC.create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.VirtualTC.VirtualTC.create" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a virtual traffic controller of the type (flavor) specified. Arguments
@@ -843,6 +1086,16 @@ Abstracts away implementation specific code.</p>
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="auroraagent.VirtualWifi.VirtualWifi._VirtualWifi__load_module">
+<tt class="descname">_VirtualWifi__load_module</tt><big>(</big><em>flavor</em>, <em>metadata</em><big>)</big><a class="headerlink" href="#auroraagent.VirtualWifi.VirtualWifi._VirtualWifi__load_module" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="auroraagent.VirtualWifi.VirtualWifi.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>database</em><big>)</big><a class="reference internal" href="_modules/auroraagent/VirtualWifi.html#VirtualWifi.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.VirtualWifi.VirtualWifi.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="auroraagent.VirtualWifi.VirtualWifi.create_slice">
 <tt class="descname">create_slice</tt><big>(</big><em>configuration</em><big>)</big><a class="reference internal" href="_modules/auroraagent/VirtualWifi.html#VirtualWifi.create_slice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.VirtualWifi.VirtualWifi.create_slice" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets up radios and adds any BSS specified.
@@ -872,7 +1125,7 @@ for an auxiliary slice.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>configuration</strong> (<em>dict</em>) &#8211; </td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>configuration</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; </td>
 </tr>
 </tbody>
 </table>
@@ -889,242 +1142,138 @@ for an auxiliary slice.</p>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
 <p>Base class for exceptions in Aurora.
 Inherit it and define info to use it.</p>
-<dl class="attribute">
-<dt id="auroraagent.exception.AuroraException.message">
-<tt class="descname">message</tt><em class="property"> = 'An unknown exception occurred.'</em><a class="headerlink" href="#auroraagent.exception.AuroraException.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.BridgeNotFound">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">BridgeNotFound</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#BridgeNotFound"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.BridgeNotFound" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.BridgeNotFound.message">
-<tt class="descname">message</tt><em class="property"> = 'The bridge does not exist.'</em><a class="headerlink" href="#auroraagent.exception.BridgeNotFound.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.CommandNotFound">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">CommandNotFound</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#CommandNotFound"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.CommandNotFound" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.CommandNotFound.message">
-<tt class="descname">message</tt><em class="property"> = 'Command is either not valid or not allowed.'</em><a class="headerlink" href="#auroraagent.exception.CommandNotFound.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.EntryNotFound">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">EntryNotFound</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#EntryNotFound"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.EntryNotFound" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.EntryNotFound.message">
-<tt class="descname">message</tt><em class="property"> = 'The entry does not exist in the database.'</em><a class="headerlink" href="#auroraagent.exception.EntryNotFound.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.FlavorNotExist">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">FlavorNotExist</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#FlavorNotExist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.FlavorNotExist" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.FlavorNotExist.message">
-<tt class="descname">message</tt><em class="property"> = 'Flavor does not exist!'</em><a class="headerlink" href="#auroraagent.exception.FlavorNotExist.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.InstanceNotFound">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">InstanceNotFound</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#InstanceNotFound"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.InstanceNotFound" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.InstanceNotFound.message">
-<tt class="descname">message</tt><em class="property"> = 'The instance does not exist.'</em><a class="headerlink" href="#auroraagent.exception.InstanceNotFound.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.InvalidConfig">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">InvalidConfig</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#InvalidConfig"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.InvalidConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.InvalidConfig.message">
-<tt class="descname">message</tt><em class="property"> = 'The configuration file is not valid.'</em><a class="headerlink" href="#auroraagent.exception.InvalidConfig.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.InvalidEncryption">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">InvalidEncryption</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#InvalidEncryption"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.InvalidEncryption" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.InvalidEncryption.message">
-<tt class="descname">message</tt><em class="property"> = 'Encryption type not valid.'</em><a class="headerlink" href="#auroraagent.exception.InvalidEncryption.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.InvalidKey">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">InvalidKey</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#InvalidKey"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.InvalidKey" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.InvalidKey.message">
-<tt class="descname">message</tt><em class="property"> = 'Key specified is not valid for the encryption type.'</em><a class="headerlink" href="#auroraagent.exception.InvalidKey.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.InvalidSSID">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">InvalidSSID</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#InvalidSSID"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.InvalidSSID" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.InvalidSSID.message">
-<tt class="descname">message</tt><em class="property"> = 'SSID not valid; must not be None or an empty string.'</em><a class="headerlink" href="#auroraagent.exception.InvalidSSID.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.ModuleNotLoaded">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">ModuleNotLoaded</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#ModuleNotLoaded"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.ModuleNotLoaded" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.ModuleNotLoaded.message">
-<tt class="descname">message</tt><em class="property"> = 'Module not found in loaded module list.'</em><a class="headerlink" href="#auroraagent.exception.ModuleNotLoaded.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.NameAlreadyInUse">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">NameAlreadyInUse</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#NameAlreadyInUse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.NameAlreadyInUse" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.NameAlreadyInUse.message">
-<tt class="descname">message</tt><em class="property"> = 'The name is already in the database.'</em><a class="headerlink" href="#auroraagent.exception.NameAlreadyInUse.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.NoUserIDForSlice">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">NoUserIDForSlice</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#NoUserIDForSlice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.NoUserIDForSlice" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.NoUserIDForSlice.message">
-<tt class="descname">message</tt><em class="property"> = 'No user id was found for the slice in question.'</em><a class="headerlink" href="#auroraagent.exception.NoUserIDForSlice.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+</dd></dl>
 
+<dl class="exception">
+<dt id="auroraagent.exception.NotImplementedError">
+<em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">NotImplementedError</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#auroraagent.exception.NotImplementedError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.PIDNotFound">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">PIDNotFound</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#PIDNotFound"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.PIDNotFound" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.PIDNotFound.message">
-<tt class="descname">message</tt><em class="property"> = 'PID Not found.'</em><a class="headerlink" href="#auroraagent.exception.PIDNotFound.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.ReachedBSSLimitOnRadio">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">ReachedBSSLimitOnRadio</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#ReachedBSSLimitOnRadio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.ReachedBSSLimitOnRadio" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.ReachedBSSLimitOnRadio.message">
-<tt class="descname">message</tt><em class="property"> = 'No more BSS are permitted on this radio.'</em><a class="headerlink" href="#auroraagent.exception.ReachedBSSLimitOnRadio.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.SliceCreationFailed">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">SliceCreationFailed</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#SliceCreationFailed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.SliceCreationFailed" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.SliceCreationFailed.message">
-<tt class="descname">message</tt><em class="property"> = 'Unable to create slice.'</em><a class="headerlink" href="#auroraagent.exception.SliceCreationFailed.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.SliceModificationFailed">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">SliceModificationFailed</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#SliceModificationFailed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.SliceModificationFailed" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.SliceModificationFailed.message">
-<tt class="descname">message</tt><em class="property"> = 'Unable to modify slice.'</em><a class="headerlink" href="#auroraagent.exception.SliceModificationFailed.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.SliceNotFound">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">SliceNotFound</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#SliceNotFound"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.SliceNotFound" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.SliceNotFound.message">
-<tt class="descname">message</tt><em class="property"> = 'The slice does not exist.'</em><a class="headerlink" href="#auroraagent.exception.SliceNotFound.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.SliceRadioNotFound">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">SliceRadioNotFound</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#SliceRadioNotFound"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.SliceRadioNotFound" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.SliceRadioNotFound.message">
-<tt class="descname">message</tt><em class="property"> = 'The slice radio can not be found.'</em><a class="headerlink" href="#auroraagent.exception.SliceRadioNotFound.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.SliceRecreationFailed">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">SliceRecreationFailed</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#SliceRecreationFailed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.SliceRecreationFailed" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.SliceRecreationFailed.message">
-<tt class="descname">message</tt><em class="property"> = 'Unable to recreate slice.'</em><a class="headerlink" href="#auroraagent.exception.SliceRecreationFailed.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.disabledError">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">disabledError</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#disabledError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.disabledError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.disabledError.message">
-<tt class="descname">message</tt><em class="property"> = 'The radio must be active to execute this function.'</em><a class="headerlink" href="#auroraagent.exception.disabledError.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="exception">
 <dt id="auroraagent.exception.hostapdError">
 <em class="property">exception </em><tt class="descclassname">auroraagent.exception.</tt><tt class="descname">hostapdError</tt><big>(</big><em>message=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/auroraagent/exception.html#hostapdError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#auroraagent.exception.hostapdError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#auroraagent.exception.AuroraException" title="auroraagent.exception.AuroraException"><tt class="xref py py-class docutils literal"><span class="pre">auroraagent.exception.AuroraException</span></tt></a></p>
-<dl class="attribute">
-<dt id="auroraagent.exception.hostapdError.message">
-<tt class="descname">message</tt><em class="property"> = 'An error occured with hostapd.  Check settings.'</em><a class="headerlink" href="#auroraagent.exception.hostapdError.message" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 </div>

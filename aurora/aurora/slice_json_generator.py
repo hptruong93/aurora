@@ -1,6 +1,79 @@
-# Aurora Slice JSON Generator (Generates a Json File)
-# SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
+# 2014
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &
+#              Mike Kobierski 
+#
+""".. warning::
 
+    Out of date and unused!  Use at own risk.
+
+Module for generating a JSON configuration.  To be compatible with 
+Aurora Manager v0.2 and later, follow the structure of this functional
+JSON configuration::
+
+    {
+        "VirtualWIFI": [
+            {
+                "flavor" : "wifi_radio",
+                "attributes" : 
+                    {
+                        "name" : "radio0",
+                        "channel" : "1",
+                        "txpower" : "20",
+                        "disabled" : "0",
+                        "country" : "CA",
+                        "hwmode" : "abg"   
+                    }
+            },
+            {
+                "flavor" : "wifi_bss",
+                "attributes" : 
+                    {
+                        "name" : "NetworkSSID",
+                        "radio" : "radio0",
+                        "if_name" : "wlan0",
+                        "encryption_type":"wep-open",
+                        "key":"00000"
+                    }
+            }
+        ], 
+        "VirtualBridges": [
+            {
+                "flavor":"linux_bridge",
+                "attributes":   
+                    {
+                        "name":"linux-br",
+                        "interfaces":
+                            ["vwlan0","tun0"],
+                        "bridge_settings":{},
+                        "port_settings":{}
+                    }
+            }
+        ], 
+        "VirtualInterfaces": [
+            {
+                "flavor":"capsulator",
+                "attributes": 
+                    {
+                        "attach_to":"eth0",
+                        "name":"tun0",
+                        "forward_to":"10.0.0.1",
+                        "tunnel_tag":"auto",
+                        "is_virtual":true
+                    }
+            },
+            {
+                "flavor":"veth",
+                "attributes": 
+                    {
+                        "attach_to":"wlan0",
+                        "name":"vwlan0",
+                        "mac":"00:00:00:00:00:01"
+                    }
+            }
+        ]
+    }
+
+"""
 import ast
 import json
 import sys

@@ -1,16 +1,16 @@
 #!/usr/bin/python -tt
 #
 # Author: Mike Kobierski
-
-"""A short script which copies python launch code
-aurora and auroraclient to /usr/local/bin.  This
-eases launching aurora/aurora/ManagerServer.py
-and auroraclient/shell.py.
+"""A short script which copies python launch code aurora and 
+auroraclient to /usr/local/bin.  This eases launching 
+:mod:`aurora.shell` and :mod:`auroraclient.shell`.
 
 Run with root privileges.
-Examples:
+Usage::
+
     $ sudo python aurorainstall.py
     $ sudo python aurorainstall.py --uninstall
+
 """
 def main():
     import os
@@ -19,6 +19,9 @@ def main():
     import sys
     import time
     import traceback
+
+    if os.geteuid() != 0:
+        sys.exit("You need root permissions to do this!")
 
     args = sys.argv[1:]
     
@@ -39,39 +42,19 @@ def main():
         print "Removing /usr/local/bin/aurora..."
         os.remove("/usr/local/bin/aurora")
     except IOError as e:
-        if (e[0] == errno.EPERM):
-            print >> sys.stderr, "You need root permissions to do this!"
-            sys.exit(1)
-        else:
-            print >> sys.stderr, e
-            print "Continuing..."
+        print >> sys.stderr, e
+        print "Continuing..."
     except OSError as e:
         if (e[0] == 2):
             print "aurora does not already exist, contining..."
-    # Remove auroramanager
-    try:
-        print "Removing /usr/local/bin/auroramanager..."
-        os.remove("/usr/local/bin/auroramanager")
-    except IOError as e:
-        if (e[0] == errno.EPERM):
-            print >> sys.stderr, "You need root permissions to do this!"
-            sys.exit(1)
-        else:
-            print >> sys.stderr, e
-            print "Continuing..."
-    except OSError as e:
-        if (e[0] == 2):
-            print "auroramanager does not already exist, contining..."
+
+    # Remove aurora-manager
     try:
         print "Removing /usr/local/bin/aurora-manager..."
         os.remove("/usr/local/bin/aurora-manager")
     except IOError as e:
-        if (e[0] == errno.EPERM):
-            print >> sys.stderr, "You need root permissions to do this!"
-            sys.exit(1)
-        else:
-            print >> sys.stderr, e
-            print "Continuing..."
+        print >> sys.stderr, e
+        print "Continuing..."
     except OSError as e:
         if (e[0] == 2):
             print "aurora-manager does not already exist, contining..."
@@ -163,9 +146,7 @@ if __name__ == "__main__":
             shutil.move('aurora-manager', '/usr/local/bin/aurora-manager')
             shutil.move('aurora-client', '/usr/local/bin/aurora')
         except IOError as e:
-            if (e[0] == 13):
-                print >> sys.stderr, "You need root permissions to do this!"
-            print >> sys.stderr, e
+            traceback.print_exc(file=sys.stdout)
             sys.exit(1)
         print "\nTo run, first start aurora-manager:"
         print "\t$ aurora-manager"

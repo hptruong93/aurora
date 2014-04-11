@@ -61,7 +61,7 @@ class AuroraDB(object):
         """Returns a handle for MySQL database access using 
         credentials assigned when AuroraDB instance was created.
 
-        :rtype: MySQLdb.Connection
+        :rtype: :class:`MySQLdb.Connection`
 
         """
         return mdb.connect(self.mysql_host, self.mysql_username,

@@ -55,10 +55,10 @@
 <span class="kn">import</span> <span class="nn">copy</span>
 <div class="viewcode-block" id="OvsTC"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.ovs_tc.OvsTC">[docs]</a><span class="k">class</span> <span class="nc">OvsTC</span><span class="p">:</span>    
     <span class="sd">&quot;&quot;&quot;The ovs-tc class sets up ovs queues on bridge interfaces&quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="OvsTC.__init__"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.ovs_tc.OvsTC.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c"># Keep track of all created instances</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">process_list</span> <span class="o">=</span> <span class="p">{}</span>
-
+</div>
 <div class="viewcode-block" id="OvsTC.start"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.ovs_tc.OvsTC.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uplink</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">downlink</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">if_up</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">if_down</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">ovs_db_sock</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sets up queues and using ovs-vsctl to limit rates to specified limits.&quot;&quot;&quot;</span>
 

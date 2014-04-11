@@ -1,6 +1,7 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 import subprocess, os, inspect, tempfile
 import psutil, copy
+import random
 
 import exception
 
@@ -477,14 +478,19 @@ class OpenWRTWifi:
 
             # Encryption complete; finish up other parameters
             # and apply
+
+            
+
             if new_entry:
-                mac = radio_entry["macaddr"]
-                base_macaddr = str(total_bss * 2)
+                final_mac = self._generate_random_MAC_addr()
 
-                if len(base_macaddr) < 2:
-                    base_macaddr = '0' + base_macaddr
+                # mac = radio_entry["macaddr"]
+                # base_macaddr = str(total_bss * 2)
 
-                final_mac = base_macaddr + mac[2:]
+                # if len(base_macaddr) < 2:
+                #     base_macaddr = '0' + base_macaddr
+
+                # final_mac = base_macaddr + mac[2:]
             else:
                 final_mac = macaddr
 
@@ -557,3 +563,31 @@ class OpenWRTWifi:
 
     def modify_bss(self, radio, name, new_name=None, encryption_type=None, key=None):
         pass
+
+    def _generate_random_MAC_addr(self):
+        """Generates a random and appropriate `MAC address \
+        <http://en.wikipedia.org/wiki/MAC_address>`_.
+
+        A MAC address is 48 bytes long and has the format
+        ``11:22:33:44:55:66``.  
+        
+        The most significant byte (in this case 0x11) contains 
+        information about the station broadcasting the MAC 
+        address::
+        
+            0x02 = 0000 0010
+                          ^^
+                          |+- Multicast bit: always set this to 0, 
+                          |     as we are only ever doing unicast
+                          +-- Global or local MAC addr: 
+                                because we are generating the MAC addr
+                                ourselves, always set this to 1: local
+
+        :returns: str -- Random and valid MAC address
+        
+        """
+        mac = [0x02]
+        for i in range(5):
+            mac.append(random.randint(0x00, 0xff))
+        mac_str = ':'.join(map(lambda x: "%02x" % x, mac))
+        return mac_str

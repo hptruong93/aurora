@@ -1,3 +1,21 @@
+# 2014
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &
+#              Mike Kobierski 
+#
+"""Intended entry point for Aurora Manager.
+
+Usage::
+
+    $ python shell.py <DEBUG|INFO|WARNING|ERROR|CRITICAL>
+
+or::
+
+    >>> import sys
+    >>> sys.path.append('/path/to/aurora/package/dir')
+    >>> from aurora.shell import main
+    >>> main()
+
+"""
 import sys
 import traceback
 

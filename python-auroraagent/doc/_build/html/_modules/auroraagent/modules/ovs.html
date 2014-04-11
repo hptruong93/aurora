@@ -75,11 +75,11 @@
     <span class="c"># and Ubuntu 13.04 w/ OVS 1.9 from apt</span>
     <span class="n">ovs_schema</span> <span class="o">=</span> <span class="s">&quot;/usr/share/openvswitch/vswitch.ovsschema&quot;</span>
     
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">database</span><span class="p">):</span>
+<div class="viewcode-block" id="OpenVSwitch.__init__"><a class="viewcode-back" href="../../../auroraagent.modules.html#auroraagent.modules.ovs.OpenVSwitch.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">database</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
         
         <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-    
+    </div>
     <span class="k">def</span> <span class="nf">__exec_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
         <span class="c"># Want to throw exception if we give an invalid command</span>
         <span class="c"># Note: args is a list of arguments</span>
