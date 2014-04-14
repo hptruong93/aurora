@@ -134,7 +134,7 @@ class SliceAgent:
                 print "vif_up,vif_down",vif_up, vif_down
                 traffic_control["attributes"]["if_up"] = vif_up
                 traffic_control["attributes"]["if_down"] = vif_down
-                if traffic_control["flavor"] == "ovs-tc":
+                if traffic_control["flavor"] == "ovs_tc":
                     if "ovs" in self.v_bridges.module_list.keys():
                         traffic_control["attributes"]["ovs_db_sock"] = self.v_bridges.module_list["ovs"].socket_file.name
                     else:
@@ -161,18 +161,21 @@ class SliceAgent:
             print "...does not exist"
             #pass
         else:
+            # Delete QOS parameters
+            if "TrafficAttributes" in slice_data.keys():
+                for traffic_control in slice_data['TrafficAttributes']:
+                    try:
+                        self.tc.delete(traffic_control['attributes']['name'])
+                    except Exception:
+                        traceback.print_exc(file=sys.stdout)
+                        print("Error: Unable to remove Qos " + traffic_control['attributes']['name'])
             # Delete all bridges
             for bridge in slice_data['VirtualBridges']:
                 try:
                     self.v_bridges.delete_bridge(bridge['attributes']['name'])
                 except:
                     print("Error: Unable to delete bridge " + bridge['attributes']['name'])
-            if "TrafficAttributes" in slice_data.keys():
-                for traffic_control in slice_data['TrafficAttributes']:
-                    try:
-                        self.tc.delete(traffic_control['attributes']['name'])
-                    except:
-                        print("Error: Unable to remove Qos " + traffic_control['attributes']['name'])
+
             # Delete all virtual interfaces
             for interface in slice_data['VirtualInterfaces']:
                 try:

@@ -60,6 +60,7 @@ class Tc(object):
                 pass
 
     def stop(self, if_up = None, if_down = None, name = None):
+        qos_list = []
         if if_up is not None:
             qos_list.append(if_up)
         if if_down is not None:

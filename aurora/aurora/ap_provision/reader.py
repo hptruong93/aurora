@@ -63,11 +63,21 @@ def get_radio_wifi_radio(slice):
         return interface['name']
     return None
 
+def link_rate_to_int(rate):
+    if rate.endswith('kbit'):
+        rate = rate.split('kbit')[0]
+        rate = int(rate) * 1024
+    elif rate.endswith('mbit'):
+        rate = rate.split('mbit')[0]
+        rate = int(rate) * (1024**2)
+    # TODO: Add others
+    return int(rate)
+
 def get_uplink(slice):
     sum_up = 0
     try:
         for item in slice['TrafficAttributes']:
-            sum_up += int(item['attributes']['uplink'])
+            sum_up += link_rate_to_int(item['attributes']['uplink'])
     except KeyError as e:
         #Well this slice does not have any traffic info associated with it
         pass
@@ -77,7 +87,7 @@ def get_downlink(slice):
     sum_down = 0
     try:
         for item in slice['TrafficAttributes']:
-            sum_down += int(item['attributes']['downlink'])
+            sum_down += link_rate_to_int(item['attributes']['downlink'])
     except KeyError as e:
         #Well this slice does not have any traffic info associated with it
         pass

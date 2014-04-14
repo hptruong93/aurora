@@ -104,10 +104,10 @@ class VirtualTC:
         entry = self.__get_entry(name)
         args = {}
         flavor = entry["flavor"]
-        args["if_up"] = entry["if_up"]
-        args["if_down"] = entry["if_down"]
-        if flavor == "ovs-tc":
-            args["ovs_db_sock"] = entry["ovs_db_sock"]
+        args["if_up"] = entry["attributes"]["if_up"]
+        args["if_down"] = entry["attributes"]["if_down"]
+        if flavor == "ovs_tc":
+            args["ovs_db_sock"] = entry["attributes"]["ovs_db_sock"]
         # Module should already be loaded
         manager = self.__get_module(flavor)
         manager.stop(**args)
