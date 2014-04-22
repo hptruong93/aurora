@@ -107,7 +107,7 @@ class APSliceNumberVerification(RequestVerification):
                                               AND status <> "FAILED"
                                             GROUP BY physical_ap) AS 
                                       A LEFT JOIN ap ON A.physical_ap = ap.name
-                                      WHERE name = '%s' """, (request['physical_ap']))
+                                      WHERE name = '%s' """, str((request['physical_ap'])))
                     result = cursor.fetchall()
 
                     if len(result) == 0:
@@ -227,7 +227,7 @@ class AccessConflictVerification(RequestVerification):
                                        WHERE tenant_id = '%s'
                                        AND physical_ap = '%s'
                                        AND status <> "DELETED"
-                                       """, (str(tenant_id), physical_ap))
+                                       """, (str(tenant_id), str(physical_ap)))
                     
                     #Get the client's slices
                     result = [item for sublist in cursor.fetchall() for item in sublist]
@@ -338,7 +338,7 @@ class ValidDeleteVerification(RequestVerification):
                                        WHERE tenant_id = '%s'
                                        AND ap_slice_id = '%s'
                                        AND status <> "DELETED"
-                                       """, (str(request['tenant_id']), request['slice'])) #Look for this key in ap_slice_delete in manager.py
+                                       """, (str(request['tenant_id']), str(request['slice']))) #Look for this key in ap_slice_delete in manager.py
                     result = cursor.fetchall()
                     if len(result) == 0:
                         raise exceptions.NoSuchSliceExists(request['slice'])
