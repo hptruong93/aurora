@@ -37,7 +37,6 @@ class RequestVerification():
     @staticmethod
     def _ap_name_exists(mysqlCursor, physical_ap):
         to_execute = """SELECT name FROM ap WHERE name = '%s'""" % physical_ap
-        print to_execute
         mysqlCursor.execute(to_execute)
 
         ap_names = mysqlCursor.fetchall()
@@ -91,7 +90,6 @@ class APSliceNumberVerification(RequestVerification):
                                             GROUP BY physical_ap) AS 
                                       A LEFT JOIN ap ON A.physical_ap = ap.name
                                       WHERE name IS NOT NULL"""
-                    print to_execute
                     cursor.execute(to_execute)
                     result = cursor.fetchall()
                     
@@ -110,7 +108,6 @@ class APSliceNumberVerification(RequestVerification):
                                             GROUP BY physical_ap) AS 
                                       A LEFT JOIN ap ON A.physical_ap = ap.name
                                       WHERE name = '%s' """ % str(request['physical_ap'])
-                    print to_execute
                     cursor.execute(to_execute)
                     result = cursor.fetchall()
 
@@ -232,7 +229,6 @@ class AccessConflictVerification(RequestVerification):
                                        AND physical_ap = '%s'
                                        AND status <> "DELETED"
                                        """ % (str(tenant_id), str(physical_ap))
-                    print to_execute
                     cursor.execute(to_execute)
                     
                     #Get the client's slices
@@ -344,8 +340,7 @@ class ValidDeleteVerification(RequestVerification):
                                      WHERE tenant_id = '%s'
                                      AND ap_slice_id = '%s'
                                      AND status <> "DELETED"
-                                     """, (str(request['tenant_id']), str(request['slice']))
-                    print to_execute
+                                     """ % (str(request['tenant_id']), str(request['slice']))
                     cursor.execute(to_execute) #Look for this key in ap_slice_delete in manager.py
                     result = cursor.fetchall()
                     if len(result) == 0:
