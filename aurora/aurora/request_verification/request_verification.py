@@ -36,7 +36,7 @@ class RequestVerification():
 
     @staticmethod
     def _ap_name_exists(mysqlCursor, physical_ap):
-        mysqlCursor.execute("""SELECT name FROM ap WHERE name = %s""", str(physical_ap)
+        mysqlCursor.execute("""SELECT name FROM ap WHERE name = %s""", str(physical_ap))
         ap_names = mysqlCursor.fetchall()
         if len(ap_names) != 0:
             return True

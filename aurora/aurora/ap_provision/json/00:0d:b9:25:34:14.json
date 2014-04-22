@@ -15,7 +15,7 @@
     }, 
     "rabbitmq_password": "let_me_in", 
     "rabbitmq_username": "access_point", 
-    "rabbitmq_host": "10.5.8.3", 
+    "rabbitmq_host": "192.168.0.88", 
     "region": "mcgill", 
     "queue": "HP-AP", 
     "rabbitmq_reply_queue": "AuroraManager", 
