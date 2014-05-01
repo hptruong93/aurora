@@ -16,6 +16,7 @@ import sys
 import time
 import traceback
 import uuid
+import config
 
 import MySQLdb as mdb
 
@@ -45,11 +46,6 @@ class Manager(object):
     """
     #Dispatcher variables
 
-    MYSQL_HOST = 'localhost'
-    MYSQL_USERNAME = 'root'
-    MYSQL_PASSWORD = 'supersecret' 
-    MYSQL_DB = 'aurora' 
-
     def __init__(self):
         """Sets up the environment which Manager will use to handle 
         specific tasks.
@@ -66,15 +62,15 @@ class Manager(object):
         self.LOGGER.info("Constructing Manager...")
 
         ### Dispatcher variables
-        host = 'localhost'
-        username = 'outside_world'
-        password = 'wireless_access'
-        manager_queue = 'AuroraManager'
+        host = config.CONFIG['dispatcher']['host']
+        username = config.CONFIG['dispatcher']['username']
+        password = config.CONFIG['dispatcher']['password']
+        manager_queue = config.CONFIG['dispatcher']['manager_queue']
 
-        self.mysql_host = self.MYSQL_HOST #host
-        self.mysql_username = self.MYSQL_USERNAME #'root'
-        self.mysql_password = self.MYSQL_PASSWORD #'supersecret'
-        self.mysql_db = self.MYSQL_DB #'aurora'
+        self.mysql_host = config.CONFIG['mysql']['mysql_host']
+        self.mysql_username = config.CONFIG['mysql']['mysql_username']
+        self.mysql_password = config.CONFIG['mysql']['mysql_password']
+        self.mysql_db = config.CONFIG['mysql']['mysql_db']
 
         #Initialize AuroraDB Object
         self.aurora_db = AuroraDB(self.mysql_host,

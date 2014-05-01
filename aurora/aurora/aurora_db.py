@@ -17,6 +17,8 @@ from types import *
 
 import MySQLdb as mdb
 
+import config
+
 from aurora.cls_logger import get_cls_logger
 from aurora.exc import *
 
@@ -27,16 +29,11 @@ class AuroraDB(object):
     """The AuroraDB class handles interaction with the SQL database."""
     #Default values in __init__ should potentially be omitted
 
-    DEFAULT_MYSQL_HOST = 'localhost'
-    DEFAULT_MYSQL_USERNAME = 'root'
-    DEFAULT_MYSQL_PASSWORD = 'supersecret'
-    DEFAULT_MYSQL_DB = 'aurora'
-
     def __init__(self,
-                 mysql_host = DEFAULT_MYSQL_HOST,
-                 mysql_username = DEFAULT_MYSQL_USERNAME,
-                 mysql_password = DEFAULT_MYSQL_PASSWORD,
-                 mysql_db = DEFAULT_MYSQL_DB):
+                 mysql_host = config.CONFIG['mysql']['mysql_host'],
+                 mysql_username = config.CONFIG['mysql']['mysql_username'],
+                 mysql_password = config.CONFIG['mysql']['mysql_password'],
+                 mysql_db = config.CONFIG['mysql']['mysql_db']):
         """Create a new instance of AuroraDB object.
 
         :param str mysql_host:

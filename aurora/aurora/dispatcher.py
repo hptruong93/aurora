@@ -635,13 +635,15 @@ def main():
 
     exitLoop = False
 
+    import config
+
     ######
     # Connection Variables
-    host = 'localhost'
-    username = 'outside_world'
-    password = 'wireless_access'
-    mysql_username = 'root'
-    mysql_password = 'supersecret'
+    host = config.CONFIG['dispatcher']['host']
+    username = config.CONFIG['dispatcher']['username']
+    password = config.CONFIG['dispatcher']['password']
+    mysql_username = config.CONFIG['mysql']['mysql_username']
+    mysql_password = config.CONFIG['mysql']['mysql_username']
     sender = Dispatcher(host, username, password, 
                         mysql_username, mysql_password)
 
