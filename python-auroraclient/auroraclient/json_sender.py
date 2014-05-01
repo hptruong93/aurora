@@ -58,5 +58,5 @@ if __name__ == '__main__': #FOR TESTING
     sender = JSONSender()
     FILE = open('json/apslice.json', 'r')
     payload = json.load(FILE)
-    url = 'http://localhost:5553' #Will change
+    url = 'http://10.5.8.3:5554' #Will change
     sender.send_json(url, payload)

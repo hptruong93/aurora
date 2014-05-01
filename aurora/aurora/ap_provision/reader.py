@@ -109,6 +109,6 @@ def get_number_slice_on_radio(physical_ap_info, radio_name):
             continue
     return count
 
-
+#For testing only
 if __name__ == '__main__':
     print get_number_slice_on_radio('openflow1', 'radio0')

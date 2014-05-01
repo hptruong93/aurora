@@ -425,6 +425,9 @@ class Manager(object):
         else:
             message = pt.get_string(fields=["Name", "status"])    
 
+        import os
+        print os.getcwd()
+
         #return response
         response = {"status":True, "message":message}
         return response
