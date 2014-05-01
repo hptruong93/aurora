@@ -19,10 +19,12 @@ or::
 import sys
 import traceback
 
+from aurora import config
 from aurora import manager_http_server
 
 
 def main():
+    print config.CONFIG
     try:
         manager_http_server.main()
 
