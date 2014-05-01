@@ -23,6 +23,7 @@ import traceback
 
 #from keystoneclient.v2_0 import client as ksclient #commented in order to compile locally
 
+import config
 from auroraclient import json_sender
 from auroraclient import slice_json_generator
 
@@ -164,8 +165,10 @@ class AuroraConsole():
             #print json.dumps(to_send, indent=4)
             ##END DEBUG
             
+            sending_address = 'http://' + config.CONFIG['connection']['manager_host'] + ':' + config.CONFIG['connection']['manager_port']
+
             if to_send: #--help commands will not start the server
-                json_sender.JSONSender().send_json('http://%s:5554' % manager_addr, to_send) # change back to 132.206.206.133:5554
+                json_sender.JSONSender().send_json(sending_address, to_send) # change back to 132.206.206.133:5554
 
             try:
                 arg_hint = params.get('hint')
