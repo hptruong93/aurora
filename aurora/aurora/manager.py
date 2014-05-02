@@ -28,7 +28,9 @@ from aurora import dispatcher
 from aurora.exc import *
 from aurora.ap_provision import http_srv as provision_srv
 from aurora.request_verification import request_verify_API as Verify
+from aurora.request_verification import request_verification as Check
 from aurora import slice_plugin
+
 
 LOGGER = logging.getLogger(__name__)
 
