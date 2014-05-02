@@ -7,6 +7,7 @@ if [ "$1" == "--backup"  ] || [ "$1" == "-b" ]; then
 #Otherwise the script expects the file "aurora_backup.sql" to load back to mysql database
 #If the file does not exist, the script ends by outputing a message saying the file does not exists
 #The aurora database will be created by the script if not exists
+#Will have to enter password twice (2 times)
 elif [ "$1" == "--restore" ] || [ "$1" == "-r" ]; then
 	if [ -f aurora_backup.sql ]; then
 		mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS aurora"
