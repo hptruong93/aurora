@@ -22,7 +22,6 @@ import sys
 import traceback
 
 #from keystoneclient.v2_0 import client as ksclient #commented in order to compile locally
-
 import config
 from auroraclient import json_sender
 from auroraclient import slice_json_generator
