@@ -142,7 +142,7 @@ class Manager(object):
         response = {"status":True, "message":Message}
         return response
 
-    def ap_filter(self, args):
+    def ap_filter(self, args): 	
         """A helper method for finding access points based on their 
         SQL entries.  Example argument strings::
 

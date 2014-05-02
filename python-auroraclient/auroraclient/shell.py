@@ -108,7 +108,7 @@ class AuroraConsole():
             print('Error! Unexpected number of arguments.')
         else:
             function = argv[1] # Used for attrs function call
-            manager_addr = os.environ.get("AURORA_MANAGER_HOST", "localhost")
+            manager_addr = config.CONFIG['connection']['manager_host']
 
             parser = AuroraArgumentParser()
             params = vars(parser.base_parser().parse_args(argv[1:]))
@@ -200,8 +200,8 @@ class AuroraConsole():
                             ##END DEBUG
                             
                             if to_send:
-                                message = json_sender.JSONSender().send_json('http://%s:5554' % manager_addr, to_send) # change back to 132.206.206.133:5554
-                                self.slice_json_generator = slice_json_generator.SliceJsonGenerator(os.path.join(CLIENT_DIR, 'json/yangwutest.json'),1,1,1); # Initialize the slice_json_generator
+                                message = json_sender.JSONSender().send_json(sending_address, to_send) # change back to 132.206.206.133:5554
+                                #self.slice_json_generator = slice_json_generator.SliceJsonGenerator(os.path.join(CLIENT_DIR, 'json/yangwutest.json'),1,1,1); # Initialize the slice_json_generator
 
                                 if 'openflow' in message.lower(): # Restore params['file'] and clean up params['hint'] to create a slice
                                     params['file'] = store
@@ -218,7 +218,7 @@ class AuroraConsole():
                                     }
                                     pprint(to_send)
                                     if to_send:
-                                        message = json_sender.JSONSender().send_json('http://%s:5554' % manager_addr, to_send) # change back to 132.206.206.133:5554
+                                        message = json_sender.JSONSender().send_json(sending_address, to_send) # change back to 132.206.206.133:5554
 
                                         
                             exitLoop = True;

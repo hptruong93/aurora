@@ -7,6 +7,7 @@ import sys
 import ast
 import os
 
+import config
 from auroraclient import json_sender #Enable the communication between manager and generator
 
 CLIENT_DIR = os.path.dirname(os.path.abspath(__file__)) # detect the local directory
@@ -88,8 +89,9 @@ class SliceJsonGenerator():
         while(not Loop):
             tmp_data = raw_input()
             Loop = self.communicatewithManager(tmp_data,'SSID_NAME')
-        self.data['config']['VirtualWIFI'][1]['attributes']['name'] = tmp_data
-        
+        self.data['config']['RadioInterfaces'][1]['attributes']['name'] = tmp_data
+ 
+
         Loop = False
         print('Bridge Type:')
         while(not Loop):
@@ -101,7 +103,7 @@ class SliceJsonGenerator():
         self.data['tenant_id'] = os.environ.get("AURORA_TENANT", -1)
         print self.data
         if(self.communicatewithManager(self.data,'radio_check')):
-            del self.data['config']['VirtualWIFI'][0]
+            del self.data['config']['RadioInterfaces'][0]
         del self.data['physical_ap']
         del self.data['tenant_id']
 
@@ -133,8 +135,10 @@ class SliceJsonGenerator():
             'project_id':os.environ.get("AURORA_PROJECT", -1),
             'user_id':os.environ.get("AURORA_USER", -1),
         }
+       
+        manager_address = 'http://' + config.CONFIG['connection']['manager_host'] + ':' + config.CONFIG['connection']['manager_port']
         if toSend: #--help commands will not start the server
-            response = json_sender.JSONSender().send_json('http://localhost:5554', toSend) # change back to 132.206.206.133:5554
+            response = json_sender.JSONSender().send_json(manager_address, toSend) # change back to 132.206.206.133:5554
         if 'true' not in response:
             print " Please Enter the right value!!"
             return False
