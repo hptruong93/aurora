@@ -118,6 +118,30 @@ class Manager(object):
         response = getattr(self, function)(args, tenant_id, user_id, project_id)
         return response
 
+    #Communicate with json file generator
+    def configuration_generation(self, args, tenant_id, user_id, project_id):
+        #print args['data']
+        Message = 'false'
+        if 'bridge_type' in args['type'] and ('linux' in args['data'] or 'ovs' in args['data']):
+            Message = 'true'
+        
+        elif 'SSID_NAME' in args['type']:
+            Message = 'true'
+        
+        #print ('VirtualWIFI' in args['data']) and ('wifi_radio' in args['data']['VirtualWIFI'][0]['flavor'])
+        elif 'radio_check' in args['type']: # Used to check if the radio configuration is already set
+            print "The radio channel exists"
+            check = Check.RadioConfigExistedVerification() # check if the radio channel exists
+            request = {}
+
+            request['config'] = args['data']['config']
+            request['physical_ap'] = args['data']['physical_ap']
+            request['tenant_id'] = args['data']['tenant_id']
+            error = check.verify('create_slice', request)
+            print error
+        response = {"status":True, "message":Message}
+        return response
+
     def ap_filter(self, args):
         """A helper method for finding access points based on their 
         SQL entries.  Example argument strings::
