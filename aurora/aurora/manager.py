@@ -128,8 +128,7 @@ class Manager(object):
             Message = 'true'
         
         elif 'SSID_NAME' in args['type']: # check if there is the same name already existing in the database
-            sql_Info.verify(args['type'])
-            Message = 'true'
+            Message = sql_Info.verify(args['type'])
         
         #print ('VirtualWIFI' in args['data']) and ('wifi_radio' in args['data']['VirtualWIFI'][0]['flavor'])
         elif 'radio_check' in args['type']: # Used to check if the radio configuration is already set

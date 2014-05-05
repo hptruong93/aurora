@@ -21,4 +21,5 @@ def verify(args):
             information = cursor.fetchall()
     except:
         print "There is an error in sql_Info.py!!!"
-    print information
+    if information[0][0] == 0:
+        return "true"
