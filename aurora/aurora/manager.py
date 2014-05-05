@@ -132,7 +132,6 @@ class Manager(object):
         
         #print ('VirtualWIFI' in args['data']) and ('wifi_radio' in args['data']['VirtualWIFI'][0]['flavor'])
         elif 'radio_check' in args['type']: # Used to check if the radio configuration is already set
-            print "The radio channel exists"
             check = Check.RadioConfigExistedVerification() # check if the radio channel exists
             request = {}
 
@@ -140,7 +139,8 @@ class Manager(object):
             request['physical_ap'] = args['data']['physical_ap']
             request['tenant_id'] = args['data']['tenant_id']
             error = check.verify('create_slice', request)
-            print error
+            if error is None:
+				Message = 'true'
         response = {"status":True, "message":Message}
         return response
 
