@@ -17,7 +17,8 @@ def verify(args):
         with link:
             cursor = link.cursor()
             to_execute = """ select COUNT(distinct ap_slice_ssid) from ap_slice where status <> "DELETED" and ap_slice_ssid = "%s" """%(str(args))
-            information = cursor.execute(to_execute)
+            cursor.execute(to_execute)
+            information = cursor.fetchall()
     except:
         print "There is an error in sql_Info.py!!!"
     print information
