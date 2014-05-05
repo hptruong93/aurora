@@ -52,12 +52,16 @@ class SliceJsonGenerator():
                 exitLoop = True
                 # Dump to JSON file
                 try:
-                    print "the file name is " + filename
+                    #print "the file name is " + filename
                     self.JFILE = open(filename, "w")
                 except IOError:
                     print('Error opening file for writing!')
                     sys.exit(-1)
-                json.dump(self.data['config'], self.JFILE, sort_keys=True, indent=4)
+                # Rename the key: RadioInterfaces to VirtualWIFI
+                output = self.data['config']
+                output['VirtualWIFI'] = self.data['config']['RadioInterfaces']
+                del output['RadioInterfaces']
+                json.dump(output, self.JFILE, sort_keys=True, indent=4)
                 self.JFILE.flush()
                 self.JFILE.close()
             else:

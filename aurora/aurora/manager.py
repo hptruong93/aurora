@@ -1136,7 +1136,7 @@ class Manager(object):
                     ap_name = self.aurora_db.get_wslice_physical_ap(ap_slice_id)
             except Exception as e:
                 response = {"status":False, "message":message + e.message}
-                traceback.print_exc(file=sys.stdout)
+                traceback.print_exc(file=sys.stdout)RadioInterfaces
                 return response
             message += self.aurora_db.wslice_delete(ap_slice_id)
 

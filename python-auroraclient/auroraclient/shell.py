@@ -131,7 +131,7 @@ class AuroraConsole():
                             1,1,1
                     ) # Initialize the slice_json_generator
                     params['file'] = [GEN_JSON_FPATH,]
-                    
+
                 try:
                     JFILE = open(os.path.join(CLIENT_DIR, 'json', params['file'][0]), 'r')
                     #print JFILE
