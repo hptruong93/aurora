@@ -101,9 +101,9 @@ class SliceJsonGenerator():
         
         self.data['physical_ap'] = 'openflow1'
         self.data['tenant_id'] = os.environ.get("AURORA_TENANT", -1)
-        print self.data
+
         if(self.communicatewithManager(self.data,'radio_check')):
-            del self.data['config']['VirtualWIFI'][0]
+            del self.data['config']['RadioInterfaces'][0]
         del self.data['physical_ap']
         del self.data['tenant_id']
 

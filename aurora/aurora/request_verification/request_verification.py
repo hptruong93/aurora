@@ -10,7 +10,7 @@ import MySQLdb as mdb
 
 from aurora.ap_provision import reader as provision_reader
 from aurora.request_verification import verification_exception as exceptions
-
+from aurora import config
 
 #This module is called by manager before acting on any AP.
 #This will detect inconsistency/ invalid request/operation of the manager requested by the client.
@@ -29,10 +29,10 @@ class RequestVerification():
     #This method must be wrapped by a try catch block (catching mdb.Error)
     @staticmethod
     def _database_connection():
-        return mdb.connect('localhost',
-                                   'root',
-                                   'supersecret',
-                                   'aurora')
+        return mdb.connect(config.CONFIG['mysql']['mysql_host'],
+                                   config.CONFIG['mysql']['mysql_username'],
+                                   config.CONFIG['mysql']['mysql_password'],
+                                   config.CONFIG['mysql']['mysql_db'])
 
     @staticmethod
     def _ap_name_exists(mysqlCursor, physical_ap):
