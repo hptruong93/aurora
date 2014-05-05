@@ -30,7 +30,7 @@ from aurora.ap_provision import http_srv as provision_srv
 from aurora.request_verification import request_verify_API as Verify
 from aurora.request_verification import request_verification as Check
 from aurora import slice_plugin
-
+from aurora import sql_Info
 
 LOGGER = logging.getLogger(__name__)
 
@@ -127,7 +127,8 @@ class Manager(object):
         if 'bridge_type' in args['type'] and ('linux' in args['data'] or 'ovs' in args['data']):
             Message = 'true'
         
-        elif 'SSID_NAME' in args['type']:
+        elif 'SSID_NAME' in args['type']: # check if there is the same name already existing in the database
+            sql_Info.verify(args['type'])
             Message = 'true'
         
         #print ('VirtualWIFI' in args['data']) and ('wifi_radio' in args['data']['VirtualWIFI'][0]['flavor'])
