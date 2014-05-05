@@ -140,7 +140,7 @@ class Manager(object):
             request['tenant_id'] = args['data']['tenant_id']
             error = check.verify('create_slice', request)
             if error is None:
-				Message = 'true'
+                Message = 'true'
         response = {"status":True, "message":Message}
         return response
 
