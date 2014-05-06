@@ -103,6 +103,11 @@ class SliceJsonGenerator():
             Loop = self.communicatewithManager(tmp_data,'bridge_type')
         self.data['config']['VirtualBridges'][0]['flavor'] = tmp_data
         
+        if "ovs" in self.data['config']['VirtualBridges'][0]['flavor'] :
+            print "Please Give a Controller IP Address:"
+            tmp_data = raw_input()
+            self.data['config']['VirtualBridges'][0]['attributes']['bridge_settings']['controller'][0] = tmp_data
+
         self.data['physical_ap'] = 'openflow1'
         self.data['tenant_id'] = os.environ.get("AURORA_TENANT", -1)
 
