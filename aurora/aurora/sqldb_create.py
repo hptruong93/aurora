@@ -6,6 +6,7 @@
 import logging
 import sys
 import traceback
+import config
 
 import MySQLdb as mdb
 
@@ -20,9 +21,9 @@ class SQLDBCreate(object):
         """Step 0: Connecto to mySQL.  Uses :mod:`MySQLdb` :mod:`mysqldb`"""
         #Connect to Aurora mySQL database
         try:
-            self.con = mdb.connect(host='localhost', 
-                                   user='root', 
-                                   passwd='supersecret') #Change address
+            self.con = mdb.connect(host=config.CONFIG['mysql']['mysql_host'], 
+                                   user=config.CONFIG['mysql']['user_name'], 
+                                   passwd=config.CONFIG['mysql']['password']) #Change address
 
         except mdb.Error, e:
 
