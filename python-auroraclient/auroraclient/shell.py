@@ -207,12 +207,12 @@ class AuroraConsole():
                                 message = json_sender.JSONSender().send_json(sending_address, to_send) # change back to 132.206.206.133:5554
                                 #self.slice_json_generator = slice_json_generator.SliceJsonGenerator(os.path.join(CLIENT_DIR, 'json/yangwutest.json'),1,1,1); # Initialize the slice_json_generator
 
-                                if 'openflow' in message.lower(): # Restore params['file'] and clean up params['hint'] to create a slice
+                                if message is not None: # Restore params['file'] and clean up params['hint'] to create a slice
                                     params['file'] = store
                                     params['hint'] = None
                                     del params['location']
                                     params['ap'] = [message]
-                                    print params
+
                                     to_send = {
                                         'function':function,
                                         'parameters':params,
