@@ -35,7 +35,7 @@ class RequestVerification():
                                    config.CONFIG['mysql']['mysql_db'])
 
     @staticmethod
-    def _ap_name_exists(mysqlCursor, physical_ap):
+    def ap_name_exists(mysqlCursor, physical_ap):
         to_execute = """SELECT name FROM ap WHERE name = '%s'""" % physical_ap
         mysqlCursor.execute(to_execute)
 
@@ -97,7 +97,7 @@ class APSliceNumberVerification(RequestVerification):
                         if ap[used_slice] > 4 * ap[number_radio]:
                             return 'The AP ' + str(ap[name]) + ' has no space left to create new slice.'
                 else:
-                    if not RequestVerification._ap_name_exists(cursor, request['physical_ap']):
+                    if not RequestVerification.ap_name_exists(cursor, request['physical_ap']):
                         raise exceptions.NoSuchAPExists(str(request['physical_ap']))
 
                     to_execute = """SELECT name, used_slice, number_radio, number_radio_free 
