@@ -152,13 +152,17 @@ class AuroraConsole():
                 store = params['file'] 
                 params['file']= None
                 
+            tenant_id = os.environ.get("AURORA_TENANT", config.CONFIG['tenant_info']['tenant_id'])
+            project_id = os.environ.get("AURORA_PROJECT", config.CONFIG['tenant_info']['project_id'])
+            user_id = os.environ.get("AURORA_USER", config.CONFIG['tenant_info']['user_id'])
+
             #We will send in the following format: {function:"",parameters:""}
             to_send = {
                 'function':function,
                 'parameters':params,
-                'tenant_id':os.environ.get("AURORA_TENANT", -1),
-                'project_id':os.environ.get("AURORA_PROJECT", -1),
-                'user_id':os.environ.get("AURORA_USER", -1),
+                'tenant_id': tenant_id,
+                'project_id': project_id,
+                'user_id': user_id,
             }
             ##FOR DEBUGGING PURPOSES
             #print json.dumps(to_send, indent=4)
@@ -191,9 +195,9 @@ class AuroraConsole():
                             to_send = {
                                 'function':function,
                                 'parameters':params,
-                                'tenant_id':os.environ.get("AURORA_TENANT", -1),
-                                'project_id':os.environ.get("AURORA_PROJECT", -1),
-                                'user_id':os.environ.get("AURORA_USER", -1),
+                                'tenant_id': tenant_id,
+                                'project_id': project_id,
+                                'user_id': user_id,
                             }
                             ##FOR DEBUGGING PURPOSES
                             #pprint(to_send)
@@ -212,9 +216,9 @@ class AuroraConsole():
                                     to_send = {
                                         'function':function,
                                         'parameters':params,
-                                        'tenant_id':os.environ.get("AURORA_TENANT", -1),
-                                        'project_id':os.environ.get("AURORA_PROJECT", -1),
-                                        'user_id':os.environ.get("AURORA_USER", -1),
+                                        'tenant_id': tenant_id,
+                                        'project_id': project_id,
+                                        'user_id': user_id,
                                     }
                                     pprint(to_send)
                                     if to_send:
