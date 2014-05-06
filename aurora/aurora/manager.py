@@ -1093,7 +1093,6 @@ class Manager(object):
             ap_slice_list = []
             for entry in ap_slice_dict:
                 ap_slice_list.append(entry['ap_slice_id'])
-
         else:
             ap_slice_list = args['ap-slice-delete']
 
@@ -1102,6 +1101,7 @@ class Manager(object):
         if not ap_slice_list:
             message += " None to delete\n"
 
+        status = True
         for ap_slice_id in ap_slice_list:
             config = {
                 "slice":ap_slice_id, 
@@ -1113,8 +1113,8 @@ class Manager(object):
             if not my_slice:
                 message += "No slice '%s'\n" % ap_slice_id
                 if ap_slice_id == ap_slice_list[-1]:
-                    response = {"status":False, "message":message}
-                    return response #Should continue here instead of returning so soon???
+                    status = False
+                    continue #Indeed should continue here to check if we can delete the next slice
                 else:
                     continue
 
@@ -1122,8 +1122,8 @@ class Manager(object):
             if error is not None:
                 message += error + '\n'
                 if ap_slice_id == ap_slice_list[-1]:
-                    response = {"status":False, "message":message}
-                    return response
+                    status = False
+                    continue #Indeed should continue here to check if we can delete the next slice
                 else:
                     continue
             try:
@@ -1157,7 +1157,7 @@ class Manager(object):
                 LOGGER.error(e.message)
 
         #Return response
-        response = {"status":True, "message":message}
+        response = {"status":status, "message":message}
         return response
 
     def ap_slice_filter(self, arg_filter, tenant_id):
