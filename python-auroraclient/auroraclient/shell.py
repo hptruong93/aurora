@@ -216,9 +216,32 @@ class AuroraConsole():
                                         'project_id':os.environ.get("AURORA_PROJECT", -1),
                                         'user_id':os.environ.get("AURORA_USER", -1),
                                     }
-                                    pprint(to_send)
+                                    #pprint(to_send)
                                     if to_send:
                                         message = json_sender.JSONSender().send_json(sending_address, to_send) # change back to 132.206.206.133:5554
+                                        
+                                    if "An initial configuration is required" in message: # if the AP has not configured its radio, configure it with JSON
+                                        store['VirtualWIFI'].append({   "flavor" : "wifi_radio",
+                                                                        "attributes" : 
+                                                                            {
+                                                                                "name" : "radio0",
+                                                                                "channel" : "2",
+                                                                                "txpower" : "20",
+                                                                                "disabled" : "0",
+                                                                                "country" : "CA",
+                                                                                "hwmode" : "abg"   
+                                                                            }})
+                                        params['file'] = store
+                                        to_send = {
+                                            'function':function,
+                                            'parameters':params,
+                                            'tenant_id':os.environ.get("AURORA_TENANT", -1),
+                                            'project_id':os.environ.get("AURORA_PROJECT", -1),
+                                            'user_id':os.environ.get("AURORA_USER", -1),
+                                        }
+                                       # pprint(to_send)
+                                        if to_send:
+                                            message = json_sender.JSONSender().send_json(sending_address, to_send) # change back to 132.206.206.133:5554
 
                                         
                             exitLoop = True;
