@@ -124,7 +124,7 @@ class Manager(object):
     def configuration_generation(self, args, tenant_id, user_id, project_id):
         #print args['data']
         Message = 'false'
-        if 'bridge_type' in args['type'] and ('linux' in args['data'] or 'ovs' in args['data']):
+        if 'bridge_type' in args['type'] and ('linux_bridge' in args['data'] or 'ovs' in args['data']):
             Message = 'true'
         
         elif 'SSID_NAME' in args['type']: # check if there is the same name already existing in the database
