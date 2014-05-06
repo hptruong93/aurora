@@ -1893,28 +1893,6 @@ class Manager(object):
         response = {"status":True, "message":message}
         return response
 
-
-        message = ""
-        for entry in wnet_to_print:
-            message += "%13s: %s\n" % ("Name", entry['name'])
-            for key,value in entry.iteritems():
-                if key != 'name':
-                    message += "%13s: %s\n" % (key, value)
-            message += '\n'
-        message += "Associated slices:\n"
-        if not slices_to_print:
-            message += " None\n"
-        for entry in slices_to_print:
-            message += "%13s: %s\n" % ("ap_slice_id", entry['ap_slice_id'])
-            if arg_i:
-                for key,value in entry.iteritems():
-                    if key != 'ap_slice_id':
-                        message += "%13s: %s\n" % (key, value)
-                message += '\n'
-        #Return response
-        response = {"status":True, "message":message}
-        return response
-
     def wnet_update_ssid(self, args, tenant_id, user_id, project_id):
         """Updates the SSID of slices within a wnet.  
 
