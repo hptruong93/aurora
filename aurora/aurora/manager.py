@@ -124,7 +124,8 @@ class Manager(object):
     def configuration_generation(self, args, tenant_id, user_id, project_id):
         #print args['data']
         Message = 'false'
-        if 'bridge_type' in args['type'] and ('linux' in args['data'] or 'ovs' in args['data']):
+        status = True
+        if 'bridge_type' in args['type'] and ('linux_bridge' in args['data'] or 'ovs' in args['data']):
             Message = 'true'
         
         elif 'SSID_NAME' in args['type']: # check if there is the same name already existing in the database
@@ -140,8 +141,11 @@ class Manager(object):
             request['tenant_id'] = args['data']['tenant_id']
             error = check.verify('create_slice', request)
             if error is None:
-                Message = 'true'
-        response = {"status":True, "message":Message}
+                status = True
+                slice_number = sql_Info.checkSliceNumber(request['physical_ap']);
+            else
+                status = False
+        response = {"status":status, "message":Message}
         return response
 
     def ap_filter(self, args): 	
@@ -1092,7 +1096,6 @@ class Manager(object):
             ap_slice_list = []
             for entry in ap_slice_dict:
                 ap_slice_list.append(entry['ap_slice_id'])
-
         else:
             ap_slice_list = args['ap-slice-delete']
 
@@ -1101,6 +1104,7 @@ class Manager(object):
         if not ap_slice_list:
             message += " None to delete\n"
 
+        status = True
         for ap_slice_id in ap_slice_list:
             config = {
                 "slice":ap_slice_id, 
@@ -1112,8 +1116,8 @@ class Manager(object):
             if not my_slice:
                 message += "No slice '%s'\n" % ap_slice_id
                 if ap_slice_id == ap_slice_list[-1]:
-                    response = {"status":False, "message":message}
-                    return response #Should continue here instead of returning so soon???
+                    status = False
+                    continue #Indeed should continue here to check if we can delete the next slice
                 else:
                     continue
 
@@ -1121,8 +1125,8 @@ class Manager(object):
             if error is not None:
                 message += error + '\n'
                 if ap_slice_id == ap_slice_list[-1]:
-                    response = {"status":False, "message":message}
-                    return response
+                    status = False
+                    continue #Indeed should continue here to check if we can delete the next slice
                 else:
                     continue
             try:
@@ -1156,7 +1160,7 @@ class Manager(object):
                 LOGGER.error(e.message)
 
         #Return response
-        response = {"status":True, "message":message}
+        response = {"status":status, "message":message}
         return response
 
     def ap_slice_filter(self, arg_filter, tenant_id):
@@ -1889,28 +1893,6 @@ class Manager(object):
                     ]
                 )
 
-        response = {"status":True, "message":message}
-        return response
-
-
-        message = ""
-        for entry in wnet_to_print:
-            message += "%13s: %s\n" % ("Name", entry['name'])
-            for key,value in entry.iteritems():
-                if key != 'name':
-                    message += "%13s: %s\n" % (key, value)
-            message += '\n'
-        message += "Associated slices:\n"
-        if not slices_to_print:
-            message += " None\n"
-        for entry in slices_to_print:
-            message += "%13s: %s\n" % ("ap_slice_id", entry['ap_slice_id'])
-            if arg_i:
-                for key,value in entry.iteritems():
-                    if key != 'ap_slice_id':
-                        message += "%13s: %s\n" % (key, value)
-                message += '\n'
-        #Return response
         response = {"status":True, "message":message}
         return response
 

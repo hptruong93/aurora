@@ -120,27 +120,28 @@ class AuroraConsole():
                 if not (params['file'] or params['hint']):                
                     print 'Please specify a file argument or hint!'
                     return
-                elif params['hint'] and not params['file']:
+          #      elif params['hint'] and not params['file']:
                     # Generate a json for use
-                    GEN_JSON_FNAME = 'gen_config.json'
-                    GEN_JSON_FPATH = os.path.join(CLIEN_JSON_DIR, GEN_JSON_FNAME)
+          #          GEN_JSON_FNAME = 'gen_config.json'
+          #          GEN_JSON_FPATH = os.path.join(CLIEN_JSON_DIR, GEN_JSON_FNAME)
 
-                    self.slice_json_generator = \
-                        slice_json_generator.SliceJsonGenerator(
-                            GEN_JSON_FPATH,
-                            1,1,1
-                    ) # Initialize the slice_json_generator
-                    params['file'] = [GEN_JSON_FPATH,]
+          #          self.slice_json_generator = \
+          #              slice_json_generator.SliceJsonGenerator(
+          #                  GEN_JSON_FPATH,
+          #                  1,1,1
+          #          ) # Initialize the slice_json_generator
+          #          params['file'] = [GEN_JSON_FPATH,]   """
 
-                try:
-                    JFILE = open(os.path.join(CLIENT_DIR, 'json', params['file'][0]), 'r')
-                    #print JFILE
-                    file_content = json.load(JFILE)
-                    params['file'] = file_content
-                    JFILE.close()
-                except:
-                    print('Error loading json file!')
-                    sys.exit(-1)
+                elif params['file'] and not params['hint']:
+                    try:
+                        JFILE = open(os.path.join(CLIENT_DIR, 'json', params['file'][0]), 'r')
+                        #print JFILE
+                        file_content = json.load(JFILE)
+                        params['file'] = file_content
+                        JFILE.close()
+                    except:
+                        print('Error loading json file!')
+                        sys.exit(-1)
             #Authenticate
 
 #            try:
@@ -148,30 +149,16 @@ class AuroraConsole():
 #            except:
 #                print 'Invalid Credentials!'
 #                sys.exit(-1)       
-            if params.get('hint') is not None: #--"hint" token, store params['file'] for the third sent
-                store = params['file'] 
-                params['file']= None
+            #if params.get('hint') is not None: #--"hint" token, store params['file'] for the third sent
+             #   store = params['file'] 
+             #   params['file']= None
                 
             tenant_id = os.environ.get("AURORA_TENANT", config.CONFIG['tenant_info']['tenant_id'])
             project_id = os.environ.get("AURORA_PROJECT", config.CONFIG['tenant_info']['project_id'])
             user_id = os.environ.get("AURORA_USER", config.CONFIG['tenant_info']['user_id'])
-
-            #We will send in the following format: {function:"",parameters:""}
-            to_send = {
-                'function':function,
-                'parameters':params,
-                'tenant_id': tenant_id,
-                'project_id': project_id,
-                'user_id': user_id,
-            }
-            ##FOR DEBUGGING PURPOSES
-            #print json.dumps(to_send, indent=4)
-            ##END DEBUG
-            
             sending_address = 'http://' + config.CONFIG['connection']['manager_host'] + ':' + config.CONFIG['connection']['manager_port']
-
-            if to_send: #--help commands will not start the server
-                json_sender.JSONSender().send_json(sending_address, to_send) # change back to 132.206.206.133:5554
+            #We will send in the following format: {function:"",parameters:""}
+            self._send_to_server(sending_address, function, params)
 
             try:
                 arg_hint = params.get('hint')
@@ -206,23 +193,33 @@ class AuroraConsole():
                             if to_send:
                                 message = json_sender.JSONSender().send_json(sending_address, to_send) # change back to 132.206.206.133:5554
                                 #self.slice_json_generator = slice_json_generator.SliceJsonGenerator(os.path.join(CLIENT_DIR, 'json/yangwutest.json'),1,1,1); # Initialize the slice_json_generator
+                                GEN_JSON_FNAME = 'gen_config.json'
+                                GEN_JSON_FPATH = os.path.join(CLIEN_JSON_DIR, GEN_JSON_FNAME)
+
+                                self.slice_json_generator = \
+                                    slice_json_generator.SliceJsonGenerator(
+                                        params['ap'],
+                                        GEN_JSON_FPATH,
+                                        1,1,1
+                                ) # Initialize the slice_json_generator
+                                params['file'] = [GEN_JSON_FPATH,]
+                                try:
+                                    JFILE = open(os.path.join(CLIENT_DIR, 'json', params['file'][0]), 'r')
+                                    #print JFILE
+                                    file_content = json.load(JFILE)
+                                    params['file'] = file_content
+                                    JFILE.close()
+                                except:
+                                    print('Error loading json file!')
+                                    sys.exit(-1)
 
                                 if message is not None: # Restore params['file'] and clean up params['hint'] to create a slice
-                                    params['file'] = store
+                                    #params['file'] = store
                                     params['hint'] = None
                                     del params['location']
                                     params['ap'] = [message]
 
-                                    to_send = {
-                                        'function':function,
-                                        'parameters':params,
-                                        'tenant_id': tenant_id,
-                                        'project_id': project_id,
-                                        'user_id': user_id,
-                                    }
-                                    #pprint(to_send)
-                                    if to_send:
-                                        message = json_sender.JSONSender().send_json(sending_address, to_send) # change back to 132.206.206.133:5554
+                                    self._send_to_server(sending_address, function, params)
                                         
                                     if "An initial configuration is required" in message: # if the AP has not configured its radio, configure it with JSON
                                         store['VirtualWIFI'].append({   "flavor" : "wifi_radio",
@@ -236,17 +233,7 @@ class AuroraConsole():
                                                                                 "hwmode" : "abg"   
                                                                             }})
                                         params['file'] = store
-                                        to_send = {
-                                            'function':function,
-                                            'parameters':params,
-                                            'tenant_id':os.environ.get("AURORA_TENANT", -1),
-                                            'project_id':os.environ.get("AURORA_PROJECT", -1),
-                                            'user_id':os.environ.get("AURORA_USER", -1),
-                                        }
-                                       # pprint(to_send)
-                                        if to_send:
-                                            message = json_sender.JSONSender().send_json(sending_address, to_send) # change back to 132.206.206.133:5554
-
+                                        self._send_to_server(sending_address, function, params)
                                         
                             exitLoop = True;
                         else:
@@ -257,7 +244,26 @@ class AuroraConsole():
                 print "Finshed the current statement"
                     
             
+    def _send_to_server(self, sending_address, function, params):
+        tenant_id = os.environ.get("AURORA_TENANT", config.CONFIG['tenant_info']['tenant_id'])
+        project_id = os.environ.get("AURORA_PROJECT", config.CONFIG['tenant_info']['project_id'])
+        user_id = os.environ.get("AURORA_USER", config.CONFIG['tenant_info']['user_id'])
+        ## print params
+        to_send = {
+            'function':function,
+            'parameters':params,
+            'tenant_id': tenant_id,
+            'project_id': project_id,
+            'user_id': user_id,
+        }
+        ##FOR DEBUGGING PURPOSES
+        #pprint(to_send)
+        ##END DEBUG
         
+        if to_send:
+            message = json_sender.JSONSender().send_json(sending_address, to_send) # change back to 132.206.206.133:5554
+            
+            
     def _get_ksclient(self, **kwargs):
         """Get an endpoint and auth token from Keystone.
         :param username: name of user
