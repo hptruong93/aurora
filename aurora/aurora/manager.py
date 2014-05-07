@@ -124,6 +124,7 @@ class Manager(object):
     def configuration_generation(self, args, tenant_id, user_id, project_id):
         #print args['data']
         Message = 'false'
+        status = True
         if 'bridge_type' in args['type'] and ('linux_bridge' in args['data'] or 'ovs' in args['data']):
             Message = 'true'
         
@@ -140,8 +141,11 @@ class Manager(object):
             request['tenant_id'] = args['data']['tenant_id']
             error = check.verify('create_slice', request)
             if error is None:
-                Message = 'true'
-        response = {"status":True, "message":Message}
+                status = True
+                slice_number = sql_Info.checkSliceNumber(request['physical_ap']);
+            else
+                status = False
+        response = {"status":status, "message":Message}
         return response
 
     def ap_filter(self, args): 	
