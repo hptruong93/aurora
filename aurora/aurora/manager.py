@@ -128,7 +128,7 @@ class Manager(object):
         if 'bridge_type' in args['type'] and ('linux_bridge' in args['data'] or 'ovs' in args['data']):
             Message = 'true'
         
-        elif 'SSID_NAME' in args['type']: # check if there is the same name already existing in the database
+        elif 'SSID_NAME' in args['type']: # ciheck if there is the same name already existing in the database
             Message = sql_Info.verify(args['type'])
         
         #print ('VirtualWIFI' in args['data']) and ('wifi_radio' in args['data']['VirtualWIFI'][0]['flavor'])
@@ -139,10 +139,11 @@ class Manager(object):
             request['config'] = args['data']['config']
             request['physical_ap'] = args['data']['physical_ap']
             request['tenant_id'] = args['data']['tenant_id']
+
             error = check.verify('create_slice', request)
             if error is None:
                 status = True
-                slice_number = sql_Info.checkSliceNumber(request['physical_ap']);
+                Message = sql_Info.checkSliceNumber(request['physical_ap']);
             else:
                 status = False
         response = {"status":status, "message":Message}
