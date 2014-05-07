@@ -13,6 +13,7 @@ import BaseHTTPServer
 import json
 import logging
 import os
+import urlparse
 from pprint import pprint
 import sys
 import traceback
@@ -74,18 +75,26 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         """
 
-        print self.rfile.read(0)
+        parsed_path = urlparse.urlparse(self.path)
+        try:
+            params = dict([p.split('=') for p in parsed_path[4].split('&')])
+        except:
+            params = {}
+        LOGGER.info('Client retrieving request with id: ' + str(params['request_id']))
 
         self.send_response(200)
         self.send_header("Content-type", "application/json")
         self.end_headers()
         
         #Open response file
-        RESPONSEFILE = open(os.path.join(CLIENT_DIR, 'json/response.json'), 
+        RESPONSEFILE = open(os.path.join(CLIENT_DIR, 'json/' + params['request_id'] + '.json'), 
                             'r')
         response = json.load(RESPONSEFILE)
         
         self.wfile.write(response)
+       
+        #Delete the response file for security reason
+        os.remove(RESPONSEFILE.name)
     
     def do_POST(self):
         """Handles a POST request.
@@ -108,14 +117,14 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         default_response = {}
         default_response['status'] = False
         default_response['message'] = ""
-        with open(os.path.join(CLIENT_DIR, 'json/response.json'), 
-                  'w') as RESPONSE_FILE: 
+        #with open(os.path.join(CLIENT_DIR, 'json/response.json'), 
+        #          'w') as RESPONSE_FILE: 
+        #    json.dump(default_response, RESPONSE_FILE, 
+        #              sort_keys=True, indent=4)
+        with open(os.path.join(CLIENT_DIR, 'json/' + request_id + '.json'), 
+             'w') as RESPONSE_FILE: 
             json.dump(default_response, RESPONSE_FILE, 
-                      sort_keys=True, indent=4)
-        # with open(os.path.join(CLIENT_DIR, 'json/' + request_id + '.json'), 
-        #     'w') as RESPONSE_FILE: 
-        #     json.dump(default_response, RESPONSE_FILE, 
-        #     sort_keys=True, indent=4)
+            sort_keys=True, indent=4)
 
         # Begin the response
         self.send_response(200)
@@ -140,7 +149,7 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
         #Save response to file
-        with open(os.path.join(CLIENT_DIR, 'json/response.json'), 
+        with open(os.path.join(CLIENT_DIR, 'json/' + request_id + '.json'), 
                   'w') as RESPONSE_FILE: 
             json.dump(response, RESPONSE_FILE, sort_keys=True, indent=4)
     
