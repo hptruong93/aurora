@@ -120,27 +120,28 @@ class AuroraConsole():
                 if not (params['file'] or params['hint']):                
                     print 'Please specify a file argument or hint!'
                     return
-                elif params['hint'] and not params['file']:
+          #      elif params['hint'] and not params['file']:
                     # Generate a json for use
-                    GEN_JSON_FNAME = 'gen_config.json'
-                    GEN_JSON_FPATH = os.path.join(CLIEN_JSON_DIR, GEN_JSON_FNAME)
+          #          GEN_JSON_FNAME = 'gen_config.json'
+          #          GEN_JSON_FPATH = os.path.join(CLIEN_JSON_DIR, GEN_JSON_FNAME)
 
-                    self.slice_json_generator = \
-                        slice_json_generator.SliceJsonGenerator(
-                            GEN_JSON_FPATH,
-                            1,1,1
-                    ) # Initialize the slice_json_generator
-                    params['file'] = [GEN_JSON_FPATH,]
+          #          self.slice_json_generator = \
+          #              slice_json_generator.SliceJsonGenerator(
+          #                  GEN_JSON_FPATH,
+          #                  1,1,1
+          #          ) # Initialize the slice_json_generator
+          #          params['file'] = [GEN_JSON_FPATH,]   """
 
-                try:
-                    JFILE = open(os.path.join(CLIENT_DIR, 'json', params['file'][0]), 'r')
-                    #print JFILE
-                    file_content = json.load(JFILE)
-                    params['file'] = file_content
-                    JFILE.close()
-                except:
-                    print('Error loading json file!')
-                    sys.exit(-1)
+                elif params['file'] and not params['hint']:
+                    try:
+                        JFILE = open(os.path.join(CLIENT_DIR, 'json', params['file'][0]), 'r')
+                        #print JFILE
+                        file_content = json.load(JFILE)
+                        params['file'] = file_content
+                        JFILE.close()
+                    except:
+                        print('Error loading json file!')
+                        sys.exit(-1)
             #Authenticate
 
 #            try:
@@ -148,9 +149,9 @@ class AuroraConsole():
 #            except:
 #                print 'Invalid Credentials!'
 #                sys.exit(-1)       
-            if params.get('hint') is not None: #--"hint" token, store params['file'] for the third sent
-                store = params['file'] 
-                params['file']= None
+            #if params.get('hint') is not None: #--"hint" token, store params['file'] for the third sent
+             #   store = params['file'] 
+             #   params['file']= None
                 
             tenant_id = os.environ.get("AURORA_TENANT", config.CONFIG['tenant_info']['tenant_id'])
             project_id = os.environ.get("AURORA_PROJECT", config.CONFIG['tenant_info']['project_id'])
@@ -206,9 +207,27 @@ class AuroraConsole():
                             if to_send:
                                 message = json_sender.JSONSender().send_json(sending_address, to_send) # change back to 132.206.206.133:5554
                                 #self.slice_json_generator = slice_json_generator.SliceJsonGenerator(os.path.join(CLIENT_DIR, 'json/yangwutest.json'),1,1,1); # Initialize the slice_json_generator
+                                GEN_JSON_FNAME = 'gen_config.json'
+                                GEN_JSON_FPATH = os.path.join(CLIEN_JSON_DIR, GEN_JSON_FNAME)
+
+                                self.slice_json_generator = \
+                                    slice_json_generator.SliceJsonGenerator(
+                                        GEN_JSON_FPATH,
+                                        1,1,1
+                                ) # Initialize the slice_json_generator
+                                params['file'] = [GEN_JSON_FPATH,]
+                                try:
+                                    JFILE = open(os.path.join(CLIENT_DIR, 'json', params['file'][0]), 'r')
+                                    #print JFILE
+                                    file_content = json.load(JFILE)
+                                    params['file'] = file_content
+                                    JFILE.close()
+                                except:
+                                    print('Error loading json file!')
+                                    sys.exit(-1)
 
                                 if message is not None: # Restore params['file'] and clean up params['hint'] to create a slice
-                                    params['file'] = store
+                                    #params['file'] = store
                                     params['hint'] = None
                                     del params['location']
                                     params['ap'] = [message]
