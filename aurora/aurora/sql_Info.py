@@ -4,6 +4,8 @@ information and data storing in the SQL database.
 
 import MySQLdb as mdb
 import config
+import traceback
+import sys
 
 def _database_connection():
     return mdb.connect(config.CONFIG['mysql']['mysql_host'],
@@ -29,10 +31,12 @@ def checkSliceNumber(args):
     try:
         with link:
             cursor = link.cursor()
-            to_execute = """ select name, (4 * number_radio - number_slice_free) as occupied from ap where name = "%S" """%(str(args))
+            to_execute = """ select name, (4 * number_radio - number_slice_free) as occupied from ap where name = "%s" """%(str(args))
             cursor.execute(to_execute)
             information = cursor.fetchall()
+            return information
     except:
-        print "There is an error in checkSliceNumber from sql_Info.py!!!"
+        #print "There is an error in checkSliceNumber from sql_Info.py!!!"
+        traceback.print_exc(file=sys.stdout)
 
 
