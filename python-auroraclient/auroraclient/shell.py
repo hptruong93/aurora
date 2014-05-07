@@ -200,13 +200,19 @@ class AuroraConsole():
                                 GEN_JSON_FNAME = 'gen_config.json'
                                 GEN_JSON_FPATH = os.path.join(CLIEN_JSON_DIR, GEN_JSON_FNAME)
 
-                                self.slice_json_generator = \
+                                if message is not None: # Restore params['file'] and clean up params['hint'] to create a slice
+                                    #params['file'] = store
+                                    params['hint'] = None
+                                    del params['location']
+                                    params['ap'] = [message]
+
+                                    self.slice_json_generator = \
                                     slice_json_generator.SliceJsonGenerator(
-                                        params['ap'],
+                                        params['ap'][0],
                                         GEN_JSON_FPATH,
                                         1,1,1
-                                ) # Initialize the slice_json_generator
-                                params['file'] = [GEN_JSON_FPATH,]
+                                    ) # Initialize the slice_json_generator
+                                    params['file'] = [GEN_JSON_FPATH,]
                                 try:
                                     JFILE = open(os.path.join(CLIENT_DIR, 'json', params['file'][0]), 'r')
                                     #print JFILE
@@ -216,12 +222,6 @@ class AuroraConsole():
                                 except:
                                     print('Error loading json file!')
                                     sys.exit(-1)
-
-                                if message is not None: # Restore params['file'] and clean up params['hint'] to create a slice
-                                    #params['file'] = store
-                                    params['hint'] = None
-                                    del params['location']
-                                    params['ap'] = [message]
 
                                     self._send_to_server(sending_address, function, params)
                                         

@@ -6,18 +6,21 @@ import json
 import sys
 import ast
 import os
+import traceback
 
 import config
+import utils
 from auroraclient import json_sender #Enable the communication between manager and generator
 
 CLIENT_DIR = os.path.dirname(os.path.abspath(__file__)) # detect the local directory
 
 class SliceJsonGenerator():
     
-    def __init__(self, filename, sliceID, tenantID, projectID):
+    def __init__(self, APname, filename, sliceID, tenantID, projectID):
         #Initialize outside dictionary and populate
         self.data = {}
         self.params = {}
+        self.APname = APname
         #self.data['ap_slice_id'] = sliceID
         #self.data['tenant_id'] = tenantID
         #self.data['project_id'] = projectID
@@ -48,6 +51,7 @@ class SliceJsonGenerator():
             choice = raw_input()
             if choice == '9':
                 exitLoop = True
+                sys.exit(0)
             elif choice == '0':
                 exitLoop = True
                 # Dump to JSON file
@@ -68,7 +72,7 @@ class SliceJsonGenerator():
                 try:
                     self.options[int(choice)]()
                 except (KeyError, ValueError, IndexError):
-                    print('Please enter a valid option!')
+                    traceback.print_exc(file=sys.stdout)
                     
             
     def SliceConfig(self):
@@ -107,8 +111,8 @@ class SliceJsonGenerator():
             print "Please Give a Controller IP Address:"
             tmp_data = raw_input()
             self.data['config']['VirtualBridges'][0]['attributes']['bridge_settings']['controller'][0] = tmp_data
-
-        self.data['physical_ap'] = 'openflow1'
+        
+        self.data['physical_ap'] = str(self.APname)
         self.data['tenant_id'] = os.environ.get("AURORA_TENANT", -1)
 
         if(self.communicatewithManager(self.data,'radio_check')):
@@ -134,24 +138,25 @@ class SliceJsonGenerator():
         #    Loop = self.communicatewithManager(self.data['slice_qos_aggregate_rate'],'slice_qos_aggregate_rate')
         
     def communicatewithManager(self, data, Ftype): # Implement a channel to communicate with manager
-        print Ftype
         self.params['data'] = data
         self.params['type'] = Ftype
+        request_id = utils.generate_request_id()
         toSend = {
             'function':'configuration-generation',
             'parameters':self.params,
             'tenant_id':os.environ.get("AURORA_TENANT", -1),
             'project_id':os.environ.get("AURORA_PROJECT", -1),
             'user_id':os.environ.get("AURORA_USER", -1),
+            'request_id': request_id
         }
        
         manager_address = 'http://' + config.CONFIG['connection']['manager_host'] + ':' + config.CONFIG['connection']['manager_port']
         if toSend: #--help commands will not start the server
-            response = json_sender.JSONSender().send_json(manager_address, toSend) # change back to 132.206.206.133:5554
-        if 'true' not in response:
-            print " Please Enter the right value!!"
-            return False
-        else:
+            response = json_sender.JSONSender().send_json(manager_address, toSend, request_id) # change back to 132.206.206.133:5554
+       # if 'true' not in response:
+       #     print " Please Enter the right value!!"
+       #     return False
+       # else:
             return True
             
     def addVI(self):
