@@ -143,7 +143,7 @@ class Manager(object):
             if error is None:
                 status = True
                 slice_number = sql_Info.checkSliceNumber(request['physical_ap']);
-            else
+            else:
                 status = False
         response = {"status":status, "message":Message}
         return response
@@ -936,7 +936,6 @@ class Manager(object):
                                 if args['location'].lower() == entry[0].lower():
                                     # once the location matches -- check if the AP has free spots
                                     apList = self.ap_filter("name=" + entry[1])
-                                    print apList
                                     if apList[0][1]['number_slice_free'] > 0:
                                         if(len(indexSliceLoad)==0):
                                             indexSliceLoad = entry[1]
