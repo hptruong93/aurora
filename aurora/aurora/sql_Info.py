@@ -33,6 +33,6 @@ def checkSliceNumber(args):
             cursor.execute(to_execute)
             information = cursor.fetchall()
     except:
-        print "There is an error in verify from sql_Info.py!!!"
+        print "There is an error in checkSliceNumber from sql_Info.py!!!"
 
 
