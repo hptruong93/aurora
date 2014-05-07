@@ -179,6 +179,8 @@ class AuroraConsole():
 
                             ##############Send the information back again to the manager###############
                             params['location'] = choice
+
+                            request_id = utils.generate_request_id()
                            ## print params
                             to_send = {
                                 'function':function,
@@ -186,13 +188,14 @@ class AuroraConsole():
                                 'tenant_id': tenant_id,
                                 'project_id': project_id,
                                 'user_id': user_id,
+                                'request_id': request_id,
                             }
                             ##FOR DEBUGGING PURPOSES
                             #pprint(to_send)
                             ##END DEBUG
                             
                             if to_send:
-                                message = json_sender.JSONSender().send_json(sending_address, to_send) # change back to 132.206.206.133:5554
+                                message = json_sender.JSONSender().send_json(sending_address, to_send, request_id) # change back to 132.206.206.133:5554
                                 #self.slice_json_generator = slice_json_generator.SliceJsonGenerator(os.path.join(CLIENT_DIR, 'json/yangwutest.json'),1,1,1); # Initialize the slice_json_generator
                                 GEN_JSON_FNAME = 'gen_config.json'
                                 GEN_JSON_FPATH = os.path.join(CLIEN_JSON_DIR, GEN_JSON_FNAME)

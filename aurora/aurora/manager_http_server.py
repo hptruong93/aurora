@@ -74,7 +74,7 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         """
 
-        print self.rfile
+        print self.rfile.read(0)
 
         self.send_response(200)
         self.send_header("Content-type", "application/json")
