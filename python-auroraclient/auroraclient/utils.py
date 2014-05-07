@@ -4,6 +4,7 @@ Created on Jan 7, 2013
 @author: Mohammad Faraji<ms.faraji@utoronto.ca>
 '''
 import prettytable
+import uuid
 
 def is_authentication_required(f):
     """Checks to see if the function requires authentication.
@@ -45,3 +46,6 @@ def print_dict(d):
     pt.align = 'l'
     [pt.add_row(list(r)) for r in d.iteritems()]
     print pt.get_string(sortby='Property')
+
+def generate_request_id():
+    return uuid.uuid4()
