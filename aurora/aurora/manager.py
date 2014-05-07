@@ -932,7 +932,7 @@ class Manager(object):
                                 if args['location'].lower() == entry[0].lower():
                                     # once the location matches -- check if the AP has free spots
                                     apList = self.ap_filter("name=" + entry[1])
-
+                                    print apList
                                     if apList[0][1]['number_slice_free'] > 0:
                                         if(len(indexSliceLoad)==0):
                                             indexSliceLoad = entry[1]
@@ -978,7 +978,6 @@ class Manager(object):
                               'VirtualBridges':[],
                               'RadioInterfaces':arg_file['VirtualWIFI'],
                               'TrafficAttributes':arg_file['TrafficAttributes']})
-
         # Send to plugin for parsing
         try:
             # arg_tag is not used correctly here, though this is 
