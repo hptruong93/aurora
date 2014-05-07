@@ -124,6 +124,7 @@ class Manager(object):
     def configuration_generation(self, args, tenant_id, user_id, project_id):
         #print args['data']
         Message = 'false'
+        status = True
         if 'bridge_type' in args['type'] and ('linux_bridge' in args['data'] or 'ovs' in args['data']):
             Message = 'true'
         
@@ -140,8 +141,11 @@ class Manager(object):
             request['tenant_id'] = args['data']['tenant_id']
             error = check.verify('create_slice', request)
             if error is None:
-                Message = 'true'
-        response = {"status":True, "message":Message}
+                status = True
+                slice_number = sql_Info.checkSliceNumber(request['physical_ap']);
+            else:
+                status = False
+        response = {"status":status, "message":Message}
         return response
 
     def ap_filter(self, args): 	
@@ -932,7 +936,6 @@ class Manager(object):
                                 if args['location'].lower() == entry[0].lower():
                                     # once the location matches -- check if the AP has free spots
                                     apList = self.ap_filter("name=" + entry[1])
-
                                     if apList[0][1]['number_slice_free'] > 0:
                                         if(len(indexSliceLoad)==0):
                                             indexSliceLoad = entry[1]
@@ -978,7 +981,6 @@ class Manager(object):
                               'VirtualBridges':[],
                               'RadioInterfaces':arg_file['VirtualWIFI'],
                               'TrafficAttributes':arg_file['TrafficAttributes']})
-
         # Send to plugin for parsing
         try:
             # arg_tag is not used correctly here, though this is 
