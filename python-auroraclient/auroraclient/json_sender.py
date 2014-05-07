@@ -10,7 +10,7 @@ import requests
 class JSONSender():
     HTTP_TIMEOUT = 15
 
-    def send_json(self, url, payload):
+    def send_json(self, url, payload, request_id):
         
         try:
             r = requests.post(url, data=json.dumps(payload), timeout=self.HTTP_TIMEOUT)
@@ -32,7 +32,7 @@ class JSONSender():
         time.sleep(1)
 
         try:
-            r = requests.get(url, timeout=self.HTTP_TIMEOUT)    
+            r = requests.get(url, params = {'request_id': request_id}, timeout=self.HTTP_TIMEOUT)    
         except KeyboardInterrupt:
             return
         except requests.Timeout as t:

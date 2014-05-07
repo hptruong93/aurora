@@ -23,6 +23,7 @@ import traceback
 
 #from keystoneclient.v2_0 import client as ksclient #commented in order to compile locally
 import config
+import utils
 from auroraclient import json_sender
 from auroraclient import slice_json_generator
 
@@ -248,6 +249,8 @@ class AuroraConsole():
         tenant_id = os.environ.get("AURORA_TENANT", config.CONFIG['tenant_info']['tenant_id'])
         project_id = os.environ.get("AURORA_PROJECT", config.CONFIG['tenant_info']['project_id'])
         user_id = os.environ.get("AURORA_USER", config.CONFIG['tenant_info']['user_id'])
+
+        request_id = utils.generate_request_id()
         ## print params
         to_send = {
             'function':function,
@@ -255,13 +258,14 @@ class AuroraConsole():
             'tenant_id': tenant_id,
             'project_id': project_id,
             'user_id': user_id,
+            'request_id': request_id
         }
         ##FOR DEBUGGING PURPOSES
         #pprint(to_send)
         ##END DEBUG
         
         if to_send:
-            message = json_sender.JSONSender().send_json(sending_address, to_send) # change back to 132.206.206.133:5554
+            message = json_sender.JSONSender().send_json(sending_address, to_send, request_id) # change back to 132.206.206.133:5554
             
             
     def _get_ksclient(self, **kwargs):

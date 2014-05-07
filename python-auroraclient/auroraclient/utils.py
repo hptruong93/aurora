@@ -48,4 +48,4 @@ def print_dict(d):
     print pt.get_string(sortby='Property')
 
 def generate_request_id():
-    return uuid.uuid4()
+    return str(uuid.uuid4())

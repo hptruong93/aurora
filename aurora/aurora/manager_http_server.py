@@ -73,6 +73,9 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         Sends a 200-OK response with the data from the response file.
 
         """
+
+        print self.rfile
+
         self.send_response(200)
         self.send_header("Content-type", "application/json")
         self.end_headers()
@@ -95,6 +98,12 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         the client by a client GET request.
 
         """
+        # Parse the form data posted
+        data_string = self.rfile.read(int(self.headers['Content-Length']))
+        JSONfile = json.loads(data_string)
+        self.LOGGER.debug(JSONfile['function'])
+
+        request_id = JSONfile['request_id']
         # Clear previous response file (if exists)
         default_response = {}
         default_response['status'] = False
@@ -103,11 +112,10 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                   'w') as RESPONSE_FILE: 
             json.dump(default_response, RESPONSE_FILE, 
                       sort_keys=True, indent=4)
-        
-        # Parse the form data posted
-        data_string = self.rfile.read(int(self.headers['Content-Length']))
-        JSONfile = json.loads(data_string)
-        self.LOGGER.debug(JSONfile['function'])
+        # with open(os.path.join(CLIENT_DIR, 'json/' + request_id + '.json'), 
+        #     'w') as RESPONSE_FILE: 
+        #     json.dump(default_response, RESPONSE_FILE, 
+        #     sort_keys=True, indent=4)
 
         # Begin the response
         self.send_response(200)
