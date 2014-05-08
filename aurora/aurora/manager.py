@@ -1097,8 +1097,17 @@ class Manager(object):
             ap_slice_list = []
             for entry in ap_slice_dict:
                 ap_slice_list.append(entry['ap_slice_id'])
-        else if args_name:
-            arg_filter = "ap_slice_id=" + """'args_name'"""
+        elif args_name:
+            arg_filter = "status!DELETED&ap_slice_ssid=" + str(args_name[0])
+            ap_slice_dict = self.ap_slice_filter(arg_filter, tenant_id)
+
+            if len(ap_slice_dict) > 1:
+                message = "There are more than 1 slice named " + str(args_name[0])          
+                return {"status": False, "message": message}
+            ap_slice_list = []
+
+            for entry in ap_slice_dict:
+                ap_slice_list.append(entry['ap_slice_id'])
         else:
             ap_slice_list = args['ap-slice-delete']
 
@@ -1329,7 +1338,7 @@ class Manager(object):
                         expression = expression+' AND '+ entry
                     else:
                         expression = entry
-            self.LOGGER.debug("SQL Filter: %s", expression)
+            self.LOGGER.info("SQL Filter: %s", expression)
 
             #Execute Query
             try:
