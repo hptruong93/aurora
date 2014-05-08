@@ -442,32 +442,12 @@ or at least aurora is no longer running.</p>
 and querying the SQL database stored by Aurora Manager.</p>
 <dl class="class">
 <dt id="aurora.aurora_db.AuroraDB">
-<em class="property">class </em><tt class="descclassname">aurora.aurora_db.</tt><tt class="descname">AuroraDB</tt><big>(</big><em>mysql_host='localhost'</em>, <em>mysql_username='root'</em>, <em>mysql_password='supersecret'</em>, <em>mysql_db='aurora'</em><big>)</big><a class="reference internal" href="_modules/aurora/aurora_db.html#AuroraDB"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.aurora_db.AuroraDB" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">aurora.aurora_db.</tt><tt class="descname">AuroraDB</tt><big>(</big><em>mysql_host=u'localhost'</em>, <em>mysql_username=u'root'</em>, <em>mysql_password=u'supersecret'</em>, <em>mysql_db=u'aurora'</em><big>)</big><a class="reference internal" href="_modules/aurora/aurora_db.html#AuroraDB"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.aurora_db.AuroraDB" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
 <p>The AuroraDB class handles interaction with the SQL database.</p>
-<dl class="attribute">
-<dt id="aurora.aurora_db.AuroraDB.DEFAULT_MYSQL_DB">
-<tt class="descname">DEFAULT_MYSQL_DB</tt><em class="property"> = 'aurora'</em><a class="headerlink" href="#aurora.aurora_db.AuroraDB.DEFAULT_MYSQL_DB" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="aurora.aurora_db.AuroraDB.DEFAULT_MYSQL_HOST">
-<tt class="descname">DEFAULT_MYSQL_HOST</tt><em class="property"> = 'localhost'</em><a class="headerlink" href="#aurora.aurora_db.AuroraDB.DEFAULT_MYSQL_HOST" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="aurora.aurora_db.AuroraDB.DEFAULT_MYSQL_PASSWORD">
-<tt class="descname">DEFAULT_MYSQL_PASSWORD</tt><em class="property"> = 'supersecret'</em><a class="headerlink" href="#aurora.aurora_db.AuroraDB.DEFAULT_MYSQL_PASSWORD" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="aurora.aurora_db.AuroraDB.DEFAULT_MYSQL_USERNAME">
-<tt class="descname">DEFAULT_MYSQL_USERNAME</tt><em class="property"> = 'root'</em><a class="headerlink" href="#aurora.aurora_db.AuroraDB.DEFAULT_MYSQL_USERNAME" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="method">
 <dt id="aurora.aurora_db.AuroraDB.__init__">
-<tt class="descname">__init__</tt><big>(</big><em>mysql_host='localhost'</em>, <em>mysql_username='root'</em>, <em>mysql_password='supersecret'</em>, <em>mysql_db='aurora'</em><big>)</big><a class="reference internal" href="_modules/aurora/aurora_db.html#AuroraDB.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.aurora_db.AuroraDB.__init__" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">__init__</tt><big>(</big><em>mysql_host=u'localhost'</em>, <em>mysql_username=u'root'</em>, <em>mysql_password=u'supersecret'</em>, <em>mysql_db=u'aurora'</em><big>)</big><a class="reference internal" href="_modules/aurora/aurora_db.html#AuroraDB.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.aurora_db.AuroraDB.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new instance of AuroraDB object.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -2144,26 +2124,6 @@ as well as tenant_id, project_id, and user_id.  They should all
 return a dictionary with a boolean &#8216;successful&#8217; to notify client 
 if the query was handled without error, as well as a message with 
 additional information.</p>
-<dl class="attribute">
-<dt id="aurora.manager.Manager.MYSQL_DB">
-<tt class="descname">MYSQL_DB</tt><em class="property"> = 'aurora'</em><a class="headerlink" href="#aurora.manager.Manager.MYSQL_DB" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="aurora.manager.Manager.MYSQL_HOST">
-<tt class="descname">MYSQL_HOST</tt><em class="property"> = 'localhost'</em><a class="headerlink" href="#aurora.manager.Manager.MYSQL_HOST" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="aurora.manager.Manager.MYSQL_PASSWORD">
-<tt class="descname">MYSQL_PASSWORD</tt><em class="property"> = 'supersecret'</em><a class="headerlink" href="#aurora.manager.Manager.MYSQL_PASSWORD" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="aurora.manager.Manager.MYSQL_USERNAME">
-<tt class="descname">MYSQL_USERNAME</tt><em class="property"> = 'root'</em><a class="headerlink" href="#aurora.manager.Manager.MYSQL_USERNAME" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="method">
 <dt id="aurora.manager.Manager.__init__">
 <tt class="descname">__init__</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/aurora/manager.html#Manager.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aurora.manager.Manager.__init__" title="Permalink to this definition">¶</a></dt>
@@ -2520,6 +2480,11 @@ point store the same information about slices.</p>
 </tbody>
 </table>
 </dd></dl>
+
+<dl class="method">
+<dt id="aurora.manager.Manager.configuration_generation">
+<tt class="descname">configuration_generation</tt><big>(</big><em>args</em>, <em>tenant_id</em>, <em>user_id</em>, <em>project_id</em><big>)</big><a class="headerlink" href="#aurora.manager.Manager.configuration_generation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="aurora.manager.Manager.parseargs">

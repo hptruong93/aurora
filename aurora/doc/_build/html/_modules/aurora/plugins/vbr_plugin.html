@@ -60,7 +60,7 @@
 
 <div class="viewcode-block" id="VirtualBridgePlugin"><a class="viewcode-back" href="../../../aurora.plugins.html#aurora.plugins.vbr_plugin.VirtualBridgePlugin">[docs]</a><span class="k">class</span> <span class="nc">VirtualBridgePlugin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">):</span>
+<div class="viewcode-block" id="VirtualBridgePlugin.__init__"><a class="viewcode-back" href="../../../aurora.plugins.html#aurora.plugins.vbr_plugin.VirtualBridgePlugin.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tenant_id</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tenant_id</span> <span class="o">=</span> <span class="n">tenant_id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">flavors</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;ovs&#39;</span><span class="p">:</span><span class="s">&#39;aurora.plugins.ovs_plugin.OVSPlugin&#39;</span><span class="p">,</span>
                         <span class="s">&#39;linux_bridge&#39;</span><span class="p">:</span><span class="s">&#39;aurora.plugins.linux_bridge_plugin.LinuxBridgePlugin&#39;</span><span class="p">}</span>
@@ -69,7 +69,7 @@
                                        <span class="s">&#39;interfaces&#39;</span><span class="p">:[],</span>
                                        <span class="s">&#39;bridge_settings&#39;</span><span class="p">:{},</span>
                                        <span class="s">&#39;port_settings&#39;</span><span class="p">:{}}}]</span>
-        
+        </div>
 <div class="viewcode-block" id="VirtualBridgePlugin.parse"><a class="viewcode-back" href="../../../aurora.plugins.html#aurora.plugins.vbr_plugin.VirtualBridgePlugin.parse">[docs]</a>    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">numSlice</span><span class="p">,</span> <span class="n">currentIndex</span><span class="p">):</span>
         <span class="n">VBridge</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="c">#Return basic default</span>
