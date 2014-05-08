@@ -1020,7 +1020,7 @@ class Manager(object):
             # Verify adding process. See request_verification for more information
             # An error message is retuned if there is any problem, else None is returned.
             error = Verify.verifyOK(aplist[index], tenant_id, json_entry)
-            if error is not None: 
+            if error is not None:
                 message += error + "\n"
                 add_success = False
                 continue
@@ -1090,14 +1090,18 @@ class Manager(object):
         message = ""
 
         args_all = args['all']
+        args_name = args['ssid']
         if args_all:
             arg_filter = "status!DELETED"
             ap_slice_dict= self.ap_slice_filter(arg_filter, tenant_id)
             ap_slice_list = []
             for entry in ap_slice_dict:
                 ap_slice_list.append(entry['ap_slice_id'])
+        else if args_name:
+            arg_filter = "ap_slice_id=" + """'args_name'"""
         else:
             ap_slice_list = args['ap-slice-delete']
+
 
       #  self.LOGGER.debug("ap_slice_list: %s",ap_slice_list)
 

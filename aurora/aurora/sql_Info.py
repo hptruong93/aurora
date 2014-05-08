@@ -31,7 +31,10 @@ def checkSliceNumber(args):
     try:
         with link:
             cursor = link.cursor()
-            to_execute = """ select name, (4 * number_radio - number_slice_free) as occupied from ap where name = "%s" """%(str(args))
+            to_execute = """ SELECT name, (4 * number_radio - number_slice_free) 
+                             AS occupied 
+                             FROM ap 
+                             WHERE name = "%s" """%(str(args))
             cursor.execute(to_execute)
             information = cursor.fetchall()
             return information

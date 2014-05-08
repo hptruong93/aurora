@@ -141,7 +141,23 @@
                     "metavar":"slices/tags"
                 },
                 [
-                    
+                        "--all",
+                        {
+                            "action":"store_true",
+                            "help":"Select all available slices for delete",
+                            "default":false
+                        }
+                ],
+                [
+                        "--ssid",
+                        {
+                            "action":"store",
+                            "help":"Select slice with ssid for delete",
+                            "nargs":1,
+                            "default":null,
+                            "choices":null,
+                            "metavar":"ssid"
+                        }
                 ]
             ],
             [
