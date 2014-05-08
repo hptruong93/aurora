@@ -30,10 +30,10 @@ class AuroraDB(object):
     #Default values in __init__ should potentially be omitted
 
     def __init__(self,
-                 mysql_host = config.CONFIG['mysql']['mysql_host'],
-                 mysql_username = config.CONFIG['mysql']['mysql_username'],
-                 mysql_password = config.CONFIG['mysql']['mysql_password'],
-                 mysql_db = config.CONFIG['mysql']['mysql_db']):
+                 mysql_host,
+                 mysql_username,
+                 mysql_password,
+                 mysql_db):
         """Create a new instance of AuroraDB object.
 
         :param str mysql_host:
