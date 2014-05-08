@@ -1,9 +1,9 @@
 import traceback
 
 def hint(manager, args):
-	arg_hint = args['hint'][0]
-	if "location" in arg_hint:
-    	# Try to access the local database to grab location
+    arg_hint = args['hint'][0]
+    if "location" in arg_hint:
+        # Try to access the local database to grab location
         tempList = manager.ap_filter(arg_hint)
         message = ""
         for entry in tempList:
@@ -38,10 +38,10 @@ def hint(manager, args):
                     message = indexSliceLoad
                 else:
                     message = "invalid location information"
-        except Exception as e:
+        except Exception as ex:
             traceback.print_exc(file=sys.stdout)
             
         response = {"status":True, "message":message}
         return response
-	if args['file'] is None:
+    if args['file'] is None:
         raise NoSliceConfigFileException()
