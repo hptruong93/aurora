@@ -1338,7 +1338,7 @@ class Manager(object):
                         expression = expression+' AND '+ entry
                     else:
                         expression = entry
-            self.LOGGER.info("SQL Filter: %s", expression)
+            self.LOGGER.debug("SQL Filter: %s", expression)
 
             #Execute Query
             try:
