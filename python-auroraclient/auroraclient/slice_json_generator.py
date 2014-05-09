@@ -77,6 +77,19 @@ class SliceJsonGenerator():
         output['VirtualWIFI'] = self.data['config']['RadioInterfaces']
         del output['RadioInterfaces']
         
+        #changed the WLAN & ETH interface name according to the # of existing slices
+        VWLAN = """%s-%d"""%(str(output['VirtualInterfaces'][1]['attributes']['name']),self.sliceNUM)
+        WLAN  = """%s-%d"""%(str(output['VirtualInterfaces'][1]['attributes']['attach_to']),self.sliceNUM)
+        VETH  =	"""%s-%d"""%(str(output['VirtualInterfaces'][0]['attributes']['name']),self.sliceNUM)
+        
+        # switch the name in JSON
+        output['VirtualInterfaces'][1]['attributes']['name'] = VWLAN
+        output['VirtualInterfaces'][1]['attributes']['attach_to'] = WLAN
+        output['VirtualInterfaces'][0]['attributes']['name'] = VETH
+        output['VirtualWIFI'][0]['attributes']['if_name'] = WLAN
+        output['VirtualBridges'][0]['attributes']['interfaces'][0] = VWLAN
+        output['VirtualBridges'][0]['attributes']['interfaces'][1] = VETH
+        
         #Give a list of names according to the existing slice number
         if self.sliceNUM == 0:
             output['VirtualWIFI'].append({      "flavor" : "wifi_radio",
@@ -90,9 +103,6 @@ class SliceJsonGenerator():
                                                             "hwmode" : "abg"   
                                                         }})
         
-        #changed the WLAN & ETH interface name according to the # of existing slices
-        VWLAN = """%s-%d"""%(str(output['VirtualInterfaces'][1]['attributes']['name']),self.sliceNUM)
-        print VWLAN
         
         json.dump(output, self.JFILE, sort_keys=True, indent=4)
         self.JFILE.flush()
