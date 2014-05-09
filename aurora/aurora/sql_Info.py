@@ -42,5 +42,19 @@ def checkSliceNumber(args):
     except:
         #print "There is an error in checkSliceNumber from sql_Info.py!!!"
         traceback.print_exc(file=sys.stdout)
+        
+def checkAP_up(APname)
+    link = _database_connection()
+    try:
+        with link:
+            cursor = link.cursor()
+            to_execute = """ select COUNT(*) from ap where name = "%s" 
+                             AND status = "UP" """%(str(APname))
+            cursor.execute(to_execute)
+            information = cursor.fetchall()
+            print information
+            return information
+    except:
+        traceback.print_exc(file=sys.stdout)
 
 

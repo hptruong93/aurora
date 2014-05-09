@@ -1,5 +1,6 @@
 import traceback
 import sys
+from aurora import sql_Info
 
 def hint(manager, args):
     arg_hint = args['hint'][0]
@@ -27,10 +28,13 @@ def hint(manager, args):
                     for entry in tempList:
                         if args['location'].lower() == entry[0].lower():
                             # once the location matches -- check if the AP has free spots
-                            apList = self.ap_filter("name=" + entry[1])
+                            apList = manager.ap_filter("name=" + entry[1])
                             if apList[0][1]['number_slice_free'] > 0:
                                 if(len(indexSliceLoad)==0):
                                     indexSliceLoad = entry[1]
+                                    #TODO: this following two lines are only for testing purpose
+                                    msg = sql_Info.checkAP_up(indexSliceLoad)
+                                    print msg
                                     break
                                 elif(apList[0][1]['number_slice_free']>freespace):
                                     freespace = apList[0][1]['number_slice_free']
