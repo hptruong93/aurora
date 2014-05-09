@@ -1,4 +1,5 @@
 import traceback
+import sys
 
 def hint(manager, args):
     arg_hint = args['hint'][0]

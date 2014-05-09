@@ -21,6 +21,7 @@ class SliceJsonGenerator():
         self.data = {}
         self.params = {}
         self.APname = APname
+        self.sliceNUM = -1
         #self.data['ap_slice_id'] = sliceID
         #self.data['tenant_id'] = tenantID
         #self.data['project_id'] = projectID
@@ -54,20 +55,7 @@ class SliceJsonGenerator():
                 sys.exit(0)
             elif choice == '0':
                 exitLoop = True
-                # Dump to JSON file
-                try:
-                    #print "the file name is " + filename
-                    self.JFILE = open(filename, "w")
-                except IOError:
-                    print('Error opening file for writing!')
-                    sys.exit(-1)
-                # Rename the key: RadioInterfaces to VirtualWIFI
-                output = self.data['config']
-                output['VirtualWIFI'] = self.data['config']['RadioInterfaces']
-                del output['RadioInterfaces']
-                json.dump(output, self.JFILE, sort_keys=True, indent=4)
-                self.JFILE.flush()
-                self.JFILE.close()
+                self._modifyConfig(filename)
             else:
                 try:
                     self.options[int(choice)]()
@@ -75,14 +63,49 @@ class SliceJsonGenerator():
                     traceback.print_exc(file=sys.stdout)
                     
             
+    def _modifyConfig(self, filename):
+        # Dump to JSON file
+        try:
+            #print "the file name is " + filename
+            self.JFILE = open(filename, "w")
+        except IOError:
+            traceback.print_exc(file=sys.stdout)
+            sys.exit(-1)
+        
+        # Rename the key: RadioInterfaces to VirtualWIFI
+        output = self.data['config']
+        output['VirtualWIFI'] = self.data['config']['RadioInterfaces']
+        del output['RadioInterfaces']
+        
+        #Give a list of names according to the existing slice number
+        if self.sliceNUM == 0:
+            output['VirtualWIFI'].append({      "flavor" : "wifi_radio",
+                                                        "attributes" : 
+                                                        {
+                                                            "name" : "radio0",
+                                                            "channel" : "2",
+                                                            "txpower" : "20",
+                                                            "disabled" : "0",
+                                                            "country" : "CA",
+                                                            "hwmode" : "abg"   
+                                                        }})
+        
+        #changed the WLAN & ETH interface name according to the # of existing slices
+        VWLAN = """%s-%d"""%(str(output['VirtualInterfaces'][1]['attributes']['name']),self.sliceNUM)
+        print VWLAN
+        
+        json.dump(output, self.JFILE, sort_keys=True, indent=4)
+        self.JFILE.flush()
+        self.JFILE.close()
+            
     def SliceConfig(self):
-        Loop = False
+        Loop = 'false'
         
         try:
            ## print "the file name is " + filename
             self.JFILE = open(os.path.join(CLIENT_DIR, 'json/template.json'), "r")
         except IOError:
-            print('Error opening file for writing!')
+            traceback.print_exc(file=sys.stdout)
             sys.exit(-1)
         self.data['config'] = json.load(self.JFILE)
         self.JFILE.close()
@@ -94,15 +117,15 @@ class SliceJsonGenerator():
         
         print('Enter attributes...')
         print('SSID NAME:')
-        while(not Loop):
+        while('true' not in Loop):
             tmp_data = raw_input()
             Loop = self.communicatewithManager(tmp_data,'SSID_NAME')
         self.data['config']['RadioInterfaces'][1]['attributes']['name'] = tmp_data
  
 
-        Loop = False
+        Loop = 'false'
         print('Bridge Type:')
-        while(not Loop):
+        while('true' not in Loop):
             tmp_data = raw_input()
             Loop = self.communicatewithManager(tmp_data,'bridge_type')
         self.data['config']['VirtualBridges'][0]['flavor'] = tmp_data
@@ -115,27 +138,19 @@ class SliceJsonGenerator():
         self.data['physical_ap'] = str(self.APname)
         self.data['tenant_id'] = os.environ.get("AURORA_TENANT", -1)
 
-        if(self.communicatewithManager(self.data,'radio_check')):
-            del self.data['config']['RadioInterfaces'][0]
+        slicenumber = self.communicatewithManager(self.data,'radio_check')
+        try:
+            self.sliceNUM =  int(slicenumber[0][1])
+        except ValueError:
+            traceback.print_exc(file = sys.stdout)
+            sys.exit(-1)
+
+        print self.sliceNUM
+        del self.data['config']['RadioInterfaces'][0]
         del self.data['physical_ap']
         del self.data['tenant_id']
 
-        #print('firmware:')
-        #while(not Loop):
-            #self.data['firmware'] = raw_input()
-            #Loop = self.communicatewithManager(self.data['firmware'],'firmware')
-        #Loop = False
-        
-        #print('slice_qos_priority:')
-        #while(not Loop):
-            #self.data['slice_qos_priority'] = raw_input()
-            #Loop = self.communicatewithManager(self.data['slice_qos_priority'],'slice_qos_priority')
-        #Loop = False
-        
-        #print('slice_qos_aggregate_rate:')
-        #while(not Loop):
-        #    self.data['slice_qos_aggregate_rate'] = raw_input()
-        #    Loop = self.communicatewithManager(self.data['slice_qos_aggregate_rate'],'slice_qos_aggregate_rate')
+
         
     def communicatewithManager(self, data, Ftype): # Implement a channel to communicate with manager
         self.params['data'] = data
@@ -157,7 +172,7 @@ class SliceJsonGenerator():
        #     print " Please Enter the right value!!"
        #     return False
        # else:
-            return True
+        return response
             
     def addVI(self):
         validFlavor = False

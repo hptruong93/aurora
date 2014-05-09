@@ -213,31 +213,30 @@ class AuroraConsole():
                                         1,1,1
                                     ) # Initialize the slice_json_generator
                                     params['file'] = [GEN_JSON_FPATH,]
-                                try:
-                                    JFILE = open(os.path.join(CLIENT_DIR, 'json', params['file'][0]), 'r')
-                                    #print JFILE
-                                    file_content = json.load(JFILE)
-                                    params['file'] = file_content
-                                    JFILE.close()
-                                except:
-                                    print('Error loading json file!')
-                                    sys.exit(-1)
+                                    try:
+                                        JFILE = open(os.path.join(CLIENT_DIR, 'json', params['file'][0]), 'r')
+                                        #print JFILE
+                                        file_content = json.load(JFILE)
+                                        params['file'] = file_content
+                                        JFILE.close()
+                                    except:
+                                        print('Error loading json file!')
+                                        sys.exit(-1)
 
-                                    self._send_to_server(sending_address, function, params)
+                                    message = self._send_to_server(sending_address, function, params)
                                         
-                                    if "An initial configuration is required" in message: # if the AP has not configured its radio, configure it with JSON
-                                        store['VirtualWIFI'].append({   "flavor" : "wifi_radio",
-                                                                        "attributes" : 
-                                                                            {
-                                                                                "name" : "radio0",
-                                                                                "channel" : "2",
-                                                                                "txpower" : "20",
-                                                                                "disabled" : "0",
-                                                                                "country" : "CA",
-                                                                                "hwmode" : "abg"   
-                                                                            }})
-                                        params['file'] = store
-                                        self._send_to_server(sending_address, function, params)
+                                    #if "An initial configuration is required" in message: # if the AP has not configured its radio, configure it with JSON
+                                        #params['file']['VirtualWIFI'].append({   "flavor" : "wifi_radio",
+                                                                        #"attributes" : 
+                                                                            #{
+                                                                                #"name" : "radio0",
+                                                                                #"channel" : "2",
+                                                                                #"txpower" : "20",
+                                                                                #"disabled" : "0",
+                                                                                #"country" : "CA",
+                                                                                #"hwmode" : "abg"   
+                                                                            #}})
+                                        #self._send_to_server(sending_address, function, params) 
                                         
                             exitLoop = True;
                         else:
@@ -269,6 +268,7 @@ class AuroraConsole():
         
         if to_send:
             message = json_sender.JSONSender().send_json(sending_address, to_send, request_id) # change back to 132.206.206.133:5554
+        return message
             
             
     def _get_ksclient(self, **kwargs):
