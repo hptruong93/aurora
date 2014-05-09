@@ -141,10 +141,13 @@ class Manager(object):
             request['physical_ap'] = args['data']['physical_ap']
             request['tenant_id'] = args['data']['tenant_id']
 
+            Message = sql_Info.checkSliceNumber(request['physical_ap']) 
+            if Message > 0: #check if the raido channel need to be configured
+                del request['config']['RadioInterfaces'][0]
+
             error = check.verify('create_slice', request)
             if error is None:
                 status = True
-                Message = sql_Info.checkSliceNumber(request['physical_ap']);
             else:
                 status = False
         response = {"status":status, "message":Message}
