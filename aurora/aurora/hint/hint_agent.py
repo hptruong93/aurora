@@ -30,15 +30,15 @@ def hint(manager, args):
                             # once the location matches -- check if the AP has free spots
                             apList = manager.ap_filter("name=" + entry[1])
                             if apList[0][1]['number_slice_free'] > 0:
-                                if(len(indexSliceLoad)==0):
-                                    indexSliceLoad = entry[1]
+                                if(len(indexSliceLoad)==0): # In this case, token is only "location"
                                     #TODO: this following two lines are only for testing purpose
-                                    msg = sql_Info.checkAP_up(indexSliceLoad)
-                                    print msg
-                                    break
-                                elif(apList[0][1]['number_slice_free']>freespace):
-                                    freespace = apList[0][1]['number_slice_free']
-                                    indexSliceLoad = entry[1]
+                                    if sql_Info.checkAP_up(indexSliceLoad): # if AP is up, assign the AP
+                                        indexSliceLoad = entry[1]
+                                        break
+                                elif(apList[0][1]['number_slice_free']>freespace): # Token contains "slice-load"
+                                    if sql_Info.checkAP_up(indexSliceLoad): # if AP is up, assign the AP
+                                        freespace = apList[0][1]['number_slice_free']
+                                        indexSliceLoad = entry[1]
 
                     message = indexSliceLoad
                 else:

@@ -52,8 +52,8 @@ def checkAP_up(APname):
                              AND status = "UP" """%(str(APname))
             cursor.execute(to_execute)
             information = cursor.fetchall()
-            print information[0][0]
-            return information[0][0]
+            #print information[0][0]
+            return information[0][0] != 0
     except:
         traceback.print_exc(file=sys.stdout)
 
