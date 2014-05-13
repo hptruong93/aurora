@@ -62,5 +62,3 @@ Run the following commands to ignore changes to configuration files once
 running aurora-manager:
 
     git update-index --assume-unchanged aurora/aurora/ap_provision/json/*.json
-    git update-index --assume-unchanged aurora/aurora/json/response.json
-
