@@ -151,7 +151,7 @@ class SliceJsonGenerator():
 
         slicenumber = self.communicatewithManager(self.data,'radio_check')
         try:
-            self.sliceNUM =  slicenumber[0][1]
+            self.sliceNUM =  int(slicenumber[0][1])
         except ValueError:
             traceback.print_exc(file = sys.stdout)
             sys.exit(-1)
