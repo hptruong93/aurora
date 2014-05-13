@@ -22,6 +22,16 @@ class MissingKeyInRequest(VerificationException):
     def _handle_exception(self):
         return 'Key \'' + self.message + '\' could not be found. Please check request!'
 
+#This exception is raised when the verifier detects that the current tenant will have at least two slices with the same ssid.
+#This is caught when the tenant tries to create a new slice
+class DuplicatedSlice(VerificationException):
+    def __init__(self, message = "not_provided"):
+        self.message = message
+        super(DuplicatedSlice, self).__init__(message)
+    
+    def _handle_exception(self):
+        return "Duplicated slice named \'" + self.message + "\'"
+
 #This exception is raised when the verifier cannot find the ap mentioned in the request, either in the database or the
 #provision folder of manager
 class NoSuchAPExists(VerificationException):

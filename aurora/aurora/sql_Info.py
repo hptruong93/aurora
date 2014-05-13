@@ -13,12 +13,12 @@ def _database_connection():
                                config.CONFIG['mysql']['mysql_password'],
                                config.CONFIG['mysql']['mysql_db'])
 
-def verify(args):
+def verify(ap_slice_ssid):
     link = _database_connection()
     try:
         with link:
             cursor = link.cursor()
-            to_execute = """ select COUNT(distinct ap_slice_ssid) from ap_slice where status <> "DELETED" and ap_slice_ssid = "%s" """%(str(args))
+            to_execute = """ select COUNT(distinct ap_slice_ssid) from ap_slice where status <> "DELETED" and ap_slice_ssid = "%s" """%(str(ap_slice_ssid))
             cursor.execute(to_execute)
             information = cursor.fetchall()
     except:

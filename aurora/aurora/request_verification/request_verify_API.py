@@ -9,8 +9,10 @@ class RequestVerifier():
     #The command names must be identical to the method calling
     #verification from aurora_db.py
     _commands = {
-        verify_agent.GENERAL_CHECK : [verify_agent.APSliceNumberVerification()],
-        verify_agent.CREATE_SLICE : [verify_agent.APSliceNumberVerification(), 
+        verify_agent.GENERAL_CHECK : [verify_agent.APSliceNumberVerification(),
+                                      verify_agent.APSliceSSIDVerification()],
+        verify_agent.CREATE_SLICE : [verify_agent.APSliceSSIDVerification(),
+                        verify_agent.APSliceNumberVerification(), 
                         verify_agent.RadioConfigExistedVerification(),
                         verify_agent.BridgeNumberVerification(),
                         verify_agent.VirtualInterfaceNumberVerification(),
@@ -95,7 +97,7 @@ if __name__ == '__main__':
                         "attributes": {
                             "encryption_type": "wep-open",
                             "radio": "radio0", 
-                            "name": "QoS v3",
+                            "name": "MK-test",
                             "key": "23456",
                             "if_name": "wlan0-2"
                         }, 
