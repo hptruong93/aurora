@@ -56,5 +56,27 @@ def checkAP_up(APname):
             return information[0][0] != 0
     except:
         traceback.print_exc(file=sys.stdout)
+        
+def checkName(sliceName, tenantID):
+    link = _database_connection()
+    try:
+        with link:
+            cursor = link.cursor()
+            to_execute = """ select COUNT(*) from ap_slice where ap_slice_ssid 
+                            = "%s" and tenant_id = "%s" and status = 
+                            "UP" """%(str(sliceName), str(tenantID))
+            cursor.execute(to_execute)
+            information = cursor.fetchall()
+            print information[0][0]
+            return information[0][0] == 0
+            
+            
+            #to_execute = """ select COUNT(*) from ap_slice where ap_slice_ssid 
+            #                = "%s" and tenant_id = "%s" and status = 
+            #                "PENDING" """%(str(sliceName), str(tenantID))
+            #cursor.execute(to_execute)
+            #information = cursor.fetchall()
+    except:
+        traceback.print_exc(file=sys.stdout)
 
 
