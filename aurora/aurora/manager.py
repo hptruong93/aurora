@@ -133,7 +133,7 @@ class Manager(object):
             Message = sql_Info.verify(args['type'])
         
         #print ('VirtualWIFI' in args['data']) and ('wifi_radio' in args['data']['VirtualWIFI'][0]['flavor'])
-        elif 'radio_check' in args['type']: # Used to check if the radio configuration is already set
+        elif 'radio_icheck' in args['type']: # Used to check if the radio configuration is already set
             check = Check.RadioConfigExistedVerification() # check if the radio channel exists
             request = {}
 
@@ -141,7 +141,8 @@ class Manager(object):
             request['physical_ap'] = args['data']['physical_ap']
             request['tenant_id'] = args['data']['tenant_id']
 
-            Message = sql_Info.checkSliceNumber(request['physical_ap']) 
+            Message = sql_Info.checkSliceNumber(request['physical_ap'])
+            print Message 
             if Message > 0: #check if the raido channel need to be configured
                 del request['config']['RadioInterfaces'][0]
 
