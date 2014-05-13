@@ -38,9 +38,8 @@ def checkSliceNumber(args):
                              WHERE name = "%s" """%(str(args))
             cursor.execute(to_execute)
             information = cursor.fetchall()
-            return information
+            return information[0][1]
     except:
-        #print "There is an error in checkSliceNumber from sql_Info.py!!!"
         traceback.print_exc(file=sys.stdout)
         
 def checkAP_up(APname):
