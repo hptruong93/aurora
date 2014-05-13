@@ -9,6 +9,7 @@ import traceback
 
 from aurora.cls_logger import get_cls_logger
 from aurora.exc import *
+from aurora import config
 
 LOGGER = logging.getLogger(__name__)
 
@@ -31,7 +32,10 @@ class ProvisionHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
                 if ".." in file_name:
                     raise RequestInvalidConfigFileNameException()
                 with open(os.path.join(self._PROVISION_DIR, file_name),'r') as CF:
-                    config_file = json.dumps(json.load(CF))
+                    config_file = json.load(CF)
+                    print config_file
+                    config_file['rabbitmq_host'] = config.CONFIG['manager']['host']
+                    config_file = json.dumps(config_file)
                 
             except RequestInvalidConfigFileNameException:
                 # File does not exist/ not permitted/ not json

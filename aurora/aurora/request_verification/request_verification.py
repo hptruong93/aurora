@@ -58,6 +58,54 @@ class RequestVerification():
     def _detail_verification(self, command, request):
         pass
 
+class APSliceSSIDVerification(RequestVerification):
+    @classmethod
+    def _get_exception(cls):
+        return exceptions.DuplicatedSlice
+
+    #If request = None, it checks for inconsistency in the database, namely an AP with n radios should not have more than 4n ap slices
+    #If request != None, it checks for the ap requested for available space.
+    #The method raises a NoAvailableSpaceLeftInAP exception if there is any conflict.
+    def _detail_verification(self, command, request):
+        try:
+            con = RequestVerification._database_connection() 
+            with con:
+                cursor = con.cursor()
+
+                if request is None:
+                    to_execute = """SELECT ap_slice_ssid FROM ap_slice
+                                            WHERE status <> "DELETED"
+                                            GROUP BY ap_slice_ssid having COUNT(ap_slice_ssid) > 1"""
+                    cursor.execute(to_execute)
+                    result = cursor.fetchall()
+                    
+                    if len(result) != 0:
+                        ssid_list = [str(i[0]) for i in result]
+                        return "Duplicated slice exists. SSIDs are " + ", ".join(ssid_list)
+                else:
+                    radio_interface = request['config']['RadioInterfaces']
+                    for entry in radio_interface:
+                        if entry['flavor'] == 'wifi_bss':
+                            new_ssid = entry['attributes']['name']
+
+                    to_execute = """SELECT COUNT(ap_slice_ssid)
+                                    FROM ap_slice
+                                    WHERE status<>'DELETED'
+                                    AND tenant_id=%s
+                                    AND ap_slice_ssid='%s' """ % (str(request['tenant_id']), new_ssid)
+                    print to_execute
+                    cursor.execute(to_execute)
+                    result = cursor.fetchall()
+
+                    if result[0][0] != 0: #Meaning there is already a slice with "new_ssid" as ssid
+                        return "Duplicated slice ssid " + str(new_ssid)
+        except mdb.Error, e:
+                traceback.print_exc(file=sys.stdout)
+                sys.exit(1)
+        except KeyError, e:
+                raise exceptions.MissingKeyInRequest(str(e.args[0]))
+        return None
+
 class APSliceNumberVerification(RequestVerification):
     @classmethod
     def _get_exception(cls):

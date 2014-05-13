@@ -14,7 +14,7 @@
         },
         {
             "flavor" : "wifi_bss",
-            "attributes" : 
+            "attributes" :
                 {
                     "name" : "BCRL vSwitch",
                     "radio" : "radio0",
@@ -26,15 +26,13 @@
     ], 
     "VirtualBridges": [
         {
-            "flavor":"ovs",
+            "flavor":"linux_bridge",
             "attributes":   
                 {
-                    "name":"vswitch-br",
+                    "name":"linux-br",
                     "interfaces":
                         ["vwlan0","veth0"],
-                    "bridge_settings":{
-                        "controller":["0"]
-                    },
+                    "bridge_settings":{},
                     "port_settings":{}
                 }
         }
@@ -46,7 +44,7 @@
                 {
                     "attach_to":"eth0",
                     "name":"veth0",
-                    "mac":"00:00:00:00:00:30"
+                    "mac":"00:00:00:00:00:20"
                 }
         },
         {
@@ -55,7 +53,7 @@
                 {
                     "attach_to":"wlan0",
                     "name":"vwlan0",
-                    "mac":"00:00:00:00:00:31"
+                    "mac":"00:00:00:00:00:21"
                 }
         }
     ]
