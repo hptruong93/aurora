@@ -4,7 +4,7 @@
             "flavor" : "wifi_bss",
             "attributes" : 
                 {
-                    "name" : "BCRL vSwitch no3",
+                    "name" : "BCRL-vSwitch-no3",
                     "radio" : "radio0",
                     "if_name" : "wlan0-2",
                     "encryption_type":"wep-open",

@@ -4,7 +4,7 @@
             "flavor" : "wifi_bss",
             "attributes" : 
                 {
-                    "name" : "MK v2",
+                    "name" : "MK-v2",
                     "radio" : "radio0",
                     "if_name" : "wlan0-1",
                     "encryption_type":"wep-open",
