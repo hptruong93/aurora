@@ -1,16 +1,20 @@
 import traceback
 import sys
 from aurora.hint import sql_Info
+from aurora import filter_agent as filter
 
 def hint(manager, args):
     arg_hint = args['hint'][0]
     if "location" in arg_hint:
         # Try to access the local database to grab location
-        tempList = manager.ap_filter(arg_hint+"&status=UP")
+        #tempList = manager.ap_filter(arg_hint)
+        tempList = filter.filter(filter.join_table("ap", "location_tags", "name", "ap_name"), \
+                    ["ap_name", "location_tags.name"], ["status = 'UP'"])
+
         message = ""
         for entry in tempList:
             if not ('mcgill' in entry[0] or 'mcgill' in entry[1]):
-                message += "%5s: %s\n" % (entry[1], entry[0])
+                message += "%5s: %s\n" % (entry[0], entry[1])
         
         # Make a decision according to the token "location" OR "slice_load"
         try:

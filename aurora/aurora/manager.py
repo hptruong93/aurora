@@ -217,42 +217,42 @@ class Manager(object):
             tag_result = []
             args_list = args.split('&')
             
-            if args_list[0] == 'location' or args_list[0] == 'location,slice-load':  # Yang: add one more case if the user ask for the location_tag ['location']
-                try:
-                    with self.con:
-                        cur = self.con.cursor()
-                        tempList = []
-                        if 'location' in args_list[0]:
-                            cur.execute("SELECT * FROM location_tags")
-                            tempList = list(cur.fetchall())
-                            return tempList
-                except mdb.Error, e:
-                    print "Error %d: %s" % (e.args[0], e.args[1])
+            # if args_list[0] == 'location' or args_list[0] == 'location,slice-load':  # Yang: add one more case if the user ask for the location_tag ['location']
+            #     try:
+            #         with self.con:
+            #             cur = self.con.cursor()
+            #             tempList = []
+            #             if 'location' in args_list[0]:
+            #                 cur.execute("SELECT * FROM location_tags")
+            #                 tempList = list(cur.fetchall())
+            #                 return tempList
+            #     except mdb.Error, e:
+            #         print "Error %d: %s" % (e.args[0], e.args[1])
 
             for (index, entry) in enumerate(args_list):
                 args_list[index] = entry.strip()
                  #Filter for tags (NOT Query is not yet implemented (future work?),
                  #support for only 1 tag (USE 'OR' STATEMENT IN FUTURE FOR MULTIPLE))
-                if 'tag' in args_list[index] or 'location' in args_list[index]:
-                    tag_compare = True
-                    try:
-                        with self.con:
-                            cur = self.con.cursor()
-                            if '=' in args_list[index]:
-                                cur.execute("SELECT ap_name FROM location_tags WHERE name=\'"+\
-                                            args_list[index].split('=')[1]+"\'")
-                            else:
-                                self.LOGGER.warning("Unexpected character in tag query. Please check syntax and try again!")
-                                sys.exit(0)
-                            tempresult = cur.fetchall()
-                            for result in tempresult:
-                                tag_result.append(result[0])
+                # if 'tag' in args_list[index] or 'location' in args_list[index]:
+                #     tag_compare = True
+                #     try:
+                #         with self.con:
+                #             cur = self.con.cursor()
+                #             if '=' in args_list[index]:
+                #                 cur.execute("SELECT ap_name FROM location_tags WHERE name=\'"+\
+                #                             args_list[index].split('=')[1]+"\'")
+                #             else:
+                #                 self.LOGGER.warning("Unexpected character in tag query. Please check syntax and try again!")
+                #                 sys.exit(0)
+                #             tempresult = cur.fetchall()
+                #             for result in tempresult:
+                #                 tag_result.append(result[0])
+                
+                #     except mdb.Error, e:
+                #         traceback.print_exc(file=sys.stdout)
+                #         # self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
 
-                    except mdb.Error, e:
-                        traceback.print_exc(file=sys.stdout)
-                        # self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
-
-                elif '=' in args_list[index]:
+                if '=' in args_list[index]:
                     if (args_list[index].split('=')[0] == "name")           or \
                        (args_list[index].split('=')[0] == "firmware")       or \
                        (args_list[index].split('=')[0] == "region")         or \

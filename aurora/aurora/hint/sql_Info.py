@@ -2,8 +2,8 @@
 information and data storing in the SQL database.  
 """
 
-import MySQLdb as mdb
 from aurora import config
+import MySQLdb as mdb
 import traceback
 import sys
 
