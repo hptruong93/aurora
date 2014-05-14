@@ -3,7 +3,7 @@ information and data storing in the SQL database.
 """
 
 import MySQLdb as mdb
-import config
+from aurora import config
 import traceback
 import sys
 
