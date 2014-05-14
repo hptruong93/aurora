@@ -127,10 +127,8 @@ class SliceJsonGenerator():
         
         
         json.dump(output, self.JFILE, sort_keys=True, indent=4)
-        json.dump(output, sys.stdout, sort_keys=True, indent=4)
         self.JFILE.flush()
         self.JFILE.close()
-        sys.exit(0)
             
     def SliceConfig(self):
         Loop = 'false'

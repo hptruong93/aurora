@@ -6,7 +6,7 @@ def hint(manager, args):
     arg_hint = args['hint'][0]
     if "location" in arg_hint:
         # Try to access the local database to grab location
-        tempList = manager.ap_filter(arg_hint)
+        tempList = manager.ap_filter(arg_hint+"&status=UP")
         message = ""
         for entry in tempList:
             if not ('mcgill' in entry[0] or 'mcgill' in entry[1]):
