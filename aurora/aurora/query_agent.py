@@ -29,7 +29,7 @@ def join_table(table1, table2, field1, field2, type = "inner join"):
     out = """%s %s %s ON %s.%s = %s.%s """ % (table1, type, table2, table1, field1, table2, field2)
     return out
 
-def filter(table_name, fields = [], criteria = []):
+def query(table_name, fields = [], criteria = []):
     connection = _database_connection()
     try:
         with connection:
@@ -45,6 +45,3 @@ def filter(table_name, fields = [], criteria = []):
             return information
     except:
         traceback.print_exc(file=sys.stdout)
-
-if __name__ == '__main__':
-    print filter(join_table("ap", "location_tags", "name", "ap_name"), ["ap_name", "location_tags.name"], ["status = 'UP'"])

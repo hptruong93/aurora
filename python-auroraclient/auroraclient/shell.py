@@ -159,13 +159,17 @@ class AuroraConsole():
             user_id = os.environ.get("AURORA_USER", config.CONFIG['tenant_info']['user_id'])
             sending_address = 'http://' + config.CONFIG['connection']['manager_host'] + ':' + config.CONFIG['connection']['manager_port']
             #We will send in the following format: {function:"",parameters:""}
-            self._send_to_server(sending_address, function, params)
+            msg = self._send_to_server(sending_address, function, params)
 
             try:
                 arg_hint = params.get('hint')
                 if arg_hint is None:
                     sys.exit(0)
                 if "location" in arg_hint or "location,slice-load" in arg_hint: # Once the token is 'hint', wait for users' reply
+                    if msg == "" or msg == "unkown": # in case of the fact that APs are full
+                        print "Warning: All possible APs are already full!!!"
+                        sys.exit(0)
+
                     exitLoop = False
                     while not exitLoop:
                         print "Please Enter the location where the AP you want to access:"
@@ -201,7 +205,10 @@ class AuroraConsole():
                                 GEN_JSON_FPATH = os.path.join(CLIEN_JSON_DIR, GEN_JSON_FNAME)
 
                                 if message is not None: # Restore params['file'] and clean up params['hint'] to create a slice
-                                    #params['file'] = store
+                                    if len(message) == 0: #There is no chosen ap
+                                        print "Cannot locate an available AP based on provided information"
+                                        break
+
                                     params['hint'] = None
                                     del params['location']
                                     params['ap'] = [message]
@@ -210,7 +217,7 @@ class AuroraConsole():
                                     slice_json_generator.SliceJsonGenerator(
                                         params['ap'][0],
                                         GEN_JSON_FPATH,
-                                        1,1,1
+                                        1, tenant_id, project_id
                                     ) # Initialize the slice_json_generator
                                     params['file'] = [GEN_JSON_FPATH,]
                                     try:

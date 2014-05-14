@@ -134,7 +134,6 @@ class SliceJsonGenerator():
         Loop = 'false'
         
         try:
-           ## print "the file name is " + filename
             self.JFILE = open(os.path.join(CLIENT_DIR, 'json/template.json'), "r")
         except IOError:
             traceback.print_exc(file=sys.stdout)
@@ -149,15 +148,14 @@ class SliceJsonGenerator():
         
         print('Enter attributes...')
         print('SSID NAME:')
-        while('true' not in Loop):
+        while ('true' not in Loop):
             tmp_data = raw_input()
             Loop = self.communicatewithManager(tmp_data,'SSID_NAME')
         self.data['config']['RadioInterfaces'][1]['attributes']['name'] = tmp_data
- 
 
         Loop = 'false'
         print('Bridge Type:')
-        while('true' not in Loop):
+        while ('true' not in Loop):
             tmp_data = raw_input()
             Loop = self.communicatewithManager(tmp_data,'bridge_type')
         self.data['config']['VirtualBridges'][0]['flavor'] = tmp_data
@@ -165,10 +163,10 @@ class SliceJsonGenerator():
         if "ovs" in self.data['config']['VirtualBridges'][0]['flavor'] :
             print "Please Give a Controller IP Address:"
             tmp_data = raw_input()
-            self.data['config']['VirtualBridges'][0]['attributes']['bridge_settings']['controller'][0] = tmp_data
+            self.data['config']['VirtualBridges'][0]['attributes']['bridge_settings']={'controller':[tmp_data]} #['controller'][0] = tmp_data
         
         self.data['physical_ap'] = str(self.APname)
-        self.data['tenant_id'] = os.environ.get("AURORA_TENANT", -1)
+        self.data['tenant_id'] = os.environ.get("AURORA_TENANT", config.CONFIG['tenant_info']['tenant_id'])
 
         slicenumber = self.communicatewithManager(self.data,'radio_check')
         try:
@@ -181,7 +179,6 @@ class SliceJsonGenerator():
         del self.data['physical_ap']
         del self.data['tenant_id']
 
-
         
     def communicatewithManager(self, data, Ftype): # Implement a channel to communicate with manager
         self.params['data'] = data
@@ -190,15 +187,15 @@ class SliceJsonGenerator():
         toSend = {
             'function':'configuration-generation',
             'parameters':self.params,
-            'tenant_id':os.environ.get("AURORA_TENANT", -1),
-            'project_id':os.environ.get("AURORA_PROJECT", -1),
-            'user_id':os.environ.get("AURORA_USER", -1),
+            'tenant_id':os.environ.get("AURORA_TENANT", config.CONFIG['tenant_info']['tenant_id']),
+            'project_id':os.environ.get("AURORA_PROJECT", config.CONFIG['tenant_info']['project_id']),
+            'user_id':os.environ.get("AURORA_USER", config.CONFIG['tenant_info']['user_id']),
             'request_id': request_id
         }
 
         manager_address = 'http://' + config.CONFIG['connection']['manager_host'] + ':' + config.CONFIG['connection']['manager_port']
         if toSend: #--help commands will not start the server
-            response = json_sender.JSONSender().send_json(manager_address, toSend, request_id) # change back to 132.206.206.133:5554
+            response = json_sender.JSONSender().send_json(manager_address, toSend, request_id)
        # if 'true' not in response:
        #     print " Please Enter the right value!!"
        #     return False
