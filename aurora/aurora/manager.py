@@ -25,13 +25,15 @@ from aurora import ap_monitor
 from aurora import config_db
 from aurora.cls_logger import get_cls_logger
 from aurora import dispatcher
+from aurora import slice_plugin
 from aurora.exc import *
 from aurora.ap_provision import http_srv as provision_srv
+
 from aurora.request_verification import request_verify_API as Verify
 from aurora.request_verification import request_verification as Check
+
+from aurora.hint import sql_Info
 from aurora.hint import hint_agent
-from aurora import slice_plugin
-from aurora import sql_Info
 
 LOGGER = logging.getLogger(__name__)
 
