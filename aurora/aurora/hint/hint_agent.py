@@ -1,6 +1,6 @@
 import traceback
 import sys
-from aurora import sql_Info
+from aurora.hint import sql_Info
 
 def hint(manager, args):
     arg_hint = args['hint'][0]

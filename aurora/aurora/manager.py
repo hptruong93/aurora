@@ -25,13 +25,15 @@ from aurora import ap_monitor
 from aurora import config_db
 from aurora.cls_logger import get_cls_logger
 from aurora import dispatcher
+from aurora import slice_plugin
 from aurora.exc import *
 from aurora.ap_provision import http_srv as provision_srv
+
 from aurora.request_verification import request_verify_API as Verify
 from aurora.request_verification import request_verification as Check
+
+from aurora.hint import sql_Info
 from aurora.hint import hint_agent
-from aurora import slice_plugin
-from aurora import sql_Info
 
 LOGGER = logging.getLogger(__name__)
 
@@ -141,8 +143,9 @@ class Manager(object):
             request['physical_ap'] = args['data']['physical_ap']
             request['tenant_id'] = args['data']['tenant_id']
 
-            Message = sql_Info.checkSliceNumber(request['physical_ap']) 
-            if Message > 0: #check if the raido channel need to be configured
+            Message = sql_Info.checkSliceNumber(request['physical_ap'])
+            print Message  
+            if int(Message[0][1]) > 0: #check if the raido channel need to be configured
                 del request['config']['RadioInterfaces'][0]
 
             error = check.verify('create_slice', request)
@@ -915,51 +918,6 @@ class Manager(object):
         # Add one section for dealing with 'hint' token, once it is processed, return
         if arg_hint:
             return hint_agent.hint(self, args)
-            # if "location" in arg_hint:
-            #     # Try to access the local database to grab location
-            #     tempList = self.ap_filter(arg_hint)
-            #     message = ""
-            #     for entry in tempList:
-            #         if not ('mcgill' in entry[0] or 'mcgill' in entry[1]):
-            #             message += "%5s: %s\n" % (entry[1], entry[0])
-                
-
-
-            #     # Make a decision according to the token "location" OR "slice_load"
-            #     try:
-            #         if args.get('location') is not None: # if there is a location specification
-            #             if args['location'].lower() in message.lower(): # check if the location is valid
-            #                 indexSliceLoad = ""
-            #                 freespace = 0;
-            #                 if "slice-load" in arg_hint:
-            #                     print "Search the lightweight AP"
-            #                     indexSliceLoad = "unknown"
-            #                 else:
-            #                     print "Locate a random AP"
-                            
-            #                 # Search for the proper slices
-            #                 for entry in tempList:
-            #                     if args['location'].lower() == entry[0].lower():
-            #                         # once the location matches -- check if the AP has free spots
-            #                         apList = self.ap_filter("name=" + entry[1])
-            #                         if apList[0][1]['number_slice_free'] > 0:
-            #                             if(len(indexSliceLoad)==0):
-            #                                 indexSliceLoad = entry[1]
-            #                                 break
-            #                             elif(apList[0][1]['number_slice_free']>freespace):
-            #                                 freespace = apList[0][1]['number_slice_free']
-            #                                 indexSliceLoad = entry[1]
-
-            #                 message = indexSliceLoad
-            #             else:
-            #                 message = "invalid location information"
-            #     except Exception as e:
-            #         traceback.print_exc(file=sys.stdout)
-                    
-            #     response = {"status":True, "message":message}
-            #     return response
-            # if arg_file is None:
-            #     raise NoSliceConfigFileException()
 
         # end of the section
 
