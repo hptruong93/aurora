@@ -7,6 +7,7 @@ import sys
 import ast
 import os
 import traceback
+import random
 
 import config
 import utils
@@ -78,18 +79,38 @@ class SliceJsonGenerator():
         del output['RadioInterfaces']
         
         #changed the WLAN & ETH interface name according to the # of existing slices
-        VWLAN = """%s%d"""%(str(output['VirtualInterfaces'][1]['attributes']['name']),self.sliceNUM)
-        #WLAN  = """%s%d"""%(str(output['VirtualInterfaces'][1]['attributes']['attach_to']),self.sliceNUM)
-        VETH  =	"""%s%d"""%(str(output['VirtualInterfaces'][0]['attributes']['name']),self.sliceNUM)
-        
+
+        if self.sliceNUM == 0:
+            append_vwlan = ""
+            append_wlan = ""
+            append_bridge = ""
+            append_veth = ""
+        else:
+            append_vwlan = str(self.sliceNUM)
+            append_wlan = "-" + str(self.sliceNUM)
+            append_bridge = "-" + str(self.sliceNUM)
+            append_veth = str(self.sliceNUM)
+
+        vwlan = str(output['VirtualInterfaces'][1]['attributes']['name']) + append_vwlan
+        wlan  = str(output['VirtualInterfaces'][1]['attributes']['attach_to']) + append_wlan
+        veth  =	str(output['VirtualInterfaces'][0]['attributes']['name']) + append_veth
+        bridge = output['VirtualBridges'][0]['attributes']['name'] + append_bridge
+        new_mac = self.generate_mac()
+
         # switch the name in JSON
-        output['VirtualInterfaces'][1]['attributes']['name'] = VWLAN
-        #output['VirtualInterfaces'][1]['attributes']['attach_to'] = WLAN
-        output['VirtualInterfaces'][0]['attributes']['name'] = VETH
-        #output['VirtualWIFI'][0]['attributes']['if_name'] = WLAN
-        output['VirtualBridges'][0]['attributes']['interfaces'][0] = VWLAN
-        output['VirtualBridges'][0]['attributes']['interfaces'][1] = VETH
+        output['VirtualInterfaces'][1]['attributes']['name'] = vwlan
+        output['VirtualInterfaces'][1]['attributes']['attach_to'] = wlan
+        output['VirtualInterfaces'][0]['attributes']['name'] = veth
+        output['VirtualInterfaces'][0]['attributes']['mac'] = new_mac[0]
+        output['VirtualInterfaces'][1]['attributes']['mac'] = new_mac[1]
+
+        output['VirtualWIFI'][1]['attributes']['if_name'] = wlan
         
+        output['VirtualBridges'][0]['attributes']['interfaces'][0] = vwlan
+        output['VirtualBridges'][0]['attributes']['interfaces'][1] = veth
+        output['VirtualBridges'][0]['attributes']['name'] = bridge
+        
+
         #Give a list of names according to the existing slice number
         if self.sliceNUM > 0:
             del output['VirtualWIFI'][0]
@@ -106,8 +127,10 @@ class SliceJsonGenerator():
         
         
         json.dump(output, self.JFILE, sort_keys=True, indent=4)
+        json.dump(output, sys.stdout, sort_keys=True, indent=4)
         self.JFILE.flush()
         self.JFILE.close()
+        sys.exit(0)
             
     def SliceConfig(self):
         Loop = 'false'
@@ -174,7 +197,7 @@ class SliceJsonGenerator():
             'user_id':os.environ.get("AURORA_USER", -1),
             'request_id': request_id
         }
-       
+
         manager_address = 'http://' + config.CONFIG['connection']['manager_host'] + ':' + config.CONFIG['connection']['manager_port']
         if toSend: #--help commands will not start the server
             response = json_sender.JSONSender().send_json(manager_address, toSend, request_id) # change back to 132.206.206.133:5554
@@ -294,6 +317,11 @@ class SliceJsonGenerator():
         else:
             print('Entry Deleted!')
             
+    def generate_mac(self):
+        #For four slices the chance of collision is 3/(255*255) which is very small
+        rand = "%02x" % random.randint(0x00, 0xff) + ":" + "%02x" % random.randint(0x00, 0xff)
+        return ("00:00:00:" + rand + ":20", "00:00:00:00:" + rand + ":21")
+
     def printConfig(self):
         print(json.dumps(self.data, sort_keys=True, indent=4))
 

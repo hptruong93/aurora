@@ -5,7 +5,7 @@
             "attributes" : 
                 {
                     "name" : "radio0",
-                    "channel" : "1",
+                    "channel" : "2",
                     "txpower" : "20",
                     "disabled" : "0",
                     "country" : "CA",
@@ -14,9 +14,9 @@
         },
         {
             "flavor" : "wifi_bss",
-            "attributes" :
+            "attributes" : 
                 {
-                    "name" : "BCRL vSwitch",
+                    "name" : "MK",
                     "radio" : "radio0",
                     "if_name" : "wlan0",
                     "encryption_type":"wep-open",
@@ -49,7 +49,7 @@
         },
         {
             "flavor":"veth",
-            "attributes":
+            "attributes": 
                 {
                     "attach_to":"wlan0",
                     "name":"vwlan0",
