@@ -38,7 +38,7 @@ def checkSliceNumber(args):
                              WHERE name = "%s" """%(str(args))
             cursor.execute(to_execute)
             information = cursor.fetchall()
-            return information[0][1]
+            return information
     except:
         traceback.print_exc(file=sys.stdout)
         

@@ -133,7 +133,7 @@ class Manager(object):
             Message = sql_Info.verify(args['type'])
         
         #print ('VirtualWIFI' in args['data']) and ('wifi_radio' in args['data']['VirtualWIFI'][0]['flavor'])
-        elif 'radio_icheck' in args['type']: # Used to check if the radio configuration is already set
+        elif 'radio_check' in args['type']: # Used to check if the radio configuration is already set
             check = Check.RadioConfigExistedVerification() # check if the radio channel exists
             request = {}
 
@@ -142,8 +142,8 @@ class Manager(object):
             request['tenant_id'] = args['data']['tenant_id']
 
             Message = sql_Info.checkSliceNumber(request['physical_ap'])
-            print Message 
-            if Message > 0: #check if the raido channel need to be configured
+            print Message  
+            if int(Message[0][1]) > 0: #check if the raido channel need to be configured
                 del request['config']['RadioInterfaces'][0]
 
             error = check.verify('create_slice', request)
@@ -916,51 +916,6 @@ class Manager(object):
         # Add one section for dealing with 'hint' token, once it is processed, return
         if arg_hint:
             return hint_agent.hint(self, args)
-            # if "location" in arg_hint:
-            #     # Try to access the local database to grab location
-            #     tempList = self.ap_filter(arg_hint)
-            #     message = ""
-            #     for entry in tempList:
-            #         if not ('mcgill' in entry[0] or 'mcgill' in entry[1]):
-            #             message += "%5s: %s\n" % (entry[1], entry[0])
-                
-
-
-            #     # Make a decision according to the token "location" OR "slice_load"
-            #     try:
-            #         if args.get('location') is not None: # if there is a location specification
-            #             if args['location'].lower() in message.lower(): # check if the location is valid
-            #                 indexSliceLoad = ""
-            #                 freespace = 0;
-            #                 if "slice-load" in arg_hint:
-            #                     print "Search the lightweight AP"
-            #                     indexSliceLoad = "unknown"
-            #                 else:
-            #                     print "Locate a random AP"
-                            
-            #                 # Search for the proper slices
-            #                 for entry in tempList:
-            #                     if args['location'].lower() == entry[0].lower():
-            #                         # once the location matches -- check if the AP has free spots
-            #                         apList = self.ap_filter("name=" + entry[1])
-            #                         if apList[0][1]['number_slice_free'] > 0:
-            #                             if(len(indexSliceLoad)==0):
-            #                                 indexSliceLoad = entry[1]
-            #                                 break
-            #                             elif(apList[0][1]['number_slice_free']>freespace):
-            #                                 freespace = apList[0][1]['number_slice_free']
-            #                                 indexSliceLoad = entry[1]
-
-            #                 message = indexSliceLoad
-            #             else:
-            #                 message = "invalid location information"
-            #     except Exception as e:
-            #         traceback.print_exc(file=sys.stdout)
-                    
-            #     response = {"status":True, "message":message}
-            #     return response
-            # if arg_file is None:
-            #     raise NoSliceConfigFileException()
 
         # end of the section
 

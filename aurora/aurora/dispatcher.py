@@ -242,7 +242,7 @@ class Dispatcher(object):
 
         Stops the poller threads created in AP Monitor so 
         they will not try and send a message while the connection is 
-        down.  Also stops the timers associated with sent messages - 
+        down. Also stops the timers associated with sent messages - 
         if we cannot receive a reply it doesn't make sense to wait for 
         one.
 

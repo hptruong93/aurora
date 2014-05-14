@@ -33,7 +33,6 @@ class ProvisionHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
                     raise RequestInvalidConfigFileNameException()
                 with open(os.path.join(self._PROVISION_DIR, file_name),'r') as CF:
                     config_file = json.load(CF)
-                    print config_file
                     config_file['rabbitmq_host'] = config.CONFIG['manager']['host']
                     config_file = json.dumps(config_file)
                 
