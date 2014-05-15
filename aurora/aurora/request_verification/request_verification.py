@@ -1,3 +1,8 @@
+# 2014
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith,
+#              Mike Kobierski and Hoai Phuoc Truong
+#
+
 from __future__ import division #This is not needed for python 3.x
 
 from abc import *
@@ -10,6 +15,7 @@ import MySQLdb as mdb
 
 from aurora.ap_provision import reader as provision_reader
 from aurora.request_verification import verification_exception as exceptions
+from aurora import query_agent as filter
 from aurora import config
 
 #This module is called by manager before acting on any AP.
@@ -25,21 +31,9 @@ AP_ETH_IFACE = 'eth0'
 class RequestVerification():
     __metaclass__ = ABCMeta
     
-    #This method return a connection to mysql database
-    #This method must be wrapped by a try catch block (catching mdb.Error)
     @staticmethod
-    def _database_connection():
-        return mdb.connect(config.CONFIG['mysql']['mysql_host'],
-                                   config.CONFIG['mysql']['mysql_username'],
-                                   config.CONFIG['mysql']['mysql_password'],
-                                   config.CONFIG['mysql']['mysql_db'])
-
-    @staticmethod
-    def ap_name_exists(mysqlCursor, physical_ap):
-        to_execute = """SELECT name FROM ap WHERE name = '%s'""" % physical_ap
-        mysqlCursor.execute(to_execute)
-
-        ap_names = mysqlCursor.fetchall()
+    def ap_name_exists(physical_ap):
+        ap_names = filter.query('ap', ['name'], ['name = "%s"' % physical_ap])
         if len(ap_names) != 0:
             return True
         return False
@@ -68,40 +62,25 @@ class APSliceSSIDVerification(RequestVerification):
     #The method raises a NoAvailableSpaceLeftInAP exception if there is any conflict.
     def _detail_verification(self, command, request):
         try:
-            con = RequestVerification._database_connection() 
-            with con:
-                cursor = con.cursor()
+            if request is None:
+                result = filter.query('ap_slice', ['ap_slice_ssid'], \
+                                                  ['status <> "DELETED" GROUP BY ap_slice_ssid HAVING COUNT(ap_slice_ssid) > 1'])
+                
+                if len(result) != 0:
+                    ssid_list = [str(i[0]) for i in result]
+                    return "Duplicated slice exists. SSIDs are " + ", ".join(ssid_list)
+            else:
+                radio_interface = request['config']['RadioInterfaces']
+                for entry in radio_interface:
+                    if entry['flavor'] == 'wifi_bss':
+                        new_ssid = entry['attributes']['name']
 
-                if request is None:
-                    to_execute = """SELECT ap_slice_ssid FROM ap_slice
-                                            WHERE status <> "DELETED"
-                                            GROUP BY ap_slice_ssid having COUNT(ap_slice_ssid) > 1"""
-                    cursor.execute(to_execute)
-                    result = cursor.fetchall()
-                    
-                    if len(result) != 0:
-                        ssid_list = [str(i[0]) for i in result]
-                        return "Duplicated slice exists. SSIDs are " + ", ".join(ssid_list)
-                else:
-                    radio_interface = request['config']['RadioInterfaces']
-                    for entry in radio_interface:
-                        if entry['flavor'] == 'wifi_bss':
-                            new_ssid = entry['attributes']['name']
+                result = filter.query('ap_slice', ['COUNT(ap_slice_ssid)'], ['status <> "DELETED"', \
+                                                                             'tenant_id = "%s"' % request['tenant_id'],\
+                                                                             'ap_slice_ssid = "%s"' % new_ssid])
 
-                    to_execute = """SELECT COUNT(ap_slice_ssid)
-                                    FROM ap_slice
-                                    WHERE status<>'DELETED'
-                                    AND tenant_id=%s
-                                    AND ap_slice_ssid='%s' """ % (str(request['tenant_id']), new_ssid)
-                    print to_execute
-                    cursor.execute(to_execute)
-                    result = cursor.fetchall()
-
-                    if result[0][0] != 0: #Meaning there is already a slice with "new_ssid" as ssid
-                        return "Duplicated slice ssid " + str(new_ssid)
-        except mdb.Error, e:
-                traceback.print_exc(file=sys.stdout)
-                sys.exit(1)
+                if result[0][0] != 0: #Meaning there is already a slice with "new_ssid" as ssid
+                    return "Duplicated slice ssid " + str(new_ssid)
         except KeyError, e:
                 raise exceptions.MissingKeyInRequest(str(e.args[0]))
         return None
@@ -121,52 +100,24 @@ class APSliceNumberVerification(RequestVerification):
         }
         
         try:
-            con = RequestVerification._database_connection() 
-            with con:
-                cursor = con.cursor()
+            name = 0
+            slice_left = 1
 
-                name = 0
-                used_slice = 1
-                number_radio = 2
+            if request is None:
+                result = filter.query('ap', ['name', 'number_slice_free'], [])
 
-                if request is None:
-                    to_execute = """SELECT name, used_slice, number_radio, number_radio_free 
-                                      FROM (SELECT physical_ap, COUNT(physical_ap) AS used_slice 
-                                            FROM ap_slice 
-                                            WHERE status <> "DELETED"
-                                              AND status <> "FAILED"
-                                            GROUP BY physical_ap) AS 
-                                      A LEFT JOIN ap ON A.physical_ap = ap.name
-                                      WHERE name IS NOT NULL"""
-                    cursor.execute(to_execute)
-                    result = cursor.fetchall()
-                    
-                    for ap in result:
-                        if ap[used_slice] > 4 * ap[number_radio]:
-                            return 'The AP ' + str(ap[name]) + ' has no space left to create new slice.'
-                else:
-                    if not RequestVerification.ap_name_exists(cursor, request['physical_ap']):
-                        raise exceptions.NoSuchAPExists(str(request['physical_ap']))
+                for ap in result:
+                    if ap[slice_left] < 0:
+                        return 'The AP ' + str(ap[name]) + ' has no space left to create new slice.'
+            else:
+                if not RequestVerification.ap_name_exists(request['physical_ap']):
+                    raise exceptions.NoSuchAPExists(str(request['physical_ap']))
 
-                    to_execute = """SELECT name, used_slice, number_radio, number_radio_free 
-                                      FROM (SELECT physical_ap, COUNT(physical_ap) AS used_slice 
-                                            FROM ap_slice 
-                                            WHERE status <> "DELETED"
-                                              AND status <> "FAILED"
-                                            GROUP BY physical_ap) AS 
-                                      A LEFT JOIN ap ON A.physical_ap = ap.name
-                                      WHERE name = '%s' """ % str(request['physical_ap'])
-                    cursor.execute(to_execute)
-                    result = cursor.fetchall()
+                result = filter.query('ap', ['name', 'number_slice_free'], ['name = "%s"' % request['physical_ap']])
 
-                    if len(result) == 0:
-                        return None #No slice has been created yet on the interested ap
-
-                    ap = result[0]
-                    if ap[used_slice] + _ADDITIONAL_SLICE[command] > 4 * ap[number_radio]: #We create new slice
+                for ap in result: #We expect only 1 ap though
+                    if ap[slice_left] - _ADDITIONAL_SLICE[command] < 0:
                         return 'The AP \'' + str(ap[name]) + '\' has no space left to execute command \'' + command + '\'.'
-                        #Else return None later
-
         except mdb.Error, e:
                 traceback.print_exc(file=sys.stdout)
                 sys.exit(1)
@@ -266,45 +217,39 @@ class AccessConflictVerification(RequestVerification):
                 for interface in request['config']['VirtualInterfaces']:
                     requested_interfaces.add(interface['attributes']['attach_to'])
 
-                con = RequestVerification._database_connection()
-                with con:
-                    cursor = con.cursor()
-                    physical_ap = request['physical_ap']                    
+                physical_ap = request['physical_ap']                    
 
-                    #Get all of his slices
-                    to_execute = """SELECT ap_slice_id FROM ap_slice
-                                       WHERE tenant_id = '%s'
-                                       AND physical_ap = '%s'
-                                       AND status <> "DELETED"
-                                       """ % (str(tenant_id), str(physical_ap))
-                    cursor.execute(to_execute)
-                    
-                    #Get the client's slices
-                    result = [item for sublist in cursor.fetchall() for item in sublist]
+                #Get all of his slices
+                slice_list = filter.query('ap_slice', ['ap_slice_id'], ['tenant_id = "%s"' % tenant_id, \
+                                                                        'physical_ap = "%s"' % physical_ap, \
+                                                                        'status <> "DELETED"'])
+                
+                #Get the client's slices
+                result = [item for sublist in slice_list for item in sublist]
 
-                    #At this point, we are sure that the ap exists since its existence has been previously checked by
-                    #APSliceNumberVerification
-                    ap_info = provision_reader.get_physical_ap_info(physical_ap)
-                    init_database = ap_info['last_known_config']['init_database']
+                #At this point, we are sure that the ap exists since its existence has been previously checked by
+                #APSliceNumberVerification
+                ap_info = provision_reader.get_physical_ap_info(physical_ap)
+                init_database = ap_info['last_known_config']['init_database']
 
-                    for slice in init_database:
-                        if (slice not in result) and (slice != 'default_slice'): #Then slice must be someone else's
-                            current_slice = init_database[slice]
-                            bridge = current_slice['VirtualBridges'][0]['attributes']['name']
+                for slice in init_database:
+                    if (slice not in result) and (slice != 'default_slice'): #Then slice must be someone else's
+                        current_slice = init_database[slice]
+                        bridge = current_slice['VirtualBridges'][0]['attributes']['name']
 
-                            interfaces = set([])
-                            for interface in current_slice['VirtualInterfaces']:
-                                iface_bind = interface['attributes']['attach_to']
-                                if iface_bind != AP_ETH_IFACE:
-                                    interfaces.add(iface_bind)
+                        interfaces = set([])
+                        for interface in current_slice['VirtualInterfaces']:
+                            iface_bind = interface['attributes']['attach_to']
+                            if iface_bind != AP_ETH_IFACE:
+                                interfaces.add(iface_bind)
 
-                            #Check if conflict
-                            if not interfaces.isdisjoint(requested_interfaces):
-                                conflict = interfaces.intersection(requested_interfaces)
-                                raise exceptions.AccessConflict("Access conflict for interfaces " + ', '.join(conflict))
+                        #Check if conflict
+                        if not interfaces.isdisjoint(requested_interfaces):
+                            conflict = interfaces.intersection(requested_interfaces)
+                            raise exceptions.AccessConflict("Access conflict for interfaces " + ', '.join(conflict))
 
-                            if bridge == requested_bridge:
-                                raise exceptions.AccessConflict("Access conflict for bridge. Please choose another bridge.")                                
+                        if bridge == requested_bridge:
+                            raise exceptions.AccessConflict("Access conflict for bridge. Please choose another bridge.")
 
             except KeyError, e:
                 raise exceptions.MissingKeyInRequest(str(e.args[0]))
@@ -380,31 +325,24 @@ class ValidDeleteVerification(RequestVerification):
                 return None
             else:
                 #Check for validity of deletion
-                con = RequestVerification._database_connection()
-                with con:
-                    cursor = con.cursor()
-                    #Get the ap that the slice is in
-                    to_execute = """SELECT physical_ap FROM ap_slice
-                                     WHERE tenant_id = '%s'
-                                     AND ap_slice_id = '%s'
-                                     AND status <> "DELETED"
-                                     """ % (str(request['tenant_id']), str(request['slice']))
-                    cursor.execute(to_execute) #Look for this key in ap_slice_delete in manager.py
-                    result = cursor.fetchall()
-                    if len(result) == 0:
-                        raise exceptions.NoSuchSliceExists(request['slice'])
-                    #There should be only one ap_name
-                    ap_name = [element for tupl in result for element in tupl][0]
-                    ap_info = provision_reader.get_physical_ap_info(ap_name)
-                    slice = provision_reader.get_slice(request['slice'], ap_name)
-                    if slice is None: #Slice is none means it has never been successfully created. The client is deleting a FAILED slice.
-                        return None
+                result = filter.query('ap_slice', ['physical_ap'], ['tenant_id = "%s"' % request['tenant_id'], \
+                                                                    'ap_slice_id = "%s"' % request['slice'], \
+                                                                    'status <> "DELETED"'])
 
-                    current_radio = provision_reader.get_radio_wifi_bss(slice)
-                    slice_count = provision_reader.get_number_slice_on_radio(ap_info, current_radio)
-                    if slice_count != 1: #Have to check if this is the main slice
-                        if provision_reader.get_radio_interface(slice, 'wifi_radio') is not None:
-                            return "Cannot delete slice containing radio configurations!"
+                if len(result) == 0:
+                    raise exceptions.NoSuchSliceExists(request['slice'])
+                #There should be only one ap_name
+                ap_name = [element for tupl in result for element in tupl][0]
+                ap_info = provision_reader.get_physical_ap_info(ap_name)
+                slice = provision_reader.get_slice(request['slice'], ap_name)
+                if slice is None: #Slice is none means it has never been successfully created. The client is deleting a FAILED slice.
+                    return None
+
+                current_radio = provision_reader.get_radio_wifi_bss(slice)
+                slice_count = provision_reader.get_number_slice_on_radio(ap_info, current_radio)
+                if slice_count != 1: #Have to check if this is the main slice
+                    if provision_reader.get_radio_interface(slice, 'wifi_radio') is not None:
+                        return "Cannot delete slice containing radio configurations!"
             return None
         except mdb.Error, e:
             traceback.print_exc(file=sys.stdout)

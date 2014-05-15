@@ -1,6 +1,6 @@
 # 2014
-# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &
-#              Mike Kobierski 
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith,
+#              Mike Kobierski and Hoai Phuoc Truong
 #
 """The configuration database module stores and fetches JSON 
 configurations for created slices.

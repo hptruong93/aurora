@@ -1,6 +1,6 @@
 # 2014
-# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &
-#              Mike Kobierski 
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith,
+#              Mike Kobierski and Hoai Phuoc Truong
 #
 """This module is responsible for building the configuration JSON 
 which will be dispatched to the aurora agent.

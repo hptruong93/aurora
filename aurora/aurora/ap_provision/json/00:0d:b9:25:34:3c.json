@@ -19,7 +19,7 @@
     "rabbitmq_host": "10.5.8.3", 
     "region": "mcgill", 
     "queue": "openflow3", 
-    "rabbitmq_reply_queue": "amq.gen-Zrgx32H3Suam-orBbcgQ7A", 
+    "rabbitmq_reply_queue": "AuroraManager", 
     "default_config": {
         "init_hardware_database": {
             "wifi_radio": {

@@ -1,3 +1,8 @@
+# 2014
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith,
+#              Mike Kobierski and Hoai Phuoc Truong
+#
+
 #Take in either --backup or --restore
 #If backup then the script will try to backup the aurora database STRUCTURE only.
 #No data will be backup

@@ -1,6 +1,9 @@
 #!/usr/bin/python -tt
 # Aurora-client Shell
-# SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
+# 2014
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith,
+#              Mike Kobierski and Hoai Phuoc Truong
+#
 
 """
 Command-line interface to the Aurora API

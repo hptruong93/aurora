@@ -1,4 +1,10 @@
 #!/usr/bin/python -tt
+# 2014
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith,
+#              Mike Kobierski and Hoai Phuoc Truong
+#
+
+
 """A module containing an HTTP server which will listen for incoming
 capsulator tunnel configuration requests.  Upon receipt of a
 configuration, it will set up a capsulator tunnel.

@@ -1,6 +1,6 @@
 # 2014
-# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &
-#              Mike Kobierski 
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith,
+#              Mike Kobierski and Hoai Phuoc Truong
 #
 """Module containing threads which can run a continuous
 loop until a stop event is thrown.  Thread target code must

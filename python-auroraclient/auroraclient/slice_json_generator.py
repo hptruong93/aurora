@@ -1,6 +1,9 @@
 #LOCATION TAGS IN AP_SLICE
 # Aurora JSON Generator (Generates a Json File)
-# SAVI Mcgill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
+# 2014
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith,
+#              Mike Kobierski and Hoai Phuoc Truong
+#
 
 import json
 import sys

@@ -1,7 +1,10 @@
 #!/bin/sh
 # rc.default-iptables
 # 
-
+# 2014
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith,
+#              Mike Kobierski and Hoai Phuoc Truong
+#
 
 echo -e "\n\nLoading simple rc.default-iptables..\n"
 

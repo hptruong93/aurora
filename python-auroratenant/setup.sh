@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# 2014
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith,
+#              Mike Kobierski and Hoai Phuoc Truong
+#
+
 # Need root to run
 if [[ $EUID -ne 0 ]]; then
    echo "This script must be run as root" 1>&2

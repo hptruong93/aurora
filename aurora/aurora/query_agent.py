@@ -1,3 +1,8 @@
+# 2014
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith,
+#              Mike Kobierski and Hoai Phuoc Truong
+#
+
 import MySQLdb as mdb
 import traceback
 import sys
@@ -30,6 +35,14 @@ def join_table(table1, table2, field1, field2, type = "inner join"):
     return out
 
 def query(table_name, fields = [], criteria = []):
+    """Interface to query the mysql database.
+
+        :param str table_name: name of the table to query
+        :param list fields: selected fields of the table that will be queried. This is a list os strings
+        :param list criteria: criteria used for filtering (e.g. fields1 > 3). This is a list of strings
+
+        :rtype: tuple
+    """
     connection = _database_connection()
     try:
         with connection:

@@ -1,6 +1,6 @@
 # 2014
-# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &
-#              Mike Kobierski 
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith,
+#              Mike Kobierski and Hoai Phuoc Truong
 #
 """Collection of methods for adding, updating, deleting, 
 and querying the SQL database stored by Aurora Manager.

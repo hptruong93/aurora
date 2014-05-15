@@ -1,6 +1,10 @@
 #!/bin/bash
 # Aurora auto_capsulator Start-Up
 #
+# 2014
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith,
+#              Mike Kobierski and Hoai Phuoc Truong
+#
 
 start() {
     screen -dm /usr/local/bin/auto_capsulator $1

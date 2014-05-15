@@ -1,6 +1,6 @@
 # 2014
-# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith &
-#              Mike Kobierski 
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith,
+#              Mike Kobierski and Hoai Phuoc Truong
 #
 """A Quick Script for creating the Aurora database tables/schema."""
 import logging
