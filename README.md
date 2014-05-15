@@ -14,6 +14,7 @@ controlled by users.  These clients run on a user's computer, and allow
 users to control these access points through simple to complex commands,
 depending on their needs.
 
+Stable master branch merged on 15th May 2014.
 
 Dependencies
 ===
