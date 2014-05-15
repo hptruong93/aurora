@@ -127,14 +127,15 @@ class Manager(object):
     #Communicate with json file generator
     def configuration_generation(self, args, tenant_id, user_id, project_id):
         #print args['data']
-        Message = 'false'
+        Message = 'False'
         status = True
         if 'bridge_type' in args['type'] and ('linux_bridge' in args['data'] or 'ovs' in args['data']):
-            Message = 'true'
+            Message = 'True'
         
         elif 'SSID_NAME' in args['type']: # ciheck if there is the same name already existing in the database
-            Message = sql_Info.verify(args['type'])
-        
+            status = sql_Info.verify(args['data'], tenant_id)
+            Message = str(status)
+
         #print ('VirtualWIFI' in args['data']) and ('wifi_radio' in args['data']['VirtualWIFI'][0]['flavor'])
         elif 'radio_check' in args['type']: # Used to check if the radio configuration is already set
             check = Check.RadioConfigExistedVerification() # check if the radio channel exists

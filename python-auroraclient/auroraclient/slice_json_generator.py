@@ -148,16 +148,22 @@ class SliceJsonGenerator():
         
         print('Enter attributes...')
         print('SSID NAME:')
-        while ('true' not in Loop):
+        while ('True' not in Loop):
             tmp_data = raw_input()
             Loop = self.communicatewithManager(tmp_data,'SSID_NAME')
+            if 'True' not in Loop:
+                print 'Invalid name. Please try again.'
+
         self.data['config']['RadioInterfaces'][1]['attributes']['name'] = tmp_data
 
-        Loop = 'false'
+        Loop = 'False'
         print('Bridge Type:')
-        while ('true' not in Loop):
+        while ('True' not in Loop):
             tmp_data = raw_input()
             Loop = self.communicatewithManager(tmp_data,'bridge_type')
+            if 'True' not in Loop:
+                print 'Invalid bridge type. Please try again.'
+
         self.data['config']['VirtualBridges'][0]['flavor'] = tmp_data
         
         if "ovs" in self.data['config']['VirtualBridges'][0]['flavor'] :
@@ -175,7 +181,6 @@ class SliceJsonGenerator():
             traceback.print_exc(file = sys.stdout)
             sys.exit(-1)
 
-        #del self.data['config']['RadioInterfaces'][0]
         del self.data['physical_ap']
         del self.data['tenant_id']
 
@@ -196,10 +201,6 @@ class SliceJsonGenerator():
         manager_address = 'http://' + config.CONFIG['connection']['manager_host'] + ':' + config.CONFIG['connection']['manager_port']
         if toSend: #--help commands will not start the server
             response = json_sender.JSONSender().send_json(manager_address, toSend, request_id)
-       # if 'true' not in response:
-       #     print " Please Enter the right value!!"
-       #     return False
-       # else:
         return response
             
     def addVI(self):

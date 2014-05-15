@@ -14,9 +14,9 @@ def _database_connection():
 
 def _generate_query(table_name, fields, criteria):
     if len(fields) == 0:
-        to_execute = """SELECT * FROM %s""" % table_name
+        to_execute = """SELECT * FROM (%s)""" % table_name
     else:
-        to_execute = "SELECT " + ",".join(fields) + " FROM %s" % table_name
+        to_execute = "SELECT " + ",".join(fields) + " FROM (%s)" % table_name
 
     #Now parse the criteria
     if len(criteria) != 0:
@@ -39,7 +39,7 @@ def query(table_name, fields = [], criteria = []):
             if to_execute is None:
                 return None
 
-            #print to_execute
+            print to_execute
             cursor.execute(to_execute)
             information = cursor.fetchall()
             return information

@@ -3,6 +3,7 @@ information and data storing in the SQL database.
 """
 
 from aurora import config
+from aurora import query_agent as filter
 import MySQLdb as mdb
 import traceback
 import sys
@@ -13,19 +14,11 @@ def _database_connection():
                                config.CONFIG['mysql']['mysql_password'],
                                config.CONFIG['mysql']['mysql_db'])
 
-def verify(ap_slice_ssid):
-    link = _database_connection()
-    try:
-        with link:
-            cursor = link.cursor()
-            to_execute = """ select COUNT(distinct ap_slice_ssid) from ap_slice where status <> "DELETED" and ap_slice_ssid = "%s" """%(str(ap_slice_ssid))
-            cursor.execute(to_execute)
-            information = cursor.fetchall()
-    except:
-        #print "There is an error in verify from sql_Info.py!!!"
-        traceback.print_exc(file=sys.stdout)
-    if information[0][0] == 0:
-        return "true"
+def verify(ap_slice_ssid, tenant_id):
+    result = filter.query('ap_slice', ['ap_slice_ssid'], ['ap_slice_ssid = "%s"' % ap_slice_ssid, \
+                                                          'tenant_id = %s' % str(tenant_id), \
+                                                          'status <> "DELETED"'])
+    return len(result) == 0
 
 def checkSliceNumber(args):
     link = _database_connection()
