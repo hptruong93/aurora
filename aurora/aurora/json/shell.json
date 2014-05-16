@@ -197,13 +197,20 @@
                 {
                     "action":"store",
                     "help":"Show a specific slice",
-                    "nargs":1,
+                    "nargs": 1,
                     "default":null,
                     "choices":null,
                     "metavar":"id"
                 },
                 [
-                    
+                    [
+                        "--ssid",
+                        {
+                            "action":"store_true",
+                            "help":"Select slice based on ssid",
+                            "default":false
+                        }
+                    ]
                 ]
             ],
             [

@@ -13,6 +13,8 @@ import traceback
 import sys
 
 def verify(ap_slice_ssid, tenant_id):
+    if len(ap_slice_ssid) == 0:
+        return False
     result = filter.query('ap_slice', ['ap_slice_ssid'], ['ap_slice_ssid = "%s"' % ap_slice_ssid, \
                                                           'tenant_id = %s' % str(tenant_id), \
                                                           'status <> "DELETED"'])

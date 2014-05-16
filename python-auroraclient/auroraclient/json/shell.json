@@ -337,6 +337,17 @@
                             "choices":null,
                             "metavar":"filter"
                         }
+                    ],
+                    [
+                        "--ssid",
+                        {
+                            "action":"store",
+                            "help":"Selecting slice using ssid",
+                            "nargs":1,
+                            "default":null,
+                            "choices":null,
+                            "metavar":"tags"
+                        }
                     ]
                 ]
             ],
@@ -461,7 +472,14 @@
                     "metavar":"id"
                 },
                 [
-                    
+                    [
+                        "--ssid",
+                        {
+                            "action":"store_true",
+                            "help":"Select slice based on ssid",
+                            "default":false
+                        }
+                    ]
                 ]
             ],
             [

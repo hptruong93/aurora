@@ -9,14 +9,21 @@ import ast
 import json
 import time
 import traceback
+import os
 
 import requests
+import config
 
 class JSONSender():
     HTTP_TIMEOUT = 15
 
     def send_json(self, url, payload, request_id):
-        
+        tenant_id = os.environ.get("AURORA_TENANT", config.CONFIG['tenant_info']['tenant_id'])
+        project_id = os.environ.get("AURORA_PROJECT", config.CONFIG['tenant_info']['project_id'])
+        user_id = os.environ.get("AURORA_USER", config.CONFIG['tenant_info']['user_id'])
+
+        print "Tenant %s querying..." % tenant_id
+
         try:
             r = requests.post(url, data=json.dumps(payload), timeout=self.HTTP_TIMEOUT)
         except KeyboardInterrupt:

@@ -26,6 +26,7 @@ from aurora import config_db
 from aurora.cls_logger import get_cls_logger
 from aurora import dispatcher
 from aurora import slice_plugin
+from aurora import query_agent as filter
 from aurora.exc import *
 from aurora.ap_provision import http_srv as provision_srv
 
@@ -1492,7 +1493,22 @@ class Manager(object):
 
         """
         message = ""
-        for arg_id in args['ap-slice-show']:
+        args_name = args['ssid']
+        
+        if args_name:
+            list_name = args['ap-slice-show']
+            filtered_list = list(set(list_name))
+            
+            filtered_list = map(lambda x : 'ap_slice_ssid="%s"' % x, filtered_list)
+            criteria = filter.join_criteria(filtered_list, 'OR')
+            criteria = filter.join_criteria([criteria, 'status != "DELETED"'], 'AND')
+            
+            ap_slice_list = list(filter.query('ap_slice', ['ap_slice_id'], [criteria]))
+            ap_slice_list = [x[0] for x in ap_slice_list]
+        else:
+            ap_slice_list = args['ap-slice-show']  
+        
+        for arg_id in ap_slice_list:
             if self.aurora_db.wslice_belongs_to(tenant_id, project_id, arg_id):
                 message += self.ap_slice_list({'filter':['ap_slice_id=%s' % arg_id,],
                                            'i':True,

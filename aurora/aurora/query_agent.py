@@ -17,7 +17,7 @@ def _database_connection():
                                    config.CONFIG['mysql']['mysql_password'],
                                    config.CONFIG['mysql']['mysql_db'])
 
-def _generate_query(table_name, fields, criteria):
+def _generate_query(table_name, fields, criteria, appendix):
     if len(fields) == 0:
         to_execute = """SELECT * FROM (%s)""" % table_name
     else:
@@ -27,14 +27,18 @@ def _generate_query(table_name, fields, criteria):
     if len(criteria) != 0:
         to_execute += " WHERE "
         to_execute += " AND ".join(criteria)
-    return to_execute
+    return to_execute + appendix
 
 def join_table(table1, table2, field1, field2, type = "inner join"):
     type = " " + type.upper() + " "
     out = """%s %s %s ON %s.%s = %s.%s """ % (table1, type, table2, table1, field1, table2, field2)
     return out
 
-def query(table_name, fields = [], criteria = []):
+def join_criteria(criteria_list, criteria_joiner):
+    joiner = " %s " % criteria_joiner
+    return joiner.join(map(lambda x : "(%s)" % x, criteria_list))
+
+def query(table_name, fields = [], criteria = [], appendix = ''):
     """Interface to query the mysql database.
 
         :param str table_name: name of the table to query
@@ -48,7 +52,7 @@ def query(table_name, fields = [], criteria = []):
         with connection:
             cursor = connection.cursor()
 
-            to_execute = _generate_query(table_name, fields, criteria)
+            to_execute = _generate_query(table_name, fields, criteria, appendix)
             if to_execute is None:
                 return None
 

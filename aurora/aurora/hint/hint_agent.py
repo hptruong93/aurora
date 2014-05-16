@@ -18,9 +18,8 @@ def hint(manager, args):
                     ["ap_name", "location_tags.name", "number_slice_free"], ["status = 'UP'", 'number_slice_free > 0'])
 
         message = ""
-        for entry in tempList:
-            if not ('mcgill' in entry[0] or 'mcgill' in entry[1]):
-                message += "%5s: %s\n" % (entry[1], entry[0])
+        for entry in tempList:          
+            message += "%5s: %s\n" % (entry[1], entry[0])
 
         # Make a decision according to the token "location" OR "slice_load"
         try:
