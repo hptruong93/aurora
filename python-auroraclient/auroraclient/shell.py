@@ -170,7 +170,7 @@ class AuroraConsole():
                     sys.exit(0)
                 if "location" in arg_hint or "location,slice-load" in arg_hint: # Once the token is 'hint', wait for users' reply
                     if msg == "" or msg == "unkown": # in case of the fact that APs are full
-                        print "Warning: All possible APs are already full!!!"
+                        print "Warning: No AP is currently available!!!"
                         sys.exit(0)
 
                     exitLoop = False
