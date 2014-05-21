@@ -17,11 +17,7 @@ def _database_connection():
                                    config.CONFIG['mysql']['mysql_password'],
                                    config.CONFIG['mysql']['mysql_db'])
 
-<<<<<<< HEAD
-def _generate_query(table_name, fields, criteria, appendix):
-=======
 def _build_query(table_name, fields, criteria):
->>>>>>> 9ac5ea819f3ea5c206da9c234e25c023753c810b
     if len(fields) == 0:
         to_execute = """SELECT * FROM (%s)""" % table_name
     else:
@@ -61,11 +57,7 @@ def query(table_name, fields = [], criteria = [], appendix = ''):
         with connection:
             cursor = connection.cursor()
 
-<<<<<<< HEAD
-            to_execute = _generate_query(table_name, fields, criteria, appendix)
-=======
             to_execute = _build_query(table_name, fields, criteria)
->>>>>>> 9ac5ea819f3ea5c206da9c234e25c023753c810b
             if to_execute is None:
                 return None
 
