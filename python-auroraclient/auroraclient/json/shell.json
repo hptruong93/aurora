@@ -475,18 +475,12 @@
                     [
                         "--ssid",
                         {
-<<<<<<< HEAD
-                            "action":"store_true",
-                            "help":"Select slice based on ssid",
-                            "default":false
-=======
                             "action":"store",
                             "help":"Select slice with to show",
                             "nargs":"+",
                             "default":null,
                             "choices":null,
                             "metavar":"ssid"
->>>>>>> 9ac5ea819f3ea5c206da9c234e25c023753c810b
                         }
                     ]
                 ]
