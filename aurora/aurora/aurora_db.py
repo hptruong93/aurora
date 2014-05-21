@@ -19,6 +19,7 @@ import MySQLdb as mdb
 
 import config
 
+from aurora import query_agent as query
 from aurora.cls_logger import get_cls_logger
 from aurora.exc import *
 
@@ -1231,36 +1232,30 @@ class AuroraDB(object):
         :rtype: list 
 
         """
-        try:
-            with self._database_connection() as db:
-                wnet_id = self.get_wnet_name_id(wnet_arg, tenant_id)['wnet_id']
+        wnet_id = self.get_wnet_name_id(wnet_arg, tenant_id)['wnet_id']
 
-                # Get slices associated with this wnet
-                if include_deleted:
-                    to_execute = ("SELECT * FROM ap_slice WHERE "
-                                  "wnet_id = '%s'" % wnet_id)
-                else:
-                    to_execute = ("""SELECT * FROM ap_slice WHERE 
-                                         wnet_id = '%s' AND 
-                                         status<>'DELETED' AND
-                                         status<>'DELETING'""" % wnet_id)
-                db.execute(to_execute)
-                slice_info_tt = db.fetchall()
+        selected_columns = ['metering.ap_slice_id', 'ap_slice_ssid', 'tenant_id', 'physical_ap', 
+                            'project_id', 'wnet_id', 'status', 'current_mb_sent', 
+                            'current_active_duration', 'total_active_duration']
+        table_name = query.join_table('ap_slice', 'metering', 'ap_slice_id', 'ap_slice_id')
+        condition = ['wnet_id = "%s"' % wnet_id]
 
-                #Prune through list
-                slice_list = []
-                for (i, slice_t) in enumerate(slice_info_tt):
-                    slice_list.append({})
-                    slice_list[i]['ap_slice_id'] = slice_t[0]
-                    slice_list[i]['ap_slice_ssid'] = slice_t[1]
-                    slice_list[i]['tenant_id'] = slice_t[2]
-                    slice_list[i]['physical_ap'] = slice_t[3]
-                    slice_list[i]['project_id'] = slice_t[4]
-                    slice_list[i]['wnet_id'] = slice_t[5]
-                    slice_list[i]['status'] = slice_t[6]
-        except mdb.Error as e:
-            self.LOGGER.error("Error %d: %s", e.args[0], e.args[1])
-            sys.exit(1)
+        if not include_deleted:
+            condition.append('status <> "DELETING"')
+            condition.append('status <> "DELETED"')
+
+        # Get slices associated with this wnet
+        slice_info_tt = query.query(table_name, selected_columns, condition)
+
+        #Prune through list
+        slice_list = []
+        for (i, slice_t) in enumerate(slice_info_tt):
+            slice_list.append({})
+            index = 0
+            for item in selected_columns:
+                slice_list[i][item] = slice_t[index]
+                index += 1
+            slice_list[i]['ap_slice_id'] = slice_list[i].pop('metering.ap_slice_id')
         return slice_list
 
     def get_wnet_name_id(self, wnet_arg, tenant_id):
