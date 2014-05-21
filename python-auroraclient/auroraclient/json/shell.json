@@ -204,7 +204,7 @@
                         {
                             "action":"store",
                             "help":"Select slice with ssid for delete",
-                            "nargs":1,
+                            "nargs":"+",
                             "default":null,
                             "choices":null,
                             "metavar":"ssid"
@@ -466,7 +466,7 @@
                 {
                     "action":"store",
                     "help":"Show a specific slice",
-                    "nargs":"+",
+                    "nargs":"*",
                     "default":null,
                     "choices":null,
                     "metavar":"id"
@@ -475,9 +475,18 @@
                     [
                         "--ssid",
                         {
+<<<<<<< HEAD
                             "action":"store_true",
                             "help":"Select slice based on ssid",
                             "default":false
+=======
+                            "action":"store",
+                            "help":"Select slice with to show",
+                            "nargs":"+",
+                            "default":null,
+                            "choices":null,
+                            "metavar":"ssid"
+>>>>>>> 9ac5ea819f3ea5c206da9c234e25c023753c810b
                         }
                     ]
                 ]
@@ -515,8 +524,18 @@
                             "nargs":"+",
                             "default":null,
                             "choices":null,
-                            "required":true,
                             "metavar":"slices/tags"
+                        }
+                    ],
+                    [
+                        "--ssid",
+                        {
+                            "action":"store",
+                            "help":"Select slice with ssid to add",
+                            "nargs":"+",
+                            "default":null,
+                            "choices":null,
+                            "metavar":"ssid"
                         }
                     ]
                 ]
@@ -567,7 +586,22 @@
                     "metavar":"name"
                 },
                 [
-                
+                    [
+                        "--wslice",
+                        {
+                            "action":"store_true",
+                            "help":"Delete all slices, but keep the wnet",
+                            "default":false
+                        }
+                    ],
+                    [
+                        ["-a", "--all"],
+                        {
+                            "action":"store_true",
+                            "help":"Delete all slices and then delete the wnet",
+                            "default":false
+                        }
+                    ]
                 ]
             ],
             [
@@ -647,7 +681,18 @@
                             "help":"Remove all slices",
                             "default":false
                         }
-                    ] 
+                    ],
+                    [
+                        "--ssid",
+                        {
+                            "action":"store",
+                            "help":"Select slice with ssid to remove",
+                            "nargs":"+",
+                            "default":null,
+                            "choices":null,
+                            "metavar":"ssid"
+                        }
+                    ]
                 ]
             ],
             [

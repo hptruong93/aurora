@@ -1,0 +1,57 @@
+{
+    "VirtualBridges": [
+        {
+            "attributes": {
+                "bridge_settings": {}, 
+                "interfaces": [
+                    "vwlan0", 
+                    "veth0"
+                ], 
+                "name": "linux-br", 
+                "port_settings": {}
+            }, 
+            "flavor": "linux_bridge"
+        }
+    ], 
+    "VirtualInterfaces": [
+        {
+            "attributes": {
+                "attach_to": "eth0", 
+                "mac": "00:00:00:b3:87:20", 
+                "name": "veth0"
+            }, 
+            "flavor": "veth"
+        }, 
+        {
+            "attributes": {
+                "attach_to": "wlan0", 
+                "mac": "00:00:00:00:b3:87:21", 
+                "name": "vwlan0"
+            }, 
+            "flavor": "veth"
+        }
+    ], 
+    "VirtualWIFI": [
+        {
+            "attributes": {
+                "channel": "2", 
+                "country": "CA", 
+                "disabled": "0", 
+                "hwmode": "abg", 
+                "name": "radio0", 
+                "txpower": "20"
+            }, 
+            "flavor": "wifi_radio"
+        }, 
+        {
+            "attributes": {
+                "encryption_type": "wep-open", 
+                "if_name": "wlan0", 
+                "key": "23456", 
+                "name": "MedStaff-Triage", 
+                "radio": "radio0"
+            }, 
+            "flavor": "wifi_bss"
+        }
+    ]
+}

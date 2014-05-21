@@ -1,0 +1,46 @@
+{
+    "VirtualBridges": [
+        {
+            "attributes": {
+                "bridge_settings": {}, 
+                "interfaces": [
+                    "vwlan02", 
+                    "veth02"
+                ], 
+                "name": "linux-br-2", 
+                "port_settings": {}
+            }, 
+            "flavor": "linux_bridge"
+        }
+    ], 
+    "VirtualInterfaces": [
+        {
+            "attributes": {
+                "attach_to": "eth0", 
+                "mac": "00:00:00:a3:8d:20", 
+                "name": "veth02"
+            }, 
+            "flavor": "veth"
+        }, 
+        {
+            "attributes": {
+                "attach_to": "wlan0-2", 
+                "mac": "00:00:00:00:a3:8d:21", 
+                "name": "vwlan02"
+            }, 
+            "flavor": "veth"
+        }
+    ], 
+    "VirtualWIFI": [
+        {
+            "attributes": {
+                "encryption_type": "wep-open", 
+                "if_name": "wlan0-2", 
+                "key": "23456", 
+                "name": "NurseIntern-ICU", 
+                "radio": "radio0"
+            }, 
+            "flavor": "wifi_bss"
+        }
+    ]
+}

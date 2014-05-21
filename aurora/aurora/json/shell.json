@@ -197,7 +197,7 @@
                 {
                     "action":"store",
                     "help":"Show a specific slice",
-                    "nargs": 1,
+                    "nargs":"*",
                     "default":null,
                     "choices":null,
                     "metavar":"id"
@@ -206,9 +206,12 @@
                     [
                         "--ssid",
                         {
-                            "action":"store_true",
-                            "help":"Select slice based on ssid",
-                            "default":false
+                            "action":"store",
+                            "help":"Select slice with to show",
+                            "nargs":"*",
+                            "default":null,
+                            "choices":null,
+                            "metavar":"ssid"
                         }
                     ]
                 ]
