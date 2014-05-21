@@ -26,8 +26,8 @@ def _build_query(table_name, fields, criteria):
     #Now parse the criteria
     if len(criteria) != 0:
         to_execute += " WHERE "
-        to_execute += " AND ".join(criteria)
-    return to_execute + appendix
+        to_execute += join_criteria(criteria, 'AND')
+    return to_execute 
 
 def join_criteria(criteria_list, joiner = 'AND'):
     joiner = " %s " % joiner
