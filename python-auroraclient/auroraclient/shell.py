@@ -166,6 +166,7 @@ class AuroraConsole():
 
             try:
                 arg_hint = params.get('hint')
+                arg_ap = params.get('ap')
                 if arg_hint is None:
                     sys.exit(0)
                 if "location" in arg_hint or "location,slice-load" in arg_hint: # Once the token is 'hint', wait for users' reply
@@ -186,6 +187,8 @@ class AuroraConsole():
 
                             ##############Send the information back again to the manager###############
                             params['location'] = choice
+                            if arg_ap:
+                                params['favored_ap'] = arg_ap
 
                             request_id = utils.generate_request_id()
                            ## print params

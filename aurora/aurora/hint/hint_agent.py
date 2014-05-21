@@ -10,12 +10,20 @@ from aurora import query_agent as filter
 
 def hint(manager, args):
     arg_hint = args['hint']
+    favored_ap = args['ap']
+    if favored_ap:
+        favored_ap = favored_ap[0]
 
     if "location" in arg_hint:
         # Try to access the local database to grab location
         #tempList = manager.ap_filter(arg_hint)
-        tempList = filter.query(filter.join_table("ap", "location_tags", "name", "ap_name"), \
+        if favored_ap is None:
+            tempList = filter.query(filter.join_table("ap", "location_tags", "name", "ap_name"), \
                     ["ap_name", "location_tags.name", "number_slice_free"], ["status = 'UP'", 'number_slice_free > 0'])
+        else:
+            tempList = filter.query(filter.join_table("ap", "location_tags", "name", "ap_name"), \
+                    ["ap_name", "location_tags.name", "number_slice_free"], 
+                    ["status = 'UP'", 'number_slice_free > 0', 'ap_name = "%s"' % favored_ap])
 
         message = ""
         for entry in tempList:
@@ -29,6 +37,8 @@ def hint(manager, args):
                     if "slice-load" in arg_hint:
                         manager.LOGGER.info("Hinting --> Search the lightweight AP")
                         indexSliceLoad = "unknown"
+                    elif favored_ap is not None:
+                        manager.LOGGER.info("Hinting --> Locate the favored AP: " + favored_ap)
                     else:
                         manager.LOGGER.info("Hinting --> Locate a random AP")
                     

@@ -29,6 +29,11 @@ def _generate_query(table_name, fields, criteria):
         to_execute += " AND ".join(criteria)
     return to_execute
 
+def join_criteria(criteria_list, joiner = 'AND'):
+    joiner = " %s " % joiner
+    output = joiner.join(criteria_list)
+    return  "(%s)" % output
+
 def join_table(table1, table2, field1, field2, type = "inner join"):
     type = " " + type.upper() + " "
     out = """%s %s %s ON %s.%s = %s.%s """ % (table1, type, table2, table1, field1, table2, field2)

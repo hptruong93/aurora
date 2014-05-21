@@ -28,6 +28,7 @@ from aurora import dispatcher
 from aurora import slice_plugin
 from aurora.exc import *
 from aurora.ap_provision import http_srv as provision_srv
+from aurora import query_agent as query
 
 from aurora.request_verification import request_verify_API as Verify
 from aurora.request_verification import request_verification as Check
@@ -146,8 +147,8 @@ class Manager(object):
             request['tenant_id'] = args['data']['tenant_id']
 
             Message = sql_Info.checkSliceNumber(request['physical_ap'])
-            print request['physical_ap']
-            print Message  
+            #print request['physical_ap']
+            #print Message  
             if int(Message[0][1]) > 0: #check if the raido channel need to be configured
                 del request['config']['RadioInterfaces'][0]
 
@@ -1026,30 +1027,29 @@ class Manager(object):
 
         args_all = args['all']
         args_name = args['ssid']
+        ap_slice_list = args['ap-slice-delete']
+        if ap_slice_list is None:
+            ap_slice_list = []
+
         if args_all:
             arg_filter = "status!DELETED"
             ap_slice_dict= self.ap_slice_filter(arg_filter, tenant_id)
-            ap_slice_list = []
-            for entry in ap_slice_dict:
-                ap_slice_list.append(entry['ap_slice_id'])
+            ap_slice_list = [entry['ap_slice_id'] for entry in ap_slice_dict]
         elif args_name:
-            arg_filter = "status!DELETED&ap_slice_ssid=" + str(args_name[0])
-            ap_slice_dict = self.ap_slice_filter(arg_filter, tenant_id)
-
-            if len(ap_slice_dict) > 1:
-                message = "There are more than 1 slice named " + str(args_name[0])          
+            conditions = map(lambda x : "ap_slice_ssid = '%s'" % x, args_name)
+            conditions = query.join_criteria(conditions, "OR")
+            result = query.query('ap_slice', ['ap_slice_id'], 
+                                 [conditions, 'tenant_id = "%s"' % tenant_id, 'status <> "DELETED"'])
+            if (len(result) != len(args_name)) and (len(result) != 0):
+                message = "Duplicated ssid exists. Specify slice with its id to delete instead."
                 return {"status": False, "message": message}
-            ap_slice_list = []
 
-            for entry in ap_slice_dict:
-                ap_slice_list.append(entry['ap_slice_id'])
-        else:
-            ap_slice_list = args['ap-slice-delete']
-
+            ap_slice_list += [x[0] for x in result]
+            
 
       #  self.LOGGER.debug("ap_slice_list: %s",ap_slice_list)
 
-        if not ap_slice_list:
+        if not ap_slice_list or len(ap_slice_list) == 0:
             message += " None to delete\n"
 
         status = True
@@ -1063,20 +1063,14 @@ class Manager(object):
             my_slice = self.aurora_db.wslice_belongs_to(tenant_id, project_id, ap_slice_id)
             if not my_slice:
                 message += "No slice '%s'\n" % ap_slice_id
-                if ap_slice_id == ap_slice_list[-1]:
-                    status = False
-                    continue #Indeed should continue here to check if we can delete the next slice
-                else:
-                    continue
+                status = False
+                continue #Indeed should continue here to check if we can delete the next slice
 
             error = Verify.verifyOK(tenant_id = tenant_id, request = config)
             if error is not None:
                 message += error + '\n'
-                if ap_slice_id == ap_slice_list[-1]:
-                    status = False
-                    continue #Indeed should continue here to check if we can delete the next slice
-                else:
-                    continue
+                status = False
+                continue #Indeed should continue here to check if we can delete the next slice
             try:
                 arg_filter = "ap_slice_id=%s&status=DELETED" % ap_slice_id
                 slice_list = self.ap_slice_filter(arg_filter, tenant_id)
@@ -1491,8 +1485,17 @@ class Manager(object):
         :rtype: dict
 
         """
+        slice_id_list = args['ap-slice-show']
+        arg_name = args['ssid']
+        if arg_name is not None:
+            conditions = map(lambda x : "ap_slice_ssid = '%s'" % x, arg_name)
+            conditions = query.join_criteria(conditions, "OR")
+            result = query.query('ap_slice', ['ap_slice_id'], 
+                                 [conditions, 'tenant_id = "%s"' % tenant_id, 'status <> "DELETED"'])
+            slice_id_list += [x[0] for x in result]
+
         message = ""
-        for arg_id in args['ap-slice-show']:
+        for arg_id in slice_id_list:
             if self.aurora_db.wslice_belongs_to(tenant_id, project_id, arg_id):
                 message += self.ap_slice_list({'filter':['ap_slice_id=%s' % arg_id,],
                                            'i':True,
@@ -1561,15 +1564,25 @@ class Manager(object):
         :rtype: dict
 
         """
+        slice_id_list = args['slice']
+        if slice_id_list is None:
+            slice_id_list = []
+
         message = ""
         #TODO:Slice filter integration
         arg_name = args['wnet-add-wslice'][0]
-        if not args['slice']:
+        if not args['slice'] and not args['ssid']:
             err_msg = "Error: No slices specified.\n"
             response = {"status":False, "message":err_msg}
             return response
+        elif args['ssid']:
+            conditions = map(lambda x : "ap_slice_ssid = '%s'" % x, args['ssid'])
+            conditions = query.join_criteria(conditions, "OR")
+            result = query.query('ap_slice', ['ap_slice_id'], 
+                                 [conditions, 'tenant_id = "%s"' % tenant_id, 'status <> "DELETED"'])
+            slice_id_list += [x[0] for x in result]
 
-        for arg_slice in args['slice']:
+        for arg_slice in slice_id_list:
 
             self.LOGGER.debug("arg_name: %s", arg_name)
             self.LOGGER.debug("arg_slice: %s", arg_slice)
@@ -1621,17 +1634,33 @@ class Manager(object):
 
         """
         arg_name = args['wnet-delete'][0]
+        message = ""
+        status = True
 
-        #Send to database
-        try:
-            message = self.aurora_db.wnet_remove(arg_name, tenant_id)
-        except Exception as e:
-            traceback.print_exc(file=sys.stdout)
-            response = {"status":False, "message":e.message}
+        if args['wslice'] or args['all']:
+            slices_to_delete = self.aurora_db.get_wnet_slices(arg_name, tenant_id)
+            slices_to_delete = [slice['ap_slice_id'] for slice in slices_to_delete]
+
+            deleting_arg = {'all': False, 'ap-slice-delete' : slices_to_delete, 'ssid': None}
+            delete_status = self.ap_slice_delete(deleting_arg, tenant_id, user_id, project_id)
+
+            message += delete_status['message']
+            status = delete_status['status']
+
+        if (args['all'] or not args['wslice']) and status:
+            #Send to database
+            try:
+                message += self.aurora_db.wnet_remove(arg_name, tenant_id)
+            except Exception as e:
+                traceback.print_exc(file=sys.stdout)
+                response = {"status":False, "message":e.message}
+                return response
+            #Send Response
+            response = {"status":True, "message":message}
             return response
-        #Send Response
-        response = {"status":True, "message":message}
-        return response
+        else:
+            message += "Deleting slices failed. Manager did not proceed to delete wnet!"
+            return {'status': status, 'message': message}
 
     def wnet_join_subnet(self, args, tenant_id, user_id, project_id):
         """Joins a wnet to an existing subnet within SAVI.
@@ -1658,12 +1687,25 @@ class Manager(object):
         message = ""
         arg_name = args['wnet-remove-wslice'][0]
         arg_a = args['all']
-        if not args['slice'] and not arg_a:
+        arg_ssid = args['ssid']
+        if not args['slice'] and not arg_a and not arg_ssid:
             err_msg = "No slice specified.\n"
             response = {"status":False, "message":err_msg}
             return response
+        else:
+            if arg_ssid:
+                conditions = map(lambda x : "ap_slice_ssid = '%s'" % x, args['ssid'])
+                conditions = query.join_criteria(conditions, "OR")
+                result = query.query('ap_slice', ['ap_slice_id'], 
+                                     [conditions, 'tenant_id = "%s"' % tenant_id, 'status <> "DELETED"'])
+                list_from_ssid = [x[0] for x in result]
+            else:
+                list_from_ssid = []
 
         slices_to_remove = args.get('slice')
+        if slices_to_remove is None:
+            slices_to_remove = []
+
         if arg_a:
             slices_to_remove = []
             wnet_slices_data = self.aurora_db.get_wnet_slices(arg_name, 
@@ -1673,7 +1715,7 @@ class Manager(object):
                 slices_to_remove.append(ap_slice_data.get('ap_slice_id'))
 
 
-        for arg_slice in slices_to_remove:
+        for arg_slice in slices_to_remove + list_from_ssid:
             try:
                 my_slice = self.aurora_db.wslice_belongs_to(tenant_id, 
                                                             project_id, 
