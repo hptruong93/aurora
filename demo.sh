@@ -113,6 +113,10 @@ echo Finished adding slices to wnet
 echo ""Command issued ------------------\> aurora wnet-show NurseIntern""
 aurora wnet-show NurseIntern
 #####################################################################
+wait_for_input "view statistics for NurseIntern wnet"
+echo ""Command issued ------------------\> aurora wnet-show -i NurseIntern""
+aurora wnet-show -i NurseIntern
+#####################################################################
 wait_for_input "delete wnet NurseIntern"
 
 echo Deleting NurseIntern wnet
