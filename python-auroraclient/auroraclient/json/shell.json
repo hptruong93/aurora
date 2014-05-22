@@ -177,6 +177,39 @@
                             "choices":null,
                             "metavar":"tags"
                         }   
+                    ],
+                    [
+                        "--ssid",
+                        {
+                            "action":"store",
+                            "help":"ssid",
+                            "nargs":"*",
+                            "default":null,
+                            "choices":null,
+                            "metavar":"ssid"
+                        }
+                    ],
+                    [
+                        "--location",
+                        {
+                            "action":"store",
+                            "help":"location",
+                            "nargs":1,
+                            "default":null,
+                            "choices":null,
+                            "metavar":"location"
+                        }
+                    ],
+                    [
+                        "--bridge",
+                        {
+                            "action":"store",
+                            "help":"bridge type and address (if applicable)",
+                            "nargs": 1,
+                            "default":null,
+                            "choices":null,
+                            "metavar":"bridge"
+                        }
                     ]
                 ]
             ],

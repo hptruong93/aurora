@@ -124,18 +124,6 @@ class AuroraConsole():
                 if not (params['file'] or params['hint']):                
                     print 'Please specify a file argument or hint!'
                     return
-          #      elif params['hint'] and not params['file']:
-                    # Generate a json for use
-          #          GEN_JSON_FNAME = 'gen_config.json'
-          #          GEN_JSON_FPATH = os.path.join(CLIEN_JSON_DIR, GEN_JSON_FNAME)
-
-          #          self.slice_json_generator = \
-          #              slice_json_generator.SliceJsonGenerator(
-          #                  GEN_JSON_FPATH,
-          #                  1,1,1
-          #          ) # Initialize the slice_json_generator
-          #          params['file'] = [GEN_JSON_FPATH,]   """
-
                 elif params['file'] and not params['hint']:
                     try:
                         JFILE = open(os.path.join(CLIENT_DIR, 'json', params['file'][0]), 'r')
@@ -167,90 +155,104 @@ class AuroraConsole():
             try:
                 arg_hint = params.get('hint')
                 arg_ap = params.get('ap')
+
                 if arg_hint is None:
                     sys.exit(0)
                 if "location" in arg_hint or "location,slice-load" in arg_hint: # Once the token is 'hint', wait for users' reply
-                    if msg == "" or msg == "unkown": # in case of the fact that APs are full
+                    ap_locations = msg.get('ap_location')
+                    if msg['ap_location'] == "": # in case of APs are full
                         print "Warning: No AP is currently available!!!"
                         sys.exit(0)
 
                     exitLoop = False
                     while not exitLoop:
-                        print "Please Enter the location where the AP you want to access:"
-                        print "(Enter 0 to leave otherwise)"
+                        if params.get('location') is None:
+                            print ap_locations
+                            print "Please Enter the location where the AP you want to access:"
+                            print "(Enter 0 to leave otherwise)"
 
-                        choice = raw_input()
+                            choice = raw_input()
+                        else:
+                            choice = params.get('location')[0]
                         if choice == '0':
                             exitLoop = True;
                         elif len(choice) > 0: # Unable to do a logic checking here due to the lack of data at the file
                             print "the location is " + choice
+                            to_send = None
+                            if params.get('location') is None:
+                                ##############Send the information back again to the manager###############
+                                params['location'] = [choice]
+                                if arg_ap:
+                                    params['favored_ap'] = arg_ap
 
-                            ##############Send the information back again to the manager###############
-                            params['location'] = choice
-                            if arg_ap:
-                                params['favored_ap'] = arg_ap
-
-                            request_id = utils.generate_request_id()
-                           ## print params
-                            to_send = {
-                                'function':function,
-                                'parameters':params,
-                                'tenant_id': tenant_id,
-                                'project_id': project_id,
-                                'user_id': user_id,
-                                'request_id': request_id,
-                            }
-                            ##FOR DEBUGGING PURPOSES
-                            #pprint(to_send)
-                            ##END DEBUG
+                                request_id = utils.generate_request_id()
+                                to_send = {
+                                    'function':function,
+                                    'parameters':params,
+                                    'tenant_id': tenant_id,
+                                    'project_id': project_id,
+                                    'user_id': user_id,
+                                    'request_id': request_id,
+                                }
                             
                             if to_send:
-                                message = json_sender.JSONSender().send_json(sending_address, to_send, request_id) # change back to 132.206.206.133:5554
-                                #self.slice_json_generator = slice_json_generator.SliceJsonGenerator(os.path.join(CLIENT_DIR, 'json/yangwutest.json'),1,1,1); # Initialize the slice_json_generator
-                                GEN_JSON_FNAME = 'gen_config.json'
-                                GEN_JSON_FPATH = os.path.join(CLIEN_JSON_DIR, GEN_JSON_FNAME)
+                                message = json_sender.JSONSender().send_json(sending_address, to_send, request_id)
+                            else:
+                                message = msg
 
-                                if message is not None: # Restore params['file'] and clean up params['hint'] to create a slice
-                                    if len(message) == 0: #There is no chosen ap
-                                        print "Cannot locate an available AP based on provided information"
-                                        break
+                            GEN_JSON_FNAME = 'gen_config.json'
+                            GEN_JSON_FPATH = os.path.join(CLIEN_JSON_DIR, GEN_JSON_FNAME)
 
-                                    params['hint'] = None
-                                    del params['location']
-                                    params['ap'] = [message]
+                            if message is not None: # Restore params['file'] and clean up params['hint'] to create a slice
+                                if len(message['ap_location']) == 0: #There is no chosen ap
+                                    print "Cannot locate an available AP based on provided information"
+                                    break
 
-                                    self.slice_json_generator = \
-                                    slice_json_generator.SliceJsonGenerator(
-                                        params['ap'][0],
-                                        GEN_JSON_FPATH,
-                                        1, tenant_id, project_id
-                                    ) # Initialize the slice_json_generator
-                                    params['file'] = [GEN_JSON_FPATH,]
-                                    try:
-                                        JFILE = open(os.path.join(CLIENT_DIR, 'json', params['file'][0]), 'r')
-                                        #print JFILE
-                                        file_content = json.load(JFILE)
-                                        params['file'] = file_content
-                                        JFILE.close()
-                                    except:
-                                        print('Error loading json file!')
-                                        sys.exit(-1)
+                                params['hint'] = None
+                                del params['location']
+                                params['ap'] = [message['ap']]
 
-                                    message = self._send_to_server(sending_address, function, params)
-                                        
-                                    #if "An initial configuration is required" in message: # if the AP has not configured its radio, configure it with JSON
-                                        #params['file']['VirtualWIFI'].append({   "flavor" : "wifi_radio",
-                                                                        #"attributes" : 
-                                                                            #{
-                                                                                #"name" : "radio0",
-                                                                                #"channel" : "2",
-                                                                                #"txpower" : "20",
-                                                                                #"disabled" : "0",
-                                                                                #"country" : "CA",
-                                                                                #"hwmode" : "abg"   
-                                                                            #}})
-                                        #self._send_to_server(sending_address, function, params) 
-                                        
+                                if message['ssid'] is None:
+                                    params['ssid'] = None
+                                    ssid = None
+                                    print "ssid is not provided or invalid"
+                                else:
+                                    ssid = params['ssid'][0]
+
+                                if message['bridge']['flavor'] is None:
+                                    bridge = None
+                                    params['bridge'] = None
+                                    print "bridge is not provided or invalid"
+                                else:
+                                    bridge = {}
+                                    bridge['name'] = params['bridge'][0]
+
+                                user_config = {
+                                    'ap': params['ap'][0],
+                                    'ssid': ssid,
+                                    'bridge': bridge,
+                                }
+
+                                self.slice_json_generator = \
+                                slice_json_generator.SliceJsonGenerator(
+                                    user_config,
+                                    GEN_JSON_FPATH,
+                                    1, tenant_id, project_id
+                                ) # Initialize the slice_json_generator
+
+                                params['file'] = [GEN_JSON_FPATH,]
+
+                                try:
+                                    JFILE = open(os.path.join(CLIENT_DIR, 'json', params['file'][0]), 'r')
+                                    #print JFILE
+                                    file_content = json.load(JFILE)
+                                    params['file'] = file_content
+                                    JFILE.close()
+                                except:
+                                    print('Error loading json file!')
+                                    sys.exit(-1)
+
+                                message = self._send_to_server(sending_address, function, params)
                             exitLoop = True;
                         else:
                             exitLoop = True;

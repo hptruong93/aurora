@@ -20,12 +20,15 @@ CLIENT_DIR = os.path.dirname(os.path.abspath(__file__)) # detect the local direc
 
 class SliceJsonGenerator():
     
-    def __init__(self, APname, filename, sliceID, tenantID, projectID):
+    def __init__(self, user_config, filename, sliceID, tenantID, projectID):
         #Initialize outside dictionary and populate
+        self.filename = filename
         self.data = {}
         self.params = {}
-        self.APname = APname
+        self.APname = user_config['ap']
         self.sliceNUM = -1
+        self.ssid = user_config['ssid']
+        self.bridge = user_config['bridge']
         #self.data['ap_slice_id'] = sliceID
         #self.data['tenant_id'] = tenantID
         #self.data['project_id'] = projectID
@@ -37,9 +40,9 @@ class SliceJsonGenerator():
         self.params['type'] = []
         #Initialize function dictionary
         self.options = {1:self.SliceConfig, 2:self.addVI, 3:self.listVI, 4:self.delVI, 5:self.addVB, 6:self.listVB, 7:self.delVB, 8:self.printConfig}
-        self.generate(filename)
+        self.generate()
     
-    def generate(self, filename):
+    def generate(self):
         exitLoop = False
         while not exitLoop:
             print('Choose an option: ')
@@ -59,7 +62,7 @@ class SliceJsonGenerator():
                 sys.exit(0)
             elif choice == '0':
                 exitLoop = True
-                self._modifyConfig(filename)
+                self._modifyConfig()
             else:
                 try:
                     self.options[int(choice)]()
@@ -67,11 +70,11 @@ class SliceJsonGenerator():
                     traceback.print_exc(file=sys.stdout)
                     
             
-    def _modifyConfig(self, filename):
+    def _modifyConfig(self):
         # Dump to JSON file
         try:
             #print "the file name is " + filename
-            self.JFILE = open(filename, "w")
+            self.JFILE = open(self.filename, "w")
         except IOError:
             traceback.print_exc(file=sys.stdout)
             sys.exit(-1)
@@ -150,22 +153,27 @@ class SliceJsonGenerator():
         #print file_content['VirtualInterfaces'];
         
         print('Enter attributes...')
-        print('SSID NAME:')
-        while ('True' not in Loop):
-            tmp_data = raw_input()
-            Loop = self.communicatewithManager(tmp_data,'SSID_NAME')
-            if 'True' not in Loop:
-                print 'Invalid name. Please try again.'
-
+        if self.ssid is None:
+            print('SSID NAME:')
+            while ('True' not in Loop):
+                tmp_data = raw_input()
+                Loop = self.communicatewithManager(tmp_data,'SSID_NAME')
+                if 'True' not in Loop:
+                    print 'Invalid name. Please try again.'
+        else:
+            tmp_data = self.ssid
         self.data['config']['RadioInterfaces'][1]['attributes']['name'] = tmp_data
 
-        Loop = 'False'
-        print('Bridge Type:')
-        while ('True' not in Loop):
-            tmp_data = raw_input()
-            Loop = self.communicatewithManager(tmp_data,'bridge_type')
-            if 'True' not in Loop:
-                print 'Invalid bridge type. Please try again.'
+        if self.bridge is None:
+            Loop = 'False'
+            print('Bridge Type:')
+            while ('True' not in Loop):
+                tmp_data = raw_input()
+                Loop = self.communicatewithManager(tmp_data,'bridge_type')
+                if 'True' not in Loop:
+                    print 'Invalid bridge type. Please try again.'
+        else:
+            tmp_data = self.bridge['name']
 
         self.data['config']['VirtualBridges'][0]['flavor'] = tmp_data
         
@@ -322,6 +330,7 @@ class SliceJsonGenerator():
         return ("00:00:00:" + rand + ":20", "00:00:00:00:" + rand + ":21")
 
     def printConfig(self):
+        self._modifyConfig()
         print(json.dumps(self.data, sort_keys=True, indent=4))
 
 def main():

@@ -135,7 +135,7 @@ class Manager(object):
             Message = 'True'
         
         elif 'SSID_NAME' in args['type']: # ciheck if there is the same name already existing in the database
-            status = sql_Info.verify(args['data'], tenant_id)
+            status = sql_Info.verify_ssid(args['data'], tenant_id)
             Message = str(status)
 
         #print ('VirtualWIFI' in args['data']) and ('wifi_radio' in args['data']['VirtualWIFI'][0]['flavor'])
@@ -148,9 +148,8 @@ class Manager(object):
             request['tenant_id'] = args['data']['tenant_id']
 
             Message = sql_Info.checkSliceNumber(request['physical_ap'])
-            #print request['physical_ap']
-            #print Message  
-            if int(Message[0][1]) > 0: #check if the raido channel need to be configured
+
+            if int(Message[0][1]) > 0: #check if the radio channel need to be configured
                 del request['config']['RadioInterfaces'][0]
 
             error = check.verify('create_slice', request)
@@ -892,7 +891,7 @@ class Manager(object):
                        # we need to split the file for each AP, saved here
         # Add one section for dealing with 'hint' token, once it is processed, return
         if arg_hint:
-            return hint_agent.hint(self, args)
+            return hint_agent.hint(self, args, tenant_id, user_id, project_id)
         # end of the section
 
         message = ""
