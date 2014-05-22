@@ -152,7 +152,11 @@ class Manager(object):
             if int(Message[0][1]) > 0: #check if the radio channel need to be configured
                 del request['config']['RadioInterfaces'][0]
 
-            error = check.verify('create_slice', request)
+            try:
+                error = check.verify('create_slice', request)
+            except:
+                error = "Error"
+
             if error is None:
                 status = True
             else:

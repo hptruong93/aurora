@@ -156,6 +156,11 @@ class RadioConfigExistedVerification(RequestVerification):
                     return "Radio for the ap " + request['physical_ap'] + " has already been configured. Cannot change the radio's configurations."
                 elif (not config_existed) and (not request_has_config):
                     return "Radio for the ap " + request['physical_ap'] + " has not been configured. An initial configuration is required."
+                else: #Check for pending slices. Reject slice creation if previous slice creation has not been completed
+                    number_pending_slice = filter.query('ap_slice', ['COUNT(*)'], 
+                                                        ['status = "PENDING"', 'physical_ap = "%s"' % request['physical_ap']])
+                    if number_pending_slice[0][0] > 0:
+                        raise exceptions.RadioConfigLocked('Radio config is pending. Try again later...')
 
             except KeyError, e:
                 raise exceptions.MissingKeyInRequest(str(e.args[0]))

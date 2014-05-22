@@ -77,6 +77,17 @@ class RadioConfigInvalid(VerificationException):
     def _handle_exception(self):
         return self.message
 
+#This exception is raised when the client's operation would result in:
+#Uncertain slice creation status because there was slice creation previously and the AP has not reported back the status
+# of that operation
+class RadioConfigLocked(VerificationException):
+    def __init__(self, message = ""):
+        self.message = message
+        super(RadioConfigLocked, self).__init__(message)
+
+    def _handle_exception(self):
+        return self.message
+
 #This exception is raised when the client attempts to create a new slice and provide an invalid number of Bridge
 #The number of Bridge expected is one.
 class BridgeNumberInvalid(VerificationException):
