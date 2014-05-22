@@ -61,14 +61,12 @@ else
     ap=${1}
     shift
     while [[ -n "$1" ]]; do
-        aurora ap-slice-create --hint location --ap ${ap} << EOL
-mcgill
+        aurora ap-slice-create --hint location --ap ${ap} --ssid ${1} --location mcgill --bridge linux_bridge << EOL
 1
-${1}
-linux_bridge
 0
 EOL
         shift
+        sleep 5
     done
 
     sleep 1

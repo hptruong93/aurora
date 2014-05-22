@@ -61,7 +61,7 @@ def query(table_name, fields = [], criteria = [], appendix = ''):
             if to_execute is None:
                 return None
 
-            print to_execute
+            #print to_execute
             cursor.execute(to_execute)
             information = cursor.fetchall()
             return information
