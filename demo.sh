@@ -20,6 +20,7 @@ aurora ap-slice-delete --all
 aurora wnet-delete Triage
 aurora wnet-delete NurseIntern
 
+echo "*--------------------------------------------------------------------------*"
 echo Finished cleaning up
 echo Ready to start
 
@@ -78,19 +79,29 @@ aurora wnet-show MedStaff
 
 
 #####################################################################
-wait_for_input "create NurseIntern slices"
-echo Creating NurseIntern slices
+wait_for_input "create NurseIntern slice on Triage AP"
+echo Creating NurseIntern slice on Triage AP
 #Nurse Intern
-# bash bash_aurora.sh ICU NurseIntern-ICU > /dev/null
-echo ""Command issued ------------------\> aurora ap-slice-create --ap ICU --file NurseIntern-ICU.json""
-aurora ap-slice-create --ap ICU --file NurseIntern-ICU.json
-echo Done with slice on ICU
+
 # bash bash_aurora.sh Triage NurseIntern-Triage > /dev/null
 echo ""Command issued ------------------\> aurora ap-slice-create --ap Triage --file NurseIntern-Triage.json""
 aurora ap-slice-create --ap Triage --file NurseIntern-Triage.json
 echo Done with slice on Triage
 
-echo Finished creating NurseIntern slices
+
+echo Finished creating NurseIntern slice on Triage AP
+echo ""Command issued ------------------\> aurora ap-slice-list""
+aurora ap-slice-list
+#####################################################################
+wait_for_input "create NurseIntern slice on ICU AP"
+echo Creating NurseIntern slice on ICU AP
+# bash bash_aurora.sh ICU NurseIntern-ICU > /dev/null
+echo ""Command issued ------------------\> aurora ap-slice-create --ap ICU --file NurseIntern-ICU.json""
+aurora ap-slice-create --ap ICU --file NurseIntern-ICU.json
+echo Done with slice on ICU
+
+
+echo Finished creating NurseIntern slice on ICU AP
 echo ""Command issued ------------------\> aurora ap-slice-list""
 aurora ap-slice-list
 #####################################################################

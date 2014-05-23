@@ -76,7 +76,7 @@ class APSliceSSIDVerification(RequestVerification):
                         new_ssid = entry['attributes']['name']
 
                 result = filter.query('ap_slice', ['COUNT(ap_slice_ssid)'], ['status <> "DELETED"', \
-                                                                             'tenant_id = "%s"' % request['tenant_id'],\
+                                                                             'physical_ap = "%s"' % request['physical_ap'],\
                                                                              'ap_slice_ssid = "%s"' % new_ssid])
 
                 if result[0][0] != 0: #Meaning there is already a slice with "new_ssid" as ssid
