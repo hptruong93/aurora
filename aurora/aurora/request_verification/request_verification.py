@@ -102,6 +102,7 @@ class APSliceNumberVerification(RequestVerification):
         try:
             name = 0
             slice_left = 1
+            number_radio = 2
 
             if request is None:
                 result = filter.query('ap', ['name', 'number_slice_free'], [])
@@ -113,14 +114,20 @@ class APSliceNumberVerification(RequestVerification):
                 if not RequestVerification.ap_name_exists(request['physical_ap']):
                     raise exceptions.NoSuchAPExists(str(request['physical_ap']))
 
-                result = filter.query('ap', ['name', 'number_slice_free'], ['name = "%s"' % request['physical_ap']])
+                result = filter.query('ap', ['name', 'number_slice_free', 'number_radio'], ['name = "%s"' % request['physical_ap']])
 
-                for ap in result: #We expect only 1 ap though
-                    if ap[slice_left] - _ADDITIONAL_SLICE[command] < 0:
-                        return 'The AP \'' + str(ap[name]) + '\' has no space left to execute command \'' + command + '\'.'
-        except mdb.Error, e:
-                traceback.print_exc(file=sys.stdout)
-                sys.exit(1)
+                ap = result[0] #We only expect 1 result
+                if ap[slice_left] - _ADDITIONAL_SLICE[command] < 0:
+                    return 'The AP \'' + str(ap[name]) + '\' has no space left to execute command \'' + command + '\'.'
+        
+                #Double check with ap_provision database if has more than 1 radio
+                if ap[number_radio] > 1:
+                    requested_radio = provision_reader.get_radio_wifi_bss(request['config'])
+                    request_ap_info = provision_reader.get_physical_ap_info(request['physical_ap'])
+                    number_slices = provision_reader.get_number_slice_on_radio(request_ap_info, requested_radio)
+                    if number_slices >= 4: #No more space
+                        return 'The AP \'%s\' has no space left on radio \'%s\' to execute command \'%s\'.' % (str(ap[name]), str(requested_radio), command) 
+
         except KeyError, e:
                 raise exceptions.MissingKeyInRequest(str(e.args[0]))
         return None
@@ -151,6 +158,8 @@ class RadioConfigExistedVerification(RequestVerification):
                     raise exceptions.NoSuchAPExists(str(request['physical_ap']))
 
                 config_existed = number_slices != 0
+
+                print "Existing config is %s and requesting config is %s " % (config_existed, request_has_config)
 
                 if config_existed and request_has_config:
                     return "Radio for the ap " + request['physical_ap'] + " has already been configured. Cannot change the radio's configurations."

@@ -26,7 +26,7 @@ def _build_query(table_name, fields, criteria):
     #Now parse the criteria
     if len(criteria) != 0:
         to_execute += " WHERE "
-        to_execute += join_criteria(criteria, 'AND')
+        to_execute += ' AND '.join(criteria)
     return to_execute 
 
 def join_criteria(criteria_list, joiner = 'AND'):
@@ -61,7 +61,7 @@ def query(table_name, fields = [], criteria = [], appendix = ''):
             if to_execute is None:
                 return None
 
-            #print to_execute
+            print to_execute
             cursor.execute(to_execute)
             information = cursor.fetchall()
             return information
