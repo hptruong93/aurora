@@ -8,7 +8,7 @@ received messages.
 """
 
 
-import collections
+import Queue
 import datetime
 import logging
 import json
@@ -61,7 +61,7 @@ class APMonitor(object):
         self.poller_threads = {}
 
         # To handle incoming status update requests, make a command queue
-        self.timeout_queue = collections.deque()
+        self.timeout_queue = Queue.Queue()
         self._make_queue_daemon()
 
     def _make_queue_daemon(self):
@@ -84,12 +84,12 @@ class APMonitor(object):
 
         """
         while True:
-            while len(self.timeout_queue) < 1 and not stop_event.is_set():
-                time.sleep(0.1)
+            # while len(self.timeout_queue) < 1 and not stop_event.is_set():
+            #     time.sleep(0.1)
             if stop_event.is_set():
                 self.LOGGER.info("Queue Daemon caught stop event")
                 break
-            (args, kwargs) = self.timeout_queue.popleft()
+            (args, kwargs) = self.timeout_queue.get()
             self.LOGGER.debug("Queue Daemon is calling _set_status(%s, %s)",
                 args, kwargs
             )
@@ -102,7 +102,7 @@ class APMonitor(object):
         :param kwargs: Keyword arguments for set_status 
 
         """
-        self.timeout_queue.append((args, kwargs))
+        self.timeout_queue.put((args, kwargs))
 
     def stop(self):
         """Stops all threads created by AP Monitor."""
