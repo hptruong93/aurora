@@ -17,6 +17,10 @@ import urlparse
 from pprint import pprint
 import sys
 import traceback
+from SocketServer import ThreadingMixIn
+import threading
+import Queue
+from abc import *
 
 from aurora import cls_logger
 from aurora import manager
@@ -45,6 +49,9 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     """
     server_version= "Aurora/0.2"
     MANAGER = None
+    request_queue = Queue.Queue()
+
+    
 
     # Override __init__ to instantiate Manager, pass along parameters:
     # BaseHTTPServer.BaseHTTPRequestHandler(request, client_address, 
@@ -61,6 +68,9 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if NewConnectionHandler.MANAGER == None:
             self.LOGGER.info("Error: No manager to handle request.")
             sys.exit(1)
+
+
+
         BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, *args)
     
     # __del__ does not override anything
@@ -117,10 +127,7 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         default_response = {}
         default_response['status'] = False
         default_response['message'] = ""
-        #with open(os.path.join(CLIENT_DIR, 'json/response.json'), 
-        #          'w') as RESPONSE_FILE: 
-        #    json.dump(default_response, RESPONSE_FILE, 
-        #              sort_keys=True, indent=4)
+
         with open(os.path.join(CLIENT_DIR, 'json/' + request_id + '.json'), 
              'w') as RESPONSE_FILE: 
             json.dump(default_response, RESPONSE_FILE, 
@@ -142,16 +149,9 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         # Send to manager.py
         # Format of response: 
         # {"status":(true of false) ,"message":"string if necessary"}
-        response = NewConnectionHandler.MANAGER.parseargs(
-                function, parameters, tenant_id,
-                user_id, project_id
-        )
-
-
-        #Save response to file
-        with open(os.path.join(CLIENT_DIR, 'json/' + request_id + '.json'), 
-                  'w') as RESPONSE_FILE: 
-            json.dump(response, RESPONSE_FILE, sort_keys=True, indent=4)
+        NewConnectionHandler.request_queue.put([function, parameters, tenant_id, user_id, project_id, request_id])
+        #print len(NewConnectionHandler.request_queue)
+        
     
     # Sends a document, unused
     def sendPage( self, type, body ):
@@ -167,7 +167,35 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write( body )
         
-class ManagerServer(BaseHTTPServer.HTTPServer):
+
+def _process_request(queue):
+    while True:
+        data = queue.get()
+
+        function = data[0]
+        parameters = data[1]
+        tenant_id = data[2]
+        user_id = data[3]
+        project_id = data[4]
+        request_id = data[5]
+
+        response = NewConnectionHandler.MANAGER.parseargs(
+                function, parameters, tenant_id,
+                user_id, project_id
+        )
+
+        #Save response to file
+        with open(os.path.join(CLIENT_DIR, 'json/' + request_id + '.json'), 
+                  'w') as RESPONSE_FILE: 
+            json.dump(response, RESPONSE_FILE, sort_keys=True, indent=4)
+
+def _make_request_daemon(queue):
+    t = threading.Thread(target=_process_request, args=(queue, ))
+    t.daemon = True
+    t.start()
+    return t
+
+class ManagerServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
     """Builds upon :class:`BaseHTTPServer.HTTPServer`.
 
     Includes a logger, instantiates a :class:`aurora.manager.Manager` 
@@ -186,6 +214,9 @@ class ManagerServer(BaseHTTPServer.HTTPServer):
         # When initialized, handler_class from main is stored in 
         # RequestHandlerClass
         self.RequestHandlerClass.MANAGER = self.manager
+
+        request_daemon = _make_request_daemon(self.RequestHandlerClass.request_queue)
+
         BaseHTTPServer.HTTPServer.serve_forever(self)
     
     def server_close(self):
