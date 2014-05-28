@@ -189,11 +189,14 @@ def _process_request(queue):
                   'w') as RESPONSE_FILE: 
             json.dump(response, RESPONSE_FILE, sort_keys=True, indent=4)
 
-def _make_request_daemon(queue):
-    t = threading.Thread(target=_process_request, args=(queue, ))
-    t.daemon = True
-    t.start()
-    return t
+def _make_request_daemon(queue, quantity = 1):
+    output = []
+    for i in range(0, quantity):
+        t = threading.Thread(target=_process_request, args=(queue, ))
+        t.daemon = True
+        t.start()
+        output.append(t)
+    return output
 
 class ManagerServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
     """Builds upon :class:`BaseHTTPServer.HTTPServer`.
