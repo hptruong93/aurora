@@ -12,14 +12,15 @@ A possible entry point for starting manager is :func:`main()`.
 import BaseHTTPServer
 import json
 import logging
-import os
 import urlparse
 from pprint import pprint
+import os
 import sys
 import traceback
 from SocketServer import ThreadingMixIn
 import threading
 import Queue
+import time
 
 from aurora import cls_logger
 from aurora import manager
@@ -29,6 +30,8 @@ LOGGER = logging.getLogger(__name__)
 
 
 CLIENT_DIR = os.path.dirname(os.path.abspath(__file__))
+RESPONSES = {}
+last_response = 0
 
 class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     """Handles client HTTP requests.
@@ -50,8 +53,6 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     MANAGER = None
     request_queue = Queue.Queue()
 
-    
-
     # Override __init__ to instantiate Manager, pass along parameters:
     # BaseHTTPServer.BaseHTTPRequestHandler(request, client_address, 
     #                                       server)
@@ -67,8 +68,6 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if NewConnectionHandler.MANAGER == None:
             self.LOGGER.info("Error: No manager to handle request.")
             sys.exit(1)
-
-
 
         BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, *args)
     
@@ -96,14 +95,21 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.end_headers()
         
         #Open response file
-        RESPONSEFILE = open(os.path.join(CLIENT_DIR, 'json/' + params['request_id'] + '.json'), 
-                            'r')
-        response = json.load(RESPONSEFILE)
-        
+        try:
+            response = RESPONSES[params['request_id']]
+        except:
+            response = {"status": False ,"message":"Response not found for the request"}
         self.wfile.write(response)
-       
-        #Delete the response file for security reason
-        os.remove(RESPONSEFILE.name)
+        RESPONSES.pop(params['request_id'], None)
+
+        global last_response
+        #If the manager HTTP server was idle in the last 30s, then all responses must have expired
+        #If so, clear all responses
+        if time.time() - last_response > 30: 
+            RESPONSES.clear()
+            LOGGER.info("HTTP server has been idle for the last 30s. Responses cleared") 
+        last_response = time.time()
+
     
     def do_POST(self):
         """Handles a POST request.
@@ -122,15 +128,6 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.LOGGER.debug(JSONfile['function'])
 
         request_id = JSONfile['request_id']
-        # Clear previous response file (if exists)
-        default_response = {}
-        default_response['status'] = False
-        default_response['message'] = ""
-
-        with open(os.path.join(CLIENT_DIR, 'json/' + request_id + '.json'), 
-             'w') as RESPONSE_FILE: 
-            json.dump(default_response, RESPONSE_FILE, 
-            sort_keys=True, indent=4)
 
         # Begin the response
         self.send_response(200)
@@ -145,11 +142,10 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         project_id = JSONfile.get('project_id') or -1
         user_id = JSONfile.get('user_id') or -1
         
-        # Send to manager.py
-        # Format of response: 
+        # Put in queue to wait to send to manager.py
+        # Format of response:
         # {"status":(true of false) ,"message":"string if necessary"}
         NewConnectionHandler.request_queue.put([function, parameters, tenant_id, user_id, project_id, request_id])
-        #print len(NewConnectionHandler.request_queue)
         
     
     # Sends a document, unused
@@ -168,6 +164,7 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         
 
 def _process_request(queue):
+    #Continuously check queue for message to send to manager.py
     while True:
         data = queue.get()
 
@@ -183,10 +180,9 @@ def _process_request(queue):
                 user_id, project_id
         )
 
-        #Save response to file
-        with open(os.path.join(CLIENT_DIR, 'json/' + request_id + '.json'), 
-                  'w') as RESPONSE_FILE: 
-            json.dump(response, RESPONSE_FILE, sort_keys=True, indent=4)
+        #Save to RAM
+        RESPONSES[request_id] = response
+
 
 def _make_request_daemon(queue, quantity = 1):
     output = []
