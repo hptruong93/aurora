@@ -1596,9 +1596,9 @@ class Manager(object):
             return response
         elif args['ssid']:
             conditions = map(lambda x : "ap_slice_ssid = '%s'" % x, args['ssid'])
-            conditions = query.join_criteria(conditions, "OR")
-            result = query.query('ap_slice', ['ap_slice_id'], 
-                                 [conditions, 'tenant_id = "%s"' % tenant_id, 'status <> "DELETED"'])
+            conditions = query.join_criteria(conditions, 'OR')
+            conditions = query.join_criteria([conditions, 'tenant_id = "%s"', 'status <> "DELETED"'], 'AND')
+            result = query.query('ap_slice', ['ap_slice_id'], [conditions])
             slice_id_list += [x[0] for x in result]
 
         for arg_slice in slice_id_list:
