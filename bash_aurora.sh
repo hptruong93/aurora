@@ -1,20 +1,24 @@
 #!/bin/bash
 
-#Usage: bash bash_aurora.sh [ap_name] [slice1_name] [slice2_name]...
+#Usage without switch: bash bash_aurora.sh [ap_name] [slice1_name] [slice2_name]...
 #If no switch is provided, this expects ap name, followed by names of the slices. All will use linux_bridge
 #
+# [var] indicates optional var
+# (A / B) means either A or B would work
+# [var...] indicates possiblity to include infinitely many var at this place
+#
 # List of switches:
-# -d / --delete --> slice ssid --> delete slices by ssid. If nothing provided, delete all
-# -l / --list --> list all slices
-# -r / --restart --> restart slice with id (uuid of the slice)
-# -t / --hint --> location [slice-load] --> create slice with --hint option
-# -s / --show --> slice id (uuid of the slice) --> show slice with given id
-# -p / --ap-list --> name of ap --> list ap
-# -ps / --ap-show --> name of ap --> show ap
-# -w / --wnet-list --> list all wnets
-# -ws / --wnet-show --> wnet name --> show wnet with given name
-# -c / --wnet-create --> new wnet name --> create wnet with given name
-# -a / --wnet-add-wslice --> slice ssid --> add slice with ssid into wnet
+# (-d / --delete) slice-ssid [slice-ssid...] --> delete slices by ssid. If nothing provided, delete all
+# (-l / --list) --> list all slices
+# (-r / --restart) slice-id --> restart slice with id (uuid of the slice)
+# (-t / --hint) [slice-load] --> create slice with --hint option
+# (-s / --show) slice-id [slice-id...] --> show slice with given id
+# (-p / --ap-list) name-of-ap --> list ap
+# (-ps / --ap-show) name-of-ap --> show ap
+# (-w / --wnet-list) --> list all wnets
+# (-ws / --wnet-show) wnet-name --> show wnet with given name
+# (-c / --wnet-create) new-wnet-name --> create wnet with given name
+# (-a / --wnet-add-wslice) slice-ssid [slice-ssid...] --> add slice with ssid into wnet
 
 
 

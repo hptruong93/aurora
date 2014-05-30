@@ -1505,9 +1505,9 @@ class Manager(object):
             list_name = args['ap-slice-show']
             filtered_list = list(set(list_name))
             
-            filtered_list = map(lambda x : 'ap_slice_ssid="%s"' % x, filtered_list)
+            filtered_list = map(lambda x : 'ap_slice_id="%s"' % x, filtered_list)
             criteria = filter.join_criteria(filtered_list, 'OR')
-            criteria = filter.join_criteria([criteria, 'status != "DELETED"'], 'AND')
+            criteria = filter.join_criteria([criteria, 'status <> "DELETED"'], 'AND')
             
             ap_slice_list = list(filter.query('ap_slice', ['ap_slice_id'], [criteria]))
             ap_slice_list = [x[0] for x in ap_slice_list]
