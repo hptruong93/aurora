@@ -102,15 +102,6 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.wfile.write(response)
         RESPONSES.pop(params['request_id'], None)
 
-        global last_response
-        #If the manager HTTP server was idle in the last 30s, then all responses must have expired
-        #If so, clear all responses
-        if time.time() - last_response > 30: 
-            RESPONSES.clear()
-            LOGGER.info("HTTP server has been idle for the last 30s. Responses cleared") 
-        last_response = time.time()
-
-    
     def do_POST(self):
         """Handles a POST request.
 
@@ -122,6 +113,15 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         the client by a client GET request.
 
         """
+
+        global last_response
+        #If the manager HTTP server was idle in the last 30s, then all responses must have expired
+        #If so, clear all responses
+        if time.time() - last_response > 30: 
+            RESPONSES.clear()
+            LOGGER.info("HTTP server has been idle for the last 30s. Responses cleared") 
+        last_response = time.time()
+
         # Parse the form data posted
         data_string = self.rfile.read(int(self.headers['Content-Length']))
         JSONfile = json.loads(data_string)
