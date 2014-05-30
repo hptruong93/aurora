@@ -22,6 +22,7 @@ import threading
 import Queue
 import time
 
+from aurora import stop_thread
 from aurora import cls_logger
 from aurora import manager
 from aurora.exc import *
@@ -163,9 +164,13 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.wfile.write( body )
         
 
-def _process_request(queue):
+def _process_request(queue, stop_event=None):
     #Continuously check queue for message to send to manager.py
     while True:
+        if stop_event.is_set():
+            self.LOGGER.info("Request processor daemon caught stop event")
+            break
+
         data = queue.get()
 
         function = data[0]
@@ -187,7 +192,7 @@ def _process_request(queue):
 def _make_request_daemon(queue, quantity = 1):
     output = []
     for i in range(0, quantity):
-        t = threading.Thread(target=_process_request, args=(queue, ))
+        t = stop_thread.StoppableThread(target=_process_request, args=(queue, ))#threading.Thread(target=_process_request, args=(queue, ))
         t.daemon = True
         t.start()
         output.append(t)
@@ -213,7 +218,7 @@ class ManagerServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
         # RequestHandlerClass
         self.RequestHandlerClass.MANAGER = self.manager
 
-        request_daemon = _make_request_daemon(self.RequestHandlerClass.request_queue)
+        self.request_daemon = _make_request_daemon(self.RequestHandlerClass.request_queue)
 
         BaseHTTPServer.HTTPServer.serve_forever(self)
     
@@ -221,6 +226,10 @@ class ManagerServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
         """Run to close the ManagerServer."""
         # Delete all references to manager so it destructs
         self.manager.stop()
+
+        for daemon in self.request_daemon:
+            daemon.stop()
+            del daemon
         del self.manager, self.RequestHandlerClass.MANAGER
         
         BaseHTTPServer.HTTPServer.server_close(self) 
