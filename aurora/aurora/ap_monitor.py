@@ -89,11 +89,15 @@ class APMonitor(object):
             if stop_event.is_set():
                 self.LOGGER.info("Queue Daemon caught stop event")
                 break
-            (args, kwargs) = self.timeout_queue.get()
-            self.LOGGER.debug("Queue Daemon is calling _set_status(%s, %s)",
-                args, kwargs
-            )
-            self._set_status(*args, **kwargs)
+
+            try:
+                (args, kwargs) = self.timeout_queue.get(block = False)
+                self.LOGGER.debug("Queue Daemon is calling _set_status(%s, %s)",
+                    args, kwargs
+                )
+                self._set_status(*args, **kwargs)
+            except Queue.Empty as e:
+                time.sleep(0.1)
 
     def _add_call_to_queue(self, *args, **kwargs):
         """Writes a set_status call to the queue.

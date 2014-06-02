@@ -168,26 +168,28 @@ def _process_request(queue, stop_event=None):
     #Continuously check queue for message to send to manager.py
     while True:
         if stop_event.is_set():
-            self.LOGGER.info("Request processor daemon caught stop event")
+            LOGGER.info("Request processor daemon caught stop event")
             break
 
-        data = queue.get()
+        try:
+            data = queue.get(block = False)
 
-        function = data[0]
-        parameters = data[1]
-        tenant_id = data[2]
-        user_id = data[3]
-        project_id = data[4]
-        request_id = data[5]
+            function = data[0]
+            parameters = data[1]
+            tenant_id = data[2]
+            user_id = data[3]
+            project_id = data[4]
+            request_id = data[5]
 
-        response = NewConnectionHandler.MANAGER.parseargs(
-                function, parameters, tenant_id,
-                user_id, project_id
-        )
+            response = NewConnectionHandler.MANAGER.parseargs(
+                    function, parameters, tenant_id,
+                    user_id, project_id
+            )
 
-        #Save to RAM
-        RESPONSES[request_id] = response
-
+            #Save to RAM
+            RESPONSES[request_id] = response
+        except Queue.Empty as e:
+            time.sleep(0.1)
 
 def _make_request_daemon(queue, quantity = 1):
     output = []
@@ -224,15 +226,21 @@ class ManagerServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
     
     def server_close(self):
         """Run to close the ManagerServer."""
+        self.LOGGER.info("Closing HTTP server...")
         # Delete all references to manager so it destructs
         self.manager.stop()
 
         for daemon in self.request_daemon:
             daemon.stop()
-            del daemon
+            try:
+                daemon.join()
+            except RuntimeError as e:
+                self.LOGGER.warn(e.message)
+
         del self.manager, self.RequestHandlerClass.MANAGER
         
-        BaseHTTPServer.HTTPServer.server_close(self) 
+        BaseHTTPServer.HTTPServer.server_close(self)
+        self.LOGGER.info("HTTP server closed!")
 
 def main():
     """An entry point for launching Aurora Manager.
