@@ -1036,9 +1036,9 @@ class Manager(object):
             ap_slice_list = []
 
         if args_all:
-            arg_filter = "status!DELETED"
-            ap_slice_dict= self.ap_slice_filter(arg_filter, tenant_id)
-            ap_slice_list = [entry['ap_slice_id'] for entry in ap_slice_dict]
+            condition = ["status <> 'DELETED'", "tenant_id = '%s'" % tenant_id]
+            result = query.query('ap_slice', ['ap_slice_id'], condition)
+            ap_slice_list += [x[0] for x in result]
         elif args_name:
             conditions = map(lambda x : "ap_slice_ssid = '%s'" % x, args_name)
             conditions = query.join_criteria(conditions, "OR")
@@ -1076,9 +1076,9 @@ class Manager(object):
                 status = False
                 continue #Indeed should continue here to check if we can delete the next slice
             try:
-                arg_filter = "ap_slice_id=%s&status=DELETED" % ap_slice_id
-                slice_list = self.ap_slice_filter(arg_filter, tenant_id)
-                if slice_list:
+                condition = ["ap_slice_id = '%s'" % ap_slice_id, "status = 'DELETED'"]
+                slice_list = query.query('ap_slice', ['ap_slice_id'], condition)
+                if len(slice_list) != 0:
                     message += "Slice already deleted: '%s'\n" % ap_slice_id
                     continue
                 else:
