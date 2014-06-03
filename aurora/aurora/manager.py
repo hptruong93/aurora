@@ -140,28 +140,16 @@ class Manager(object):
 
         #print ('VirtualWIFI' in args['data']) and ('wifi_radio' in args['data']['VirtualWIFI'][0]['flavor'])
         elif 'radio_check' in args['type']: # Used to check if the radio configuration is already set
-            check = Check.RadioConfigExistedVerification() # check if the radio channel exists
             request = {}
 
             request['config'] = args['data']['config']
             request['physical_ap'] = args['data']['physical_ap']
             request['tenant_id'] = args['data']['tenant_id']
 
-            Message = sql_Info.checkSliceNumber(request['physical_ap'])
-
-            if int(Message[0][1]) > 0: #check if the radio channel need to be configured
-                del request['config']['RadioInterfaces'][0]
-
-            try:
-                error = check.verify('create_slice', request)
-            except:
-                error = "Error"
-
-            if error is None:
-                status = True
-            else:
-                status = False
-        response = {"status":status, "message":Message}
+            suggestion = hint_agent.suggestAP(request)
+            status = suggestion['status']
+            del suggestion['status']
+        response = {"status":status, "message": suggestion}
         return response
 
     def ap_filter(self, args): 	
