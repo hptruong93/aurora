@@ -159,8 +159,6 @@ class RadioConfigExistedVerification(RequestVerification):
 
                 config_existed = number_slices != 0
 
-                print "Existing config is %s and requesting config is %s " % (config_existed, request_has_config)
-
                 if config_existed and request_has_config:
                     return "Radio for the ap " + request['physical_ap'] + " has already been configured. Cannot change the radio's configurations."
                 elif (not config_existed) and (not request_has_config):

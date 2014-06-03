@@ -22,6 +22,7 @@ import threading
 import Queue
 import time
 
+from aurora import config
 from aurora import stop_thread
 from aurora import cls_logger
 from aurora import manager
@@ -189,9 +190,9 @@ def _process_request(queue, stop_event=None):
             #Save to RAM
             RESPONSES[request_id] = response
         except Queue.Empty as e:
-            time.sleep(0.1)
+            time.sleep(config.CONFIG['manager']['request_processing_interval'])
 
-def _make_request_daemon(queue, quantity = 1):
+def _make_request_daemon(queue, quantity):
     output = []
     for i in range(0, quantity):
         t = stop_thread.StoppableThread(target=_process_request, args=(queue, ))#threading.Thread(target=_process_request, args=(queue, ))
@@ -220,7 +221,7 @@ class ManagerServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
         # RequestHandlerClass
         self.RequestHandlerClass.MANAGER = self.manager
 
-        self.request_daemon = _make_request_daemon(self.RequestHandlerClass.request_queue)
+        self.request_daemon = _make_request_daemon(self.RequestHandlerClass.request_queue, config.CONFIG['manager']['request_processor'])
 
         BaseHTTPServer.HTTPServer.serve_forever(self)
     
@@ -274,7 +275,7 @@ def main():
     cls_logger.set_up_root_logger(level=level)
     
     handler_class=NewConnectionHandler
-    server_address = ('', 5554)
+    server_address = (config.CONFIG['manager']['host'], int(config.CONFIG['manager']['port']))
     try:
         msrvr = ManagerServer(server_address, handler_class)
         LOGGER.info("Starting webserver...")
