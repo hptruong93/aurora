@@ -30,7 +30,6 @@ class SliceJsonGenerator():
         self.ssid = user_config['ssid']
         self.bridge = user_config['bridge']
         self.assigned_radio = None
-        self.number_existing_slices = -1
         #self.data['ap_slice_id'] = sliceID
         #self.data['tenant_id'] = tenantID
         #self.data['project_id'] = projectID
@@ -83,23 +82,39 @@ class SliceJsonGenerator():
         
         # Rename the key: RadioInterfaces to VirtualWIFI
         output = self.data['config']
-        output['VirtualWIFI'] = self.data['config']['RadioInterfaces']
-        del output['RadioInterfaces']
-        
+        try:
+            output['VirtualWIFI'] = self.data['config']['RadioInterfaces']
+            del output['RadioInterfaces']
+        except KeyError:
+            output.pop('RadioInterfaces')
+            pass
+
+        for item in output['VirtualWIFI']:
+            if item['flavor'] == 'wifi_radio':
+                item['attributes']['name'] = self.assigned_radio
+            elif item['flavor'] == 'wifi_bss':
+                item['attributes']['radio'] = self.assigned_radio
+
+        radio_number = utils.remove_letters(self.assigned_radio)
+
         #changed the WLAN & ETH interface name according to the # of existing slices
-        if self.number_existing_slices == 0:
+        if self.slice_on_radio == 0:
             append_vwlan = ""
             append_wlan = ""
+        else:
+            append_vwlan = str(self.slice_on_radio)
+            append_wlan = "-" + str(self.slice_on_radio)
+
+        if self.number_slice_existing == 0:
             append_bridge = ""
             append_veth = ""
         else:
-            append_vwlan = str(self.number_existing_slices)
-            append_wlan = "-" + str(self.number_existing_slices)
-            append_bridge = "-" + str(self.number_existing_slices)
-            append_veth = str(self.number_existing_slices)
+            append_bridge = "-" + str(self.number_slice_existing)
+            append_veth = str(self.number_slice_existing)
 
-        vwlan = str(output['VirtualInterfaces'][1]['attributes']['name']) + append_vwlan
-        wlan  = str(output['VirtualInterfaces'][1]['attributes']['attach_to']) + append_wlan
+
+        vwlan = utils.remove_digits(str(output['VirtualInterfaces'][1]['attributes']['name'])) + radio_number + append_vwlan
+        wlan  = utils.remove_digits(str(output['VirtualInterfaces'][1]['attributes']['attach_to'])) + radio_number + append_wlan
         veth  =	str(output['VirtualInterfaces'][0]['attributes']['name']) + append_veth
         bridge = output['VirtualBridges'][0]['attributes']['name'] + append_bridge
         new_mac = self.generate_mac()
@@ -192,13 +207,12 @@ class SliceJsonGenerator():
         self.data['tenant_id'] = os.environ.get("AURORA_TENANT", config.CONFIG['tenant_info']['tenant_id'])
 
         finalize = self.communicatewithManager(self.data,'radio_check')
-        try:
-            self.slice_on_radio =  finalize['slice_number']
-            self.assigned_radio = finalize['suggest_radio']
-            self.number_existing_slices = finalize['existing_slice']
-        except ValueError:
-            traceback.print_exc(file = sys.stdout)
-            sys.exit(-1)
+        
+        self.slice_on_radio =  finalize['slice_number']
+        self.assigned_radio = finalize['suggest_radio']
+        self.number_slice_existing = finalize['existing_slice']
+
+        
 
         del self.data['physical_ap']
         del self.data['tenant_id']

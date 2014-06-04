@@ -66,6 +66,15 @@ class NoAvailableSpaceLeftInAP(VerificationException):
     def _handle_exception(self):
         return self.message
 
+#This exception is raised when a radio is having, or is requested to have more than 4 slices
+class NoAvailableSpaceLeftInRadio(VerificationException):
+    def __init__(self, message = ""):
+        self.message = message
+        super(NoAvailableSpaceLeftInRadio, self).__init__(message)
+    
+    def _handle_exception(self):
+        return self.message
+
 #This exception is raised when the client's operation would result in:
 #	There would be two configurations for one radio
 #	There would be no configuration for the radio which a slice will be created on/ has existing slices

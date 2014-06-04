@@ -411,9 +411,9 @@ class Database:
         """Returns the entry identified by radio name
         if it exists.  Raises exception.EntryNotFound if it does not."""
         for entry in self.hw_database["wifi_radio"]["radio_list"]:
-            if entry["name"] == radio:
+            if entry["name"] == str(radio):
                 return entry
-            raise exception.EntryNotFound(radio)
+        raise exception.EntryNotFound(radio)
         
     def hw_list_all(self, as_json=False):
         if as_json:

@@ -5,6 +5,7 @@ Created on Jan 7, 2013
 '''
 import prettytable
 import uuid
+import string
 
 def is_authentication_required(f):
     """Checks to see if the function requires authentication.
@@ -49,3 +50,11 @@ def print_dict(d):
 
 def generate_request_id():
     return str(uuid.uuid4())
+
+def remove_letters(input_string):
+    translate = string.maketrans('','')
+    nodigs = translate.translate(translate, string.digits)
+    return input_string.translate(translate, nodigs)
+
+def remove_digits(input_string):
+    return ''.join([i for i in input_string if not i.isdigit()])

@@ -5,6 +5,10 @@
 
 import traceback
 import sys
+
+from aurora.request_verification import request_verification as Check
+from aurora.request_verification import verification_exception as exceptions
+from aurora.ap_provision import reader as provision_reader
 from aurora.hint import sql_Info
 from aurora import query_agent as filter
 
@@ -81,3 +85,38 @@ def hint(manager, args, tenant_id, user_id, project_id):
         return response
     if args['file'] is None:
         raise NoSliceConfigFileException()
+
+def suggestAP(request):
+    requesting_radio = provision_reader.get_radio_wifi_bss(request['config'])
+    number_slices_on_radio = _get_slice_on_requested_radio(request)
+    try:
+        Check.APSliceNumberVerification().verify('create_slice', request)
+    except exceptions.NoAvailableSpaceLeftInAP as e:
+        return {'status' : False, 'slice_number': -1, 'suggest_radio' : None, 'exception' : e}
+    except exceptions.NoAvailableSpaceLeftInRadio:
+        try: #Changing radio
+            requesting_radio = 'radio1'
+
+            for item in request['config']['RadioInterfaces']:
+                if item['flavor'] == 'wifi_radio':
+                    item['attributes']['name'] = requesting_radio
+                elif item['flavor'] == 'wifi_bss':
+                    item['attributes']['radio'] = requesting_radio
+
+            number_slices_on_radio = _get_slice_on_requested_radio(request)
+            Check.APSliceNumberVerification().verify('create_slice', request)
+        except exceptions.NoAvailableSpaceLeftInRadio as ex:
+            return {'status' : False, 'slice_number': -1, 'suggest_radio' : None, 'exception' : ex}
+    except Exception as ee:
+        return {'status' : False, 'slice_number': -1, 'suggest_radio' : None, 'exception' : ee}
+
+    existing_slices = provision_reader.get_slice_count(provision_reader.get_physical_ap_info(request['physical_ap']))
+    return {'status' : True, 'slice_number': number_slices_on_radio, 
+            'suggest_radio' : requesting_radio, 
+            'existing_slice' : existing_slices, 'exception' : None}
+
+def _get_slice_on_requested_radio(request):
+    requested_radio = provision_reader.get_radio_wifi_bss(request['config'])
+    request_ap_info = provision_reader.get_physical_ap_info(request['physical_ap'])
+    number_slices = provision_reader.get_number_slice_on_radio(request_ap_info, requested_radio)
+    return number_slices

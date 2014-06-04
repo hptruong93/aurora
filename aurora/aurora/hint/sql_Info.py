@@ -7,7 +7,6 @@
 information and data storing in the SQL database.  
 """
 
-from aurora import config
 from aurora import query_agent as filter
 import traceback
 import sys

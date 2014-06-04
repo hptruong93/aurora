@@ -126,7 +126,7 @@ class APSliceNumberVerification(RequestVerification):
                     request_ap_info = provision_reader.get_physical_ap_info(request['physical_ap'])
                     number_slices = provision_reader.get_number_slice_on_radio(request_ap_info, requested_radio)
                     if number_slices >= 4: #No more space
-                        return 'The AP \'%s\' has no space left on radio \'%s\' to execute command \'%s\'.' % (str(ap[name]), str(requested_radio), command) 
+                        raise exceptions.NoAvailableSpaceLeftInRadio('The AP \'%s\' has no space left on radio \'%s\' to execute command \'%s\'.' % (str(ap[name]), str(requested_radio), command))
 
         except KeyError, e:
                 raise exceptions.MissingKeyInRequest(str(e.args[0]))
@@ -158,6 +158,9 @@ class RadioConfigExistedVerification(RequestVerification):
                     raise exceptions.NoSuchAPExists(str(request['physical_ap']))
 
                 config_existed = number_slices != 0
+
+                print configuring_radio
+                print number_slices
 
                 if config_existed and request_has_config:
                     return "Radio for the ap " + request['physical_ap'] + " has already been configured. Cannot change the radio's configurations."
