@@ -329,7 +329,7 @@
                 {
                     "action":"store",
                     "help":"Move a slice",
-                    "nargs":1,
+                    "nargs":"*",
                     "default":null,
                     "choices":null,
                     "metavar":"slices/tags"
@@ -345,6 +345,18 @@
                             "choices":null,
                             "required":true,
                             "metavar":"access-point"
+                        }
+                    ],
+                    [
+                        "--ssid",
+                        {
+                            "action":"store",
+                            "help":"Select slice with ssid",
+                            "nargs":1,
+                            "default":null,
+                            "choices":null,
+                            "required":true,
+                            "metavar":"ssid"
                         }
                     ]
                 ]

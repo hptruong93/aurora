@@ -24,6 +24,7 @@ from aurora import config
 GENERAL_CHECK = 'general_check'
 CREATE_SLICE = 'create_slice' #This is the command name appears in the request parsed by manager.py
 DELETE_SLICE = 'delete_slice' #This is the command name appears in manager.py
+MOVE_SLICE = 'move_slice'
 
 AP_ETH_IFACE = 'eth0'
 
@@ -158,9 +159,6 @@ class RadioConfigExistedVerification(RequestVerification):
                     raise exceptions.NoSuchAPExists(str(request['physical_ap']))
 
                 config_existed = number_slices != 0
-
-                print configuring_radio
-                print number_slices
 
                 if config_existed and request_has_config:
                     return "Radio for the ap " + request['physical_ap'] + " has already been configured. Cannot change the radio's configurations."

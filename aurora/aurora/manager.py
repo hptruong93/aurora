@@ -36,6 +36,7 @@ from aurora.request_verification import request_verification as Check
 
 from aurora.hint import hint_agent
 from aurora.hint import sql_Info
+from aurora.hint import slice_config_agent as config_hint
 
 
 LOGGER = logging.getLogger(__name__)
@@ -1402,7 +1403,20 @@ class Manager(object):
             "message":message,
         }
         new_ap = args['ap'][0]
-        ap_slice_id = args['ap-slice-move'][0]
+
+        ap_slice_id = None
+        if args.get('ssid') is not None:
+            ap_slice_ssid = args['ssid'][0]
+            condition = 'ap_slice_ssid = "%s"' % args['ssid'][0]
+            result = query.query('ap_slice', ['ap_slice_id'], 
+                                 [condition, 'tenant_id = "%s"' % tenant_id, 'status <> "DELETED"'])
+            if len(result) == 0:
+                return {'status' : False, 'message' : "Cannot find slice with ssid %s" % ap_slice_ssid}
+            else:
+                ap_slice_id = result[0][0]
+        else:
+            ap_slice_id = args['ap-slice-move'][0]
+
         if not self.aurora_db.wslice_belongs_to(tenant_id, project_id, ap_slice_id):
             message = "You have no slice %s" % ap_slice_id
             response["message"] = message
@@ -1438,11 +1452,15 @@ class Manager(object):
             "user":tenant_id, 
             "config":config,
         }
+        suggested_config = config_hint.ConfigHint(config).hint(new_ap)
+        self.LOGGER.debug("Hint result --> \n%s" % suggested_config)
+        config_create['config'] = suggested_config
+
         error = Verify.verifyOK(new_ap, tenant_id, config_create)
         if error is not None:
             response["message"] = error
             return response
-
+        
         # Passed all checks, delete slice from existing ap and create on new one
         try:
             self.dispatcher.dispatch(config_delete, current_ap)
@@ -1463,7 +1481,7 @@ class Manager(object):
         else:
             self.aurora_db.ap_slice_set_physical_ap(ap_slice_id, new_ap)
             self.aurora_db.ap_slice_status_pending(ap_slice_id)
-            message += "Moved %s from %s to %s" % (ap_slice_id, current_ap, new_ap)
+            message += "Moving %s from %s to %s" % (ap_slice_id, current_ap, new_ap)
 
         response = {
             "status":True, 

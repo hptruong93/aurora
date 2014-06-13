@@ -11,6 +11,7 @@
 # (-d / --delete) slice-ssid [slice-ssid...] --> delete slices by ssid. If nothing provided, delete all
 # (-l / --list) --> list all slices
 # (-r / --restart) slice-id --> restart slice with id (uuid of the slice)
+# (-m / --move) ap-name [slice-ssid...] --> move the slice with given ssid to another ap
 # (-t / --hint) [slice-load] --> create slice with --hint option
 # (-s / --show) slice-id [slice-id...] --> show slice with given id
 # (-p / --ap-list) name-of-ap --> list ap
@@ -43,6 +44,17 @@ elif [ "$1" == "-r" ] || [ "$1" == "--restart" ]; then
         aurora ap-slice-restart ${2}
     else
         echo Missing what to restart2
+    fi
+elif [ "$1" == "-m" ] || [ "$1" == "--move" ]; then
+    if [[ -n "$2" ]] && [[ -n "$3" ]]; then
+        ap=${2}
+        while [[ -n "$3" ]]; do
+            echo aurora ap-slice-move --ap ${ap} --ssid ${3}
+            aurora ap-slice-move --ap ${ap} --ssid ${3}
+            shift
+        done 
+    else
+        echo Missing argument. Require ap then at least one slice ssid
     fi
 elif [ "$1" == "-t" ] || [ "$1" == "--hint" ]; then
     if [[ -n "$2" ]] && ([ "$2" == "--slice-load" ] || [ "$2" == "-l" ]); then

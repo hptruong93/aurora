@@ -102,7 +102,7 @@ class SliceJsonGenerator():
             append_vwlan = ""
             append_wlan = ""
         else:
-            append_vwlan = str(self.slice_on_radio)
+            append_vwlan = "-" + str(self.slice_on_radio)
             append_wlan = "-" + str(self.slice_on_radio)
 
         if self.number_slice_existing == 0:
@@ -110,7 +110,7 @@ class SliceJsonGenerator():
             append_veth = ""
         else:
             append_bridge = "-" + str(self.number_slice_existing)
-            append_veth = str(self.number_slice_existing)
+            append_veth = "-" + str(self.number_slice_existing)
 
 
         vwlan = utils.remove_digits(str(output['VirtualInterfaces'][1]['attributes']['name'])) + radio_number + append_vwlan

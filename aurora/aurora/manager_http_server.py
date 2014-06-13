@@ -131,10 +131,6 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         request_id = JSONfile['request_id']
 
-        # Begin the response
-        self.send_response(200)
-        self.end_headers()
-
         function = JSONfile['function']
         parameters = JSONfile['parameters']
 
@@ -148,6 +144,12 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         # Format of response:
         # {"status":(true of false) ,"message":"string if necessary"}
         NewConnectionHandler.request_queue.put([function, parameters, tenant_id, user_id, project_id, request_id])
+
+        time.sleep(0.5)
+
+        # Begin the response
+        self.send_response(200)
+        self.end_headers()
         
     
     # Sends a document, unused

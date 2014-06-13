@@ -17,24 +17,34 @@ aurora ap-slice-delete --all
 sleep 3 #If the main slice cannot be deleted, we have to delete it again
 aurora ap-slice-delete --all
 
-aurora wnet-delete Triage
-aurora wnet-delete NurseIntern
+aurora wnet-delete MedStaffWnet
+aurora wnet-delete MedStaff
 
 echo "*--------------------------------------------------------------------------*"
 echo Finished cleaning up
 echo Ready to start
 
 #####################################################################
+wait_for_input "create VSM slice"
+echo Creating VSM slice
+#VSM
+# bash bash_aurora.sh ICU VSM > /dev/null
+echo ""Command issued ------------------\> aurora ap-slice-create --ap ICU --file VSM.json""
+bash bash_aurora.sh ICU VSM > /dev/null
+
+echo Finished creating VSM slice
+echo ""Command issued ------------------\> aurora ap-slice-list""
+aurora ap-slice-list
+#####################################################################
 wait_for_input "create MedStaff slices"
 echo Creating MedStaff slices
 #MedStaff
-# bash bash_aurora.sh ICU MedStaff-ICU > /dev/null
 echo ""Command issued ------------------\> aurora ap-slice-create --ap ICU --file MedStaff-ICU.json""
-aurora ap-slice-create --ap ICU --file MedStaff-ICU.json
+bash bash_aurora.sh ICU MedStaff > /dev/null
+
 echo Done with slice on ICU
-# bash bash_aurora.sh Triage MedStaff-Triage > /dev/null
 echo ""Command issued ------------------\> aurora ap-slice-create --ap Triage --file MedStaff-Triage.json""
-aurora ap-slice-create --ap Triage --file MedStaff-Triage.json
+bash bash_aurora.sh Triage MedStaff > /dev/null
 echo Done with slice on Triage
 
 echo Finished creating MedStaff slices
@@ -45,95 +55,57 @@ echo ""Command issued ------------------\> aurora ap-slice-list""
 aurora ap-slice-list
 
 #####################################################################
-wait_for_input "create VSM slice"
-echo Creating VSM slice
-#VSM
-# bash bash_aurora.sh ICU VSM > /dev/null
-echo ""Command issued ------------------\> aurora ap-slice-create --ap ICU --file VSM.json""
-aurora ap-slice-create --ap ICU --file VSM.json
-
-echo Finished creating VSM slice
-echo ""Command issued ------------------\> aurora ap-slice-list""
-aurora ap-slice-list
-#####################################################################
 wait_for_input "create MedStaff wnet"
 echo Creating wnets
-echo ""Command issued ------------------\> aurora wnet-create MedStaff""
-aurora wnet-create MedStaff
+echo ""Command issued ------------------\> aurora wnet-create MedStaffWnet""
+aurora wnet-create MedStaffWnet
 
-echo Finished creating MedStaff wnets
+echo Finished creating MedStaffWnet wnets
 echo ""Command issued ------------------\> aurora wnet-list""
 aurora wnet-list
 #####################################################################
-wait_for_input "adding slices to MedStaff wnet"
+wait_for_input "adding slices to MedStaffWnet wnet"
 
-echo Adding slices to MedStaff wnet
-echo ""Command issued ------------------\> aurora wnet-add-wslice MedStaff --ssid MedStaff-Triage MedStaff-ICU""
-aurora wnet-add-wslice MedStaff --ssid MedStaff-Triage MedStaff-ICU
+echo Adding slices to MedStaffWnet wnet
+echo ""Command issued ------------------\> aurora wnet-add-wslice MedStaffWnet --ssid MedStaff""
+aurora wnet-add-wslice MedStaffWnet --ssid MedStaff
 
 echo Finished adding slices to wnet
-echo ""Command issued ------------------\> aurora wnet-show MedStaff""
-aurora wnet-show MedStaff
-#####################################################################
-
-
+echo ""Command issued ------------------\> aurora wnet-show MedStaffWnet""
+aurora wnet-show MedStaffWnet
 
 #####################################################################
 wait_for_input "create NurseIntern slice on Triage AP"
 echo Creating NurseIntern slice on Triage AP
-#Nurse Intern
 
-# bash bash_aurora.sh Triage NurseIntern-Triage > /dev/null
 echo ""Command issued ------------------\> aurora ap-slice-create --ap Triage --file NurseIntern-Triage.json""
-aurora ap-slice-create --ap Triage --file NurseIntern-Triage.json
-echo Done with slice on Triage
-
+bash bash_aurora.sh Triage NurseIntern > /dev/null
 
 echo Finished creating NurseIntern slice on Triage AP
 echo ""Command issued ------------------\> aurora ap-slice-list""
 aurora ap-slice-list
 #####################################################################
-wait_for_input "create NurseIntern slice on ICU AP"
-echo Creating NurseIntern slice on ICU AP
-# bash bash_aurora.sh ICU NurseIntern-ICU > /dev/null
-echo ""Command issued ------------------\> aurora ap-slice-create --ap ICU --file NurseIntern-ICU.json""
-aurora ap-slice-create --ap ICU --file NurseIntern-ICU.json
-echo Done with slice on ICU
+wait_for_input "Move NurseIntern slice to ICU AP"
+echo Moving NurseIntern slice on Triage AP
 
+echo ""Command issued ------------------\> aurora ap-slice-move --ap ICU --ssid NurseIntern""
+aurora ap-slice-move --ap ICU --ssid NurseIntern
 
-echo Finished creating NurseIntern slice on ICU AP
+sleep 2
+echo Finished moving NurseIntern slice on Triage AP
 echo ""Command issued ------------------\> aurora ap-slice-list""
 aurora ap-slice-list
 #####################################################################
-wait_for_input "create NurseIntern wnet"
-echo Creating wnets
-echo ""Command issued ------------------\> aurora wnet-create NurseIntern""
-aurora wnet-create NurseIntern
-
-echo Finished creating NurseIntern wnets
-echo ""Command issued ------------------\> aurora wnet-list""
-aurora wnet-list
+wait_for_input "view statistics for NurseIntern slice"
+echo ""Command issued ------------------\> aurora ap-slice-show --ssid NurseIntern""
+aurora ap-slice-show --ssid NurseIntern
 #####################################################################
-wait_for_input "adding slices to NurseIntern wnet"
-
-echo Adding slices to NurseIntern wnet
-echo ""Command issued ------------------\> aurora wnet-add-wslice NurseIntern --ssid NurseIntern-Triage NurseIntern-ICU""
-aurora wnet-add-wslice NurseIntern --ssid NurseIntern-Triage NurseIntern-ICU
-
-echo Finished adding slices to wnet
-echo ""Command issued ------------------\> aurora wnet-show NurseIntern""
-aurora wnet-show NurseIntern
-#####################################################################
-wait_for_input "view statistics for NurseIntern wnet"
-echo ""Command issued ------------------\> aurora wnet-show -i NurseIntern""
-aurora wnet-show -i NurseIntern
-#####################################################################
-wait_for_input "delete wnet NurseIntern"
+wait_for_input "delete slice NurseIntern"
 
 echo Deleting NurseIntern wnet
 #Make sure that none of the slice is main slice containing the radio configuration
-echo ""Command issued ------------------\> aurora wnet-delete NurseIntern --all""
-aurora wnet-delete NurseIntern --all
+echo ""Command issued ------------------\> aurora ap-slice-delete --ssid NurseIntern""
+aurora ap-slice-delete --ssid NurseIntern
 sleep 2
 echo List of slices:
 echo ""Command issued ------------------\> aurora ap-slice-list""

@@ -48,7 +48,7 @@
                 "encryption_type": "wep-open", 
                 "if_name": "wlan0", 
                 "key": "23456", 
-                "name": "MedStaff-Triage", 
+                "name": "MedStaff", 
                 "radio": "radio0"
             }, 
             "flavor": "wifi_bss"

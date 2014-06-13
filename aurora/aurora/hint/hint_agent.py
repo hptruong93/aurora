@@ -10,7 +10,7 @@ from aurora.request_verification import request_verification as Check
 from aurora.request_verification import verification_exception as exceptions
 from aurora.ap_provision import reader as provision_reader
 from aurora.hint import sql_Info
-from aurora import query_agent as filter
+from aurora import query_agent as query
 
 def hint(manager, args, tenant_id, user_id, project_id):
     arg_hint = args['hint']
@@ -21,12 +21,12 @@ def hint(manager, args, tenant_id, user_id, project_id):
 
     if "location" in arg_hint:
         # Try to access the local database to grab location
-        #tempList = manager.ap_filter(arg_hint)
+        #tempList = manager.ap_query(arg_hint)
         if favored_ap is None:
-            tempList = filter.query(filter.join_table("ap", "location_tags", "name", "ap_name"), \
+            tempList = query.query(query.join_table("ap", "location_tags", "name", "ap_name"), \
                     ["ap_name", "location_tags.name", "number_slice_free"], ["status = 'UP'", 'number_slice_free > 0'])
         else:
-            tempList = filter.query(filter.join_table("ap", "location_tags", "name", "ap_name"), \
+            tempList = query.query(query.join_table("ap", "location_tags", "name", "ap_name"), \
                     ["ap_name", "location_tags.name", "number_slice_free"], 
                     ["status = 'UP'", 'number_slice_free > 0', 'ap_name = "%s"' % favored_ap])
 
