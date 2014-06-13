@@ -40,8 +40,7 @@ class JSONSender():
         else:
             print 'Unsuccessful.  Response: %s' % (r.status_code)
         
-        #Sleep for 1 seconds while waiting for response
-        time.sleep(1)
+        #Once received from manager, we can safely assume that manager has processed the response
 
         try:
             r = requests.get(url, params = {'request_id': request_id}, timeout=self.HTTP_TIMEOUT)    
