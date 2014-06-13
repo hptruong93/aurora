@@ -17,7 +17,7 @@
         {
             "attributes": {
                 "attach_to": "eth0", 
-                "mac": "00:00:00:b3:87:20", 
+                "mac": "00:00:00:0d:e4:20", 
                 "name": "veth0"
             }, 
             "flavor": "veth"
@@ -25,7 +25,7 @@
         {
             "attributes": {
                 "attach_to": "wlan0", 
-                "mac": "00:00:00:00:b3:87:21", 
+                "mac": "00:00:00:00:0d:e4:21", 
                 "name": "vwlan0"
             }, 
             "flavor": "veth"

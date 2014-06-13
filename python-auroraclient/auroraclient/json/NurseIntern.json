@@ -4,10 +4,10 @@
             "attributes": {
                 "bridge_settings": {}, 
                 "interfaces": [
-                    "vwlan02", 
-                    "veth02"
+                    "vwlan0-1", 
+                    "veth0-1"
                 ], 
-                "name": "linux-br-2", 
+                "name": "linux-br-1", 
                 "port_settings": {}
             }, 
             "flavor": "linux_bridge"
@@ -17,16 +17,16 @@
         {
             "attributes": {
                 "attach_to": "eth0", 
-                "mac": "00:00:00:a3:8d:20", 
-                "name": "veth02"
+                "mac": "00:00:00:f4:9c:20", 
+                "name": "veth0-1"
             }, 
             "flavor": "veth"
         }, 
         {
             "attributes": {
-                "attach_to": "wlan0-2", 
-                "mac": "00:00:00:00:a3:8d:21", 
-                "name": "vwlan02"
+                "attach_to": "wlan0-1", 
+                "mac": "00:00:00:00:f4:9c:21", 
+                "name": "vwlan0-1"
             }, 
             "flavor": "veth"
         }
@@ -35,9 +35,9 @@
         {
             "attributes": {
                 "encryption_type": "wep-open", 
-                "if_name": "wlan0-2", 
+                "if_name": "wlan0-1", 
                 "key": "23456", 
-                "name": "NurseIntern-ICU", 
+                "name": "NurseIntern", 
                 "radio": "radio0"
             }, 
             "flavor": "wifi_bss"

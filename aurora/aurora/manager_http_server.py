@@ -53,7 +53,6 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     """
     server_version= "Aurora/0.2"
     MANAGER = None
-    request_queue = Queue.Queue()
 
     # Override __init__ to instantiate Manager, pass along parameters:
     # BaseHTTPServer.BaseHTTPRequestHandler(request, client_address, 
@@ -143,9 +142,11 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         # Put in queue to wait to send to manager.py
         # Format of response:
         # {"status":(true of false) ,"message":"string if necessary"}
-        NewConnectionHandler.request_queue.put([function, parameters, tenant_id, user_id, project_id, request_id])
-
-        time.sleep(0.5)
+        response = NewConnectionHandler.MANAGER.parseargs(
+                    function, parameters, tenant_id,
+                    user_id, project_id
+        )
+        RESPONSES[request_id] = response
 
         # Begin the response
         self.send_response(200)
@@ -167,42 +168,6 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.wfile.write( body )
         
 
-def _process_request(queue, stop_event=None):
-    #Continuously check queue for message to send to manager.py
-    while True:
-        if stop_event.is_set():
-            LOGGER.info("Request processor daemon caught stop event")
-            break
-
-        try:
-            data = queue.get(block = False)
-
-            function = data[0]
-            parameters = data[1]
-            tenant_id = data[2]
-            user_id = data[3]
-            project_id = data[4]
-            request_id = data[5]
-
-            response = NewConnectionHandler.MANAGER.parseargs(
-                    function, parameters, tenant_id,
-                    user_id, project_id
-            )
-
-            #Save to RAM
-            RESPONSES[request_id] = response
-        except Queue.Empty as e:
-            time.sleep(config.CONFIG['manager']['request_processing_interval'])
-
-def _make_request_daemon(queue, quantity):
-    output = []
-    for i in range(0, quantity):
-        t = stop_thread.StoppableThread(target=_process_request, args=(queue, ))#threading.Thread(target=_process_request, args=(queue, ))
-        t.daemon = True
-        t.start()
-        output.append(t)
-    return output
-
 class ManagerServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
     """Builds upon :class:`BaseHTTPServer.HTTPServer`.
 
@@ -223,8 +188,6 @@ class ManagerServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
         # RequestHandlerClass
         self.RequestHandlerClass.MANAGER = self.manager
 
-        self.request_daemon = _make_request_daemon(self.RequestHandlerClass.request_queue, config.CONFIG['manager']['request_processor'])
-
         BaseHTTPServer.HTTPServer.serve_forever(self)
     
     def server_close(self):
@@ -233,15 +196,6 @@ class ManagerServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
         # Delete all references to manager so it destructs
         self.manager.stop()
 
-        for daemon in self.request_daemon:
-            daemon.stop()
-            try:
-                daemon.join()
-            except RuntimeError as e:
-                self.LOGGER.warn(e.message)
-
-        del self.manager, self.RequestHandlerClass.MANAGER
-        
         BaseHTTPServer.HTTPServer.server_close(self)
         self.LOGGER.info("HTTP server closed!")
 

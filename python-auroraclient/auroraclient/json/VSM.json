@@ -4,10 +4,10 @@
             "attributes": {
                 "bridge_settings": {}, 
                 "interfaces": [
-                    "vwlan01", 
-                    "veth01"
+                    "vwlan0", 
+                    "veth0"
                 ], 
-                "name": "linux-br-1", 
+                "name": "linux-br", 
                 "port_settings": {}
             }, 
             "flavor": "linux_bridge"
@@ -17,16 +17,16 @@
         {
             "attributes": {
                 "attach_to": "eth0", 
-                "mac": "00:00:00:be:04:20", 
-                "name": "veth01"
+                "mac": "00:00:00:f8:6c:20", 
+                "name": "veth0"
             }, 
             "flavor": "veth"
         }, 
         {
             "attributes": {
-                "attach_to": "wlan0-1", 
-                "mac": "00:00:00:00:be:04:21", 
-                "name": "vwlan01"
+                "attach_to": "wlan0", 
+                "mac": "00:00:00:00:f8:6c:21", 
+                "name": "vwlan0"
             }, 
             "flavor": "veth"
         }
@@ -34,8 +34,19 @@
     "VirtualWIFI": [
         {
             "attributes": {
+                "channel": "2", 
+                "country": "CA", 
+                "disabled": "0", 
+                "hwmode": "abg", 
+                "name": "radio0", 
+                "txpower": "20"
+            }, 
+            "flavor": "wifi_radio"
+        }, 
+        {
+            "attributes": {
                 "encryption_type": "wep-open", 
-                "if_name": "wlan0-1", 
+                "if_name": "wlan0", 
                 "key": "23456", 
                 "name": "VSM", 
                 "radio": "radio0"
