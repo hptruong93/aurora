@@ -56,7 +56,8 @@ echo Step 2: Creating VSM slice
 #VSM
 # bash bash_aurora.sh ICU VSM > /dev/null
 echo ""Command issued ------------------\> aurora ap-slice-create --ap ICU --file VSM.json""
-bash bash_aurora.sh ICU VSM > /dev/null
+#bash bash_aurora.sh ICU VSM > /dev/null
+aurora ap-slice-create --ap ICU --file VSM.json
 
 echo Finished creating VSM slice
 echo ""Command issued ------------------\> aurora ap-slice-list""
@@ -65,13 +66,15 @@ quit ${quit_at} 2
 #####################################################################
 wait_for_input "create MedStaff slices"
 echo Step 3: Creating MedStaff slices
-#MedStaff
-echo ""Command issued ------------------\> aurora ap-slice-create --ap ICU --file MedStaff-ICU.json""
-bash bash_aurora.sh ICU MedStaff > /dev/null
 
+echo ""Command issued ------------------\> aurora ap-slice-create --ap ICU --file MedStaff-ICU.json""
+# bash bash_aurora.sh ICU MedStaff > /dev/null
+aurora ap-slice-create --ap ICU --file MedStaff-ICU.json
 echo Done with slice on ICU
+
 echo ""Command issued ------------------\> aurora ap-slice-create --ap Triage --file MedStaff-Triage.json""
-bash bash_aurora.sh Triage MedStaff > /dev/null
+# bash bash_aurora.sh Triage MedStaff > /dev/null
+aurora ap-slice-create --ap Triage --file MedStaff-Triage.json
 echo Done with slice on Triage
 
 echo Finished creating MedStaff slices
@@ -109,8 +112,11 @@ echo Step 6: Changing name for MedStaff slices to Medicine
 echo ""Command issued ------------------\> aurora wnet-update-ssid MedStaffWnet --ssid Medicine""
 aurora wnet-update-ssid MedStaffWnet --ssid Medicine
 
-echo Waiting for changes to take effect...
-sleep 2
+echo Command dispatched waiting for aurora agent to take action...
+sleep 4
+echo Waiting for changes to be applied... 
+#Actually it's just a message so that user can have some feedback. We could just join the two sleeps into one
+sleep 4
 echo Changes applied
 echo ""Command issued ------------------\> aurora wnet-show MedStaffWnet""
 aurora wnet-show MedStaffWnet
@@ -119,10 +125,12 @@ quit ${quit_at} 6
 wait_for_input "create NurseIntern slice on Triage AP"
 echo Step 7: Creating NurseIntern slice on Triage AP
 
-echo ""Command issued ------------------\> aurora ap-slice-create --ap Triage --file NurseIntern-Triage.json""
-bash bash_aurora.sh Triage NurseIntern > /dev/null
+echo ""Command issued ------------------\> aurora ap-slice-create --ap Triage --file NurseIntern.json""
+# bash bash_aurora.sh Triage NurseIntern > /dev/null
+aurora ap-slice-create --ap Triage --file NurseIntern.json
 
 echo Finished creating NurseIntern slice on Triage AP
+sleep 2
 echo ""Command issued ------------------\> aurora ap-slice-list""
 aurora ap-slice-list
 quit ${quit_at} 7
@@ -133,7 +141,6 @@ echo Step 8: Moving NurseIntern slice on Triage AP
 echo ""Command issued ------------------\> aurora ap-slice-move --ap ICU --ssid NurseIntern""
 aurora ap-slice-move --ap ICU --ssid NurseIntern
 
-sleep 2
 echo Finished moving NurseIntern slice on Triage AP
 echo ""Command issued ------------------\> aurora ap-slice-list""
 aurora ap-slice-list
