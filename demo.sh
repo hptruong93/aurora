@@ -32,6 +32,7 @@ wait_for_input() {
 
 function quit {
 	if [ "$1" == "$2" ]; then
+                echo Exiting at ${1}
 		exit 0
 	fi
 }
