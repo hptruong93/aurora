@@ -60,6 +60,8 @@ echo ""Command issued ------------------\> aurora ap-slice-create --ap ICU --fil
 aurora ap-slice-create --ap ICU --file VSM.json
 
 echo Finished creating VSM slice
+echo Waiting for VSM slice to be ready
+sleep 6
 echo ""Command issued ------------------\> aurora ap-slice-list""
 aurora ap-slice-list
 quit ${quit_at} 2
@@ -79,7 +81,7 @@ echo Done with slice on Triage
 
 echo Finished creating MedStaff slices
 echo Waiting for slices to be ready...
-sleep 4
+sleep 5
 echo Slices should now be active
 echo ""Command issued ------------------\> aurora ap-slice-list""
 aurora ap-slice-list
@@ -142,6 +144,8 @@ echo ""Command issued ------------------\> aurora ap-slice-move --ap ICU --ssid 
 aurora ap-slice-move --ap ICU --ssid NurseIntern
 
 echo Finished moving NurseIntern slice on Triage AP
+echo Waiting for NurseIntern to be ready
+sleep 2
 echo ""Command issued ------------------\> aurora ap-slice-list""
 aurora ap-slice-list
 quit ${quit_at} 8
