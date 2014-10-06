@@ -1,0 +1,1127 @@
+--------Start Entry--------------
+Date: 01 - May - 2014
+***Title: Fix MikesAP and got Mike's note
+
+***Log Content: 
+Fix Mikes AP down by simply resetting it and run Receive.py again
+
+Got Mike's note
+
+Manually connect to wireless network (WEP security) in ubuntu: [Mike's note Jan 21]
+	sudo ifconfig <interface> down
+	sudo dhclient -r <interface>
+	sudo ifconfig <interface> up
+	sudo iwconfig <interface> essid "ESSID_IN_QUOTES"
+	sudo iwconfig <interface> key HEX_KEY <<<-------- If using ASCII Equivalent, this is s:ASCII_KEY (please make note of the prefix s:)
+	****Additional Comand that may be needed  -- sudo iwconfig <interface> key open  <<<----See note below
+	sudo iwconfig <interface> mode Managed
+	sudo dhclient <interface>
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 01 - May - 2014
+***Title: IP table
+
+***Log Content: 
+IP table will need to be reconfigured everytime connected to a network
+	cd aurora/python-auroratennant
+	su
+	[password]
+	source rc.default-iptables
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 02 - May - 2014
+***Title: Added configuration file
+
+***Log Content: 
+Created configuration files for both client and manager. Credentials (username, password...) will not be hard coded into source file anymore
+Resolve a problem with client when loading configuration file: client never changes the working directory so it will not be in the correct directory and cause [IOErr 21]
+The same problem occurs in aurora manager when it does not start at the right directory. Manager is also fixed.
+
+To resolve this, the config.py will automatically append the current directory of the file to load. Possible problem is that "__file__" may not exist. In that case use "sys.argv[0]" instead, but sys.argv[0] will give the shell.py directory, so be careful when use sys.argv[0]
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 02 - May - 2014
+***Title: Added backup mysql script
+
+***Log Content: 
+Added script to backup mysql structure and schema.
+sqldb_create.py is no longer needed. Using backup is more updated.
+
+Script will take one argument --backup or --restore. If none provided nothing will be done.
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 05 - May - 2014
+***Title: nova VM creation & deletion
+
+***Log Content: 
+To create nova vm
+[See Mike's note Jan 16 & April 4]
+Also see guide to create a nova vm
+https://drive.google.com/folderview?id=0B9jn6eidJZy2SFNVWlQyNS1XRm8&usp=sharing
+
+
+Step 1: login into devstack
+$ git clone https://github.com/savi-dev/devstack
+$ cd devstack
+$ git checkout silver
+$ sudo ./install_client.sh
+$ source openrc heming mcgill EDGE-MG-1 iam.savitestbed.ca
+$ export OS_PASSWORD=jhBvtv5D
+$ nova list
+
+Step 2: initialize things
+do NOT use "$source name.sh for any of the script below. It would not work properly. Instead use "$./name.sh"
+
+a) The IP
+
+//The two following lines may not be needed since ext_net already exists
+$ nova floating-ip-pool-list
+$ nova floating-ip-create ext_net
+//End of following lines that may not be needed
+
+$cd tests
+$./create-floating-ip.sh
+[--> then yes to create new floating ip or no then use one of the vailable ips]
+[Useful commands: $nova floating-ip-list --> see all the floating ips existing]
+
+b) The key pair
+//The following lines may not be needed if a public RSA key has been created
+$ssh-keygen
+[--> press enter without a file name to write to the default file]
+[--> enter passphrase as desired]
+[--> id_rsa.pub should be created and will be used]
+//End of following lines that may not be needed
+
+$ nova keypair-add --pub_key ~/.ssh/id_rsa.pub key2
+[--> key2 is a new name for the pair. Must be distinguished from existing pairs]
+[Note that in Mike's note it is "--pub-key" which doesn't work. Replace the "-" by "_"]
+
+c) The vm:
+$nova flavor-list
+[--> to see the flavors available]
+$nova image-list
+[--> to see the images available]
+$nova boot --flavor m1.small --image da4c0bec-e11c-4390-b916-df7e972a1fc5 --key_name key2 --security_groups aurora testvm
+[--> testvm is the name of the vm]
+
+d) Pair the floating IP to the VM:
+$nova list
+$./assign-floating-ip.sh 132.206.206.x 10.5.8.x
+[--> where 132.206.206.x is the chosen floating ip created in a, and 10.5.8.x is the vm fixed IP read from $nova list]
+
+$ssh ubuntu@132.206.206.x
+$sudo passwd
+
+/*****************************************************************************************************************************/
+To enable ssh mechanism.
+Initially it would not be able to ssh into the ubuntu machine without adding the public rsa key to its ssh folder. If the key is not recognized, it would
+automatically disconnect and would not even ask for password. To fix this,
+
+$cd /etc/ssh/
+$vim sshd_config
+[--> Change "PasswordAuthentication no" to "PasswordAuthentication yes"
+Then we need to set the password of the ubuntu user. First set password of root by doing
+$sudo passwd
+[--> Then enter new password for root]
+$sudo passwd -d ubuntu
+$passwd
+[--> Then enter new password for ubuntu]
+
+After that a reboot is required for this to take effects.
+
+
+/*****************************************************************************************************************************/
+To delete a nova vm that is in use.
+Step 1: login to devstack (like above)
+Step 2: disassociate IP
+[assumed in devstack/tests/]
+$./disassociate-floating-ip.sh 132.206.206.x
+[--> where 132.206.206.x is the floating ip of the vm]
+
+Step 3: delete vm
+$nova delete testvm
+[--> testvm is the name of the vm]
+
+Step 4: delete the floating ip
+$nova floating-ip-delete 132.206.206.x
+[Be careful not to delete the wrong ones. They are very similar]
+
+Step 5: delete keypair used
+$nova keypair-delete key2
+[--> where key2 is the name of the keypair used for the machine]
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 05 - May - 2014
+***Title: Manager setup
+
+***Log Content: 
+After linux installation, get python (2.7)
+$sudo apt-get install build-essential
+[--> this already includes python 2.7]
+
+Then install git
+$sudo apt-get install git
+
+Then pull down the repository
+$git clone git@github.com:Prabhat393/aurora.git
+[--> this address may change in the future]
+
+Then
+$cd aurora/
+$sudo python aurorainstall.py
+
+Everything should be installed smoothly
+
+
+Few dependencies still needed for manager setup:
+
+1) Pretty table --> $easy_install pretty table [if easy_install is not there then $sudo apt-get install python-setuptools]
+
+2) mysql [See Mike's note Dec 11]
+$ sudo apt-get install lamp-server^
+[--> the "^" is needed. It is not a typo]
+default password is "supersecret" for the system
+
+After that run
+$su
+[--> Enter password]
+#root: cd aurora/aurora/
+#root: ./mysql_backup.sh --restore
+[--> This will restore the database structure of the system]
+[--> Enter the password for mysql TWICE]
+
+3) MySQLdb for python:
+$sudo apt-get install python2.7-mysqldb
+
+4) Pika [See Mike's note Dec 10]
+    $ sudo apt-get update; sudo apt-get upgrade
+    $ sudo apt-get install python-dev python-pip build-essential libmysqlclient-dev
+    $ sudo pip install pika
+    $ sudo pip install psutil paste requests
+    $ sudo easy_install -U distribute
+    $ sudo pip install mysql-python [--> this is not needed since we already had 3)]
+
+download python-ifconfig from
+https://code.google.com/p/python-ifconfig/downloads/detail?name=python-ifconfig-0.1.tar.gz&can=2&q=
+    $ sudo python setup.py install
+    
+To run Send.py, need RabbitMQ
+    $ sudo apt-get install rabbitmq-server
+
+Configurations for pika (otherwise have "Socket closed while authenticating indicating a probable authentication error" giving "exceptions.ProbableAuthenticationError")
+[See Mike's note Jan 9]
+rabbitMQ configuration file installation
+
+/usr/lib/rabbitmq/lib/rabbitmq_server-2.7.1/sbin/rabbitmq-plugins list
+
+http://www.rabbitmq.com/install-debian.html
+
+    $ sudo rabbitmq-plugins enable rabbitmq_management
+    $ sudo service rabbitmq-server restart
+    $ sudo rabbitmqctl list_users
+    $ sudo rabbitmqctl change_password guest secret
+
+Web interface is at http://localhost:15672
+
+5) Add pika users
+[--> guest is default user. Use this to login to web interface]
+username: guest
+password: guest
+
+Username: heming
+Password: secret
+
+Username: outside_world
+Password: wireless_access
+
+Username: access_point
+Password: let_me_in
+
+Need to change permissions of outside_world to / .* .* .*
+Also need to change permissions of access_point to / .* .* .*
+
+Tested on May 6th with openflow1 connected to manager running on testvm at 132.206.206.135 with fixed IP 10.5.8.7
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 06 - May - 2014
+***Title: ssh key adding
+
+***Log Content: 
+From http://www.thegeekstuff.com/2008/11/3-steps-to-perform-ssh-login-without-password-using-ssh-keygen-ssh-copy-id/
+Using
+$ssh-copy-id -i ~/.ssh/id_rsa.pub remote-host
+to remove password authentication when ssh into the remote-host
+e.g. $ssh-copy-id -i ~/.ssh/id_rsa.pub root@127.0.0.1
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 06 - May - 2014
+***Title: wnet feature
+
+***Log Content: 
+wnet queries:
+When there is/ are option(s), always put the wnet name in front, and then option
+e.g. aurora wnet-add-wslice wnet_name --slice slice_id
+aurora wnet-update-ssid wnet_name --ssid new_ssid
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 07 - May - 2014
+***Title: HTTP response client
+
+***Log Content: 
+Added request_id for each request from client (one POST & GET pair) so that requests are distinct.
+
+Currently, uuid is used to generate request_id, but any method that can generate distinct id (given that client does not have to communicate with manager, and there might be multiple clients querying the manager at the same time) would work.
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 07 - May - 2014
+***Title: Added auto login for devstack
+
+***Log Content: 
+Added "autologin.sh" to help logging in into devstack
+Usage: $source autologin.sh
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 08 - May - 2014
+***Title: Aurora tenant setup
+
+***Log Content: 
+Setup aurora tenant to work
+[See Mike's note on April 7th]
+
+Step 1: setup a vm (or use a current vm running manager but this can be tricky)
+$cd aurora/
+$scp python-auroratenant/* ubuntu@132.206.206.x:~/python-auroratenant/
+[--> where 132.206.206.x is the tenant's floating ip]
+$sudo bash setup.sh install
+[--> This will do everything required for the setup]
+
+Step 2: create a slice with capsulator as an interface (the other interface is veth)
+Then we need a capsulator slice to forward all traffic of a certain slice to the tenant. To do this use "caps.json" or "caps-2.json" in auroraclient to create slice. Remember to configure the forward to field in the capsulator to the tenant's fixed ip address (10.5.8.x for aurora)
+
+Step 3: check if this is working
+Connect to the slice created in step 2.
+Check for floating ip address using
+$curl http://whatismyip.org/
+or connect to the internet via browser and check. The ip should be the tenant's ip since all traffic from client was forwarded to the tenant's vm, and then output to the internet.
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 08 - May - 2014
+***Title: Refactor --hint and implement ap_slice_delete --ssid
+
+***Log Content: 
+Refactor Yang's code in manager into hint/hint_agent.py
+Implement new option for ap_slice_delete --ssid [slice_ssid] to save time deleting slices
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 08 - May - 2014
+***Title: open vswitch port
+
+***Log Content: 
+Router was originally in port 28
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 09 - May - 2014
+***Title: Useful ifconfig and ip commands
+
+***Log Content: 
+To change ip address manually
+$sudo ifconfig [interface_name] 10.0.0.100 netmask 255.255.255.0
+
+To add default gateway to routing
+$sudo route add default gw 10.0.0.1 [interface_name]
+
+To purge all changes to ip
+$ip addr flush [interface_name]
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 09 - May - 2014
+***Title: AP internet connectivity
+
+***Log Content: 
+For some reason, HP-AP cannot ping internet when eth0 is connected (tried 8.8.8.8) but can ping internal addresses (192.168.0.1).
+openflow2 does not have this problem.
+Will try to figure out next week.
+
+See solution on 13th of May
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 12 - May - 2014
+***Title: [Not done] Full system in closed environment
+
+***Log Content: 
+This time uses openflow3:
+
+1) The ap can ping internet (tried pinging 8.8.8.8)
+2) Slice creation works normally
+3) Connected to slice successfully
+4) Cannot connect to internet from slice:
+    a) Cannot ping internet (tried pinging 8.8.8.8)
+    b) Can ping router though (ping 192.168.0.2)
+    c) Ethernet connection stops working once wlan0 is connected to the slice
+
+Problem fixed on 13th of May
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 13 - May - 2014
+***Title: [Fixed] Full system in closed environment
+
+***Log Content: 
+No connection to the internet problem was caused by the MAC address of the device not regconized by the lab firewall and therefore is blocked.
+
+Notice that although the device (laptop/ phone) is connected to the network through wireless network, the traffic goes down to the AP, passing through the router and goes down to the ethernet out to the internet. Therefore, from the firewall point of view, the device is connected to the network using ethernet, not wireless connection. (Since the AP and the virtual network is transparent to the firewall. The firewall can only see the router...)
+
+Problem fixed by adding the MAC address of the wlan0 interface of the laptop to the firewall system. Laptop now has internet access through the slice.
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 13 - May - 2014
+***Title: Verification of ssid
+
+***Log Content: 
+Added ssid verification when tenant attempts to create new slice so that a tenant cannot have two slices with same ssid (in fact the AP cannot create two slices with same ssid on one radio)
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 14 - May - 2014
+***Title: --hint feature completion
+
+***Log Content: 
+Basically finished --hint feature
+
+1) Multiple slice creation
+2) Different bridges (linux & ovs)
+3) Slice load suggestion
+4) Full AP warning
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 15 - May - 2014
+***Title: Integrate request_verification with query_agent
+
+***Log Content: 
+Changed request_verification to using query_agent instead of querying directly from MySQLdb like before. This simplifies the code a lot.
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 15 - May - 2014
+***Title: Merging dev to master
+
+***Log Content: 
+Merging dev to master: stable version of aurora.
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 16 - May - 2014
+***Title: Setup aurora system using ethernet cable with internet connection
+
+***Log Content: 
+To setup aurora using ethernet cable with internet connection:
+
+Components:
+1) Manager host --> physical machine
+2) Client --> VM or physical machine. This can be the same machine as manager
+3) AP
+4) Router
+
+Step 1: connecting the components together
+1) Connect ethernet cable to router for router to have internet
+2) Connect AP and manager (and client to) the router.
+3) Verify that AP and manager are in the same subnet.
+4) Verify that AP has internet (ping 8.8.8.8 perhaps?)
+5) Verify that client can communicate with manager (ping manager perhaps?)
+
+Step 2: Config
+1) Config aurora-manager --> aurora/aurora/aurora/.config. Make sure the manager host is the manager address, and mysql credentials are correct
+2) Config aurora-client --> aurora/python-auroraclient/auroraclient/.config. Make sure the manager host is correct, and the client credentials (tenant_id, project_id, user_id) are what wanted. Note that tenant_id will be displayed when tenant queries the manager.
+3) Config AP --> In /usr/aurora/Receive.py, make sure the manager host is correct (the IP address that the AP first sends the request to)
+
+Step 3: Run
+1) Run aurora-manager. Make sure pika queue is up and running stable. Message dispatched is the keyword
+2) Run AP --> python Receive.py. Make sure that AP successfully joins the pika queue and is running stable
+3) Start querying from client.
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 16 - May - 2014
+***Title: Tool for aurora demo
+
+***Log Content: 
+Added slice_create.sh to automatically create slices using gen_config.json, gen_config-1.json, gen_config-2.json, gen_config-3.json
+Usage --> $bash slice_create.sh [-d / --delete][ap_name] [number_of_slice]
+--> Number of slice from 1 to 4
+--> AP name must exists
+--> If -d or --delete is provided as the first arg, $aurora ap-slice-delete --all is called. Script terminates immediately after
+
+Added one line to show tenant_id in json_sender.py when client queries manager
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 20 - May - 2014
+***Title: Finished bash_aurora.sh for demo purpose
+
+***Log Content: 
+bash_aurora.sh now has more functionalities:
+
+1) slice creation 
+a) --> [ap_name] [number_of_slice]
+This assumes that there is no slice on the current ap
+b) --> -t or --hint [optional: slice-load]
+$aurora ap-slice-create --hint location 
+If slice-load is provided, slice-load will be appended at the end of the above command
+2) slice deletion --> -d or --delete [slice1_ssid] [slice2_ssid]....
+If no slice_ssid provided, it will try to delete everything (i.e. $aurora ap-slice-delete --all)
+3) slic list --> -l or --list
+4) slice show --> -s or --show [slice_id]
+5) ap-list --> -p or --ap-list
+6) ap-show --> -ps or --ap-show [ap_name]
+7) slice-restart --> -r or --restart [slice_id]
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 20 - May - 2014
+***Title: Features that can be done in the future
+
+***Log Content: 
+Features that would be much better to have:
+I) Manager/client
+1) Manager decoupling modules:
+Design and manager modules so that development of different modules does not affect other modules (i.e. we do not need to restart the whole manager and shutdown the system every time we develop new feature)
+
+2) ap-slice-create:
+a) Better --hint: [Partially implemented on 22nd May]
+Allow client to directly specifies location, slice name and bridge name from the beginning. If any is missing then manager would ask. If any of the given information is invalid then the manager would ask the client to check it again.
+b) Better creation with default config
+Each user has a defauit configuration of his own. (Maybe add a command $aurora slice-default-config --file ?? to register this default config) Creation without any given parameters would load up the default config. Config will be managed by client program.
+c) Allow multiple slices creation based on simple parameters (e.g. create 4 slices with linux bridges and slice name list) [This is already part of bash_aurora but it's not an aurora feature]
+
+3) manager queries: [a) was implemented on 21st of May]
+a) Currently ap-slice-list, ap-slice-show, ap-slice-move, ap-slice-restart require client to enter slice_id, which is uuid and this is very inconvenient.
+ap-slice-delete has an option --ssid to specify slice using its ssid.
+It would be nice if we have --ssid option with multiple ssids specified by the client. The query from client would be simpler.
+
+b) Query with response:
+Host a client server so that when client issues a query that is aurora-agent related, he does not have to issue another query to view the status of his previous query.
+Manager simply notifies this client server once received the reply from aurora-agent.
+
+4) Configuration:
+Would be better if we can add a command to modify configuration .config file from aurora, not by modifying the .config file like now
+
+5) Client profile and management:
+manager should store client (user, tenant) and for each type of client (tenant/user) holds a profile record so that default configurations/ management is more organized. Currently manager only ensures that clients issue the correct requests
+to the aurora-agent, but the manager does not have any feature to summarize or analyze clients' activities. --> See tenant management below
+
+a) Client statistics: [already have with ap-slice-list -a -i] [this is a specific feature of 4)]
+Would be better if we have an option for client to track how many slices he has created/ deleted/ modified. What were the total usage of all slices over a period of time.
+
+b) Client analysis (see tenant management below)
+
+6) Controller?
+Further work to do with ovs controller? Currently using floodlight but at a very primitive level.
+First thing to be done is to provide a more user friendly floodlight controller interface. This is already implemented with GUI. See --> http://www.openflowhub.org/blog/blog/2012/07/25/avior-open-source-floodlight-gui-released/
+However, to have complete control over the flow using software mechanism, this type of GUI may not be appropriate.
+We may have to implement a user-friendly interface (software interface that other modules in the framework can talk to, not a GUI) that abstract away the complex REST API of floodlight
+
+7) Code cleaning & documentation:
+Gather all SQL queries and encapsulate them into query_agent.py (I already created query_agent.py). Currently we have queries everywhere and everytime we query, we have a repetitive piece of code to connect to MySQL
+Split manager.py into smaller file. 2k+ lines of code is not very good for code maintainance and future development
+A note for code documentation: we should not waste time documenting every single method in the framework, but rather document each module at a higher level, so people can use the module effectively without reinventing the wheel, and we save development time. For research purpose, we may not need to understand every details of the code, but rather understand what the implemented modules can offer
+
+8) Benchmark testing: (see 27th May for the test on manager)
+Testing manager performance when there are many clients queries.
+
+
+II) Tenant:
+1) Management:
+Viewing traffic and flows coming in into the tenant vm feature
+Have statistical analysis of the flows if required as well (can be research topic?)
+
+2) Interaction:
+Integrate flood light with tenant and provide more user-friendly interface to interact with (abstract the flood light complicated REST API query away)
+Some standard operations to be implemented:
+- block certain traffic flow, redirect certain traffic flow, copy certain traffic flow
+- API for tenant to control slice traffic --> view slices under control and apply flow controls (line above) to those slices.
+
+III) Agent (AP):
+1) Management:
+Complete management of traffic: speed cap/ speed assurance (minimum/ maximum traffic)
+Mike has already done some work with openWRT TC module
+
+2) Embedded openflow?
+Embedded switch can be implemented in the AP and turns it into an openflow switch. However, with the help of ovs bridge and capsulator interface, this seems to be redundant
+See --> http://archive.openflow.org/wk/index.php/Pantou_:_OpenFlow_1.0_for_OpenWRT
+
+IV) System GUIs:
+These GUIs really do not serve research purposes very well but having something for visual presentation is also worth mentioning. It is important to mention that these GUI needs to have ability to operate automated tasks for presentation purposes.
+- GUI for client (slice operations)
+- GUI for tenant (flow controls, management and analysis)
+- GUI for manager (slice management and analysis [this overlapses with tenant but it is what manager should do], database management)
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 21 - May - 2014
+***Title: SSID options and wnet switches
+
+***Log Content: 
+Added --ssid switch for slice show, slice delete, wnet add wslice. Now client can provide a list of ssid instead of a list of uuid as before.
+Added join_condition in query_agent to facilitate complex queries.
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 21 - May - 2014
+***Title: automated tools
+
+***Log Content: 
+Changed --hint to allow ap specification
+Changed bash_aurora.sh so that it now supports creating multiple slices on certain AP with client providing the slices ssids
+This uses --hint, which communicates several times with the manager. Therefore the speed is much slower than creating the slice just from json file.
+
+Prepared automated script for demo showing step by step creation of components and commands issued.
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 21 - May - 2014
+***Title: Setting up demo on laptop
+
+***Log Content: 
+Setup and ran demo on laptop.
+Update query_agent to produce stricter bracketting for sql condition
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 22 - May - 2014
+***Title: Improve --hint
+
+***Log Content: 
+Improve --hint so that client can now specify --location --ap --ssid and --bridge (type) in the command
+Using this also reduces the number of queries that the client has to make with manager in order to create a slice (given that client already has some information)
+
+Also changed bash_aurora slice creation to better match the new --hint feature
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 22 - May - 2014
+***Title: Manager-AP sync problem
+
+***Log Content: 
+Scenario: client A and B attempts to create two slices (one each) on the same empty AP
+Procedure:
+- Client A and B issue command (assumes at the same time). Both contains slice configuration
+- Manager receives commands from one of the two first (without lost of generality assumes received client A's command first)
+- Manager processes commands from client A. Message dispatched to AP
+- Manager updates its MySQL database, but ap_provision database is kept untouch.
+- Manager receives commands from B later on.
+- Manager checks for slice existence in ap_provision --> no result found. Which means that client B slice also contains radio configuration
+
+Problem:
+- Slice creation already happened at the AP. Client B's slice will be failed because radio configuration already existed.
+- Manager should be the one who block the invalid slice creation.
+- If manager remembers that it dispatch a slice creation command a moment before, it would still cannot guarantee that the request from client B will fail, since client B may request to have a slice on a different radio.
+- Current request_verification uses ap_provision as the primary database to check for radio configuration existence. MySQL database does not know which radio a slice is on.
+
+Possible solution:
+- Manager accepts both request. Implement a pending radio lock so that newly created slice on the same radio will have to wait if radio configuration is put on pending (unknown status). This would mean that the manager has to have a software queue to block dispatch messages if that message for AP needs to have radio configuration instead of directly putting the message on pika queue.
+- Another solution is to reject client B request if radio configuration is pending (unknown status). This would make client B waits and create his slice later. This is simpler to implement, but have the risk of permanently blocking the AP if reply from AP to release the lock is lost.
+
+Second solution implemented
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 23 - May - 2014
+***Title: --hint does not work with 2 radios
+
+***Log Content: 
+--hint does not take into account that there might be 2 radios, and therefore if one radio is full, it will proceed to create a configuration file without radio configurationl, and on the wrong radio as well!!!
+This is easy to fix but requires more time and slight changes.
+Request verification does not block this since it queries from the database and therefore does not check if the slice configuration is configured to the correct radio.
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 23 - May - 2014
+***Title: performance of HTTP server on manager
+
+***Log Content: 
+Scenario: manager running on laptop. Client queries from PC in the same subnet (same internal network)
+Problem: client takes ~10s to finish one query???
+Possible cause: manager HTTP server is not running on a thread. Therefore requests coming from client will be slow down
+If the above cause is causing the problem, then making the HTTP server running on a thread will resolve it.
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 27 - May - 2014
+***Title: Manager benchmark
+
+***Log Content: 
+Tested with 10 clients querying at the same time.
+
+##########################################################################
+import threading
+import subprocess
+
+class Call(threading.Thread):
+
+    def __init__ (self):
+        threading.Thread.__init__(self)
+
+    def run(self):
+        while True:
+            subprocess.check_call(["aurora", "ap-list"])
+            subprocess.check_call(["aurora", "ap-slice-list"])
+
+threads = []
+for num in range(0, 10):
+    thread = Call()
+    thread.start()
+    threads.append(thread)
+
+for t in threads:
+    t.join()
+##########################################################################
+
+Manager cannot handle this many clients querying at the same time. HTTP requests will timeout and manager throws broken pipe exception.
+Perhaps a better mean of communication between client and manager that supports mass query would suffice.
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 27 - May - 2014
+***Title: Improve manager HTTP server
+
+***Log Content: 
+Implemented a queue to store requests, and a thread to process those requests in the queue. This eliminates the problem of manager not capable of responding to large amount of requests.
+Without the queue, and given that HTTP server runs with ThreadingMixIn, "Operational Err SQL server has gone away" happens.
+Tested with the following code (50 threads querying)
+
+##########################################################################
+import threading
+import subprocess
+
+class Call(threading.Thread):
+
+    def __init__ (self):
+        threading.Thread.__init__(self)
+
+    def run(self):
+        while True:
+            subprocess.check_call(["aurora", "ap-list"])
+            subprocess.check_call(["aurora", "ap-slice-list"])
+
+threads = []
+for num in range(0, 50):
+    thread = Call()
+    thread.start()
+    threads.append(thread)
+
+for t in threads:
+    t.join()
+##########################################################################
+
+Be careful not to have 2 queues and more to process requests. Core dump happens??? [Why?] (Is this because of hardware limitation?)
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 29 - May - 2014
+***Title: Problem with manager terminating
+
+***Log Content: 
+Manager cannot be terminated by keyboard interrupt. It stucks at "IO loop is dying"
+Still hasn't figured out why running the client on the PC querying manager on laptop takes ~10s. HTTP server threading solution did not work (although it allow client to have more queries per second)
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 30 - May - 2014
+***Title: Move server request clearance to POST
+
+***Log Content: 
+Move server request clearance to POST. This is to ensure that manager does not delete active requests if request clearance happens (i.e. manager HTTP server idle for 30s)
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 02 - June - 2014
+***Title: Fix unstoppable threads during system shutdown
+
+***Log Content: 
+Fix unstoppable threads during system shutdown:
+- The problem was that system cannot be shutdown normally (using keyboard interrupt)
+- Problem was caused by blocking queue method queue.get() without any argument will block the current thread and therefore the check for stop_event will never be executed.
+- Fixed by adding queue.get(block = False) to release the resource if there is no item in the queue.
+- Tested with testing.py with 50 threads running, each has 10% chance of terminating at the end of each execution loop.
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 03 - June - 2014
+***Title: Added several info into .config
+
+***Log Content: 
+Added the following features into manager .config
+
+- request process rate: in second
+- number of request processor (request daemon)
+- manager port
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 04 - June - 2014
+***Title: [Fixed] Unable to create slice on radio1
+
+***Log Content: 
+Unable to create slice on radio1
+
+- Tried creating from 0 slices, together with default configuration but does not work
+- Tried creating from 1 or more slices, together with appropriate configuration (ones that work with slices created on radio0) but does not work either
+
+Fixed --> changed small detail in aurora-agent Database.py
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 13 - June - 2014
+***Title: Changed manager http server
+
+***Log Content: 
+Changed manager http server to process the request immediately once received POST request from client. The processing happens before the manager replies. Therefore, if the processing time is too long, request timeout would happen. However, this would increase the query speed between the client and manager since client json_sender does not have to wait 1 second then send the GET request as before
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 13 - June - 2014
+***Title: Fix ap-slice-move
+
+***Log Content: 
+Fixed ap-slice-move so that manager dynamically generates appropriate configuration for the slice being move so that the newly created configuration is applicable to the destination AP. 
+Before the slice configuration did not match the AP state all the time (interfaces and brige names duplicate, wrong choice of radio...). Features of the ap-slice-move are described below:
+
+- If the destination radio does not have radio configuration and the current slice has radio configuration, then apply the current slice radio configuration.
+- If the destination radio already had radio configuration, all radio configuration (if exists) of the current slice will be ignored
+- If one radio is already full on the AP, the manager will attempt to choose the other radio and reflects the change in the slice configuration dynamically.
+- The manager will renamed all the interfaces and bridges in the slice configuration so that they don't conflict with the current names in the destination AP.
+
+Illegal moves happens when:
+- Two slices of the same name will appear on one AP.
+- Destination AP is not available (DOWN or UNKNOWN)
+
+Lastly, ap-slice-move now has --ssid tag for automation and testing convenience
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 04 - August - 2014
+***Title: Install uci on ubuntu
+
+***Log Content: 
+To install uci on ubuntu, follow instruction at
+http://www.wakoond.hu/2013/06/using-uci-on-ubuntu.html
+
+ The following HOWTO introduces the building of UCI (Unified Configuration Interface) on Ubuntu.
+
+    Some extra package are required:
+
+    $sudo apt-get install cmake lua5.2
+
+    The libubox library is required. It should to compiled from source. To do this, first you have to get the source from git: 
+
+    $git clone git://nbd.name/luci2/libubox.git libubox
+    $cd libubox
+
+    Please follow the next steps to build libubox:
+
+    $mkdir build
+    $cd build
+    $cmake ..
+    $make ubox
+
+    Install libubox:
+
+    $sudo mkdir -p /usr/local/include/libubox
+    $sudo cp ../*.h /usr/local/include/libubox
+    $sudo cp libubox.so /usr/local/lib
+    $sudo ldconfig
+
+    Get UCI source from git:
+
+    $git clone git://nbd.name/uci.git uci
+    $cd uci
+
+    Please follow the next steps to build uci:
+
+    $mkdir build
+    $cd build
+    $cmake ..
+    $make uci cli
+
+    Install uci:
+
+    $sudo mkdir -p /usr/local/include/uci
+    $sudo cp ../uci.h ../uci_config.h /usr/local/include/uci
+    $sudo cp ../uci_blob.h ../ucimap.h /usr/local/include/uci
+    $sudo cp libuci.so /usr/local/lib
+    $sudo cp uci /usr/local/bin
+    $sudo ldconfig
+
+    Testing:
+
+    $mkdir test
+    $cat > test/test << EOF
+    $> config 'test' 'abc'
+    $>         option 'test_var' 'value'
+    $> EOF
+
+    $uci -c `pwd`/test show test
+    Output:
+    test.abc=test
+    test.abc.test_var=value
+
+    $uci -c `pwd`/test set test.abc.test_var=foobar
+    $uci -c `pwd`/test commit test
+
+    $uci -c `pwd`/test show test
+    Output:
+    test.abc=test
+    test.abc.test_var=foobar
+
+
+--------End Entry--------------
+
+
+
+
+--------Start Entry--------------
+Date: 04 - August - 2014
+***Title: Getting "wifi" command in openwrt to work on ubuntu
+
+***Log Content: 
+In openwrt system, copy the follwing files/directories to ubuntu:
+
+/lib/config/
+/lib/functions/
+/lib/functions.sh
+/lib/uci/
+/lib/wifi/
+
+/etc/functions.sh
+/sbin/wifi
+
+Then change wifi conent (first line only) from #!/bin/sh ---> #!/bin/bash
+
+
+--------End Entry--------------
+
+
+
+
