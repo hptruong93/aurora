@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workbench version="2.0">
+<workbenchAdvisor/>
+<window height="768" maximized="true" width="1276" x="64" y="24">
+<fastViewData fastViewLocation="1024"/>
+<perspectiveBar/>
+<coolbarLayout>
+<coolItem id="org.xmind.ui.group.file" itemType="typeGroupMarker"/>
+<coolItem id="org.eclipse.ui.workbench.file" itemType="typeToolBarContribution" x="124" y="30"/>
+<coolItem id="org.xmind.ui.group.undo" itemType="typeGroupMarker"/>
+<coolItem id="org.xmind.ui.workbench.undo" itemType="typeToolBarContribution" x="68" y="30"/>
+<coolItem id="org.xmind.ui.group.edit" itemType="typeGroupMarker"/>
+<coolItem id="org.xmind.ui.workbench.edit" itemType="typeToolBarContribution" x="124" y="30"/>
+<coolItem id="additions" itemType="typeGroupMarker"/>
+<coolItem id="group.editor" itemType="typeGroupMarker"/>
+<coolItem id="org.xmind.ui.MindMapEditor" itemType="typePlaceholder" x="624" y="30"/>
+</coolbarLayout>
+<page focus="true" label="&lt;Unknown Label&gt; - XMind Pro Perspective">
+<editors>
+<editorArea activeWorkbook="DefaultEditorWorkbook">
+<info part="DefaultEditorWorkbook">
+<folder appearance="1" expanded="2">
+<presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory"/>
+</folder>
+</info>
+</editorArea>
+</editors>
+<views>
+<view id="org.eclipse.ui.views.PropertySheet" partName="Properties">
+<viewState/>
+</view>
+<view id="org.xmind.ui.OverviewView" partName="Overview"/>
+<view id="org.eclipse.ui.views.ContentOutline" partName="Outline">
+<viewState/>
+</view>
+</views>
+<perspectives activePerspective="org.xmind.ui.meggy.perspective">
+<perspective editorAreaTrimState="2" editorAreaVisible="1" fixed="0" version="0.016">
+<descriptor class="org.xmind.ui.internal.meggy.MeggyPerspective" id="org.xmind.ui.meggy.perspective" label="XMind Pro Perspective"/>
+<alwaysOnActionSet id="net.xmind.ui.actions.license"/>
+<alwaysOnActionSet id="net.xmind.ui.actions.help"/>
+<alwaysOnActionSet id="org.xmind.ui.actionSet.spelling"/>
+<show_view_action id="org.eclipse.ui.views.ContentOutline"/>
+<show_view_action id="org.xmind.ui.OverviewView"/>
+<show_view_action id="org.xmind.ui.MarkerView"/>
+<show_view_action id="org.xmind.ui.NotesView"/>
+<show_view_action id="org.xmind.ui.StylesView"/>
+<show_view_action id="org.xmind.ui.ThemesView"/>
+<show_view_action id="org.xmind.ui.BrowserView"/>
+<show_view_action id="org.eclipse.ui.views.PropertySheet"/>
+<view id="org.eclipse.ui.views.ContentOutline"/>
+<view id="org.xmind.ui.OverviewView"/>
+<view id="org.eclipse.ui.views.PropertySheet"/>
+<fastViewBars/>
+<layout>
+<mainWindow>
+<info folder="true" part="left">
+<folder appearance="2" expanded="2">
+<page content="org.xmind.ui.BrowserView" label="LabelNotFound"/>
+</folder>
+</info>
+<info folder="true" part="stickyFolderRight" ratio="0.74960506" ratioLeft="949" ratioRight="317" relationship="2" relative="left">
+<folder appearance="2" expanded="2">
+<page content="org.eclipse.ui.internal.introview" label="LabelNotFound"/>
+</folder>
+</info>
+<info folder="true" part="upRight" ratio="0.8041074" ratioLeft="1018" ratioRight="248" relationship="2" relative="left">
+<folder activePageID="org.eclipse.ui.views.ContentOutline" appearance="2" expanded="2">
+<page content="org.eclipse.ui.views.ContentOutline" label="Outline"/>
+<page content="org.xmind.ui.OverviewView" label="Overview"/>
+<page content="org.xmind.ui.StylesView" label="LabelNotFound"/>
+<page content="org.xmind.ui.RevisionsView" label="LabelNotFound"/>
+<presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory">
+<part id="0"/>
+<part id="1"/>
+</presentation>
+</folder>
+</info>
+<info folder="true" part="bottomRight" ratio="0.49925485" ratioLeft="335" ratioRight="336" relationship="4" relative="upRight">
+<folder activePageID="org.eclipse.ui.views.PropertySheet" appearance="2" expanded="2">
+<page content="org.eclipse.ui.views.PropertySheet" label="Properties"/>
+<page content="org.xmind.ui.MarkerView" label="LabelNotFound"/>
+<presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory">
+<part id="0"/>
+</presentation>
+</folder>
+</info>
+<info folder="true" part="bottom" ratio="0.6989568" ratioLeft="469" ratioRight="202" relationship="4" relative="left">
+<folder appearance="2" expanded="2">
+<page content="org.xmind.ui.NotesView" label="LabelNotFound"/>
+<page content="org.xmind.ui.ThemesView" label="LabelNotFound"/>
+<page content="org.xmind.ui.GanttView" label="LabelNotFound"/>
+</folder>
+</info>
+<info part="org.eclipse.ui.editorss" ratio="0.36935166" ratioLeft="376" ratioRight="642" relationship="2" relative="left"/>
+<info folder="true" part="rightCenter" ratio="0.6493124" ratioLeft="661" ratioRight="357" relationship="2" relative="org.eclipse.ui.editorss">
+<folder appearance="2" expanded="2">
+<page content="org.xmind.ui.SearchWorkbooksView" label="LabelNotFound"/>
+<page content="org.xmind.ui.TaskInfoView" label="LabelNotFound"/>
+<page content="org.xmind.ui.GalleryView" label="LabelNotFound"/>
+</folder>
+</info>
+</mainWindow>
+</layout>
+</perspective>
+</perspectives>
+<workingSets/>
+<navigationHistory/>
+</page>
+<workbenchWindowAdvisor/>
+<actionBarAdvisor/>
+<trimLayout>
+<trimArea IMemento.internal.id="128">
+<trimItem IMemento.internal.id="org.eclipse.ui.internal.WorkbenchWindow.topBar"/>
+</trimArea>
+<trimArea IMemento.internal.id="1024">
+<trimItem IMemento.internal.id="org.eclipse.jface.action.StatusLineManager"/>
+<trimItem IMemento.internal.id="org.eclipse.ui.internal.progress.ProgressRegion"/>
+</trimArea>
+</trimLayout>
+</window>
+<mruList/>
+</workbench>

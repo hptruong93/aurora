@@ -1,0 +1,17 @@
+eclipse.preferences.version=1
+repositories/file\:_Users_frankshaka_Documents_xmind-build_v3.4.1.rc2_build_cathy_buildRepo/enabled=true
+repositories/file\:_Users_frankshaka_Documents_xmind-build_v3.4.1.rc2_build_cathy_buildRepo/isSystem=false
+repositories/file\:_Users_frankshaka_Documents_xmind-build_v3.4.1.rc2_build_cathy_buildRepo/name=file\:/Users/frankshaka/Documents/xmind-build/v3.4.1.rc2/build/cathy/buildRepo - metadata
+repositories/file\:_Users_frankshaka_Documents_xmind-build_v3.4.1.rc2_build_cathy_buildRepo/suffix=content.xml
+repositories/file\:_Users_frankshaka_Documents_xmind-build_v3.4.1.rc2_build_cathy_buildRepo/type=org.eclipse.equinox.internal.p2.metadata.repository.LocalMetadataRepository
+repositories/file\:_Users_frankshaka_Documents_xmind-build_v3.4.1.rc2_build_cathy_buildRepo/uri=file\:/Users/frankshaka/Documents/xmind-build/v3.4.1.rc2/build/cathy/buildRepo/
+repositories/file\:_Users_frankshaka_Documents_xmind-build_v3.4.1.rc2_build_cathy_buildRepo/version=1.0.0
+repositories/http\:__www.xmind.net_xmind_updates_xmind3/enabled=false
+repositories/http\:__www.xmind.net_xmind_updates_xmind3/isSystem=false
+repositories/http\:__www.xmind.net_xmind_updates_xmind3/uri=http\://www.xmind.net/xmind/updates/xmind3
+repositories/http\:__www.xmind.net_xmind_updates_xmind3_for_eclipse/enabled=false
+repositories/http\:__www.xmind.net_xmind_updates_xmind3_for_eclipse/isSystem=false
+repositories/http\:__www.xmind.net_xmind_updates_xmind3_for_eclipse/uri=http\://www.xmind.net/xmind/updates/xmind3_for_eclipse
+repositories/http\:__www.xmind.net_xmind_updates_xmindpro3/enabled=false
+repositories/http\:__www.xmind.net_xmind_updates_xmindpro3/isSystem=false
+repositories/http\:__www.xmind.net_xmind_updates_xmindpro3/uri=http\://www.xmind.net/xmind/updates/xmindpro3

@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-Vendor: %providerName
+Fragment-Host: org.xmind.core.audio
+Bundle-Version: 3.4.1.201401221918
+Eclipse-PlatformFilter: (& (osgi.os=macosx) (|(osgi.arch=x86) (osgi.ar
+ ch=ppc) (osgi.arch=x86_64)))
+Bundle-Localization: fragment_lame_macosx
+Bundle-Name: %pluginName
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: org.xmind.lame.macosx;singleton:=true
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+
+

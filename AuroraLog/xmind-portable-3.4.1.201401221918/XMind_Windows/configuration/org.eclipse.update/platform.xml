@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config transient="false" date="1390447600342">
+	<site enabled="true" updateable="true" policy="USER-EXCLUDE" url="platform:/base/">
+		<feature id="net.xmind.workbench.feature" url="features/net.xmind.workbench.feature_3.4.1.201401221918/" version="3.4.1.201401221918">
+		</feature>
+		<feature id="org.xmind.meggy.nls.feature" url="features/org.xmind.meggy.nls.feature_3.4.1.201401221918/" version="3.4.1.201401221918">
+		</feature>
+		<feature id="org.xmind.meggy.feature" plugin-identifier="org.xmind.meggy" url="features/org.xmind.meggy.feature_3.4.1.201401221918/" version="3.4.1.201401221918">
+		</feature>
+		<feature id="org.xmind.cathy.nls.feature" url="features/org.xmind.cathy.nls.feature_3.4.1.201401221918/" version="3.4.1.201401221918">
+		</feature>
+		<feature id="net.xmind.workbench.nls.feature" url="features/net.xmind.workbench.nls.feature_3.4.1.201401221918/" version="3.4.1.201401221918">
+		</feature>
+		<feature id="org.xmind.hebe.feature" plugin-identifier="org.xmind.hebe" url="features/org.xmind.hebe.feature_3.4.1.201401221918/" version="3.4.1.201401221918">
+		</feature>
+		<feature id="org.xmind.cathy.platform.nls.feature" url="features/org.xmind.cathy.platform.nls.feature_3.4.1.201401221918/" version="3.4.1.201401221918">
+		</feature>
+		<feature id="org.xmind.cathy.feature" plugin-identifier="org.xmind.cathy" url="features/org.xmind.cathy.feature_3.4.1.201401221918/" version="3.4.1.201401221918">
+		</feature>
+		<feature id="org.xmind.hebe.nls.feature" url="features/org.xmind.hebe.nls.feature_3.4.1.201401221918/" version="3.4.1.201401221918">
+		</feature>
+		<feature id="org.xmind.cathy.platform.feature" url="features/org.xmind.cathy.platform.feature_3.4.1.201401221918/" version="3.4.1.201401221918">
+		</feature>
+	</site>
+</config>
