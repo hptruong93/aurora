@@ -7,12 +7,21 @@ received message content to SliceAgent.
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
 import sys, json, threading, traceback, os, signal, time
+import time
+
+import config as init_info
 import install_dependencies
+
 from pprint import pprint
+from ifconfig import ifconfig
+
+
+import traceback
 
 try:
     import pika
 except ImportError:
+    print "Module pika not found. Installing pika..."
     install_dependencies.install("pika")
     import pika
 
@@ -22,11 +31,7 @@ except ImportError:
     install_dependencies.install("requests")
     import requests
 
-try:
-    from ifconfig import ifconfig
-except ImportError:
-    install_dependencies.install("python-ifconfig")
-    from ifconfig import ifconfig
+    
 
 import SliceAgent
 import logging
@@ -38,9 +43,7 @@ class Receive():
     only this file need be executed on the machine - it will import
     the rest of Aurora and pass the commands along."""
     
-    def __init__(self, region, queue, config, 
-                 rabbitmq_host, rabbitmq_username, 
-                 rabbitmq_password, rabbitmq_reply_queue):
+    def __init__(self, region, queue, config, rabbitmq_host, rabbitmq_username, rabbitmq_password, rabbitmq_reply_queue):
         """Connects to RabbitMQ and initializes Aurora locally."""
         
         # Run Pika logger so that error messages get printed
@@ -52,15 +55,21 @@ class Receive():
         self.region = region
         self.manager_queue = rabbitmq_reply_queue
         self.channel_open = False
+   
         # Connect to RabbitMQ (Step #1)
+        print "Connecting to RabbitMQ server with host = %s and credentials = username:\"%s\", password:\"%s\"" % (rabbitmq_host, rabbitmq_username, rabbitmq_password)
         credentials = pika.PlainCredentials(rabbitmq_username, rabbitmq_password)
         self.parameters = pika.ConnectionParameters(host=rabbitmq_host, credentials=credentials)
-        self.connection = pika.SelectConnection(self.parameters, self.on_connected)
+        self.connection = pika.SelectConnection(self.parameters, on_open_callback=self.on_connected)
 
-    
+        self.listener = threading.Thread(target=self.connection.ioloop.start)
+        self.listener.start()
+
+
     # Step #2
     def on_connected(self, connection):
         """Called when we are fully connected to RabbitMQ"""
+        print "Connected. Opening a channel..."
         # Open a channel
         self.connection.channel(self.on_channel_open)
 
@@ -68,38 +77,33 @@ class Receive():
     def on_channel_open(self, new_channel):
         """Called when our channel has opened"""
         self.channel = new_channel
-        # Queue set to delete if this consumer dies, to be volatile 
-        # (RabbitMQ dies -> takes queue with it) and to not require 
-        # acknowledgements.  All of these are useful if you want to 
-        # preserve messages, but it is likely that any preserved 
-        # messages will take longer than the timeout on the manager 
-        # to be delivered and processed (i.e. OS reboot, RabbitMQ 
-        # restart, etc.) and will put the AP into some state 
-        # unknown to the manager.  Thus, we discard them if anything 
-        # ever goes wrong
+        # Queue set to delete if this consumer dies, to be volatile (RabbitMQ dies -> takes queue with it)
+        # and to not require acknowledgements.  All of these are useful if you want to preserve messages,
+        # but it is likely that any preserved messages will take longer than the timeout on the manager
+        # to be delivered and processed (i.e. OS reboot, RabbitMQ restart, etc.) and will put the AP
+        # into some state unknown to the manager.  Thus, we discard them if anything ever goes wrong
 
         # Note: no_ack set in on_queue_declared
-        self.channel.queue_declare(queue=self.queue, durable=False, 
-                                   callback=self.on_queue_declared,
-                                   auto_delete=True)
+        print "Channel opened. Declaring queue %s..." % self.queue
+        self.channel.queue_declare(queue=self.queue, durable=False, callback=self.on_queue_declared, auto_delete=True)
 
     # Step #4
     def on_queue_declared(self, frame):
         """Called when RabbitMQ has told us our Queue has been declared, frame is the response from RabbitMQ"""
         self.channel_open = True
+        print "Queue declared. Declaring consumption call back..."
         self.channel.basic_consume(self.handle_delivery, queue=self.queue, no_ack=True,)
-        
 
     # Step #5
     def handle_delivery(self, channel, method, header, body):
         """Called when we receive a message from RabbitMQ.  Executes the command received
         and returns data or an error message if needed."""
-        print "Receiving..."
+        print "Receiving... \n%s" % body
         
-        #print channel
-        #print method
-        #print header
-        #print body
+        print channel
+        print method
+        print header
+        print body
         if header.reply_to != self.manager_queue:
             self.manager_queue = header.reply_to
         
@@ -121,7 +125,8 @@ class Receive():
         except Exception as e:
             # Finalize message and convert to JSON
             data_for_sender['message'] = traceback.format_exc()
-
+            print "--------------------exception is :\n"
+            traceback.print_exc()
             print(" [x] Error; command " + message["command"] + " failed\n" + e.message)
 
         else:
@@ -147,11 +152,14 @@ class Receive():
     
     
     def send_ap_up_status(self, config):
-        printed = False
+        print "Sending up status..."
+        
+        waiting_count = 0
         while not self.channel_open:
-            if not printed:
-                print "Waiting for channel"
-                printed = True
+            print "Waiting for channel... Waiting count %s" % waiting_count
+            waiting_count += 1
+            time.sleep(0.2)
+
         print "AP up - alerting manager...",
         slices_to_recreate = []
         if 'init_database' in config['last_known_config']:
@@ -180,9 +188,13 @@ class Receive():
         data_for_sender['config']['init_hardware_database'] = self.agent.database.hw_database
         data_for_sender['config']['region'] = self.region
         data_for_sender = json.dumps(data_for_sender)
-        self.channel.basic_publish(exchange='', routing_key=self.manager_queue,
+        try:
+            self.channel.basic_publish(exchange='', routing_key=self.manager_queue,
                                    properties=pika.BasicProperties(content_type="application/json"),
                                    body=data_for_sender)
+            pass
+        except:
+            traceback.print_exc(file=sys.stdout)
         return
 
     def shutdown_signal_received(self):
@@ -195,9 +207,12 @@ class Receive():
         print current_database
         data_for_sender = {'successful':True, 'message': 'FIN', 'config': current_database, 'ap': self.queue}
         data_for_sender = json.dumps(data_for_sender)
-        self.channel.basic_publish(exchange='', routing_key=self.manager_queue,
+        try:
+            self.channel.basic_publish(exchange='', routing_key=self.manager_queue,
                                     properties=pika.BasicProperties(content_type="application/json"),
                                     body=data_for_sender)
+        except:
+            traceback.print_exc(file=sys.stdout)
 
 # Executed when run from the command line.
 # *** NORMAL USAGE ***        
@@ -208,11 +223,11 @@ if __name__ == '__main__':
 
     ######
     # Set the provision server IP/port here
-    prov_server = 'http://10.5.8.3:5555/initial_ap_config_request/'
+    prov_server = 'http://%s:%s/initial_ap_config_request/' % (init_info.CONFIG['init_config']['manager'], init_info.CONFIG['init_config']['manager_port'])
     #######
 
     # Get mac address
-    mac = ifconfig("eth0")["hwaddr"]
+    mac = ifconfig(init_info.CONFIG['init_config']['ethernet_interface'])["hwaddr"]
     # Put in HTTP request to get config
     try:
         request = requests.get(prov_server + mac)
@@ -236,8 +251,6 @@ if __name__ == '__main__':
     password = config_full['rabbitmq_password']
     rabbitmq_host = config_full['rabbitmq_host']
     rabbitmq_reply_queue = config_full['rabbitmq_reply_queue']
-    print "config"
-    pprint(config)
 
     if queue == None:
         raise Exception("AP identifier specified is not valid.")
@@ -247,9 +260,13 @@ if __name__ == '__main__':
     receiver = Receive(region, queue, config, rabbitmq_host, 
                        username, password, rabbitmq_reply_queue)
 
-    listener = threading.Thread(target=receiver.connection.ioloop.start)
-    listener.start()
     
+    attempt = 0
+    while not receiver.channel_open:
+        print "Waiting for connection... Attempt number %s" % attempt
+        attempt += 1
+        time.sleep(1)
+
     receiver.send_ap_up_status(config)
 
     # Thanks to Matt J http://stackoverflow.com/a/1112350
@@ -263,9 +280,3 @@ if __name__ == '__main__':
         print("Connections closed.  Cleaning up and exiting.")
     signal.signal(signal.SIGINT, signal_handler)
     signal.pause()
-
-        
-        
-        
-        
-    

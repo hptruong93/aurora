@@ -37,6 +37,7 @@ class Veth:
         print "\n  $ "," ".join(interface_command)
         subprocess.check_call(interface_command)
         
+        process = None
         # Since veth forks, we need to find the PID
         for i in psutil.process_iter():
             if i.cmdline == command:
