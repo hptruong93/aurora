@@ -41,8 +41,7 @@ class Veth:
         for i in psutil.process_iter():
             if i.cmdline == command:
                 process = i
-        
-        self.process_list[name] = process
+                self.process_list[name] = process
         
 
     def stop(self, name):

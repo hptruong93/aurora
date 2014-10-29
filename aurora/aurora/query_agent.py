@@ -9,6 +9,7 @@ import sys
 import logging
 
 from aurora import config
+from aurora.cls_logger import get_cls_logger
 LOGGER = logging.getLogger(__name__)
 
 def _database_connection():
@@ -61,7 +62,7 @@ def query(table_name, fields = [], criteria = [], appendix = ''):
             if to_execute is None:
                 return None
 
-            print to_execute
+            LOGGER.debug(to_execute)
             cursor.execute(to_execute)
             information = cursor.fetchall()
             return information
