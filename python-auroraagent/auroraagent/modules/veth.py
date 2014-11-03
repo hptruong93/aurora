@@ -40,7 +40,7 @@ class Veth:
         process = None
         # Since veth forks, we need to find the PID
         for i in psutil.process_iter():
-            if i.cmdline == command:
+            if i.cmdline() == command:
                 process = i
         
         self.process_list[name] = process
@@ -48,12 +48,11 @@ class Veth:
 
     def stop(self, name):
         """Stops the process with given name, assuming it is a vethd process."""
-        
+
         process = self.process_list[name]
         process.terminate()
         # Need .wait(), otherwise process hangs around as defunct.
         process.wait()
-        
         # Delete entry now that the process has truly been deleted
         del self.process_list[name]
 

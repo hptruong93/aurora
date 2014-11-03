@@ -127,7 +127,7 @@ class Receive():
             data_for_sender['message'] = traceback.format_exc()
             print "--------------------exception is :\n"
             traceback.print_exc()
-            print(" [x] Error; command " + message["command"] + " failed\n" + e.message)
+            print(" [x] Error; command %s failed\n%s" % (message["command"], e.message))
 
         else:
             # No error, we (may) return data.

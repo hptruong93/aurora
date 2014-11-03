@@ -7,6 +7,7 @@ import MySQLdb as mdb
 import traceback
 import sys
 import logging
+from aurora.cls_logger import get_cls_logger
 
 from aurora import config
 LOGGER = logging.getLogger(__name__)
@@ -61,7 +62,7 @@ def query(table_name, fields = [], criteria = [], appendix = ''):
             if to_execute is None:
                 return None
 
-            print to_execute
+            LOGGER.debug(to_execute)
             cursor.execute(to_execute)
             information = cursor.fetchall()
             return information

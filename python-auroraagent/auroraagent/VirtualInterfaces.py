@@ -104,6 +104,7 @@ class VirtualInterfaces:
         manager = self.__get_module(flavor)
         manager.stop(name)
         self.__del_entry(name)
+
         
     def get_status(self, name):
         """Returns whether or not a given instance is running."""
