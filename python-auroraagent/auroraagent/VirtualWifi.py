@@ -1,5 +1,5 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
-import json, os
+import json, os, pprint
 
 class VirtualWifi:
     """Responsible for configuring the WiFi radio interfaces of a device.
@@ -61,7 +61,13 @@ class VirtualWifi:
         for interface in configuration:
             if interface["flavor"] == "wifi_bss":
 
+                pprint.pprint(self.database.hw_database["wifi_radio"]["radio_list"])
+
                 self.database.add_entry("RadioInterfaces", "wifi_bss", interface["attributes"])
+
+                print ("hp" * 40)
+
+                pprint.pprint(self.database.hw_database["wifi_radio"]["radio_list"])
                 
                 self.wifi.add_bss(**interface["attributes"])
                 

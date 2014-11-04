@@ -62,6 +62,7 @@ class Database:
     DEFAULT_RADIO = "radio0"
 
     def __init__(self, config):
+
         # Create intial database from template
         self.database = config["default_config"]["init_database"]
         if "init_database" in config.get("last_known_config", {}).keys():
@@ -77,6 +78,8 @@ class Database:
         self.DEFAULT_ACTIVE_SLICE = config["default_config"]["default_active_slice"]
         
         self.hw_database = config["default_config"]["init_hardware_database"]
+
+        # pprint.pprint(self.hw_database)
     
     def backup_current_config(self):
         """Stores the current configuration in the backup 
@@ -411,6 +414,7 @@ class Database:
         """Returns the entry identified by radio name
         if it exists.  Raises exception.EntryNotFound if it does not."""
         for entry in self.hw_database["wifi_radio"]["radio_list"]:
+            pprint.pprint(entry)
             if entry["name"] == str(radio):
                 return entry
         raise exception.EntryNotFound(radio)

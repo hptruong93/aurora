@@ -5,6 +5,7 @@ import random
 import time
 import WARPRadio
 import inspect
+import config
 
 import exception
 
@@ -30,6 +31,13 @@ class OpenWRTWifi:
 
 
     def __init__(self, database):
+        try:
+            subprocess.check_call(["killall", "hostapd"])
+        except:
+            pass
+        subprocess.check_call(["modprobe", "-r", "mac80211_hwsim"])
+        subprocess.check_call(["modprobe", "mac80211_hwsim", "radios=%s" % config.CONFIG["hwsim"]["max_simulated_radio"]])
+
         self.change_pending = {}
         self.database = database
         self.database.hw_list_all()
@@ -144,12 +152,24 @@ class OpenWRTWifi:
         # We increment the number of free radios
         if disabled:
             if not current_disabled:
+                try:
+                    wlan_up = subprocess.check_output(["cat", "/sys/class/net/wlan%s/operstate" % radio_num]) == "up"
+                    if wlan_up:
+                        subprocess.check_call(["ifconfig", "wlan%s" % radio_num, "down"])                   
+                except:
+                    raise exception.NonexistentInterface("The interface associated with radio%s does not exist" % radio_num)
                 self.database.hw_set_num_radio_free(self.database.hw_get_num_radio_free()+1)
                 self.change_pending[name]['disabled'] = True
 
         # Opposite situation
         else:
             if current_disabled:
+                try:
+                    wlan_down = subprocess.check_output(["cat", "/sys/class/net/wlan%s/operstate" % radio_num]) == "down"
+                    if wlan_down:
+                        subprocess.check_call(["ifconfig", "wlan%s" % radio_num, "up"])                  
+                except:
+                    raise exception.NonexistentInterface("The interface associated with radio%s does not exist" % radio_num)
                 self.database.hw_set_num_radio_free(self.database.hw_get_num_radio_free()-1)
                 self.change_pending[name]['disabled'] = True
 
@@ -490,7 +510,7 @@ class OpenWRTWifi:
 
         # Now that it's written, we tell hostapd to read it
 
-        print config_file
+
 
         command = ["hostapd", "-d", temp_file.name]
         # command = ["hostapd", "-ddd", '/home/kevinhan/aurora/python-auroraagent/auroraagent/hostapd_filee']

@@ -22,7 +22,7 @@ class AuroraException(Exception):
         super(AuroraException, self).__init__(message)
 
 class FlavorNotExist(AuroraException):
-    message = "Flavor does not exist!"
+    message = "Flavor does not exist."
     
 class ModuleNotLoaded(AuroraException):
     message = "Module not found in loaded module list."
@@ -76,10 +76,13 @@ class InvalidEncryption(AuroraException):
     message = "Encryption type not valid."
     
 class hostapdError(AuroraException):
-    message = "An error occured with hostapd.  Check settings."
+    message = "An error occured with hostapd. Check settings."
     
 class disabledError(AuroraException):
     message = "The radio must be active to execute this function."
+
+class NonexistentInterface(AuroraException):
+    message = "The interface associated with the radio does not exist."
 
 class NoUserIDForSlice(AuroraException):
     message = "No user id was found for the slice in question."
