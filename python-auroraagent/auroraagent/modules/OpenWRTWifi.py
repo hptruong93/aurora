@@ -138,6 +138,8 @@ class OpenWRTWifi:
 
         ln(" current disabled:%s" % current_disabled)
 
+        self.change_pending[name] = {}
+
         # If the command is to disable and not currently disabled
         # We increment the number of free radios
         if disabled:
@@ -149,7 +151,7 @@ class OpenWRTWifi:
         else:
             if current_disabled:
                 self.database.hw_set_num_radio_free(self.database.hw_get_num_radio_free()-1)
-                self.change_pending[name] = True
+                self.change_pending[name]['disabled'] = True
 
         # Write to database and UCI
         radio_entry["disabled"] = disabled
@@ -210,7 +212,7 @@ class OpenWRTWifi:
             # self.radio.wifi_up(radio)
             #subprocess.call(["wifi", "up", str(radio)])
 
-            self.radio._bulk_radio_set_command(radio)
+            self.radio._bulk_radio_set_command(self.change_pending[radio])
             
             radio_entry = self.database.hw_get_radio_entry(radio)
             # If a radio is disabled, do not try adding bss
@@ -236,7 +238,7 @@ class OpenWRTWifi:
                 num_hostapd = num_hostapd + 1
 
 
-        # num_radios_in_use = self.database.hw_get_num_radio() - self.database.hw_get_num_radio_free()
+        num_radios_in_use = self.database.hw_get_num_radio() - self.database.hw_get_num_radio_free()
         # print "______---_---------_--__--___--____number radio is %s and number free is %s so number in use is %s" % (self.database.hw_get_num_radio(), self.database.hw_get_num_radio_free(), num_radios_in_use)
 
 
