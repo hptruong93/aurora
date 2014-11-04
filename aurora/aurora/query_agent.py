@@ -10,6 +10,7 @@ import logging
 from aurora.cls_logger import get_cls_logger
 
 from aurora import config
+from aurora.cls_logger import get_cls_logger
 LOGGER = logging.getLogger(__name__)
 
 def _database_connection():
