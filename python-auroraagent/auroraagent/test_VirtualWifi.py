@@ -22,12 +22,12 @@ db_config = {
 		}, 
 		'init_hardware_database': {
 			'wifi_radio': {
-				'number_radio_free': 2, 
-				'max_bss_per_radio': '4',
+				'number_radio_free': 40, 
+				'max_bss_per_radio': '1',
 				'radio_list': [
 					{
 						'disabled': 1,
-						'macaddr': '00:80:48:75:1e:47', 
+						'macaddr': '', 
 						'name': 'radio0', 
 						'bss_list': [], 
 						'country': 'CA', 
@@ -39,9 +39,9 @@ db_config = {
 					}, 
 					{
 						'macaddr': '00:80:48:75:1e:4c', 
-						'name': 'radio2', 
+						'name': 'radio1', 
 						'bss_list': [], 
-						'if_name': 'wlan2', 
+						'if_name': 'wlan1', 
 						'disabled': 1, 
 						'hwmode': '11g',
 						'bss_limit': '4', 
