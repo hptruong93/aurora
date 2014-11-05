@@ -48,6 +48,7 @@ class VirtualWifi:
         """Sets up radios and adds any BSS specified.
         Will restart radios only if required."""
         
+
         # Set up radios only first
         for interface in configuration:
             if interface["flavor"] == "wifi_radio":
@@ -61,14 +62,8 @@ class VirtualWifi:
         for interface in configuration:
             if interface["flavor"] == "wifi_bss":
 
-                pprint.pprint(self.database.hw_database["wifi_radio"]["radio_list"])
-
                 self.database.add_entry("RadioInterfaces", "wifi_bss", interface["attributes"])
 
-                print ("hp" * 40)
-
-                pprint.pprint(self.database.hw_database["wifi_radio"]["radio_list"])
-                
                 self.wifi.add_bss(**interface["attributes"])
                 
          

@@ -36,7 +36,7 @@ class OpenWRTWifi:
         except:
             pass
         subprocess.check_call(["modprobe", "-r", "mac80211_hwsim"])
-        subprocess.check_call(["modprobe", "mac80211_hwsim", "radios=%s" % config.CONFIG["hwsim"]["max_simulated_radio"]])
+        subprocess.check_call(["modprobe", "mac80211_hwsim", "radios=%s" % config.CONFIG["hwsim"]["number_simulated_radio"]])
 
         self.change_pending = {}
         self.database = database
@@ -62,18 +62,18 @@ class OpenWRTWifi:
 
         # Regenerate it.  We rely on wifi detect, especially
         # since it can detect the MAC address & number of radios
-        self.radio.wifi_detect()
+        # self.radio.wifi_detect()
 
         # wait for the reply from WARPRadio.py
-        while self.radio.detect == 0:
-            pass
+        # while self.radio.detect == 0:
+        #     pass
 
         # Add package name to string, since UCI needs it
-        detect2 = "package wireless\n" + self.radio.detect
+        # detect2 = "package wireless\n" + self.radio.detect
 
         # Call UCI, import the data (UCI automatically commits)
-        command = ["uci", "import"]
-        print "\n  $ "," ".join(command)
+        # command = ["uci", "import"]
+        # print "\n  $ "," ".join(command)
 
         # uci_process = subprocess.Popen(["uci", "import"], stdin=subprocess.PIPE)
         # uci_process.communicate(input=detect2)
@@ -81,7 +81,8 @@ class OpenWRTWifi:
 
         # Count # radios
         # Each device has 1 wifi-device section
-        num_radios = detect2.split().count("wifi-device")
+        # num_radios = detect2.split().count("wifi-device")
+        num_radios = config.CONFIG["hwsim"]["number_simulated_radio"]
 
         # Set # radios in database
         self.database.hw_set_num_radio(num_radios)
@@ -101,18 +102,18 @@ class OpenWRTWifi:
             # change back to the above when done testing /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
             
             radio_data = {"name":"radio" + str(count), "if_name":"wlan" + str(count), "bss_list":[] }
-            radio_data["channel"] = "11"
-            radio_data["hwmode"] = "g"
+            # radio_data["channel"] = "11"
+            # radio_data["hwmode"] = "g"
             # Disabled should be stored as a number, not a string
             radio_data["disabled"] = 1
-            if count is 0:
-                radio_data["macaddr"] = "00:80:48:75:1e:47"
-                # This is the OpenWRT (or hostapd) limit
-                radio_data["bss_limit"] = self.database.hw_get_max_bss_per_radio()
-            else:
-                radio_data["macaddr"] = "00:80:48:75:1e:4c"
-                # This is the OpenWRT (or hostapd) limit
-                radio_data["bss_limit"] = self.database.hw_get_max_bss_per_radio()
+            # if count is 0:
+            #     radio_data["macaddr"] = "00:80:48:75:1e:47"
+            #     # This is the OpenWRT (or hostapd) limit
+            #     radio_data["bss_limit"] = self.database.hw_get_max_bss_per_radio()
+            # else:
+            #     radio_data["macaddr"] = "00:80:48:75:1e:4c"
+            #     # This is the OpenWRT (or hostapd) limit
+            radio_data["bss_limit"] = self.database.hw_get_max_bss_per_radio()
 
             self.database.hw_add_radio_entry(radio_data)
 
@@ -120,8 +121,8 @@ class OpenWRTWifi:
         print self.database.hw_list_all()
 
         # Delete default BSS; there will be as many as the # of radios
-        for count in reversed(range(0,num_radios)):
-            self.radio._uci_delete_bss_index(count)
+        # for count in reversed(range(0,num_radios)):
+        #     self.radio._uci_delete_bss_index(count)
 
         print("Radio setup complete.  They can now be used by Aurora.")
 
@@ -500,6 +501,8 @@ class OpenWRTWifi:
 
         else:
             final_mac = macaddr
+
+        self.change_pending[radio]["mac_addr"] = final_mac
 
         config_file += "bssid=" + final_mac  + "\n"
         config_file += "supported_rates=110 60 90 120 180 240 360 480 540"
