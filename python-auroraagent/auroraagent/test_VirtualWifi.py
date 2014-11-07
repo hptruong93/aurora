@@ -1,10 +1,14 @@
 import VirtualWifi
+import inspect
 import psutil
 import sys
 import Database
 import pprint
 import time
 import subprocess
+
+def ln(stringhere):
+    print "%s -------------------------------------------> %s"% (inspect.currentframe().f_back.f_lineno, stringhere)
 
 db_config = {
 	'last_known_config': {
@@ -172,60 +176,54 @@ configuration  = [{'attributes': {'txpower': '20', 'name': 'radio0', 'country': 
 configuration2  = [{'attributes': {'txpower': '20', 'name': 'radio1', 'country': 'CA', 'disabled': '0', 'hwmode': 'abg', 'channel': '2'}, 'flavor': 'wifi_radio'}, \
 {'attributes': {'encryption_type': 'wep-open', 'radio': 'radio1', 'key': '23456', 'if_name': 'wlan1', 'name': 'test1'}, 'flavor': 'wifi_bss'}]
 
-pprint.pprint(database.hw_database)
-
 
 test_VW = VirtualWifi.VirtualWifi(database)
 
 
-print "------------------------finished setting up-----------------------------------"
+ln("finished setting up")
 
-print
-print "__________------___---__---creating slice 1"
+ln("creating slice 1")
 
 test_VW.create_slice(configuration)
 
 time.sleep(2)
 
-print
-print "__________------___---__---creating slice 2"
+ln("creating slice 2")
 
 test_VW.create_slice(configuration2)
 
 time.sleep(1)
 
-print "______-------------___-----_----_---__---__-checking for running hostapd processes: "
+ln("checking for running hostapd processes")
 
 num_hostapd = 0
 for process in psutil.process_iter():
     if process.name() == "hostapd":
         num_hostapd = num_hostapd + 1
 
-print num_hostapd
+ln("number of hostapd processes: %s" % num_hostapd)
 
 time.sleep(5)
 
-print
-print "__________------___---__---deleting slice 1"
+ln("deleting slice 2")
 
 test_VW.delete_slice(configuration2)
 
 time.sleep(2)
 
-print
-print "__________------___---__---deleting slice 2"
+ln("deleting slice 1")
 
 test_VW.delete_slice(configuration)
 
 test_VW = None
 
-print "______-------------___-----_----_---__---__-checking for running hostapd processes: "
+ln("checking for running hostapd processes")
 
 num_hostapd = 0
 for process in psutil.process_iter():
     if process.name() == "hostapd":
         num_hostapd = num_hostapd + 1
 
-print num_hostapd
+ln("number of hostapd processes: %s" % num_hostapd)
 
-print "finished testing VirtualWifi - -------------------------------------"
+ln("finished testing VirtualWifi")

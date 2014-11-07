@@ -6,7 +6,7 @@ received message content to SliceAgent.
 #!/usr/bin/python -tt
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
-import sys, json, threading, traceback, os, signal, time
+import sys, json, threading, traceback, os, signal, time, inspect
 
 import config as init_info
 import install_dependencies

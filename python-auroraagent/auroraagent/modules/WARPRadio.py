@@ -1,13 +1,7 @@
 #!/usr/bin/python
 
-import subprocess
-import json
-import zmq
-import sys
-import ZeroMQThread
-import socket
-import time
-import config
+import subprocess, json, zmq, sys, ZeroMQThread, socket, time, config
+
 
 def ln(stringhere):
     print "%s -------------------------------------------> %s"% (inspect.currentframe().f_back.f_lineno, stringhere)
@@ -195,36 +189,39 @@ class WARPRadio:
 
     def _delete_section_name(self, section):
         # prtcmd = ["_uci_delete_section_name","uci","delete","wireless." + str(section)]
-        prtcmd = {"command": "_uci_delete_section_name","changes" : {"section": str(section)}}
+        prtcmd = {"command": "_delete_section_name","changes" : {"section": str(section)}}
         prtcmd = json.dumps(prtcmd)
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
 
     def _delete_bss_index(self, bss_num):
         # prtcmd = ["_uci_delete_bss_index","uci","delete","wireless.@wifi-iface[" + str(bss_num) + "]"]
-        prtcmd = {"command": "_uci_delete_bss_index","changes" : {"index":str(bss_num)}}
+        prtcmd = {"command": "_delete_bss_index","changes" : {"index":str(bss_num)}}
         prtcmd = json.dumps(prtcmd)
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
 
     def _delete_radio(self, radio, section):
         # prtcmd = ["_uci_delete_radio","uci","delete","wireless.radio" + str(radio_num) + "." + str(section)]
-        prtcmd = {"command": "_uci_delete_radio", "changes" : {"radio":radio, "section": str(section)}}
+        prtcmd = {"command": "_delete_radio", "changes" : {"radio":radio, "section": str(section)}}
         prtcmd = json.dumps(prtcmd)
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
 
     def _add_wireless_section(self, section):
         # prtcmd = ["_uci_add_wireless_section","uci","add","wireless",str(section)]
-        prtcmd = {"command": "_uci_add_wireless_section", "changes" : {"section":str(section)}}
+        prtcmd = {"command": "_add_wireless_section", "changes" : {"section":str(section)}}
         prtcmd = json.dumps(prtcmd)
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
+
+
+
 
 
     # the receive functions paired with the above sending functions
 
     def _bulk_radio_set_command_receive(self, command_json):
         radio_entry = self.database.hw_get_radio_entry(command_json["radio"])
-        for item in command_json:
-            if command_json[item] != radio_entry[item]:
-                radio_entry[item] = command_json[item]
+        for item in command_json["changes"]:
+            if command_json["changes"][item] != radio_entry[item]:
+                radio_entry[item] = command_json["changes"][item]
 
                 ln("call function in Receive.py to send info to manager")
 
@@ -289,5 +286,9 @@ class WARPRadio:
                         # any command beginning with an underscore is related to the setup/change process
                         # thus we route the info returned from the WARP board to the receive function
                         # paired to the function that sent it
-                        command_json  = WARP_response["changes"]
+
+                        try:                            
+                            command_json  = {"changes": WARP_response["changes"], "radio": WARP_response["radio"]}
+                        except:
+                            command_json  = {"changes": WARP_response["changes"]}
                         getattr(self, "%s_receive" % WARP_response["command"])(command_json)

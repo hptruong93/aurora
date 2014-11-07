@@ -40,7 +40,6 @@ class OpenWRTWifi:
 
         self.change_pending = {}
         self.database = database
-        self.database.hw_list_all()
         self.radio = WARPRadio.WARPRadio(database)
         self.setup()        
         self.hostapd_processes = {}
@@ -213,6 +212,8 @@ class OpenWRTWifi:
 
         # If no radios require changes, this will not execute
         for radio in self.change_pending:
+
+
             
             # command = ["wifi", "down", str(radio)]
             # print "\n  $ "," ".join(command)
