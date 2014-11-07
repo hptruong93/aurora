@@ -79,6 +79,12 @@ class Database:
         
         self.hw_database = config["default_config"]["init_hardware_database"]
 
+        for radio in range(0,len(self.hw_database["wifi_radio"]["radio_list"])):
+            self.hw_database["wifi_radio"]["radio_list"][radio]["txpower"] = int(self.hw_database["wifi_radio"]["radio_list"][radio]["txpower"])
+            self.hw_database["wifi_radio"]["radio_list"][radio]["channel"] = int(self.hw_database["wifi_radio"]["radio_list"][radio]["channel"])
+            self.hw_database["wifi_radio"]["radio_list"][radio]["bss_limit"] = int(self.hw_database["wifi_radio"]["radio_list"][radio]["bss_limit"])
+
+
         # pprint.pprint(self.hw_database)
     
     def backup_current_config(self):

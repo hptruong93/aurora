@@ -47,6 +47,21 @@ class VirtualWifi:
     def create_slice(self, configuration):
         """Sets up radios and adds any BSS specified.
         Will restart radios only if required."""
+
+        try:
+            configuration[0]["attributes"]["channel"] = int(configuration[0]["attributes"]["channel"])
+        except:
+            pass
+
+        try:
+            configuration[0]["attributes"]["txpower"] = int(configuration[0]["attributes"]["txpower"])
+        except:
+            pass
+
+        try:
+            configuration[0]["attributes"]["bss_limit"] = int(configuration[0]["attributes"]["bss_limit"])
+        except:
+            pass
         
 
         # Set up radios only first

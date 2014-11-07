@@ -371,7 +371,7 @@ class OpenWRTWifi:
         config_file += "driver=nl80211"  + "\n"
         # config_file += "ctrl_interface=/var/run/hostapd\n"
         # config_file += "ctrl_interface_group=0\n"
-        config_file += "channel=" + radio_entry["channel"]  + "\n"
+        config_file += "channel=" + str(radio_entry["channel"])  + "\n"
         config_file += "hw_mode=" + "g\n"#radio_entry["hwmode"] + "\n"
         #config_file += "disassoc_low_ack=1\n" # hostapd v0.7.3 does not support this
         config_file += "ssid=" + name + "\n"

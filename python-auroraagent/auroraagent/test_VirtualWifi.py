@@ -170,10 +170,10 @@ database = Database.Database(db_config)
 #     }
 # }
 
-configuration  = [{'attributes': {'txpower': '20', 'name': 'radio0', 'country': 'CA', 'disabled': '0', 'hwmode': 'abg', 'channel': '2'}, 'flavor': 'wifi_radio'}, \
+configuration  = [{'attributes': {'txpower': '20', 'name': 'radio0', 'country': 'CA', 'disabled': 0, 'hwmode': 'abg', 'channel': '2'}, 'flavor': 'wifi_radio'}, \
 {'attributes': {'encryption_type': 'wep-open', 'radio': 'radio0', 'key': '23456', 'if_name': 'wlan0', 'name': 'test0'}, 'flavor': 'wifi_bss'}]
 
-configuration2  = [{'attributes': {'txpower': '20', 'name': 'radio1', 'country': 'CA', 'disabled': '0', 'hwmode': 'abg', 'channel': '2'}, 'flavor': 'wifi_radio'}, \
+configuration2  = [{'attributes': {'txpower': '20', 'name': 'radio1', 'country': 'CA', 'disabled': 0, 'hwmode': 'abg', 'channel': '2'}, 'flavor': 'wifi_radio'}, \
 {'attributes': {'encryption_type': 'wep-open', 'radio': 'radio1', 'key': '23456', 'if_name': 'wlan1', 'name': 'test1'}, 'flavor': 'wifi_bss'}]
 
 

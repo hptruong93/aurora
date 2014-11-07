@@ -173,31 +173,26 @@ class WARPRadio:
     #     self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
 
     def _create_new_section(self, section_type, radio):
-        # prtcmd = ["_create_new_section","uci","set", "wireless." + str(name) + "=" +str(section_type)]
         prtcmd = {"command": "_create_new_section","changes" : {"radio":radio, "section" :section_type}}
         prtcmd = json.dumps(prtcmd)
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
 
     def _delete_section_name(self, section):
-        # prtcmd = ["_uci_delete_section_name","uci","delete","wireless." + str(section)]
         prtcmd = {"command": "_delete_section_name","changes" : {"section": str(section)}}
         prtcmd = json.dumps(prtcmd)
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
 
     def _delete_bss_index(self, bss_num):
-        # prtcmd = ["_uci_delete_bss_index","uci","delete","wireless.@wifi-iface[" + str(bss_num) + "]"]
         prtcmd = {"command": "_delete_bss_index","changes" : {"index":str(bss_num)}}
         prtcmd = json.dumps(prtcmd)
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
 
     def _delete_radio(self, radio, section):
-        # prtcmd = ["_uci_delete_radio","uci","delete","wireless.radio" + str(radio_num) + "." + str(section)]
         prtcmd = {"command": "_delete_radio", "changes" : {"radio":radio, "section": str(section)}}
         prtcmd = json.dumps(prtcmd)
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
 
     def _add_wireless_section(self, section):
-        # prtcmd = ["_uci_add_wireless_section","uci","add","wireless",str(section)]
         prtcmd = {"command": "_add_wireless_section", "changes" : {"section":str(section)}}
         prtcmd = json.dumps(prtcmd)
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
@@ -227,29 +222,19 @@ class WARPRadio:
     #     #subprocess.check_call(["uci","set", str(prtcmd[3])])
 
     def _create_new_section_receive(self, command_json):
-        pass
-        # print "\n  $ "," ".join(prtcmd)
-        #subprocess.check_call(["uci","set", str(prtcmd[3])])    
+        pass 
 
     def _delete_section_name_receive(self, command_json):
-        pass
-        # print "\n  $ "," ".join(prtcmd)
-        #subprocess.check_call(["uci","delete", str(prtcmd[3])])    
+        pass  
 
     def _delete_bss_index_receive(self, command_json):
-        pass
-        # print "\n  $ "," ".join(prtcmd)
-        #subprocess.check_call(["uci","delete", str(prtcmd[3])])    
+        pass   
 
     def _delete_radio_receive(self, command_json):
-        pass
-        # print "\n  $ "," ".join(prtcmd)
-        #subprocess.check_call(["uci","delete", str(prtcmd[3])])    
+        pass  
 
     def _add_wireless_section_receive(self, command_json):
         pass
-        # print "\n  $ "," ".join(prtcmd)
-        #subprocess.check_call(["uci","add", str(prtcmd[3])])
 
 
     
