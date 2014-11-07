@@ -236,12 +236,12 @@ class WARPRadio:
     #     #subprocess.check_call(["uci","set", str(prtcmd[3])])
 
     def _create_new_section_receive(self, command_json):
-        radio_entry = self.database.hw_get_radio_entry(command_json["radio"])
+        prtcmd = json.loads(command_json)
         # print "\n  $ "," ".join(prtcmd)
         #subprocess.check_call(["uci","set", str(prtcmd[3])])    
 
     def _delete_section_name_receive(self, command_json):
-        radio_entry = self.database.hw_get_radio_entry(command_json["radio"])
+        prtcmd = json.loads(command_json)
         # print "\n  $ "," ".join(prtcmd)
         #subprocess.check_call(["uci","delete", str(prtcmd[3])])    
 
