@@ -29,7 +29,7 @@ class WARPRadio:
         self.receiving_socket.setsockopt(zmq.SUBSCRIBE, self.subscription)
         self.test_thread = ZeroMQThread.ZeroMQThread(self.receive_WARP_info)
         self.test_thread.start()
-        self.WARP_mac = macadd
+        self.WARP_mac = macaddr
 
         # this will be the socket over which information is sent to Alan's server
         # thus it should be a zmq client with REQ
@@ -62,7 +62,7 @@ class WARPRadio:
 
 
     def wifi_up(self, radio):
-        
+
         interfaces = subprocess.Popen("uci show | grep =wifi-iface", shell = True, stdout = subprocess.PIPE)
 
         radio_numbers = []
@@ -227,27 +227,27 @@ class WARPRadio:
     #     #subprocess.check_call(["uci","set", str(prtcmd[3])])
 
     def _create_new_section_receive(self, command_json):
-        prtcmd = json.loads(command_json)
+        pass
         # print "\n  $ "," ".join(prtcmd)
         #subprocess.check_call(["uci","set", str(prtcmd[3])])    
 
     def _delete_section_name_receive(self, command_json):
-        prtcmd = json.loads(command_json)
+        pass
         # print "\n  $ "," ".join(prtcmd)
         #subprocess.check_call(["uci","delete", str(prtcmd[3])])    
 
     def _delete_bss_index_receive(self, command_json):
-        prtcmd = json.loads(command_json)
+        pass
         # print "\n  $ "," ".join(prtcmd)
         #subprocess.check_call(["uci","delete", str(prtcmd[3])])    
 
     def _delete_radio_receive(self, command_json):
-        prtcmd = json.loads(command_json)
+        pass
         # print "\n  $ "," ".join(prtcmd)
         #subprocess.check_call(["uci","delete", str(prtcmd[3])])    
 
     def _add_wireless_section_receive(self, command_json):
-        prtcmd = json.loads(command_json)
+        pass
         # print "\n  $ "," ".join(prtcmd)
         #subprocess.check_call(["uci","add", str(prtcmd[3])])
 
