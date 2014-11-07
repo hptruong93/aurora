@@ -8,14 +8,14 @@ def ln(stringhere):
 
 class WARPRadio:
 
-    def __init__(self, database, sending = config.CONFIG["zeromq"]["sending"], receiving  = config.CONFIG["zeromq"]["receiving"], mac_addr = "40:d8:55:04:22:84"):
+    def __init__(self, database, sending = config.CONFIG["zeromq"]["sending"], receiving  = config.CONFIG["zeromq"]["receiving"], macaddr = "40:d8:55:04:22:84"):
         self.sending_socket_number = str(sending)
         self.receiving_socket_number = str(receiving)
         self.database = database
 
         context = zmq.Context()
 
-        self.detect = 0
+        self.detect = ''
 
         # note that the publisher is associated with a port through the use of the
         # bind() statement while the subscriber uses connect(). Additionally,
@@ -24,18 +24,12 @@ class WARPRadio:
 
         self.receiving_socket = context.socket(zmq.SUB)
         self.receiving_socket.connect("tcp://localhost:%s" % self.receiving_socket_number)
-
         self.subscription = str(config.CONFIG["zeromq"]["subscription"])
-
         self.subscription_length = len(self.subscription)
-
         self.receiving_socket.setsockopt(zmq.SUBSCRIBE, self.subscription)
-
         self.test_thread = ZeroMQThread.ZeroMQThread(self.receive_WARP_info)
-
         self.test_thread.start()
-
-        self.WARP_mac = mac_addr
+        self.WARP_mac = macadd
 
         # this will be the socket over which information is sent to Alan's server
         # thus it should be a zmq client with REQ
@@ -45,8 +39,6 @@ class WARPRadio:
 
         # subscriber likely to miss first message
         self.sending_socket.send("%s test" %self.subscription)
-
-        time.sleep(1)
 
 
 
@@ -70,8 +62,7 @@ class WARPRadio:
 
 
     def wifi_up(self, radio):
-    
-        print "radio = " + radio
+        
         interfaces = subprocess.Popen("uci show | grep =wifi-iface", shell = True, stdout = subprocess.PIPE)
 
         radio_numbers = []
