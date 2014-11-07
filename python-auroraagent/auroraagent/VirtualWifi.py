@@ -79,7 +79,6 @@ class VirtualWifi:
         for interface in configuration:
             # Order of BSS/radio disabling is not important
             try:
-                print "----------------- flavor:" + interface['flavor']
                 if interface["flavor"] == "wifi_radio":
                     self.wifi.setup_radio(interface["attributes"]["name"], disabled=1)
             

@@ -38,11 +38,11 @@ db_config = {
 						'channel': '2'
 					}, 
 					{
+						'disabled': 1, 
 						'macaddr': '00:80:48:75:1e:4c', 
 						'name': 'radio1', 
 						'bss_list': [], 
 						'if_name': 'wlan1', 
-						'disabled': 1, 
 						'hwmode': '11g',
 						'bss_limit': '4', 
 						'channel': '11'

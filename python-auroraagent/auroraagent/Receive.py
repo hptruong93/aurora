@@ -7,7 +7,6 @@ received message content to SliceAgent.
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
 import sys, json, threading, traceback, os, signal, time
-import time
 
 import config as init_info
 import install_dependencies
@@ -35,6 +34,9 @@ except ImportError:
 
 import SliceAgent
 import logging
+
+def ln(stringhere):
+    print "%s -------------------------------------------> %s"% (inspect.currentframe().f_back.f_lineno, stringhere)
 
 
 class Receive():
@@ -120,6 +122,7 @@ class Receive():
             if message['command'] == 'SYN':
                 return_data = 'SYN/ACK'
             else:
+                ln("we need to change something here")
                 return_data = self.agent.execute(**message)
         # If there is an error, let the sender know    
         except Exception as e:
@@ -136,7 +139,7 @@ class Receive():
             data_for_sender['message'] = return_data
 
             print(" [x] Command executed")
-        data_for_sender['config'] = {}
+        data_for_sender['self.config'] = {}
         data_for_sender['config']['init_database'] = self.agent.database.database
         data_for_sender['config']['init_user_id_database'] = self.agent.database.user_id_data
         data_for_sender['config']['init_hardware_database'] = self.agent.database.hw_database

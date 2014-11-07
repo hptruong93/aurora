@@ -41,7 +41,7 @@ class OpenWRTWifi:
         self.change_pending = {}
         self.database = database
         self.database.hw_list_all()
-        self.radio = WARPRadio.WARPRadio()
+        self.radio = WARPRadio.WARPRadio(database)
         self.setup()        
         self.hostapd_processes = {}
 
@@ -117,8 +117,6 @@ class OpenWRTWifi:
 
             self.database.hw_add_radio_entry(radio_data)
 
-            
-        print self.database.hw_list_all()
 
         # Delete default BSS; there will be as many as the # of radios
         # for count in reversed(range(0,num_radios)):
@@ -131,13 +129,6 @@ class OpenWRTWifi:
         """Sets up a radio with the given parameters.  If parameters
         are unspecified, existing parameters are left unchanged.
         By default, it will enable the radio interface."""
-
-        # print "name = %s" % name
-        # print "disabled = %s" % disabled
-        # print "channel = %s" % channel
-        # print "hwmode = %s" % hwmode
-        # print "txpower = %s" % txpower
-        # print "country = %s" % country
 
 
         disabled = int(disabled)
@@ -160,7 +151,7 @@ class OpenWRTWifi:
                 except:
                     raise exception.NonexistentInterface("The interface associated with radio%s does not exist" % radio_num)
                 self.database.hw_set_num_radio_free(self.database.hw_get_num_radio_free()+1)
-                self.change_pending[name]['disabled'] = True
+                self.change_pending[name]['disabled'] = 1
 
         # Opposite situation
         else:
@@ -172,32 +163,32 @@ class OpenWRTWifi:
                 except:
                     raise exception.NonexistentInterface("The interface associated with radio%s does not exist" % radio_num)
                 self.database.hw_set_num_radio_free(self.database.hw_get_num_radio_free()-1)
-                self.change_pending[name]['disabled'] = True
+                self.change_pending[name]['disabled'] = 0
 
         # Write to database and UCI
         radio_entry["disabled"] = disabled
 
         ln( "radio_entry: %s" % str(radio_entry))
 
-        self.radio._radio_set_command(radio_num, "disabled", disabled)
+        # self.radio._radio_set_command(name, "disabled", disabled)
 
         if channel != None:
-            self.radio._radio_set_command(radio_num, "channel", channel)
+            # self.radio._radio_set_command(name, "channel", channel)
             radio_entry["channel"] = channel
             self.change_pending[name]['channel'] = channel
 
         if hwmode != None:
-            self.radio._radio_set_command(radio_num, "hwmode", hwmode)
+            # self.radio._radio_set_command(name, "hwmode", hwmode)
             radio_entry["hwmode"] = hwmode
             self.change_pending[name]['hwmode'] = hwmode
 
         if txpower != None:
-            self.radio._radio_set_command(radio_num, "txpower", txpower)
+            # self.radio._radio_set_command(name, "txpower", txpower)
             radio_entry["txpower"] = txpower
             self.change_pending[name]["txpower"] = txpower
 
         if country != None:
-            self.radio._radio_set_command(radio_num, "country", country)
+            # self.radio._radio_set_command(name, "country", country)
             radio_entry["country"] = country
             self.change_pending[name]["country"] = country
 
@@ -233,7 +224,7 @@ class OpenWRTWifi:
             # self.radio.wifi_up(radio)
             #subprocess.call(["wifi", "up", str(radio)])
 
-            self.radio._bulk_radio_set_command(self.change_pending[radio])
+            self.radio._bulk_radio_set_command(radio, self.change_pending[radio])
             
             radio_entry = self.database.hw_get_radio_entry(radio)
             # If a radio is disabled, do not try adding bss
@@ -260,17 +251,10 @@ class OpenWRTWifi:
 
 
         num_radios_in_use = self.database.hw_get_num_radio() - self.database.hw_get_num_radio_free()
-        # print "______---_---------_--__--___--____number radio is %s and number free is %s so number in use is %s" % (self.database.hw_get_num_radio(), self.database.hw_get_num_radio_free(), num_radios_in_use)
 
 
         if num_hostapd != num_radios_in_use:
             raise exception.hostapdError("There should be " + str(num_radios_in_use) + " hostapd instances running; there are only " + str(num_hostapd) + " instead.")
-
-    # def __radio_set_command(self, radio_num, command, value):
-    #     # We str() value, radio and command in case they are not strings (i.e. int)
-    #     prtcmd = ["uci","set","wireless.radio" + str(radio_num) + "." + str(command) + "=" +str(value)]
-    #     print "\n  $ "," ".join(prtcmd)
-    #     subprocess.check_call(["uci","set","wireless.radio" + str(radio_num) + "." + str(command) + "=" +str(value)])
 
     def __radio_get_command(self, radio_num, command):
         # rstrip is used to remove newlines from UCI
@@ -278,40 +262,10 @@ class OpenWRTWifi:
         #print "\n  $ "," ".join(prtcmd)
         #return subprocess.check_output(["uci","get","wireless.radio" + str(radio_num) + "." + str(command)]).rstrip()
 
-    # def __generic_set_command(self, section, command, value):
-    #     prtcmd = ["uci","set", "wireless." + str(section) + "." + str(command) + "=" +str(value)]
-    #     print "\n  $ "," ".join(prtcmd)
-    #     subprocess.check_call(["uci","set", "wireless." + str(section) + "." + str(command) + "=" +str(value)])
-
-    # def __create_new_section(self, section_type, name):
-    #     prtcmd = ["uci","set", "wireless." + str(name) + "=" +str(section_type)]
-    #     print "\n  $ "," ".join(prtcmd)
-    #     subprocess.check_call(["uci","set", "wireless." + str(name) + "=" +str(section_type)])
-
     def __generic_get_command(self, section, command):
         prtcmd = ["uci","get","wireless." + str(section) + "." + str(command)]
         #print "\n  $ "," ".join(prtcmd)
         #return subprocess.check_output(["uci","get","wireless." + str(section) + "." + str(command)]).rstrip()
-
-    # def __uci_delete_section_name(self, section):
-    #     prtcmd = ["uci","delete","wireless." + str(section)]
-    #     print "\n  $ "," ".join(prtcmd)
-    #     subprocess.call(["uci","delete","wireless." + str(section)])
-
-    # def __uci_delete_bss_index(self, bss_num):
-    #     prtcmd = ["uci","delete","wireless.@wifi-iface[" + str(bss_num) + "]"]
-    #     print "\n  $ "," ".join(prtcmd)
-    #     subprocess.call(["uci","delete","wireless.@wifi-iface[" + str(bss_num) + "]"])
-
-    # def __uci_delete_radio(self, radio_num, section):
-    #     prtcmd = ["uci","delete","wireless.radio" + str(radio_num) + "." + str(section)]
-    #     print "\n  $ "," ".join(prtcmd)
-    #     subprocess.call(["uci","delete","wireless.radio" + str(radio_num) + "." + str(section)])
-
-    # def __uci_add_wireless_section(self, section):
-    #     prtcmd = ["uci","add","wireless",str(section)]
-    #     print "\n  $ "," ".join(prtcmd)
-    #     subprocess.call(["uci","add","wireless",str(section)])
 
     def add_bss(self, radio, name, mode=None, encryption_type=None, key=None, auth_server=None, auth_port=None, auth_secret=None, acct_server=None, acct_port=None, acct_secret=None,nasid=None, new_entry=True, macaddr=None, if_name=None):
         """Creates a new BSS attached to the specified radio.  By default,
@@ -502,7 +456,7 @@ class OpenWRTWifi:
         else:
             final_mac = macaddr
 
-        self.change_pending[radio]["mac_addr"] = final_mac
+        self.change_pending[radio]["macaddr"] = final_mac
 
         config_file += "bssid=" + final_mac  + "\n"
         config_file += "supported_rates=110 60 90 120 180 240 360 480 540"
@@ -527,7 +481,7 @@ class OpenWRTWifi:
             bss_entry["mode"] = "ap"
             bss_entry["name"] = name
             bss_entry["main"] = True
-            bss_entry["macaddr"] = final_mac
+            radio_entry["macaddr"] = final_mac
             bss_list.append(bss_entry)
         else:
         	pass
@@ -578,7 +532,7 @@ class OpenWRTWifi:
         # If we have a "main" BSS, we must use UCI
         elif bss_entry["main"]:
             # We set the format of the name in add_bss, now we simply delete the section
-            self.radio._uci_delete_section_name("BSS" + radio_num)
+            self.radio._delete_section_name("BSS" + radio_num)
             self.hostapd_processes[radio + name].terminate()
             self.hostapd_processes[radio + name].wait()
 
