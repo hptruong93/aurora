@@ -414,7 +414,6 @@ class Database:
         """Returns the entry identified by radio name
         if it exists.  Raises exception.EntryNotFound if it does not."""
         for entry in self.hw_database["wifi_radio"]["radio_list"]:
-            pprint.pprint(entry)
             if entry["name"] == str(radio):
                 return entry
         raise exception.EntryNotFound(radio)
