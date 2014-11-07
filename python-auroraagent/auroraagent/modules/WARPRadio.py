@@ -4,7 +4,7 @@ import subprocess, json, zmq, sys, ZeroMQThread, socket, time, config
 
 
 def ln(stringhere):
-    print "%s -------------------------------------------> %s"% (inspect.currentframe().f_back.f_lineno, stringhere)
+    print "%s %s-------------------------------------------> %s"% (inspect.currentframe().f_back.f_lineno,inspect.getfile(inspect.currentframe()), stringhere)
 
 class WARPRadio:
 

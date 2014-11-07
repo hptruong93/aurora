@@ -10,16 +10,20 @@ import config
 import exception
 
 def ln(stringhere):
-    print "%s -------------------------------------------> %s"% (inspect.currentframe().f_back.f_lineno, stringhere)
+    print "%s %s-------------------------------------------> %s"% (inspect.currentframe().f_back.f_lineno, inspect.getfile(inspect.currentframe()), stringhere)
 
 ####
-# Implementation note: there are two 'databases', so to speak.
+# Implementation note: there WERE two 'databases', so to speak.
 # The first is in the Database class, the second
 # is UCI.  While this is redundant and inefficient,
 # the only other possible implementation would be to use UCI
 # as a database, which would make the Database class OpenWRT-specific.
 # This is not something I wish to have - it's bad enough the radio
 # is specific to OpenWRT.
+
+# Update: UCI has been removed and database will store all
+# the necessary information since we are migrating from
+# PCEngine (AP) to the WARP and UCI no longer has any use
 
 class OpenWRTWifi:
     """Responsible for configuring the WiFi radio interfaces of a device.

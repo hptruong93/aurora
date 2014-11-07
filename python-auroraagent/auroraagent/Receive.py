@@ -36,7 +36,7 @@ import SliceAgent
 import logging
 
 def ln(stringhere):
-    print "%s -------------------------------------------> %s"% (inspect.currentframe().f_back.f_lineno, stringhere)
+    print "%s %s-------------------------------------------> %s"% (inspect.currentframe().f_back.f_lineno,inspect.getfile(inspect.currentframe()), stringhere)
 
 
 class Receive():
