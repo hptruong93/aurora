@@ -172,28 +172,28 @@ class WARPRadio:
     #     prtcmd = json.dumps(prtcmd)
     #     self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
 
-    def _create_new_section(self, section_type, radio):
-        prtcmd = {"command": "_create_new_section","changes" : {"radio":radio, "section" :section_type}}
+    def _create_new_section(self, section_type, radio, bssid = None):
+        prtcmd = {"command": "_create_new_section","changes" : {"radio":radio, "macaddr": bssid, "section" :section_type}}
         prtcmd = json.dumps(prtcmd)
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
 
-    def _delete_section_name(self, section):
-        prtcmd = {"command": "_delete_section_name","changes" : {"section": str(section)}}
+    def _delete_section_name(self, section, bssid = None):
+        prtcmd = {"command": "_delete_section_name","changes" : {"section": str(section), "macaddr": bssid}}
         prtcmd = json.dumps(prtcmd)
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
 
-    def _delete_bss_index(self, bss_num):
-        prtcmd = {"command": "_delete_bss_index","changes" : {"index":str(bss_num)}}
+    def _delete_bss_index(self, bss_num, bssid = None):
+        prtcmd = {"command": "_delete_bss_index","changes" : {"index":str(bss_num), "macaddr": bssid}}
         prtcmd = json.dumps(prtcmd)
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
 
-    def _delete_radio(self, radio, section):
-        prtcmd = {"command": "_delete_radio", "changes" : {"radio":radio, "section": str(section)}}
+    def _delete_radio(self, radio, section, bssid = None):
+        prtcmd = {"command": "_delete_radio", "changes" : {"radio":radio, "macaddr": bssid, "section": str(section)}}
         prtcmd = json.dumps(prtcmd)
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
 
-    def _add_wireless_section(self, section):
-        prtcmd = {"command": "_add_wireless_section", "changes" : {"section":str(section)}}
+    def _add_wireless_section(self, section, bssid = None):
+        prtcmd = {"command": "_add_wireless_section", "changes" : {"section":str(section), "macaddr": bssid}}
         prtcmd = json.dumps(prtcmd)
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
 

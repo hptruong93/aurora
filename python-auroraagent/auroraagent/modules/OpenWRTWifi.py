@@ -537,7 +537,7 @@ class OpenWRTWifi:
         # If we have a "main" BSS, we must use UCI
         elif bss_entry["main"]:
             # We set the format of the name in add_bss, now we simply delete the section
-            self.radio._delete_section_name("BSS" + radio_num)
+            self.radio._delete_section_name("BSS" + radio_num, radio_entry["macaddr"])
             self.hostapd_processes[radio + name].terminate()
             self.hostapd_processes[radio + name].wait()
 
