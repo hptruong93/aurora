@@ -30,10 +30,11 @@ class ProvisionHandler( BaseHTTPServer.BaseHTTPRequestHandler ):
 
     def do_GET( self ):
         # Verify request type
-        if self.path.startswith("/initial_ap_config_request/"):
+        init_request = "/initial_ap_config_request/"
+        if self.path.startswith(init_request):
             # Open file with name of everything after the request
             try:
-                file_name = self.path[27:] + '.json'
+                file_name = self.path[len(init_request):] + '.json'
                 if ".." in file_name:
                     raise RequestInvalidConfigFileNameException()
                 with open(os.path.join(self._PROVISION_DIR, file_name),'r') as CF:

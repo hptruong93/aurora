@@ -216,6 +216,7 @@ class Receive():
                                     body=data_for_sender)
         except:
             traceback.print_exc(file=sys.stdout)
+        ln("To do: send shutdown information to lower modules to close thread in WARPRadio")
 
 # Executed when run from the command line.
 # *** NORMAL USAGE ***        

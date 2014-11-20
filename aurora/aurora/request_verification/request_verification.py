@@ -205,7 +205,7 @@ class VirtualInterfaceNumberVerification(RequestVerification):
                 #Check for number of VirtualInterface in the request
                 number_of_virtual_interface = len(request['config']['VirtualInterfaces'])
                 if number_of_virtual_interface != 2:
-                    return "Attempt to create slice with " + str(number_of_virtual_interface) + " interface(s). Exactly two VirtualInterface is required."
+                    return "Attempt to create slice with " + str(number_of_virtual_interface) + " interface(s). Exactly two VirtualInterfaces are required."
             return None
         except KeyError, e:
             raise exceptions.MissingKeyInRequest(str(e.args[0]))
