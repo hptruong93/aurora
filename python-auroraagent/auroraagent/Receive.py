@@ -35,8 +35,8 @@ except ImportError:
 import SliceAgent
 import logging
 
-def ln(stringhere):
-    print "%s -------------------------------------------> %s"% (inspect.currentframe().f_back.f_lineno, stringhere)
+def ln(stringhere = 'here', number = 40):
+    print "%s:%s %s> %s"% (__file__, inspect.currentframe().f_back.f_lineno, '-'*number, stringhere)
 
 
 class Receive():
@@ -114,7 +114,7 @@ class Receive():
         message = json.loads(body)
 
         # Prepare JSON data to return
-        data_for_sender = {'successful': False, 'message': None, 'config': None, 'ap': self.queue}
+        data_for_sender = {'successful': False, 'message': None, 'config': {}, 'ap': self.queue}
 
         # Execute the command specified
         try:
@@ -122,13 +122,12 @@ class Receive():
             if message['command'] == 'SYN':
                 return_data = 'SYN/ACK'
             else:
-                ln("we need to change something here")
+                ln("We need to change something here")
                 return_data = self.agent.execute(**message)
         # If there is an error, let the sender know    
         except Exception as e:
             # Finalize message and convert to JSON
             data_for_sender['message'] = traceback.format_exc()
-            print "--------------------exception is :\n"
             traceback.print_exc()
             print(" [x] Error; command %s failed\n%s" % (message["command"], e.message))
 
@@ -139,12 +138,12 @@ class Receive():
             data_for_sender['message'] = return_data
 
             print(" [x] Command executed")
+
         data_for_sender['self.config'] = {}
         data_for_sender['config']['init_database'] = self.agent.database.database
         data_for_sender['config']['init_user_id_database'] = self.agent.database.user_id_data
         data_for_sender['config']['init_hardware_database'] = self.agent.database.hw_database
         data_for_sender['config']['region'] = self.region
-        print data_for_sender
         data_for_sender = json.dumps(data_for_sender)
         # Send response
         self.channel.basic_publish(exchange='', routing_key=header.reply_to,

@@ -6,6 +6,8 @@ import time
 import WARPRadio
 import inspect
 import config
+import traceback
+import sys
 
 import exception
 
@@ -31,13 +33,6 @@ class OpenWRTWifi:
 
 
     def __init__(self, database):
-        try:
-            subprocess.check_call(["killall", "hostapd"])
-        except:
-            pass
-        subprocess.check_call(["modprobe", "-r", "mac80211_hwsim"])
-        subprocess.check_call(["modprobe", "mac80211_hwsim", "radios=%s" % config.CONFIG["hwsim"]["number_simulated_radio"]])
-
         self.change_pending = {}
         self.database = database
         self.radio = WARPRadio.WARPRadio(database)
@@ -47,6 +42,14 @@ class OpenWRTWifi:
     def setup(self):
         """This method removes any existing wireless configuration, subsequently
         detecting and adding any radios available to Aurora for use."""
+
+        try:
+            subprocess.check_call(["killall", "hostapd"])
+        except:
+            pass
+        subprocess.check_call(["modprobe", "-r", "mac80211_hwsim"])
+        subprocess.check_call(["modprobe", "mac80211_hwsim", "radios=%s" % config.CONFIG["hwsim"]["number_simulated_radio"]])
+        subprocess.check_call(['ifconfig', 'hwsim0', 'up'])
 
         print("Finding and setting up radios")
 
@@ -141,25 +144,33 @@ class OpenWRTWifi:
 
         # If the command is to disable and not currently disabled
         # We increment the number of free radios
-        if disabled:
-            if not current_disabled:
+        if disabled == 1:
+            if current_disabled == 0:
                 try:
-                    wlan_up = subprocess.check_output(["cat", "/sys/class/net/wlan%s/operstate" % radio_num]) == "up"
+                    interface_name = 'wlan%s' % radio_num
+                    wlan_up = interface_name in subprocess.check_output(['ifconfig'])
                     if wlan_up:
-                        subprocess.check_call(["ifconfig", "wlan%s" % radio_num, "down"])                   
+                        command = ["ifconfig", "wlan%s" % radio_num, "down"]
+                        print '$', ' '.join(command)
+                        subprocess.check_call(command)                   
                 except:
+                    traceback.print_exc(file=sys.stdout)
                     raise exception.NonexistentInterface("The interface associated with radio%s does not exist" % radio_num)
                 self.database.hw_set_num_radio_free(self.database.hw_get_num_radio_free()+1)
                 self.change_pending[name]['disabled'] = 1
 
         # Opposite situation
         else:
-            if current_disabled:
+            if current_disabled == 1:
                 try:
-                    wlan_down = subprocess.check_output(["cat", "/sys/class/net/wlan%s/operstate" % radio_num]) == "down"
+                    interface_name = 'wlan%s' % radio_num
+                    wlan_down = interface_name not in subprocess.check_output(['ifconfig'])
                     if wlan_down:
-                        subprocess.check_call(["ifconfig", "wlan%s" % radio_num, "up"])                  
+                        command = ["ifconfig", "wlan%s" % radio_num, "up"]
+                        print '$', ' '.join(command)
+                        subprocess.check_call(command)                  
                 except:
+                    traceback.print_exc(file=sys.stdout)
                     raise exception.NonexistentInterface("The interface associated with radio%s does not exist" % radio_num)
                 self.database.hw_set_num_radio_free(self.database.hw_get_num_radio_free()-1)
                 self.change_pending[name]['disabled'] = 0
@@ -212,9 +223,6 @@ class OpenWRTWifi:
 
         # If no radios require changes, this will not execute
         for radio in self.change_pending:
-
-
-            
             # command = ["wifi", "down", str(radio)]
             # print "\n  $ "," ".join(command)
             # self.radio.wifi_down(radio)
@@ -369,8 +377,8 @@ class OpenWRTWifi:
         bss_entry["if_name"] = if_name
         config_file = "interface=" + if_name + "\n"
         config_file += "driver=nl80211"  + "\n"
-        # config_file += "ctrl_interface=/var/run/hostapd\n"
-        # config_file += "ctrl_interface_group=0\n"
+        config_file += "ctrl_interface=/var/run/hostapd\n"
+        config_file += "ctrl_interface_group=0\n"
         config_file += "channel=" + str(radio_entry["channel"])  + "\n"
         config_file += "hw_mode=" + "g\n"#radio_entry["hwmode"] + "\n"
         #config_file += "disassoc_low_ack=1\n" # hostapd v0.7.3 does not support this
@@ -383,84 +391,83 @@ class OpenWRTWifi:
         # Basic params set, now encryption
         # We do nothing if category=0
         # cat 1 = psk/wep
-        if encryption_category == 1:
-            if encryption_type == "psk":
-                config_file += "wpa=1\n"
-                config_file += "wpa_passphrase=" + key + "\n"
-                config_file += "wpa_pairwise=TKIP\n"
-            elif encryption_type == "psk2":
-                config_file += "wpa=2\n"
-                config_file += "wpa_passphrase=" + key + "\n"
-                # hostapd should use wpa_pairwise, but it doesn't for some reason
-                config_file += "rsn_pairwise=CCMP\n"
-            elif "wep" in encryption_type:
-                config_file += "wep_default_key=0\n"
-                config_file += 'wep_key0="' + key + '"\n'
-                config_file += "wpa=0\n"
-                if encryption_type == "wep-open":
-                    config_file += "auth_algs=1\n"
-                elif encryption_type == "wep-shared":
-                    config_file += "auth_algs=2\n"
+
+        ln('Let\'s ignore encryption...')
+        # if encryption_category == 1:
+        #     if encryption_type == "psk":
+        #         config_file += "wpa=1\n"
+        #         config_file += "wpa_passphrase=" + key + "\n"
+        #         config_file += "wpa_pairwise=TKIP\n"
+        #     elif encryption_type == "psk2":
+        #         config_file += "wpa=2\n"
+        #         config_file += "wpa_passphrase=" + key + "\n"
+        #         # hostapd should use wpa_pairwise, but it doesn't for some reason
+        #         config_file += "rsn_pairwise=CCMP\n"
+        #     elif "wep" in encryption_type:
+        #         config_file += "wep_default_key=0\n"
+        #         config_file += 'wep_key0="' + key + '"\n'
+        #         config_file += "wpa=0\n"
+        #         if encryption_type == "wep-open":
+        #             config_file += "auth_algs=1\n"
+        #         elif encryption_type == "wep-shared":
+        #             config_file += "auth_algs=2\n"
 
 
-            bss_entry["encryption_type"] = encryption_type
-            bss_entry["key"] = key
+        #     bss_entry["encryption_type"] = encryption_type
+        #     bss_entry["key"] = key
 
-        elif encryption_category == 2:
+        # elif encryption_category == 2:
 
-            # For all enterprise
-            config_file += "disable_pmksa_caching=1\n"
-            config_file += "okc=0\n"
-            config_file += "eapol_key_index_workaround=1\n"
-            config_file += "ieee8021x=1\n"
-            config_file += "wpa_key_mgmt=WPA-EAP\n"
-            config_file += "wpa=2\n"
-            config_file += "wpa_pairwise=CCMP\n"
+        #     # For all enterprise
+        #     config_file += "disable_pmksa_caching=1\n"
+        #     config_file += "okc=0\n"
+        #     config_file += "eapol_key_index_workaround=1\n"
+        #     config_file += "ieee8021x=1\n"
+        #     config_file += "wpa_key_mgmt=WPA-EAP\n"
+        #     config_file += "wpa=2\n"
+        #     config_file += "wpa_pairwise=CCMP\n"
 
-            # We only set variables if specified.
-            # The requirements for enterprise are not checked, as they can
-            # vary a lot and are quite complex.
-            if auth_server != None:
-                config_file += "auth_server_addr=" + auth_server + "\n"
-                bss_entry["auth_server"] = auth_server
-            if auth_port != None:
-                config_file += "auth_server_port=" + auth_port + "\n"
-                bss_entry["auth_port"] = auth_port
-            if auth_secret != None:
-                config_file += "auth_server_shared_secret=" + auth_secret + "\n"
-                bss_entry["auth_secret"] = auth_secret
-            if acct_server != None:
-                config_file += "acct_server_addr=" + acct_server + "\n"
-                bss_entry["acct_server"] = acct_server
-            if acct_port != None:
-                config_file += "acct_server_port=" + acct_port + "\n"
-                bss_entry["acct_port"] = acct_port
-            if acct_secret != None:
-                config_file += "acct_server_shared_secret=" + acct_secret + "\n"
-                bss_entry["acct_secret"] = acct_secret
-            if nasid != None:
-                config_file += "nas_identifier=" + nasid + "\n"
-                bss_entry["nasid"] = nasid
+        #     # We only set variables if specified.
+        #     # The requirements for enterprise are not checked, as they can
+        #     # vary a lot and are quite complex.
+        #     if auth_server != None:
+        #         config_file += "auth_server_addr=" + auth_server + "\n"
+        #         bss_entry["auth_server"] = auth_server
+        #     if auth_port != None:
+        #         config_file += "auth_server_port=" + auth_port + "\n"
+        #         bss_entry["auth_port"] = auth_port
+        #     if auth_secret != None:
+        #         config_file += "auth_server_shared_secret=" + auth_secret + "\n"
+        #         bss_entry["auth_secret"] = auth_secret
+        #     if acct_server != None:
+        #         config_file += "acct_server_addr=" + acct_server + "\n"
+        #         bss_entry["acct_server"] = acct_server
+        #     if acct_port != None:
+        #         config_file += "acct_server_port=" + acct_port + "\n"
+        #         bss_entry["acct_port"] = acct_port
+        #     if acct_secret != None:
+        #         config_file += "acct_server_shared_secret=" + acct_secret + "\n"
+        #         bss_entry["acct_secret"] = acct_secret
+        #     if nasid != None:
+        #         config_file += "nas_identifier=" + nasid + "\n"
+        #         bss_entry["nasid"] = nasid
 
-            bss_entry["encryption_type"] = encryption_type
+        #     bss_entry["encryption_type"] = encryption_type
 
         # Encryption complete; finish up other parameters
         # and apply
 
         
-
-        
-
         if new_entry:
             final_mac = self._generate_random_MAC_addr()
-
         else:
             final_mac = macaddr
 
         self.change_pending[radio]["macaddr"] = final_mac
 
         config_file += "bssid=" + final_mac  + "\n"
-        config_file += "supported_rates=110 60 90 120 180 240 360 480 540"
+        # config_file += "supported_rates=110 60 90 120 180 240 360 480 540\n"
+        # config_file += 'basic_rates=60 120 240'
         temp_file = open('hostapd_file', 'w')#tempfile.NamedTemporaryFile()
         temp_file.write(config_file)
         temp_file.flush()
@@ -468,8 +475,8 @@ class OpenWRTWifi:
 
         # Now that it's written, we tell hostapd to read it
 
-
-
+        import os
+        print os.getcwd()
         command = ["hostapd", "-d", temp_file.name]
         # command = ["hostapd", "-ddd", '/home/kevinhan/aurora/python-auroraagent/auroraagent/hostapd_filee']
         self.hostapd_processes[radio + name] = psutil.Popen(command)
@@ -584,3 +591,4 @@ class OpenWRTWifi:
             mac.append(random.randint(0x00, 0xff))
         mac_str = ':'.join(map(lambda x: "%02x" % x, mac))
         return mac_str
+        # return '40:d8:55:04:22:84'
