@@ -8,7 +8,7 @@ import time
 import subprocess
 
 def ln(stringhere):
-    print "%s -------------------------------------------> %s"% (inspect.currentframe().f_back.f_lineno, stringhere)
+    print "%s %s-------------------------------------------> %s"% (inspect.currentframe().f_back.f_lineno,inspect.getfile(inspect.currentframe()), stringhere)
 
 db_config = {
 	'last_known_config': {
