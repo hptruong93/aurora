@@ -508,6 +508,9 @@ class OpenWRTWifi:
         
         An exception will be raised if a non-existent SSID is given."""
 
+        success = False     # we need to tell the higher level modules if the slice was actually deleted to prevent removing
+                            # information from the database before desired changes have been made on WARP
+
         # Get relevant data
         radio_entry = self.database.hw_get_radio_entry(radio)
         radio_num = radio.lstrip("radio")
@@ -536,11 +539,11 @@ class OpenWRTWifi:
                 # we can safely terminate the associated hostapd process if the slice has been removed on WARP    
                 self.hostapd_processes[radio + name].terminate()
                 self.hostapd_processes[radio + name].wait()
+                self.radio.clear_pending_action["_delete_section_name"]
             else:
+                self.radio.clear_pending_action["_delete_section_name"]
                 raise exception.SliceModificationFailed("WARP was unable to delete slice associated with \"%s\" on %s, returned error: %s" % (name, radio,
                     self.radio.pending_action["_delete_section_name"]["error"]))
-
-            self.radio.clear_pending_action["_delete_section_name"]
 
 
 
