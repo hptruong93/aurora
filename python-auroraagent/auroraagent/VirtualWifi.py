@@ -88,24 +88,21 @@ class VirtualWifi:
     def delete_slice(self, configuration):
         """Deletes any BSS and/or radios in the slice.
         Note that the radio will be reset only if required.
-        Data other than names of radios or SSIDs is not parsed or stored."""
-        
+        Data other than names of radios or SSIDs is not parsed or stored."""     
         
         for interface in configuration:
-            # Order of BSS/radio disabling is not important
+            # Order of BSS/radio disabling is important now that we are deleting a slice on the WARP board and
+            # its associated hostapd process. If the slice cannot be deleted, we need the database information on that slice
+            # to remain as is.
             try:
                 if interface["flavor"] == "wifi_radio":
-                    self.wifi.setup_radio(interface["attributes"]["name"], disabled=1)
-            
+                    self.wifi.setup_radio(interface["attributes"]["name"], disabled=1)            
                 elif interface["flavor"] == "wifi_bss":
                     self.wifi.remove_bss(interface["attributes"]["radio"],interface["attributes"]["name"])
-
+                
                 self.database.delete_entry("RadioInterfaces", interface["attributes"]["name"])
             except:
                 pass
-
-                
-        self.wifi.apply_changes()
     
     def modify_slice(self, configuration):
         """Modifies BSS parameters specified, without restarting any 
