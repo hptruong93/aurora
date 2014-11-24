@@ -376,66 +376,67 @@ class OpenWRTWifi:
         # Basic params set, now encryption
         # We do nothing if category=0
         # cat 1 = psk/wep
-        if encryption_category == 1:
-            if encryption_type == "psk":
-                config_file += "wpa=1\n"
-                config_file += "wpa_passphrase=" + key + "\n"
-                config_file += "wpa_pairwise=TKIP\n"
-            elif encryption_type == "psk2":
-                config_file += "wpa=2\n"
-                config_file += "wpa_passphrase=" + key + "\n"
-                # hostapd should use wpa_pairwise, but it doesn't for some reason
-                config_file += "rsn_pairwise=CCMP\n"
-            elif "wep" in encryption_type:
-                config_file += "wep_default_key=0\n"
-                config_file += 'wep_key0="' + key + '"\n'
-                config_file += "wpa=0\n"
-                if encryption_type == "wep-open":
-                    config_file += "auth_algs=1\n"
-                elif encryption_type == "wep-shared":
-                    config_file += "auth_algs=2\n"
+        ln("Ignore encryption for now...")
+        # if encryption_category == 1:
+        #     if encryption_type == "psk":
+        #         config_file += "wpa=1\n"
+        #         config_file += "wpa_passphrase=" + key + "\n"
+        #         config_file += "wpa_pairwise=TKIP\n"
+        #     elif encryption_type == "psk2":
+        #         config_file += "wpa=2\n"
+        #         config_file += "wpa_passphrase=" + key + "\n"
+        #         # hostapd should use wpa_pairwise, but it doesn't for some reason
+        #         config_file += "rsn_pairwise=CCMP\n"
+        #     elif "wep" in encryption_type:
+        #         config_file += "wep_default_key=0\n"
+        #         config_file += 'wep_key0="' + key + '"\n'
+        #         config_file += "wpa=0\n"
+        #         if encryption_type == "wep-open":
+        #             config_file += "auth_algs=1\n"
+        #         elif encryption_type == "wep-shared":
+        #             config_file += "auth_algs=2\n"
 
 
-            bss_entry["encryption_type"] = encryption_type
-            bss_entry["key"] = key
+        #     bss_entry["encryption_type"] = encryption_type
+        #     bss_entry["key"] = key
 
-        elif encryption_category == 2:
+        # elif encryption_category == 2:
 
-            # For all enterprise
-            config_file += "disable_pmksa_caching=1\n"
-            config_file += "okc=0\n"
-            config_file += "eapol_key_index_workaround=1\n"
-            config_file += "ieee8021x=1\n"
-            config_file += "wpa_key_mgmt=WPA-EAP\n"
-            config_file += "wpa=2\n"
-            config_file += "wpa_pairwise=CCMP\n"
+        #     # For all enterprise
+        #     config_file += "disable_pmksa_caching=1\n"
+        #     config_file += "okc=0\n"
+        #     config_file += "eapol_key_index_workaround=1\n"
+        #     config_file += "ieee8021x=1\n"
+        #     config_file += "wpa_key_mgmt=WPA-EAP\n"
+        #     config_file += "wpa=2\n"
+        #     config_file += "wpa_pairwise=CCMP\n"
 
-            # We only set variables if specified.
-            # The requirements for enterprise are not checked, as they can
-            # vary a lot and are quite complex.
-            if auth_server != None:
-                config_file += "auth_server_addr=" + auth_server + "\n"
-                bss_entry["auth_server"] = auth_server
-            if auth_port != None:
-                config_file += "auth_server_port=" + auth_port + "\n"
-                bss_entry["auth_port"] = auth_port
-            if auth_secret != None:
-                config_file += "auth_server_shared_secret=" + auth_secret + "\n"
-                bss_entry["auth_secret"] = auth_secret
-            if acct_server != None:
-                config_file += "acct_server_addr=" + acct_server + "\n"
-                bss_entry["acct_server"] = acct_server
-            if acct_port != None:
-                config_file += "acct_server_port=" + acct_port + "\n"
-                bss_entry["acct_port"] = acct_port
-            if acct_secret != None:
-                config_file += "acct_server_shared_secret=" + acct_secret + "\n"
-                bss_entry["acct_secret"] = acct_secret
-            if nasid != None:
-                config_file += "nas_identifier=" + nasid + "\n"
-                bss_entry["nasid"] = nasid
+        #     # We only set variables if specified.
+        #     # The requirements for enterprise are not checked, as they can
+        #     # vary a lot and are quite complex.
+        #     if auth_server != None:
+        #         config_file += "auth_server_addr=" + auth_server + "\n"
+        #         bss_entry["auth_server"] = auth_server
+        #     if auth_port != None:
+        #         config_file += "auth_server_port=" + auth_port + "\n"
+        #         bss_entry["auth_port"] = auth_port
+        #     if auth_secret != None:
+        #         config_file += "auth_server_shared_secret=" + auth_secret + "\n"
+        #         bss_entry["auth_secret"] = auth_secret
+        #     if acct_server != None:
+        #         config_file += "acct_server_addr=" + acct_server + "\n"
+        #         bss_entry["acct_server"] = acct_server
+        #     if acct_port != None:
+        #         config_file += "acct_server_port=" + acct_port + "\n"
+        #         bss_entry["acct_port"] = acct_port
+        #     if acct_secret != None:
+        #         config_file += "acct_server_shared_secret=" + acct_secret + "\n"
+        #         bss_entry["acct_secret"] = acct_secret
+        #     if nasid != None:
+        #         config_file += "nas_identifier=" + nasid + "\n"
+        #         bss_entry["nasid"] = nasid
 
-            bss_entry["encryption_type"] = encryption_type
+        #     bss_entry["encryption_type"] = encryption_type
 
         # Encryption complete; finish up other parameters
         # and apply
