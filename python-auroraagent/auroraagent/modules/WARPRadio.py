@@ -186,7 +186,7 @@ class WARPRadio:
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
 
     def _delete_section_name(self, section, bssid = None):
-        add_pending_action)("_delete_section_name")
+        # add_pending_action)("_delete_section_name")
         prtcmd = {"command": "_delete_section_name","changes" : {"section": str(section), "macaddr": bssid}}
         prtcmd = json.dumps(prtcmd)
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))

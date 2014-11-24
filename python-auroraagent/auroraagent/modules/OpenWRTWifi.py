@@ -34,13 +34,6 @@ class OpenWRTWifi:
 
 
     def __init__(self, database):
-        try:
-            subprocess.check_call(["killall", "hostapd"])
-        except:
-            pass
-        subprocess.check_call(["modprobe", "-r", "mac80211_hwsim"])
-        subprocess.check_call(["modprobe", "mac80211_hwsim", "radios=%s" % config.CONFIG["hwsim"]["number_simulated_radio"]])
-
         self.change_pending = {}
         self.database = database
         self.radio = WARPRadio.WARPRadio(database)
@@ -56,6 +49,14 @@ class OpenWRTWifi:
         # Bring down any existing wifi
         self.radio.wifi_down()
         
+        try:
+            subprocess.check_call(["killall", "hostapd"])
+        except:
+            pass
+        subprocess.check_call(["modprobe", "-r", "mac80211_hwsim"])
+        subprocess.check_call(["modprobe", "mac80211_hwsim", "radios=%s" % config.CONFIG["hwsim"]["number_simulated_radio"]])
+        subprocess.check_call(['ifconfig', 'hwsim0', 'up'])
+
         # First, remove wireless configuration file; ignore errors
         try:
             os.remove(self.WIRELESS_FILE_PATH)
@@ -358,7 +359,7 @@ class OpenWRTWifi:
         # Interface name not specified -> assign, else, use given name
         if if_name == None:
             if_name = 'wlan' + str(radio_num) + "-" + str(total_bss)
-            
+
         bss_entry["if_name"] = if_name
         config_file = "interface=" + if_name + "\n"
         config_file += "driver=nl80211"  + "\n"

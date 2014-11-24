@@ -95,8 +95,8 @@ class VirtualWifi:
         # its associated hostapd process. If the slice cannot be deleted, we need the database information on that slice
         # to remain the same as it was before we tried to delete it.
         
-        wifi_radio = [interace in configuration if interace['flavor'] == 'wifi_radio'][0]
-        wifi_bss = [interace in configuration if interace['flavor'] == 'wifi_bss'][0]
+        wifi_radio = [interface for interface in configuration if interace['flavor'] == 'wifi_radio'][0]
+        wifi_bss = [interface for interface in configuration if interace['flavor'] == 'wifi_bss'][0]
 
         self.wifi.remove_bss(wifi_bss["attributes"]["radio"],wifi_bss["attributes"]["name"])
         self.database.delete_entry("RadioInterfaces", wifi_bss["attributes"]["name"])
