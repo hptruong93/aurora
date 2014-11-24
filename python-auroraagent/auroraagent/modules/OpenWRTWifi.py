@@ -220,6 +220,21 @@ class OpenWRTWifi:
         raising an error if a hostapd instance that is supposed to run
         is not doing so."""
 
+
+        # Make sure hostapd still running
+        # # of hostapd instance = # of radios
+        num_hostapd = 0
+        for process in psutil.process_iter():
+            if process.name() == "hostapd":
+                num_hostapd = num_hostapd + 1
+
+        num_radios_in_use = self.database.hw_get_num_radio() - self.database.hw_get_num_radio_free()
+
+
+        if num_hostapd != num_radios_in_use:
+            self.change_pending.clear()
+            raise exception.hostapdError("There should be " + str(num_radios_in_use) + " hostapd instances running; there are only " + str(num_hostapd) + " instead.")
+
         # If there are no changes pending, commit will do nothing
         # Previous versions of this code used "uci commit" to
         # affect the changes. Now, a dictionary is used to store
@@ -253,21 +268,6 @@ class OpenWRTWifi:
 
         self.change_pending.clear()
 
-
-
-        # Make sure hostapd still running
-        # # of hostapd instance = # of radios
-        num_hostapd = 0
-        for process in psutil.process_iter():
-            if process.name() == "hostapd":
-                num_hostapd = num_hostapd + 1
-
-
-        num_radios_in_use = self.database.hw_get_num_radio() - self.database.hw_get_num_radio_free()
-
-
-        if num_hostapd != num_radios_in_use:
-            raise exception.hostapdError("There should be " + str(num_radios_in_use) + " hostapd instances running; there are only " + str(num_hostapd) + " instead.")
 
     def __radio_get_command(self, radio_num, command):
         # rstrip is used to remove newlines from UCI
@@ -387,7 +387,7 @@ class OpenWRTWifi:
         config_file += "hw_mode=" + "g\n"#radio_entry["hwmode"] + "\n"
         #config_file += "disassoc_low_ack=1\n" # hostapd v0.7.3 does not support this
         config_file += "ssid=" + name + "\n"
-        config_file += "wmm_enabled=1\n"
+        # config_file += "wmm_enabled=1\n" #For some reasons data packet cannot pass through with this?
         config_file += "ignore_broadcast_ssid=0\n"
         config_file += "preamble=1\n"
         bss_entry["encryption_type"] = "none"
@@ -470,8 +470,9 @@ class OpenWRTWifi:
         self.change_pending[radio]["macaddr"] = final_mac
 
         config_file += "bssid=" + final_mac  + "\n"
-        # config_file += "supported_rates=110 60 90 120 180 240 360 480 540\n"
-        # config_file += 'basic_rates=60 120 240'
+        config_file += "supported_rates=60 90 120 180 240 360 480 540\n"
+        config_file += 'basic_rates=60 120 240'
+        ln('%s' % config_file)
         temp_file = open('hostapd_file', 'w')#tempfile.NamedTemporaryFile()
         temp_file.write(config_file)
         temp_file.flush()
