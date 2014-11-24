@@ -357,13 +357,13 @@ class OpenWRTWifi:
         # Generate simple hostapd bss config file and use CLI to load
         # Interface name not specified -> assign, else, use given name
         if if_name == None:
-            # fixed to wlan0, perious was (+ str(radio_num) + "-" + str(total_bss))
-            if_name = "wlan0"
+            if_name = 'wlan' + str(radio_num) + "-" + str(total_bss)
+            
         bss_entry["if_name"] = if_name
         config_file = "interface=" + if_name + "\n"
         config_file += "driver=nl80211"  + "\n"
-        # config_file += "ctrl_interface=/var/run/hostapd\n"
-        # config_file += "ctrl_interface_group=0\n"
+        config_file += "ctrl_interface=/var/run/hostapd\n"
+        config_file += "ctrl_interface_group=0\n"
         config_file += "channel=" + str(radio_entry["channel"])  + "\n"
         config_file += "hw_mode=" + "g\n"#radio_entry["hwmode"] + "\n"
         #config_file += "disassoc_low_ack=1\n" # hostapd v0.7.3 does not support this
@@ -440,14 +440,8 @@ class OpenWRTWifi:
 
         # Encryption complete; finish up other parameters
         # and apply
-
-        
-
-        
-
         if new_entry:
             final_mac = self._generate_random_MAC_addr()
-
         else:
             final_mac = macaddr
 
@@ -463,9 +457,6 @@ class OpenWRTWifi:
         temp_file.close()
 
         # Now that it's written, we tell hostapd to read it
-
-
-
         command = ["hostapd", "-d", temp_file.name]
         # command = ["hostapd", "-ddd", '/home/kevinhan/aurora/python-auroraagent/auroraagent/hostapd_filee']
         self.hostapd_processes[radio + name] = psutil.Popen(command)
