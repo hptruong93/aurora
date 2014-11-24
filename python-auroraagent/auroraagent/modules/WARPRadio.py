@@ -30,6 +30,8 @@ class WARPRadio:
         self.test_thread = ZeroMQThread.ZeroMQThread(self.receive_WARP_info)
         self.test_thread.start()
         self.WARP_mac = macaddr
+        self.pending_action = {}    # we need to perform some actions asynchronously (delete slice) while preventing any sort of issues from arising in the meantime
+                                    # format: {"<name of command>": {"success": <True/False>, "error": "<returned error>"}}
 
         # this will be the socket over which information is sent to Alan's server
         # thus it should be a zmq client with REQ
@@ -60,6 +62,12 @@ class WARPRadio:
                 self.receiving_socket.close()
                 subprocess.call(["fuser", "-k", self.receiving_socket_number + "/tcp"])
 
+    def add_pending_action(action_title):
+        # may have to add in an action ID in the future to distinguish between multiple pending actions of the same type
+        self.pending_action[action_title] = {"success": False, "error": ""}
+
+    def clear_pending_action(action_title):
+        del self.pending_action[action_title]
 
     def wifi_up(self, radio):
 
@@ -178,6 +186,7 @@ class WARPRadio:
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
 
     def _delete_section_name(self, section, bssid = None):
+        add_pending_action)("_delete_section_name")
         prtcmd = {"command": "_delete_section_name","changes" : {"section": str(section), "macaddr": bssid}}
         prtcmd = json.dumps(prtcmd)
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
@@ -225,10 +234,16 @@ class WARPRadio:
         pass 
 
     def _delete_section_name_receive(self, command_json):
-        pass  
+        if command_json["success"]:            
+            ln("we need to coordinate on a key/item in received json corresponding success/failure")
+            self.pending_action["_delete_section_name"]["success"] = True
+        else:
+            self.pending_action["_delete_section_name"]["success"] = False
+            self.pending_action["_delete_section_name"]["error"] = "returned_error"
+            ln("we need to change\"returned_error\" to the actual error received from WARP")
 
     def _delete_bss_index_receive(self, command_json):
-        pass   
+        pass
 
     def _delete_radio_receive(self, command_json):
         pass  

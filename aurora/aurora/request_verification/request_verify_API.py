@@ -16,13 +16,15 @@ class RequestVerifier():
     _commands = {
         verify_agent.GENERAL_CHECK : [verify_agent.APSliceNumberVerification(),
                                       verify_agent.APSliceSSIDVerification()],
+
         verify_agent.CREATE_SLICE : [verify_agent.APSliceSSIDVerification(),
-                        verify_agent.APSliceNumberVerification(), 
-                        verify_agent.RadioConfigExistedVerification(),
-                        verify_agent.BridgeNumberVerification(),
-                        verify_agent.VirtualInterfaceNumberVerification(),
-                        verify_agent.AccessConflictVerification(),
-                        verify_agent.BandwidthVerification()],
+                                    verify_agent.APSliceNumberVerification(), 
+                                    verify_agent.RadioConfigExistedVerification(),
+                                    verify_agent.BridgeNumberVerification(),
+                                    verify_agent.VirtualInterfaceNumberVerification(),
+                                    verify_agent.AccessConflictVerification(),
+                                    verify_agent.BandwidthVerification()],
+
         verify_agent.DELETE_SLICE : [verify_agent.ValidDeleteVerification()]
     }
 
@@ -39,7 +41,6 @@ class RequestVerifier():
                 return ex._handle_exception()
             except Exception:
                 traceback.print_exc(file=sys.stdout)
-                sys.exit(1)
         return None
 
 

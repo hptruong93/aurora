@@ -32,7 +32,6 @@ from aurora.ap_provision import http_srv as provision_srv
 from aurora import query_agent as query
 
 from aurora.request_verification import request_verify_API as Verify
-from aurora.request_verification import request_verification as Check
 
 from aurora.hint import hint_agent
 from aurora.hint import sql_Info

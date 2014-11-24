@@ -118,9 +118,9 @@ class NewConnectionHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         global last_response
         #If the manager HTTP server was idle in the last 30s, then all responses must have expired
         #If so, clear all responses
-        if time.time() - last_response > 30: 
+        if time.time() - last_response > 20: 
             RESPONSES.clear()
-            LOGGER.info("HTTP server has been idle for the last 30s. Responses cleared") 
+            LOGGER.info("HTTP server has been idle for the last 20s. Responses cleared") 
         last_response = time.time()
 
         # Parse the form data posted
