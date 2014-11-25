@@ -55,7 +55,6 @@ class WARPRadio:
                 self.sending_socket.close()
                 subprocess.call(["fuser", "-k", self.sending_socket_number + "/tcp"])
 
-
         port_usage = subprocess.Popen("sudo netstat -ap | grep :" + receiving_socket_number, shell = True, stdout= subprocess.PIPE)
 
         if len(port_usage.stdout.readline()) is not 0:
