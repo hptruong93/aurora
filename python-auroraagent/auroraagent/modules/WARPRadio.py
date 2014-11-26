@@ -194,7 +194,7 @@ class WARPRadio:
 
     def _delete_section_name(self, section, bssid = None):
         # add_pending_action)("_delete_section_name")
-        prtcmd = {"command": "_delete_section_name","changes" : {"section": str(section), "macaddr": bssid}}
+        prtcmd = {"command": "_delete_section_name", "changes": {"section": str(section), "macaddr": bssid}}
         prtcmd = json.dumps(prtcmd)
         self.add_pending_action("_delete_section_name")
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
@@ -257,13 +257,11 @@ class WARPRadio:
         pass 
 
     def _delete_section_name_receive(self, command_json):
-        if command_json["success"]:            
-            ln("we need to coordinate on a key/item in received json corresponding success/failure")
-            self.pending_action["_delete_section_name"]["success"] = True
+        pending_action = self.pending_action["_delete_section_name"]
+        if command_json["changes"]["success"]:            
+            pending_action["success"] = True
         else:
-            self.pending_action["_delete_section_name"]["success"] = False
-            self.pending_action["_delete_section_name"]["error"] = "returned_error"
-            ln("we need to change\"returned_error\" to the actual error received from WARP")
+            pending_action["error"] = command_json["changes"]["error"]
 
     def _delete_bss_index_receive(self, command_json):
         pass
