@@ -1,15 +1,21 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
-import subprocess, os, inspect, tempfile
-import psutil, copy
+import os
+import sys
+import subprocess
+import inspect
+import tempfile
+
+import psutil
+import copy
 import random
 import time
-import WARPRadio
-import inspect
+
 import config
+import WARPRadio
 import exception
 
-def ln(stringhere):
-    print "%s %s-------------------------------------------> %s"% (inspect.currentframe().f_back.f_lineno, inspect.getfile(inspect.currentframe()), stringhere)
+def ln(stringhere = 'was here', number_of_dash = 40):
+    print("%s:%s %s> %s"% (__file__, inspect.currentframe().f_back.f_lineno, '-'*number_of_dash, stringhere))
 
 ####
 # Implementation note: there WERE two 'databases', so to speak.
@@ -49,12 +55,15 @@ class OpenWRTWifi:
         # Bring down any existing wifi
         self.radio.wifi_down()
         
-        try:
+        try:#kill all existing hostapds instances
             subprocess.check_call(["killall", "hostapd"])
         except:
             pass
+
+        #Relaunch mac80211_hwsim
         subprocess.check_call(["modprobe", "-r", "mac80211_hwsim"])
         subprocess.check_call(["modprobe", "mac80211_hwsim", "radios=%s" % config.CONFIG["hwsim"]["number_simulated_radio"]])
+        #Bring hswim0 up for sniffing
         subprocess.check_call(['ifconfig', 'hwsim0', 'up'])
 
         # First, remove wireless configuration file; ignore errors
@@ -161,7 +170,7 @@ class OpenWRTWifi:
         # Write to database and UCI
         radio_entry["disabled"] = disabled
 
-        ln( "radio_entry: %s" % str(radio_entry))
+        ln("radio_entry: %s" % str(radio_entry))
 
         # self.radio._radio_set_command(name, "disabled", disabled)
 
@@ -221,9 +230,6 @@ class OpenWRTWifi:
 
         # If no radios require changes, this will not execute
         for radio in self.change_pending:
-
-
-            
             # command = ["wifi", "down", str(radio)]
             # print "\n  $ "," ".join(command)
             # self.radio.wifi_down(radio)

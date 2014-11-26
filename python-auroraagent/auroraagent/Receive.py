@@ -6,16 +6,20 @@ received message content to SliceAgent.
 #!/usr/bin/python -tt
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 
-import sys, json, threading, traceback, os, signal, time, inspect
+import sys
+import json
+import threading
+import os
+import signal
+import time
+import traceback
+import inspect
 
 import config as init_info
 import install_dependencies
 
 from pprint import pprint
 from ifconfig import ifconfig
-
-
-import traceback
 
 try:
     import pika
@@ -30,14 +34,11 @@ except ImportError:
     install_dependencies.install("requests")
     import requests
 
-    
-
 import SliceAgent
 import logging
 
-def ln(stringhere = 'here', number = 40):
-    print "%s:%s %s> %s"% (__file__, inspect.currentframe().f_back.f_lineno, '-'*number, stringhere)
-
+def ln(stringhere = 'was here', number_of_dash = 40):
+    print("%s:%s %s> %s"% (__file__, inspect.currentframe().f_back.f_lineno, '-'*number_of_dash, stringhere))
 
 class Receive():
     """This class connects to RabbitMQ and receives messages containing
@@ -122,7 +123,7 @@ class Receive():
             if message['command'] == 'SYN':
                 return_data = 'SYN/ACK'
             else:
-                ln("We need to change something here")
+                ln("We need to change something here?")
                 return_data = self.agent.execute(**message)
         # If there is an error, let the sender know    
         except Exception as e:
@@ -200,22 +201,26 @@ class Receive():
         return
 
     def shutdown_signal_received(self):
+        ln("To do: send shutdown information to lower modules to close thread in WARPRadio")
+
         current_database = {}
         current_database['init_database'] = self.agent.database.database
         current_database['init_user_id_database'] = self.agent.database.user_id_data
         current_database['init_hardware_database'] = self.agent.database.hw_database
         current_database['region'] = self.region
-        print "Sending current database..."
-        print current_database
+
+        print("Sending current database...\n%s" % current_database)
+
         data_for_sender = {'successful':True, 'message': 'FIN', 'config': current_database, 'ap': self.queue}
         data_for_sender = json.dumps(data_for_sender)
+        
         try:
             self.channel.basic_publish(exchange='', routing_key=self.manager_queue,
                                     properties=pika.BasicProperties(content_type="application/json"),
                                     body=data_for_sender)
         except:
             traceback.print_exc(file=sys.stdout)
-        ln("To do: send shutdown information to lower modules to close thread in WARPRadio")
+        
 
 # Executed when run from the command line.
 # *** NORMAL USAGE ***        
@@ -266,7 +271,7 @@ if __name__ == '__main__':
     
     attempt = 0
     while not receiver.channel_open:
-        print "Waiting for connection... Attempt number %s" % attempt
+        print("Waiting for connection... Attempt number %s" % attempt)
         attempt += 1
         time.sleep(1)
 
