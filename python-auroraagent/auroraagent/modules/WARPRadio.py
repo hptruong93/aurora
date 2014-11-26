@@ -12,10 +12,11 @@ class WARPRadio:
         self.sending_socket_number = str(sending)
         self.receiving_socket_number = str(receiving)
         self.database = database
+        self.detect = ''
+        self.sleep_time = 0.5
+        self.action_timeout = 5
 
         context = zmq.Context()
-
-        self.detect = ''
 
         # note that the publisher is associated with a port through the use of the
         # bind() statement while the subscriber uses connect(). Additionally,
@@ -49,25 +50,32 @@ class WARPRadio:
 
         # free up the sockets when we are done
 
-        port_usage = subprocess.Popen("sudo netstat -ap | grep :" + sending_socket_number, shell = True, stdout= subprocess.PIPE)
+        port_usage = subprocess.check_output(["netstat", "-ap", "|", "grep", ":%s" % sending_socket_number])
 
-        if len(port_usage.stdout.readline()) is not 0:
-                self.sending_socket.close()
-                subprocess.call(["fuser", "-k", self.sending_socket_number + "/tcp"])
+        if len(port_usage) is not 0:
+            self.sending_socket.close()
+            subprocess.check_call(["fuser", "-k", self.sending_socket_number + "/tcp"])
 
 
-        port_usage = subprocess.Popen("sudo netstat -ap | grep :" + receiving_socket_number, shell = True, stdout= subprocess.PIPE)
+        port_usage = subprocess.check_output(["netstat", "-ap", "|", "grep", ":%s" % receiving_socket_number])
 
-        if len(port_usage.stdout.readline()) is not 0:
-                self.receiving_socket.close()
-                subprocess.call(["fuser", "-k", self.receiving_socket_number + "/tcp"])
+        if len(port_usage) is not 0:
+            self.receiving_socket.close()
+            subprocess.check_call(["fuser", "-k", self.receiving_socket_number + "/tcp"])
 
     def add_pending_action(action_title):
         # may have to add in an action ID in the future to distinguish between multiple pending actions of the same type
-        self.pending_action[action_title] = {"success": False, "error": ""}
+        self.pending_action[action_title] = {"success": False, "error": "", "start_time": int(round(time.time() * 1000))}
 
     def clear_pending_action(action_title):
         del self.pending_action[action_title]
+
+    def wait_on_pending_action(action_title, timeout):
+        while action_title not in self.radio.pending_action: 
+            time.sleep(self.sleep_time)    #wait for the action to appear in the pending_action list                
+        waiting_action = self.pending_action[action_title]
+        while not waiting_action["success"] and waiting_action["error"] == "" and (int(round(time.time() * 1000)) - waiting_action["start_time"]) < int(timeout):
+            time.sleep(self.sleep_time)   # we want to wait for the action to either complete or to come back as having not completed due to an error    
 
     def wifi_up(self, radio):
 
@@ -189,7 +197,23 @@ class WARPRadio:
         # add_pending_action)("_delete_section_name")
         prtcmd = {"command": "_delete_section_name","changes" : {"section": str(section), "macaddr": bssid}}
         prtcmd = json.dumps(prtcmd)
+        self.add_pending_action("_delete_section_name")
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
+        self.wait_on_pending_action("_delete_section_name")     
+        action_result = self.pending_action["_delete_section_name"]   
+        if action_result["success"]:          
+            result = {"success": True, "error": ""}
+        else if not action_result["success"]:
+            if action_result["error"] == "":
+                # no error and unsuccessful means a timeout
+                result = {"success": False, "error": "timeout"}
+            else:
+                result = {"success": False, "error": action_result["error"]}
+
+        self.clear_pending_action["_delete_section_name"]
+        return result
+
+
 
     def _delete_bss_index(self, bss_num, bssid = None):
         prtcmd = {"command": "_delete_bss_index","changes" : {"index":str(bss_num), "macaddr": bssid}}

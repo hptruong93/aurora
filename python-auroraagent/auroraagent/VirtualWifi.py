@@ -103,31 +103,6 @@ class VirtualWifi:
         self.wifi.setup_radio(wifi_radio["attributes"]["name"], disabled=1)
             
 
-
-            # for interface in configuration:
-            #     
-            #     try:
-            #         if interface["flavor"] == "wifi_radio" and flavor_changes_complete["wifi_bss"]:
-            #             # only make changes if we have already attempted to delete bss and successfully deleted the slice
-            #             if deleted_on_WARP:
-            #                 self.wifi.setup_radio(interface["attributes"]["name"], disabled=1)  
-            #             # even if we didn't make any changes due to not being able to delete the slice, we say that the action is complete since
-            #             # there's nothing else that we can do with this configuration. In the future, we should reattempt slice deletion given certain return
-            #             # conditions from WARP. 
-            #             flavor_changes_complete["wifi_radio"] = True
-            #         elif interface["flavor"] == "wifi_bss" and not flavor_changes_complete["wifi_bss"]:
-            #             # this conditional is for the following problem situation: if we see the wifi_radio flavor first then we will have to skip 
-            #             # it and move on to wifi_bss. Because of this we will need to cycle through the configuration flavors a second time and may
-            #             # see wifi_bss first this time. As such, we will skip it since the proper action has already been performed on this flavor
-            #             try:
-            #                 self.wifi.remove_bss(interface["attributes"]["radio"],interface["attributes"]["name"])
-            #             except:
-
-            #             if deleted_on_WARP:
-            #                 self.database.delete_entry("RadioInterfaces", interface["attributes"]["name"])
-            #     except:
-            #         pass
-    
     def modify_slice(self, configuration):
         """Modifies BSS parameters specified, without restarting any 
         radios. Modification of radios requires the use of 

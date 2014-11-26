@@ -523,31 +523,24 @@ class OpenWRTWifi:
 
         # If we have a "main" BSS, we must use UCI
         elif bss_entry["main"]:
-            # We set the format of the name in add_bss, now we simply delete the section
-            self.radio._delete_section_name("BSS" + radio_num, radio_entry["macaddr"])
+            # We attempt to delete the section and wait to receive the results
+            #results expected in the form of {"success": <result boolean>, "error": <error string if success is false>}
+            delete_results = self.radio._delete_section_name("BSS" + radio_num, radio_entry["macaddr"])
             # we cannot delete the hostapd process until we know that the associated slice on WARP has been deleted as well
-            while "_delete_section_name" not in self.radio.pending_action: 
-                pass    #wait for the action to appear in the pending_action list
-            while (not self.radio.pending_action["_delete_section_name"]["success"]) and self.radio.current_action["_delete_section_name"]["error"] == "":
-                pass    # we want to wait for the action to either complete or to come back as having not completed due to an error
-            if self.radio.pending_action["_delete_section_name"]["success"]:          
+            if delete_results["success"]:
                 # we can safely terminate the associated hostapd process if the slice has been removed on WARP    
                 self.hostapd_processes[radio + name].terminate()
-                self.hostapd_processes[radio + name].wait()
-                self.radio.clear_pending_action["_delete_section_name"]
+                self.hostapd_processes[radio + name].wait() 
+                # Remove database entries of all BSS for the radio
+                # Otherwise, we get problems if other users depend on use and we delete and try to recreate a slice
+                del self.hostapd_processes[radio+name]
+                del bss_list[0:len(bss_list)]
+                # TODO: Sync this up with the slice data.  As it stands, someone with an SSID on a radio owned
+                # by someone else will still have their slice marked "active" when it was in fact deleted by the radio owner           
             else:
-                self.radio.clear_pending_action["_delete_section_name"]
                 raise exception.SliceModificationFailed("WARP was unable to delete slice associated with \"%s\" on %s, returned error: %s" % (name, radio,
-                    self.radio.pending_action["_delete_section_name"]["error"]))
-
-
-
-            del self.hostapd_processes[radio+name]
-            # Remove database entries of all BSS for the radio
-            # Otherwise, we get problems if other users depend on use and we delete and try to recreate a slice
-            del bss_list[0:len(bss_list)]
-            # TODO: Sync this up with the slice data.  As it stands, someone with an SSID on a radio owned
-            # by someone else will still have their slice marked "active" when it was in fact deleted by the radio owner
+                    delete_results["error"]))
+            
 
         # else:
         #     # It is possible that the radio may be marked as disabled
