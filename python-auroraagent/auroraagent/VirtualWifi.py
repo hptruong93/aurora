@@ -28,6 +28,9 @@ class VirtualWifi:
         self.wifi = self.__load_module(self.database.hw_get_firmware_name(), json.load(json_file)["VirtualWifi"])
         json_file.close()
         
+    def shutdown(self):
+        # we need to delete all running threads such that all programs will cease to run. As it stands, this only applies to WARPRadio
+        self.wifi.shutdown()
         
     def __load_module(self, flavor, metadata):
         

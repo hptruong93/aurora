@@ -46,6 +46,10 @@ class OpenWRTWifi:
         self.setup()        
         self.hostapd_processes = {}
 
+    def shutdown(self):
+        # shutdown the thread running in WARPRadio
+        self.radio.shutdown()
+
     def setup(self):
         """This method removes any existing wireless configuration, subsequently
         detecting and adding any radios available to Aurora for use."""

@@ -23,28 +23,25 @@ class WARPRadio:
         # it appears that tcp://* is used for publisher while tcp://localhost
         # is used for subscriber
 
-        self.receiving_socket = context.socket(zmq.SUB)
-        self.receiving_socket.connect("tcp://localhost:%s" % self.receiving_socket_number)
         self.subscription = str(config.CONFIG["zeromq"]["subscription"])
         self.subscription_length = len(self.subscription)
-        self.receiving_socket.setsockopt(zmq.SUBSCRIBE, self.subscription)
+        self.receiving_socket = context.socket(zmq.SUB)
+        self.receiving_socket.connect("tcp://localhost:%s" % self.receiving_socket_number)
+        self.receiving_socket.setsockopt(zmq.SUBSCRIBE, self.subscription)        
         self.test_thread = ZeroMQThread.ZeroMQThread(self.receive_WARP_info)
         self.test_thread.start()
+
         self.WARP_mac = macaddr
         self.pending_action = {}    # we need to perform some actions asynchronously (delete slice) while preventing any sort of issues from arising in the meantime
                                     # format: {"<name of command>": {"success": <True/False>, "error": "<returned error>"}}
 
         # this will be the socket over which information is sent to Alan's server
         # thus it should be a zmq client with REQ
-        context = zmq.Context()
         self.sending_socket = context.socket(zmq.PUB)
         self.sending_socket.bind("tcp://*:%s" % self.sending_socket_number)
 
         # subscriber likely to miss first message
         self.sending_socket.send("%s test" %self.subscription)
-
-
-
 
     def __del__(self):
 
@@ -61,6 +58,9 @@ class WARPRadio:
         if len(port_usage) is not 0:
             self.receiving_socket.close()
             subprocess.check_call(["fuser", "-k", self.receiving_socket_number + "/tcp"])
+
+    def shutdown(self):
+        pass
 
     def add_pending_action(action_title):
         # may have to add in an action ID in the future to distinguish between multiple pending actions of the same type
@@ -192,8 +192,7 @@ class WARPRadio:
         prtcmd = json.dumps(prtcmd)
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
 
-    def _delete_section_name(self, section, bssid = None):
-        # add_pending_action)("_delete_section_name")
+    def _delete_section_name(self, section, bssid = None):        
         prtcmd = {"command": "_delete_section_name", "changes": {"section": str(section), "macaddr": bssid}}
         prtcmd = json.dumps(prtcmd)
         self.add_pending_action("_delete_section_name")
