@@ -240,7 +240,9 @@ class OpenWRTWifi:
             # self.radio.wifi_up(radio)
             #subprocess.call(["wifi", "up", str(radio)])
 
-            self.radio._bulk_radio_set_command(radio, self.change_pending[radio])
+            result = self.radio._bulk_radio_set_command(radio, self.change_pending[radio])
+
+            print result
             
             radio_entry = self.database.hw_get_radio_entry(radio)
             # If a radio is disabled, do not try adding bss
@@ -531,7 +533,7 @@ class OpenWRTWifi:
         elif bss_entry["main"]:
             # We attempt to delete the section and wait to receive the results
             #results expected in the form of {"success": <result boolean>, "error": <error string if success is false>}
-            delete_results = self.radio._delete_section_name("BSS" + radio_num, radio_entry["macaddr"])
+            delete_results = self.radio._delete_section_name("BSS" + radio_num, radio, radio_entry["macaddr"])
             # we cannot delete the hostapd process until we know that the associated slice on WARP has been deleted as well
             if delete_results["success"]:
                 # we can safely terminate the associated hostapd process if the slice has been removed on WARP    

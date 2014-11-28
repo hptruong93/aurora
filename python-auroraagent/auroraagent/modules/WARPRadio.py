@@ -1,10 +1,10 @@
 #!/usr/bin/python
 
-import subprocess, json, zmq, sys, ZeroMQThread, socket, time, config
+import subprocess, json, zmq, sys, ZeroMQThread, socket, time, config, inspect
 
 
-def ln(stringhere):
-    print "%s %s-------------------------------------------> %s"% (inspect.currentframe().f_back.f_lineno,inspect.getfile(inspect.currentframe()), stringhere)
+def ln(stringhere = 'was here', number_of_dash = 40):
+    print("%s:%s %s> %s"% (__file__, inspect.currentframe().f_back.f_lineno, '-'*number_of_dash, stringhere))
 
 class WARPRadio:
 
@@ -28,6 +28,7 @@ class WARPRadio:
         self.subscription = str(config.CONFIG["zeromq"]["subscription"])
         self.subscription_length = len(self.subscription)
         self.receiving_socket.setsockopt(zmq.SUBSCRIBE, self.subscription)
+        self.receiving_socket.RCVTIMEO = 1000
         self.test_thread = ZeroMQThread.ZeroMQThread(self.receive_WARP_info)
         self.test_thread.start()
         self.WARP_mac = macaddr
@@ -62,19 +63,31 @@ class WARPRadio:
             self.receiving_socket.close()
             subprocess.check_call(["fuser", "-k", self.receiving_socket_number + "/tcp"])
 
-    def add_pending_action(action_title):
+    def add_pending_action(self, action_title, command):
         # may have to add in an action ID in the future to distinguish between multiple pending actions of the same type
         self.pending_action[action_title] = {"success": False, "error": "", "start_time": int(round(time.time() * 1000))}
+        ln("action title is %s" % action_title)
+        ln("command is %s" % command)
+        while action_title not in self.pending_action: 
+            time.sleep(self.sleep_time)    #wait for the action to appear in the pending_action list
 
-    def clear_pending_action(action_title):
-        del self.pending_action[action_title]
+        self.sending_socket.send("%s %s" %(self.subscription, command))
 
-    def wait_on_pending_action(action_title, timeout):
-        while action_title not in self.radio.pending_action: 
-            time.sleep(self.sleep_time)    #wait for the action to appear in the pending_action list                
         waiting_action = self.pending_action[action_title]
-        while not waiting_action["success"] and waiting_action["error"] == "" and (int(round(time.time() * 1000)) - waiting_action["start_time"]) < int(timeout):
-            time.sleep(self.sleep_time)   # we want to wait for the action to either complete or to come back as having not completed due to an error    
+        while not waiting_action["success"] and waiting_action["error"] == "" and (int(round(time.time() * 1000)) - waiting_action["start_time"]) < self.action_timeout:
+            time.sleep(self.sleep_time)   # we want to wait for the action to either complete or to come back as having not completed due to an error      
+        if waiting_action["success"]:          
+            result = {"success": True, "error": ""}
+        elif not waiting_action["success"]:
+            if waiting_action["error"] == "":
+                # no error and unsuccessful means a timeout
+                result = {"success": False, "error": "timeout"}
+            else:
+                result = {"success": False, "error": action_result["error"]}
+
+        del self.pending_action[action_title] 
+
+        return result
 
     def wifi_up(self, radio):
 
@@ -173,7 +186,10 @@ class WARPRadio:
     def _bulk_radio_set_command(self, radio, command_dict):
         prtcmd = {"radio": radio, "command": "_bulk_radio_set_command", "changes": command_dict}
         prtcmd = json.dumps(prtcmd)
-        self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
+        result = self.add_pending_action("_bulk_radio_set_command", prtcmd)
+
+        return result
+
 
     # def _radio_set_command(self, radio, command, value):
     #     # prtcmd = ["_radio_set_command","uci","set","wireless.radio" + str(radio_num) + "." + str(command) + "=" +str(value)]
@@ -192,24 +208,11 @@ class WARPRadio:
         prtcmd = json.dumps(prtcmd)
         self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
 
-    def _delete_section_name(self, section, bssid = None):
-        # add_pending_action)("_delete_section_name")
-        prtcmd = {"command": "_delete_section_name", "changes": {"section": str(section), "macaddr": bssid}}
+    def _delete_section_name(self, section, radio, bssid = None):
+        prtcmd = {"command": "_delete_section_name", "radio": radio, "changes": {"section": str(section), "macaddr": bssid}}
         prtcmd = json.dumps(prtcmd)
-        self.add_pending_action("_delete_section_name")
-        self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
-        self.wait_on_pending_action("_delete_section_name")     
-        action_result = self.pending_action["_delete_section_name"]   
-        if action_result["success"]:          
-            result = {"success": True, "error": ""}
-        else if not action_result["success"]:
-            if action_result["error"] == "":
-                # no error and unsuccessful means a timeout
-                result = {"success": False, "error": "timeout"}
-            else:
-                result = {"success": False, "error": action_result["error"]}
-
-        self.clear_pending_action["_delete_section_name"]
+        result = self.add_pending_action("_delete_section_name", prtcmd)           
+        
         return result
 
 
@@ -236,12 +239,13 @@ class WARPRadio:
     # the receive functions paired with the above sending functions
 
     def _bulk_radio_set_command_receive(self, command_json):
-        radio_entry = self.database.hw_get_radio_entry(command_json["radio"])
-        for item in command_json["changes"]:
-            if command_json["changes"][item] != radio_entry[item]:
-                radio_entry[item] = command_json["changes"][item]
+        pending_action = self.pending_action["_bulk_radio_set_command"]
+        if command_json["changes"]["success"]:            
+            pending_action["success"] = True
+        else:
+            pending_action["error"] = command_json["changes"]["error"]
 
-                ln("call function in Receive.py to send info to manager")
+        ln("make changes in OpenWRTWifi")
 
     # def _radio_set_command_receive(self, command_json):
     #     radio_entry = self.database.hw_get_radio_entry(command_json["radio"])
@@ -286,9 +290,12 @@ class WARPRadio:
             #we want to ignore it
             test = self.subscription + " test"
 
+            ln("Receiving: %s" % message)
             if message != test:
                 # get the actual response by stripping the subscription number from the received string
-                WARP_response = json.loads(message[self.subscription_length+1:])
+                message = message[self.subscription_length+1:-1]
+
+                WARP_response = json.loads(message)
 
                 if (WARP_response["command"] != "wifi down"):
                     # we don't care about wifi down
