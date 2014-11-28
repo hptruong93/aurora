@@ -15,6 +15,7 @@ class WARPRadio:
         self.detect = ''
         self.sleep_time = 0.5
         self.action_timeout = 5
+        self.continue_to_receive = True
 
         context = zmq.Context()
 
@@ -27,7 +28,8 @@ class WARPRadio:
         self.subscription_length = len(self.subscription)
         self.receiving_socket = context.socket(zmq.SUB)
         self.receiving_socket.connect("tcp://localhost:%s" % self.receiving_socket_number)
-        self.receiving_socket.setsockopt(zmq.SUBSCRIBE, self.subscription)        
+        self.receiving_socket.setsockopt(zmq.SUBSCRIBE, self.subscription) 
+        self.receiving_socket.RCVTIMEO = 1000       
         self.test_thread = ZeroMQThread.ZeroMQThread(self.receive_WARP_info)
         self.test_thread.start()
 
@@ -60,7 +62,8 @@ class WARPRadio:
             subprocess.check_call(["fuser", "-k", self.receiving_socket_number + "/tcp"])
 
     def shutdown(self):
-        pass
+        self.continue_to_receive = False
+        ln("testing to see if recv thread has received the shutdown command")
 
     def add_pending_action(action_title):
         # may have to add in an action ID in the future to distinguish between multiple pending actions of the same type
@@ -277,7 +280,7 @@ class WARPRadio:
         # run as a server in thread
         # will be used in the secondary thread to listen for radio information from WARP
 
-        while True: 
+        while AP_running: 
             #get the message
             message = self.receiving_socket.recv()
 
@@ -303,3 +306,6 @@ class WARPRadio:
                         except:
                             command_json  = {"changes": WARP_response["changes"]}
                         getattr(self, "%s_receive" % WARP_response["command"])(command_json)
+
+            # if the manager has sent down the command to terminate all processes, we want to kill this thread
+            AP_running = self.continue_to_receive
