@@ -33,6 +33,13 @@ class SliceAgent:
         # Clean up on exit
         atexit.register(self.__reset)
 
+    def shutdown(self):
+        # we've received a shutdown message from Receive.py, thus we need to close down the running threads
+        # in lower modules. As it stands, this only applies to the subscriber thread running in WARPRadio.py
+        # so we only need to notify virtualwifi
+
+        self.wifi.shutdown()
+
     def create_slice(self, slice, user, config):
         """Create a slice with the given configuration.
         Will raise exceptions if errors are encountered."""

@@ -15,6 +15,7 @@ class WARPRadio:
         self.detect = ''
         self.sleep_time = 0.5
         self.action_timeout = 5
+        self.continue_to_receive = True
 
         context = zmq.Context()
 
@@ -23,29 +24,26 @@ class WARPRadio:
         # it appears that tcp://* is used for publisher while tcp://localhost
         # is used for subscriber
 
-        self.receiving_socket = context.socket(zmq.SUB)
-        self.receiving_socket.connect("tcp://localhost:%s" % self.receiving_socket_number)
         self.subscription = str(config.CONFIG["zeromq"]["subscription"])
         self.subscription_length = len(self.subscription)
-        self.receiving_socket.setsockopt(zmq.SUBSCRIBE, self.subscription)
-        self.receiving_socket.RCVTIMEO = 1000
+        self.receiving_socket = context.socket(zmq.SUB)
+        self.receiving_socket.connect("tcp://localhost:%s" % self.receiving_socket_number)
+        self.receiving_socket.setsockopt(zmq.SUBSCRIBE, self.subscription) 
+        # self.receiving_socket.RCVTIMEO = 1000 
         self.test_thread = ZeroMQThread.ZeroMQThread(self.receive_WARP_info)
         self.test_thread.start()
+
         self.WARP_mac = macaddr
         self.pending_action = {}    # we need to perform some actions asynchronously (delete slice) while preventing any sort of issues from arising in the meantime
                                     # format: {"<name of command>": {"success": <True/False>, "error": "<returned error>"}}
 
         # this will be the socket over which information is sent to Alan's server
         # thus it should be a zmq client with REQ
-        context = zmq.Context()
         self.sending_socket = context.socket(zmq.PUB)
         self.sending_socket.bind("tcp://*:%s" % self.sending_socket_number)
 
         # subscriber likely to miss first message
         self.sending_socket.send("%s test" %self.subscription)
-
-
-
 
     def __del__(self):
 
@@ -62,6 +60,10 @@ class WARPRadio:
         if len(port_usage) is not 0:
             self.receiving_socket.close()
             subprocess.check_call(["fuser", "-k", self.receiving_socket_number + "/tcp"])
+
+    def shutdown(self):
+        self.continue_to_receive = False
+        ln("testing to see if recv thread has received the shutdown command")
 
     def add_pending_action(self, action_title, command):
         # may have to add in an action ID in the future to distinguish between multiple pending actions of the same type
@@ -282,7 +284,9 @@ class WARPRadio:
         # run as a server in thread
         # will be used in the secondary thread to listen for radio information from WARP
 
-        while True: 
+        AP_running = self.continue_to_receive
+
+        while AP_running: 
             #get the message
             message = self.receiving_socket.recv()
 
@@ -311,3 +315,6 @@ class WARPRadio:
                         except:
                             command_json  = {"changes": WARP_response["changes"]}
                         getattr(self, "%s_receive" % WARP_response["command"])(command_json)
+
+            # if the manager has sent down the command to terminate all processes, we want to kill this thread
+            AP_running = self.continue_to_receive

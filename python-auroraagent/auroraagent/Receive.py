@@ -213,6 +213,8 @@ class Receive():
 
         data_for_sender = {'successful':True, 'message': 'FIN', 'config': current_database, 'ap': self.queue}
         data_for_sender = json.dumps(data_for_sender)
+
+        self.agent.shutdown()
         
         try:
             self.channel.basic_publish(exchange='', routing_key=self.manager_queue,
