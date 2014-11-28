@@ -13,7 +13,7 @@ class WARPRadio:
         self.receiving_socket_number = str(receiving)
         self.database = database
         self.detect = ''
-        self.sleep_time = 0.5
+        self.sleep_time = 0.2
         self.action_timeout = 5
         self.continue_to_receive = True
 
@@ -29,7 +29,8 @@ class WARPRadio:
         self.receiving_socket = context.socket(zmq.SUB)
         self.receiving_socket.connect("tcp://localhost:%s" % self.receiving_socket_number)
         self.receiving_socket.setsockopt(zmq.SUBSCRIBE, self.subscription) 
-        # self.receiving_socket.RCVTIMEO = 1000 
+        self.receiving_socket.RCVTIMEO = 1000 
+        ln("timeout here causing aurora to not start")
         self.test_thread = ZeroMQThread.ZeroMQThread(self.receive_WARP_info)
         self.test_thread.start()
 
@@ -49,13 +50,13 @@ class WARPRadio:
 
         # free up the sockets when we are done
 
-        port_usage = subprocess.check_output(["netstat", "-ap", "|", "grep", ":%s" % sending_socket_number])
+        port_usage = subprocess.check_output(["netstat", "-ap", "|", "grep", ":%s" % self.sending_socket_number])
 
         if len(port_usage) is not 0:
             self.sending_socket.close()
             subprocess.check_call(["fuser", "-k", self.sending_socket_number + "/tcp"])
 
-        port_usage = subprocess.check_output(["netstat", "-ap", "|", "grep", ":%s" % receiving_socket_number])
+        port_usage = subprocess.check_output(["netstat", "-ap", "|", "grep", ":%s" % self.receiving_socket_number])
 
         if len(port_usage) is not 0:
             self.receiving_socket.close()
@@ -67,25 +68,30 @@ class WARPRadio:
 
     def add_pending_action(self, action_title, command):
         # may have to add in an action ID in the future to distinguish between multiple pending actions of the same type
+
+        # add the success, error and start time fields for later referencing
         self.pending_action[action_title] = {"success": False, "error": "", "start_time": int(round(time.time() * 1000))}
-        ln("action title is %s" % action_title)
-        ln("command is %s" % command)
         while action_title not in self.pending_action: 
             time.sleep(self.sleep_time)    #wait for the action to appear in the pending_action list
 
+        # once we know that the action has been added to the list, we can send the info to relayagent
         self.sending_socket.send("%s %s" %(self.subscription, command))
 
         waiting_action = self.pending_action[action_title]
-        while not waiting_action["success"] and waiting_action["error"] == "" and (int(round(time.time() * 1000)) - waiting_action["start_time"]) < self.action_timeout:
-            time.sleep(self.sleep_time)   # we want to wait for the action to either complete or to come back as having not completed due to an error      
-        if waiting_action["success"]:          
-            result = {"success": True, "error": ""}
-        elif not waiting_action["success"]:
-            if waiting_action["error"] == "":
+
+        # we want to wait for the action to either complete or to come back as having not completed due to an error
+        while not waiting_action["success"] and waiting_action["error"] == "" and 
+        (int(round(time.time() * 1000)) - waiting_action["start_time"]) < self.action_timeout:
+            time.sleep(self.sleep_time)
+
+        if waiting_action["error"] == "" # we have not RECEIVED an error, it may be that the error was a timeout on our end
+            if waiting_action["success"]:          
+                result = {"success": True, "error": ""}
+            else
                 # no error and unsuccessful means a timeout
                 result = {"success": False, "error": "timeout"}
-            else:
-                result = {"success": False, "error": action_result["error"]}
+        else:
+            result = {"success": False, "error": action_result["error"]}    # document the error
 
         del self.pending_action[action_title] 
 
@@ -93,10 +99,9 @@ class WARPRadio:
 
     def wifi_up(self, radio):
 
+        # finding the number of radios that are currently up
         interfaces = subprocess.Popen("uci show | grep =wifi-iface", shell = True, stdout = subprocess.PIPE)
-
         radio_numbers = []
-
         for line in interfaces.stdout:
             radio_numbers.append(line[21])
 
@@ -185,6 +190,8 @@ class WARPRadio:
         #         else:
         #             print "\toption " + option + "\t" + str(radio[option]) 
 
+    """ The folllowing 6 functions perform every possible altering action for a slice """
+
     def _bulk_radio_set_command(self, radio, command_dict):
         prtcmd = {"radio": radio, "command": "_bulk_radio_set_command", "changes": command_dict}
         prtcmd = json.dumps(prtcmd)
@@ -192,23 +199,12 @@ class WARPRadio:
 
         return result
 
-
-    # def _radio_set_command(self, radio, command, value):
-    #     # prtcmd = ["_radio_set_command","uci","set","wireless.radio" + str(radio_num) + "." + str(command) + "=" +str(value)]
-    #     prtcmd = {"radio": radio, "command": "_radio_set_command", "changes" : {"wireless":"wireless.radio%s.%s=%s" % (name.lstrip("radio"),str(command),str(value))}}
-    #     prtcmd = json.dumps(prtcmd)
-    #     self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
-
-    # def _generic_set_command(self, section, command, value):
-    #     # prtcmd = ["_generic_set_command","uci","set", "wireless." + str(section) + "." + str(command) + "=" +str(value)]
-    #     prtcmd = {"command": "_generic_set_command", "changes" : {"wireless":"wireless.%s.%s=%s" % (str(section),str(command),str(value))}}
-    #     prtcmd = json.dumps(prtcmd)
-    #     self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
-
     def _create_new_section(self, section_type, radio, bssid = None):
-        prtcmd = {"command": "_create_new_section","changes" : {"radio":radio, "macaddr": bssid, "section" :section_type}}
+        prtcmd = {"command": "_create_new_section", "radio":radio, "changes" : {"macaddr": bssid, "section" :section_type}}
         prtcmd = json.dumps(prtcmd)
-        self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
+        result = self.add_pending_action("_create_new_section", prtcmd)
+
+        return result
 
     def _delete_section_name(self, section, radio, bssid = None):
         prtcmd = {"command": "_delete_section_name", "radio": radio, "changes": {"section": str(section), "macaddr": bssid}}
@@ -217,72 +213,42 @@ class WARPRadio:
         
         return result
 
-
-
     def _delete_bss_index(self, bss_num, bssid = None):
-        prtcmd = {"command": "_delete_bss_index","changes" : {"index":str(bss_num), "macaddr": bssid}}
+        prtcmd = {"command": "_delete_bss_index", "radio":radio, "changes" : {"index":str(bss_num), "macaddr": bssid}}
         prtcmd = json.dumps(prtcmd)
-        self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
+        result = self.add_pending_action("_delete_bss_index", prtcmd)
+
+        return result
 
     def _delete_radio(self, radio, section, bssid = None):
-        prtcmd = {"command": "_delete_radio", "changes" : {"radio":radio, "macaddr": bssid, "section": str(section)}}
+        prtcmd = {"command": "_delete_radio", "radio":radio, "changes" : {"macaddr": bssid, "section": str(section)}}
         prtcmd = json.dumps(prtcmd)
-        self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
+        result = self.add_pending_action("_delete_radio", prtcmd)
+
+        return result
 
     def _add_wireless_section(self, section, bssid = None):
-        prtcmd = {"command": "_add_wireless_section", "changes" : {"section":str(section), "macaddr": bssid}}
+        prtcmd = {"command": "_add_wireless_section", "radio":radio, "changes" : {"section":str(section), "macaddr": bssid}}
         prtcmd = json.dumps(prtcmd)
-        self.sending_socket.send("%s %s" %(self.subscription, prtcmd))
+        result = self.add_pending_action("_add_wireless_section", prtcmd)
 
+        return result
 
+    ##################################
 
+    def action_result_reception(self, action_title, command_json):
+        # the reply for each of the 6 actions above will filter through this function
 
-
-    # the receive functions paired with the above sending functions
-
-    def _bulk_radio_set_command_receive(self, command_json):
-        pending_action = self.pending_action["_bulk_radio_set_command"]
+        pending_action = self.pending_action[action_title]
         if command_json["changes"]["success"]:            
             pending_action["success"] = True
         else:
             pending_action["error"] = command_json["changes"]["error"]
-
-        ln("make changes in OpenWRTWifi")
-
-    # def _radio_set_command_receive(self, command_json):
-    #     radio_entry = self.database.hw_get_radio_entry(command_json["radio"])
-    #     # print "\n  $ "," ".join(prtcmd)
-    #     #subprocess.check_call(["uci","set",str(prtcmd[3])])    
-
-    # def _generic_set_command_receive(self, command_json):
-    #     radio_entry = self.database.hw_get_radio_entry(command_json["radio"])
-    #     # print "\n  $ "," ".join(prtcmd)
-    #     #subprocess.check_call(["uci","set", str(prtcmd[3])])
-
-    def _create_new_section_receive(self, command_json):
-        pass 
-
-    def _delete_section_name_receive(self, command_json):
-        pending_action = self.pending_action["_delete_section_name"]
-        if command_json["changes"]["success"]:            
-            pending_action["success"] = True
-        else:
-            pending_action["error"] = command_json["changes"]["error"]
-
-    def _delete_bss_index_receive(self, command_json):
-        pass
-
-    def _delete_radio_receive(self, command_json):
-        pass  
-
-    def _add_wireless_section_receive(self, command_json):
-        pass
-
 
     
     def receive_WARP_info(self):
         # run as a server in thread
-        # will be used in the secondary thread to listen for radio information from WARP
+        # will be used in the secondary thread to listen for radio information from WARP via relayagent
 
         AP_running = self.continue_to_receive
 
@@ -296,7 +262,8 @@ class WARPRadio:
 
             ln("Receiving: %s" % message)
             if message != test:
-                # get the actual response by stripping the subscription number from the received string
+                # get the actual response by stripping the subscription number from the received string as well as
+                # its accompanying space (inherent to PUB/SUB comms) and the trailing null terminator from cpp
                 message = message[self.subscription_length+1:-1]
 
                 WARP_response = json.loads(message)
@@ -306,15 +273,14 @@ class WARPRadio:
                     if WARP_response["command"] == "wifi_detect":
                         self.wifi_detect_receive(WARP_response["configuration"])
                     elif WARP_response["command"][0] == "_":
-                        # any command beginning with an underscore is related to the setup/change process
-                        # thus we route the info returned from the WARP board to the receive function
-                        # paired to the function that sent it
-
+                        # any command beginning with an underscore is related to the setup/change process,
+                        # thus we route the info returned from the WARP board to the receive action_result_reception function
                         try:                            
                             command_json  = {"changes": WARP_response["changes"], "radio": WARP_response["radio"]}
                         except:
                             command_json  = {"changes": WARP_response["changes"]}
-                        getattr(self, "%s_receive" % WARP_response["command"])(command_json)
+
+                        self.action_result_reception(WARP_response["command"],command_json)
 
             # if the manager has sent down the command to terminate all processes, we want to kill this thread
             AP_running = self.continue_to_receive

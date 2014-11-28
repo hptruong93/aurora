@@ -244,9 +244,9 @@ class OpenWRTWifi:
             # self.radio.wifi_up(radio)
             #subprocess.call(["wifi", "up", str(radio)])
 
-            result = self.radio._bulk_radio_set_command(radio, self.change_pending[radio])
+            changes_result = self.radio._bulk_radio_set_command(radio, self.change_pending[radio])
 
-            print result
+            # if changes_result["error"] != ""
             
             radio_entry = self.database.hw_get_radio_entry(radio)
             # If a radio is disabled, do not try adding bss
