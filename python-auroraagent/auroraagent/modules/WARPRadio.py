@@ -239,7 +239,7 @@ class WARPRadio:
     def action_result_reception(self, action_title, command_json):
         # the reply for each of the 6 actions above will filter through this function
 
-        pending_action = self.pending_action[action_title]
+        pending_action = self.pending_action[str(action_title)]
         if command_json["changes"]["success"]:            
             pending_action["success"] = True
         else:
