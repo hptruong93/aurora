@@ -29,7 +29,7 @@ class WARPRadio:
         self.receiving_socket = context.socket(zmq.SUB)
         self.receiving_socket.connect("tcp://localhost:%s" % self.receiving_socket_number)
         self.receiving_socket.setsockopt(zmq.SUBSCRIBE, self.subscription) 
-        self.receiving_socket.RCVTIMEO = 1000 
+        #self.receiving_socket.RCVTIMEO = 1000 
         ln("timeout here causing aurora to not start")
         self.test_thread = ZeroMQThread.ZeroMQThread(self.receive_WARP_info)
         self.test_thread.start()
@@ -80,14 +80,14 @@ class WARPRadio:
         waiting_action = self.pending_action[action_title]
 
         # we want to wait for the action to either complete or to come back as having not completed due to an error
-        while not waiting_action["success"] and waiting_action["error"] == "" and 
+        while not waiting_action["success"] and waiting_action["error"] == "" and \
         (int(round(time.time() * 1000)) - waiting_action["start_time"]) < self.action_timeout:
             time.sleep(self.sleep_time)
 
-        if waiting_action["error"] == "" # we have not RECEIVED an error, it may be that the error was a timeout on our end
+        if waiting_action["error"] == "": # we have not RECEIVED an error, it may be that the error was a timeout on our end
             if waiting_action["success"]:          
                 result = {"success": True, "error": ""}
-            else
+            else:
                 # no error and unsuccessful means a timeout
                 result = {"success": False, "error": "timeout"}
         else:
