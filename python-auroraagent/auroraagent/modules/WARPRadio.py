@@ -29,8 +29,8 @@ class WARPRadio:
         self.receiving_socket = context.socket(zmq.SUB)
         self.receiving_socket.connect("tcp://localhost:%s" % self.receiving_socket_number)
         self.receiving_socket.setsockopt(zmq.SUBSCRIBE, self.subscription) 
-        self.receiving_socket.RCVTIMEO = 1000 
-        ln("timeout here causing aurora to not start")
+        #self.receiving_socket.RCVTIMEO = 1000 
+        ln("timeout here causing aurora to not start successfully")
         self.test_thread = ZeroMQThread.ZeroMQThread(self.receive_WARP_info)
         self.test_thread.start()
 
@@ -80,14 +80,14 @@ class WARPRadio:
         waiting_action = self.pending_action[action_title]
 
         # we want to wait for the action to either complete or to come back as having not completed due to an error
-        while not waiting_action["success"] and waiting_action["error"] == "" and 
+        while not waiting_action["success"] and waiting_action["error"] == "" and \
         (int(round(time.time() * 1000)) - waiting_action["start_time"]) < self.action_timeout:
             time.sleep(self.sleep_time)
 
-        if waiting_action["error"] == "" # we have not RECEIVED an error, it may be that the error was a timeout on our end
+        if waiting_action["error"] == "": # we have not RECEIVED an error, it may be that the error was a timeout on our end
             if waiting_action["success"]:          
                 result = {"success": True, "error": ""}
-            else
+            else:
                 # no error and unsuccessful means a timeout
                 result = {"success": False, "error": "timeout"}
         else:
@@ -253,6 +253,7 @@ class WARPRadio:
         AP_running = self.continue_to_receive
 
         while AP_running: 
+            ln("here's where the error is likely occuring")
             #get the message
             message = self.receiving_socket.recv()
 
@@ -283,4 +284,6 @@ class WARPRadio:
                         self.action_result_reception(WARP_response["command"],command_json)
 
             # if the manager has sent down the command to terminate all processes, we want to kill this thread
+
             AP_running = self.continue_to_receive
+            ln("still looping and the value for AP_running is %s" % AP_running)
