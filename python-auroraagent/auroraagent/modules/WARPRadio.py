@@ -16,6 +16,9 @@ class WARPRadio:
         self.sleep_time = 0.2
         self.action_timeout = 5
         self.continue_to_receive = True
+        self.WARP_mac = macaddr
+        self.pending_action = {}    # we need to perform some actions asynchronously (delete slice) while preventing any sort of issues from arising in the meantime
+                                    # format: {"<name of command>": {"success": <True/False>, "error": "<returned error>"}}
 
         context = zmq.Context()
 
@@ -32,14 +35,10 @@ class WARPRadio:
         #self.receiving_socket.RCVTIMEO = 1000 
         ln("timeout here causing aurora to not start successfully")
         self.test_thread = ZeroMQThread.ZeroMQThread(self.receive_WARP_info)
-        self.test_thread.start()
-
-        self.WARP_mac = macaddr
-        self.pending_action = {}    # we need to perform some actions asynchronously (delete slice) while preventing any sort of issues from arising in the meantime
-                                    # format: {"<name of command>": {"success": <True/False>, "error": "<returned error>"}}
+        self.test_thread.start()        
 
         # this will be the socket over which information is sent to Alan's server
-        # thus it should be a zmq client with REQ
+        # thus it should be a zmq client with PUB
         self.sending_socket = context.socket(zmq.PUB)
         self.sending_socket.bind("tcp://*:%s" % self.sending_socket_number)
 
@@ -80,8 +79,8 @@ class WARPRadio:
         waiting_action = self.pending_action[action_title]
 
         # we want to wait for the action to either complete or to come back as having not completed due to an error
-        while not waiting_action["success"] and waiting_action["error"] == "" and \
-        (int(round(time.time() * 1000)) - waiting_action["start_time"]) < self.action_timeout:
+        while (waiting_action["success"] != True) and (waiting_action["error"] == "") and \
+        ((int(round(time.time() * 1000)) - waiting_action["start_time"]) < self.action_timeout):
             time.sleep(self.sleep_time)
 
         if waiting_action["error"] == "": # we have not RECEIVED an error, it may be that the error was a timeout on our end
@@ -94,6 +93,7 @@ class WARPRadio:
             result = {"success": False, "error": waiting_action["error"]}    # document the error
 
         del self.pending_action[action_title] 
+        ln("deleting action title: %s" % action_title)
 
         return result
 
@@ -109,9 +109,9 @@ class WARPRadio:
 
         option_types = ["type","channel","hwmode","macaddr","disabled","htmode","ht_capab"]
 
-        for i in radio_numbers:
+        for num in radio_numbers:
 
-            radio_name = ["radio",str(i)]
+            radio_name = ["radio",str(num)]
 
             section = "".join(radio_name)
             radio_info[section] = {}
@@ -259,7 +259,7 @@ class WARPRadio:
 
             #sometimes the test send might be seen at the beginning of sub/pub comms
             #we want to ignore it
-            test = self.subscription + " test"
+            test = "%s test" % self.subscription
 
             ln("Receiving: %s" % message)
             if message != test:

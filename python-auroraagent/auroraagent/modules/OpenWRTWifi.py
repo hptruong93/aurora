@@ -76,28 +76,6 @@ class OpenWRTWifi:
         except Exception:
             pass
 
-        # Regenerate it.  We rely on wifi detect, especially
-        # since it can detect the MAC address & number of radios
-        # self.radio.wifi_detect()
-
-        # wait for the reply from WARPRadio.py
-        # while self.radio.detect == 0:
-        #     pass
-
-        # Add package name to string, since UCI needs it
-        # detect2 = "package wireless\n" + self.radio.detect
-
-        # Call UCI, import the data (UCI automatically commits)
-        # command = ["uci", "import"]
-        # print "\n  $ "," ".join(command)
-
-        # uci_process = subprocess.Popen(["uci", "import"], stdin=subprocess.PIPE)
-        # uci_process.communicate(input=detect2)
-
-
-        # Count # radios
-        # Each device has 1 wifi-device section
-        # num_radios = detect2.split().count("wifi-device")
         num_radios = config.CONFIG["hwsim"]["number_simulated_radio"]
 
         # Set # radios in database
@@ -234,16 +212,7 @@ class OpenWRTWifi:
 
         # If no radios require changes, this will not execute
         for radio in self.change_pending:
-            # command = ["wifi", "down", str(radio)]
-            # print "\n  $ "," ".join(command)
-            # self.radio.wifi_down(radio)
-            #subprocess.call(["wifi", "down", str(radio)])            
             
-            # command = ["wifi", "up", str(radio)]
-            # print "\n  $ "," ".join(command)
-            # self.radio.wifi_up(radio)
-            #subprocess.call(["wifi", "up", str(radio)])
-
             changes_result = self.radio._bulk_radio_set_command(radio, self.change_pending[radio])
 
             # if changes_result["error"] != ""
