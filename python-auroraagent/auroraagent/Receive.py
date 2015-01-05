@@ -123,7 +123,7 @@ class Receive():
             if message['command'] == 'SYN':
                 return_data = 'SYN/ACK'
             else:
-                ln("We need to change something here?")
+                #ln("We need to change something here?")
                 return_data = self.agent.execute(**message)
         # If there is an error, let the sender know    
         except Exception as e:
@@ -239,6 +239,7 @@ if __name__ == '__main__':
     # Get mac address
     mac = ifconfig(init_info.CONFIG['init_config']['ethernet_interface'])["hwaddr"]
     # Put in HTTP request to get config
+    ln("mac: %s" % mac)
     try:
         request = requests.get(prov_server + mac)
     except requests.exceptions.ConnectionError:
