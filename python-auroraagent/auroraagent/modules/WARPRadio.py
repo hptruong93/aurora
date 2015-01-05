@@ -63,7 +63,6 @@ class WARPRadio:
 
     def shutdown(self):
         self.continue_to_receive = False
-        ln("testing to see if recv thread has received the shutdown command")
 
     def add_pending_action(self, action_title, command):
         # may have to add in an action ID in the future to distinguish between multiple pending actions of the same type
