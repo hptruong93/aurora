@@ -69,7 +69,8 @@ class WARPRadio:
     def shutdown(self):
         # The other end of relay agent will reply with a confirmation of the shutdown notification so that the
         # call to self.receiving_socket.recv() stops blocking and thread can die
-        self.sending_socket.send("%s shut down" % self.subscription)
+        shutdown_json = json.dumps({"command": "shutdown"})
+        self.sending_socket.send("%s %s" % (self.subscription, shutdown_json))
 
     def add_pending_action(self, action_title, command):
         # may have to add in an action ID in the future to distinguish between multiple pending actions of the same type
@@ -269,19 +270,15 @@ class WARPRadio:
             test = "%s test" % self.subscription
 
             ln("Receiving: %s" % message)
-
-            if message == "%s shutdown" % self.subscription:
-                # we've received a reply from the cpp relay agent which is serving only to stop the recv function from blocking
-                # the shutdown
-                self.continue_to_receive = False
-            elif message != test:
+                
+            if message != test:
                 # get the actual response by stripping the subscription number from the received string as well as
                 # its accompanying space (inherent to PUB/SUB comms) and the trailing null terminator from cpp
                 message = message[self.subscription_length+1:-1]
 
                 WARP_response = json.loads(message)
 
-                if (WARP_response["command"] != "wifi down"):
+                if WARP_response["command"] != "wifi down":
                     # we don't care about wifi down
                     if WARP_response["command"] == "wifi_detect":
                         self.wifi_detect_receive(WARP_response["configuration"])
@@ -294,5 +291,8 @@ class WARPRadio:
                             command_json  = {"changes": WARP_response["changes"]}
 
                         self.action_result_reception(WARP_response["command"],command_json)
+                    elif WARP_response["command"] == "shutdown":
+                        # we've received a reply from the cpp relay agent which is serving only to stop the recv function from blocking
+                        # the shutdown
+                        self.continue_to_receive = False
 
-            # ln("still looping and the value for AP_running is %s" % AP_running)
