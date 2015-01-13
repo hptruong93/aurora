@@ -12,7 +12,27 @@ class WARPRadio:
         self.sending_socket_number = str(sending)
         self.receiving_socket_number = str(receiving)
         self.database = database
-        self.detect = ''
+
+        self.start()        
+
+    def __del__(self):
+
+        # free up the sockets when we are done
+
+        port_usage = subprocess.check_output(["netstat", "-ap", "|", "grep", ":%s" % self.sending_socket_number])
+
+        if len(port_usage) is not 0:
+            self.sending_socket.close()
+            subprocess.check_call(["fuser", "-k", self.sending_socket_number + "/tcp"])
+
+        port_usage = subprocess.check_output(["netstat", "-ap", "|", "grep", ":%s" % self.receiving_socket_number])
+
+        if len(port_usage) is not 0:
+            self.receiving_socket.close()
+            subprocess.check_call(["fuser", "-k", self.receiving_socket_number + "/tcp"])
+
+    def start(self):
+
         self.sleep_time = 0.2
         self.action_timeout = 5
         self.continue_to_receive = True
@@ -33,7 +53,7 @@ class WARPRadio:
         self.receiving_socket.connect("tcp://localhost:%s" % self.receiving_socket_number)
         self.receiving_socket.setsockopt(zmq.SUBSCRIBE, self.subscription) 
         #self.receiving_socket.RCVTIMEO = 1000 
-        ln("timeout here causing aurora to not start successfully")
+        # ln("timeout here causing aurora to not start successfully")
         self.test_thread = ZeroMQThread.ZeroMQThread(self.receive_WARP_info)
         self.test_thread.start()        
 
@@ -45,24 +65,11 @@ class WARPRadio:
         # subscriber likely to miss first message
         self.sending_socket.send("%s test" %self.subscription)
 
-    def __del__(self):
-
-        # free up the sockets when we are done
-
-        port_usage = subprocess.check_output(["netstat", "-ap", "|", "grep", ":%s" % self.sending_socket_number])
-
-        if len(port_usage) is not 0:
-            self.sending_socket.close()
-            subprocess.check_call(["fuser", "-k", self.sending_socket_number + "/tcp"])
-
-        port_usage = subprocess.check_output(["netstat", "-ap", "|", "grep", ":%s" % self.receiving_socket_number])
-
-        if len(port_usage) is not 0:
-            self.receiving_socket.close()
-            subprocess.check_call(["fuser", "-k", self.receiving_socket_number + "/tcp"])
 
     def shutdown(self):
-        self.continue_to_receive = False
+        # The other end of relay agent will reply with a confirmation of the shutdown notification so that the
+        # call to self.receiving_socket.recv() stops blocking and thread can die
+        self.sending_socket.send("%s shut down" % self.subscription)
 
     def add_pending_action(self, action_title, command):
         # may have to add in an action ID in the future to distinguish between multiple pending actions of the same type
@@ -252,10 +259,8 @@ class WARPRadio:
         # run as a server in thread
         # will be used in the secondary thread to listen for radio information from WARP via relayagent
 
-        AP_running = self.continue_to_receive
-
-        while AP_running: 
-            ln("here's where the error is likely occuring")
+        while self.continue_to_receive: 
+            # ln("here's where the error is likely occuring")
             #get the message
             message = self.receiving_socket.recv()
 
@@ -264,7 +269,12 @@ class WARPRadio:
             test = "%s test" % self.subscription
 
             ln("Receiving: %s" % message)
-            if message != test:
+
+            if message == "%s shutdown" % self.subscription:
+                # we've received a reply from the cpp relay agent which is serving only to stop the recv function from blocking
+                # the shutdown
+                self.continue_to_receive = False
+            elif message != test:
                 # get the actual response by stripping the subscription number from the received string as well as
                 # its accompanying space (inherent to PUB/SUB comms) and the trailing null terminator from cpp
                 message = message[self.subscription_length+1:-1]
@@ -285,7 +295,4 @@ class WARPRadio:
 
                         self.action_result_reception(WARP_response["command"],command_json)
 
-            # if the manager has sent down the command to terminate all processes, we want to kill this thread
-
-            AP_running = self.continue_to_receive
-            ln("still looping and the value for AP_running is %s" % AP_running)
+            # ln("still looping and the value for AP_running is %s" % AP_running)
