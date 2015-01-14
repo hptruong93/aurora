@@ -12,6 +12,7 @@ class WARPRadio:
         self.sending_socket_number = str(sending)
         self.receiving_socket_number = str(receiving)
         self.database = database
+        self.WARP_mac = macaddr
 
         self.start()        
 
@@ -36,7 +37,6 @@ class WARPRadio:
         self.sleep_time = 0.2
         self.action_timeout = 5
         self.continue_to_receive = True
-        self.WARP_mac = macaddr
         self.pending_action = {}    # we need to perform some actions asynchronously (delete slice) while preventing any sort of issues from arising in the meantime
                                     # format: {"<name of command>": {"success": <True/False>, "error": "<returned error>"}}
 
