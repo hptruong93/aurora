@@ -120,7 +120,7 @@ class OpenWRTWifi:
         radio_num = name.lstrip("radio")
         current_disabled = radio_entry["disabled"]
 
-        ln(" current disabled:%s" % current_disabled)
+        # ln(" current disabled:%s" % current_disabled)
 
         self.change_pending[name] = {}
 
@@ -129,6 +129,7 @@ class OpenWRTWifi:
         if disabled:
             if not current_disabled:
                 try:
+                    # the below call retreives the current operating state of this specific wlan
                     wlan_up = subprocess.check_output(["cat", "/sys/class/net/wlan%s/operstate" % radio_num]) == "up"
                     if wlan_up:
                         subprocess.check_call(["ifconfig", "wlan%s" % radio_num, "down"])                   
@@ -152,7 +153,7 @@ class OpenWRTWifi:
         # Write to database and UCI
         radio_entry["disabled"] = disabled
 
-        ln("radio_entry: %s" % str(radio_entry))
+        # ln("radio_entry: %s" % str(radio_entry))
 
         # self.radio._radio_set_command(name, "disabled", disabled)
 
@@ -280,6 +281,7 @@ class OpenWRTWifi:
 
         # Get associated radio and number of bss's
         radio_entry = self.database.hw_get_radio_entry(radio)
+        print "radio_entry: %s" % radio_entry
         radio_num = radio.lstrip("radio")
         bss_list = radio_entry["bss_list"]
         total_bss = len(radio_entry["bss_list"])
@@ -463,15 +465,6 @@ class OpenWRTWifi:
         # for process in psutil.process_iter():
         #     if process.name == "hostapd":
         #         num_hostapd = num_hostapd + 1
-
-
-        # num_radios_in_use = self.database.hw_get_num_radio() - self.database.hw_get_num_radio_free()
-        # print "number radio is %s and number free is %s so number in use is %s" % (self.database.hw_get_num_radio(), self.database.hw_get_num_radio_free(), num_radios_in_use)
-        # print "jajajajajajajjajajajajajajnumber of actual run is %s" % num_hostapd
-
-        # if self.hostapd_processes[radio + name].poll() == None:
-        #     print "-----------------__________________--------------__----------still running"
-        #     print self.hostapd_processes[radio+name]
 
 
     def remove_bss(self, radio, name):
