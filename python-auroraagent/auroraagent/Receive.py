@@ -201,7 +201,6 @@ class Receive():
         return
 
     def shutdown_signal_received(self):
-        ln("To do: send shutdown information to lower modules to close thread in WARPRadio")
 
         current_database = {}
         current_database['init_database'] = self.agent.database.database

@@ -1,6 +1,12 @@
 #!/usr/bin/python
 
-import subprocess, json, zmq, sys, ZeroMQThread, socket, time, config, inspect
+import subprocess, sys
+import json
+import zmq, ZeroMQThread
+import socket
+import time
+import config
+import inspect
 
 
 def ln(stringhere = 'was here', number_of_dash = 40):
@@ -68,12 +74,14 @@ class WARPRadio:
 
     def shutdown(self):
         # The other end of relay agent will reply with a confirmation of the shutdown notification so that the
-        # call to self.receiving_socket.recv() stops blocking and thread can die
+        # call to self.receiving_socket.recv() stops blocking and the thread can die
         shutdown_json = json.dumps({"command": "shutdown"})
         self.sending_socket.send("%s %s" % (self.subscription, shutdown_json))
 
     def add_pending_action(self, action_title, command):
         # may have to add in an action ID in the future to distinguish between multiple pending actions of the same type
+
+        command = json.dumps(command)
 
         # add the success, error and start time fields for later referencing
         self.pending_action[action_title] = {"success": False, "error": "", "start_time": int(round(time.time() * 1000))}
@@ -204,42 +212,36 @@ class WARPRadio:
 
     def _bulk_radio_set_command(self, radio, command_dict):
         prtcmd = {"radio": radio, "command": "_bulk_radio_set_command", "changes": command_dict}
-        prtcmd = json.dumps(prtcmd)
         result = self.add_pending_action("_bulk_radio_set_command", prtcmd)
 
         return result
 
     def _create_new_section(self, section_type, radio, bssid = None):
         prtcmd = {"command": "_create_new_section", "radio":radio, "changes" : {"macaddr": bssid, "section" :section_type}}
-        prtcmd = json.dumps(prtcmd)
         result = self.add_pending_action("_create_new_section", prtcmd)
 
         return result
 
     def _delete_section_name(self, section, radio, bssid = None):
         prtcmd = {"command": "_delete_section_name", "radio": radio, "changes": {"section": str(section), "macaddr": bssid}}
-        prtcmd = json.dumps(prtcmd)
         result = self.add_pending_action("_delete_section_name", prtcmd)           
         
         return result
 
     def _delete_bss_index(self, bss_num, bssid = None):
         prtcmd = {"command": "_delete_bss_index", "radio":radio, "changes" : {"index":str(bss_num), "macaddr": bssid}}
-        prtcmd = json.dumps(prtcmd)
         result = self.add_pending_action("_delete_bss_index", prtcmd)
 
         return result
 
     def _delete_radio(self, radio, section, bssid = None):
         prtcmd = {"command": "_delete_radio", "radio":radio, "changes" : {"macaddr": bssid, "section": str(section)}}
-        prtcmd = json.dumps(prtcmd)
         result = self.add_pending_action("_delete_radio", prtcmd)
 
         return result
 
     def _add_wireless_section(self, section, bssid = None):
         prtcmd = {"command": "_add_wireless_section", "radio":radio, "changes" : {"section":str(section), "macaddr": bssid}}
-        prtcmd = json.dumps(prtcmd)
         result = self.add_pending_action("_add_wireless_section", prtcmd)
 
         return result
