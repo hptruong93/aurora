@@ -98,8 +98,8 @@ class WARPRadio:
         ((int(round(time.time() * 1000)) - waiting_action["start_time"]) < self.action_timeout*1000):
             time.sleep(self.sleep_time)
 
-        ln("time: %s\nstart_time: %s\ndifference: %s\ntimeout value: %s" % (int(round(time.time() * 1000)), waiting_action["start_time"], 
-            int(round(time.time() * 1000))- waiting_action["start_time"], self.action_timeout*1000))
+        # ln("time: %s\nstart_time: %s\ndifference: %s\ntimeout value: %s" % (int(round(time.time() * 1000)), waiting_action["start_time"], 
+        #     int(round(time.time() * 1000))- waiting_action["start_time"], self.action_timeout*1000))
 
         if waiting_action["error"] == "": # we have not RECEIVED an error, it may be that the error was a timeout on our end
             if waiting_action["success"]:          
@@ -111,7 +111,7 @@ class WARPRadio:
             result = {"success": False, "error": waiting_action["error"]}    # document the error
 
         del self.pending_action[action_title] 
-        ln("deleting action title: %s" % action_title)
+        # ln("deleting action title: %s" % action_title)
 
         return result
 
