@@ -55,8 +55,8 @@ class WARPRadio:
         self.subscription = str(config.CONFIG["zeromq"]["subscription"])
         self.subscription_length = len(self.subscription)
 
-        self.start_receiver_thread()
         self.start_sender()
+        self.start_receiver_thread()
                
 
         
