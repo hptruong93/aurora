@@ -3,6 +3,11 @@
 
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 import json, sys, exception, copy, os
+import inspect
+
+def ln(stringhere = 'was here', number_of_dash = 40):
+    print("%s:%s %s> %s"% (__file__, inspect.currentframe().f_back.f_lineno, '-'*number_of_dash, stringhere))
+
 class VirtualBridges:
     """Virtual Bridge class.
 
@@ -29,9 +34,11 @@ class VirtualBridges:
         flavor = str(flavor)
         # Try returning an existing module
         try:
+            ln("initial bridge created")
             return self.__get_module(flavor)
         # If that fails, load it
         except exception.ModuleNotLoaded:
+            ln("secondary bridge created")
             module_file = __import__(self.MODULES_FOLDER,globals(),locals(),
                     [flavor]).__dict__[flavor]
             module_class_name = self.metadata.get(flavor).get('class')
