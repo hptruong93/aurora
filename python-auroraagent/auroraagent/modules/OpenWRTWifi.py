@@ -14,6 +14,8 @@ import config
 import WARPRadio
 import exception
 
+import ReceiveThread
+
 def ln(stringhere = 'was here', number_of_dash = 40):
     print("%s:%s %s> %s"% (__file__, inspect.currentframe().f_back.f_lineno, '-'*number_of_dash, stringhere))
 
@@ -45,6 +47,8 @@ class OpenWRTWifi:
         self.radio = WARPRadio.WARPRadio(database)
         self.setup()        
         self.hostapd_processes = {}
+        self.ovs_information = {}
+        self.receive_thread = ReceiveThread.ReceiveThread(self.get_ovs_info)
 
     def shutdown(self):
         # shutdown the thread running in WARPRadio
@@ -556,3 +560,17 @@ class OpenWRTWifi:
             mac.append(random.randint(0x00, 0xff))
         mac_str = ':'.join(map(lambda x: "%02x" % x, mac))
         return mac_str
+
+    def get_ovs_info(self):
+        # we need the information on the location/names of ovs server and socket files
+        # in order to use this daemon/database to create any ovs bridges. While possible
+        # to have two ovs daemons, the implementation of such a setup is more complicated
+        # than necessary
+
+        # this may need to be changed to a continual loop that will update the ovs information
+        # should it be changed (i.e. we switch to a new daemon for some reason)
+
+        while not(self.radio.ovs_information):
+            time.sleep(self.sleep_time)
+
+        self.ovs_information = self.radio.ovs_information 

@@ -1,6 +1,8 @@
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 import json, os, pprint
 import exception
+import time
+import ReceiveThread
 
 class VirtualWifi:
     """Responsible for configuring the WiFi radio interfaces of a device.
@@ -27,6 +29,11 @@ class VirtualWifi:
         json_file = open(self.MODULE_JSON_FILE)
         self.wifi = self.__load_module(self.database.hw_get_firmware_name(), json.load(json_file)["VirtualWifi"])
         json_file.close()
+
+        ovs_information = {}
+
+        self.receive_thread = ReceiveThread.ReceiveThread(self.get_ovs_info)
+
         
     def shutdown(self):
         # we need to delete all running threads such that all programs will cease to run. As it stands, this only applies to WARPRadio
@@ -128,6 +135,21 @@ class VirtualWifi:
                 #self.wifi.
                 pass
             # self.database.replace_entry("RadioInterfaces", )
+
+    def get_ovs_info(self):
+        # we need the information on the location/names of ovs server and socket files
+        # in order to use this daemon/database to create any ovs bridges. While possible
+        # to have two ovs daemons, the implementation of such a setup is more complicated
+        # than necessary
+
+        # this may need to be changed to a continual loop that will update the ovs information
+        # should it be changed (i.e. we switch to a new daemon for some reason)
+
+        while not(self.wifi.ovs_information):
+            time.sleep(self.sleep_time)
+
+        self.ovs_information = self.wifi.ovs_information 
+
 
     # TODO(mike)!!!
     # def restart_slice(self

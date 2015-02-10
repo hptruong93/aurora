@@ -1,4 +1,4 @@
-#!/usr/bin/python
+# SAVI McGill: HP Truong, Al Kenny
 
 import subprocess, sys
 import json
@@ -43,40 +43,47 @@ class WARPRadio:
         self.sleep_time = 0.2
         self.action_timeout = 5
         self.continue_to_receive = True
-        self.pending_action = {}    # we need to perform some actions asynchronously (delete slice) while preventing any sort of issues from arising in the meantime
-                                    # format: {"<name of command>": {"success": <True/False>, "error": "<returned error>"}}
 
-        context = zmq.Context()
+        # we need to perform some actions asynchronously (delete slice) while preventing any sort of issues from arising in the meantime
+        # format: {"<name of command>": {"success": <True/False>, "error": "<returned error>"}}
+        self.pending_action = {}
+        
+        self.ovs_information = {} 
 
-        # note that the publisher is associated with a port through the use of the
-        # bind() statement while the subscriber uses connect(). Additionally,
-        # it appears that tcp://* is used for publisher while tcp://localhost
-        # is used for subscriber
+        self.context = zmq.Context()
 
         self.subscription = str(config.CONFIG["zeromq"]["subscription"])
         self.subscription_length = len(self.subscription)
-        self.receiving_socket = context.socket(zmq.SUB)
-        self.receiving_socket.connect("tcp://localhost:%s" % self.receiving_socket_number)
-        self.receiving_socket.setsockopt(zmq.SUBSCRIBE, self.subscription) 
-        #self.receiving_socket.RCVTIMEO = 1000 
-        # ln("timeout here causing aurora to not start successfully")
-        self.test_thread = ZeroMQThread.ZeroMQThread(self.receive_WARP_info)
-        self.test_thread.start()        
 
-        # this will be the socket over which information is sent to Alan's server
-        # thus it should be a zmq client with PUB
-        self.sending_socket = context.socket(zmq.PUB)
-        self.sending_socket.bind("tcp://*:%s" % self.sending_socket_number)
+        self.start_receiver_thread()
+        self.start_sender()
+               
 
-        # subscriber likely to miss first message
-        self.sending_socket.send("%s test" %self.subscription)
-
+        
 
     def shutdown(self):
         # The other end of relay agent will reply with a confirmation of the shutdown notification so that the
         # call to self.receiving_socket.recv() stops blocking and the thread can die
         shutdown_json = json.dumps({"command": "shutdown"})
         self.sending_socket.send("%s %s" % (self.subscription, shutdown_json))
+
+    def start_receiver_thread(self):
+        # Start the receiver thread which will handle replies from relay agent and direct them to the function
+        # which parses the result of the actions sent to relay agent
+        self.receiving_socket = self.context.socket(zmq.SUB)
+        self.receiving_socket.connect("tcp://localhost:%s" % self.receiving_socket_number)
+        self.receiving_socket.setsockopt(zmq.SUBSCRIBE, self.subscription) 
+        self.test_thread = ZeroMQThread.ZeroMQThread(self.receive_WARP_info)
+        self.test_thread.start() 
+
+    def start_sender(self):
+        # this will be the socket over which information is sent to relay agent server
+        # thus it should be a zmq client with PUB
+        self.sending_socket = self.context.socket(zmq.PUB)
+        self.sending_socket.bind("tcp://*:%s" % self.sending_socket_number)
+
+        # subscriber likely to miss first message
+        self.sending_socket.send("%s test" %self.subscription)
 
     def add_pending_action(self, action_title, command):
         # may have to add in an action ID in the future to distinguish between multiple pending actions of the same type
@@ -297,4 +304,7 @@ class WARPRadio:
                         # we've received a reply from the cpp relay agent which is serving only to stop the recv function from blocking
                         # the shutdown
                         self.continue_to_receive = False
+                    elif "ovs" in WARP_response.keys():
+                        for key in WARP_response.keys():
+                            self.ovs_information[key] = WARP_response[key]
 
