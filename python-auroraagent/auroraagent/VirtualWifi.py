@@ -2,6 +2,7 @@
 import json, os, pprint
 import exception
 import time
+
 import ReceiveThread
 
 class VirtualWifi:

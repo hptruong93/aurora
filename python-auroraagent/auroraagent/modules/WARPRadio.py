@@ -302,7 +302,7 @@ class WARPRadio:
                             except:
                                 command_json  = {"changes": WARP_response["changes"]}
 
-                        self.action_result_reception(WARP_response["command"],command_json)
+                            self.action_result_reception(WARP_response["command"],command_json)
                     elif WARP_response["command"] == "shutdown":
                         # we've received a reply from the cpp relay agent which is serving only to stop the recv function from blocking
                         # the shutdown
