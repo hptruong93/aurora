@@ -44,7 +44,6 @@ class VirtualBridges:
             module_class_name = self.metadata.get(flavor).get('class')
             module_class = getattr(module_file, module_class_name)
             module_instance = module_class(self.database)
-            ln("%s\n%s\n%s\n%s" % (module_file, module_class_name, module_class, module_instance))
             # Add to module list
             self.module_list[flavor] = module_instance
             # Give an instance
@@ -71,7 +70,15 @@ class VirtualBridges:
         return self.module_list[self.__get_flavor(bridge)]
         
     def __get_flavor(self, bridge):
-        return self.__get_entry(bridge)["flavor"]
+        return self.__get_entry(bridge)["flavor"]        
+
+    def add_module_instance(self, flavor, details):
+        module_file = __import__(self.MODULES_FOLDER,globals(),locals(),
+                    [flavor]).__dict__[flavor]
+        module_class_name = self.metadata.get(flavor).get('class')
+        module_class = getattr(module_file, module_class_name)
+        module_instance = module_class(self.database, details)
+        self.module_list[flavor] =  module_instance
     
     def create_bridge(self, flavor, name):
         """Create a bridge of type flavor and with the given name."""

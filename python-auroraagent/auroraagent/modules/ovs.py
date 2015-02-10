@@ -1,5 +1,5 @@
 # OpenVSwitch module
-# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
+# SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith, Al Kenny
 
 # If you wish to add functionaility for custom commands
 # - say abstracting a long multi-parameter command to a simple one-argument function
@@ -24,10 +24,13 @@ class OpenVSwitch:
     # and Ubuntu 13.04 w/ OVS 1.9 from apt
     ovs_schema = "/usr/share/openvswitch/vswitch.ovsschema"
     
-    def __init__(self, database):
+    def __init__(self, database, *arguments):
         self.database = database
         
-        self.start()
+        if len(arguments) == 0:
+            self.start()
+        else:
+            self.load(arguments)
     
     def __exec_command(self, args):
         # Want to throw exception if we give an invalid command
@@ -69,6 +72,10 @@ class OpenVSwitch:
         command = ["ovs-vswitchd", "unix:" + self.socket_file.name]
         print "\n  $ "," ".join(command)
         self.vswitch_process = psutil.Popen(["ovs-vswitchd", "unix:" + self.socket_file.name])
+
+    def load(self, ovs_arguments):
+        """Load the information from a previous daemon/server"""
+        self.socket_file.name = ovs_arguments["socket_path"]
        
     def stop(self):
         """Stop all OVS daemons."""
