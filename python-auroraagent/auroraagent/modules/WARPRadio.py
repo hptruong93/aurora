@@ -50,7 +50,7 @@ class WARPRadio:
 
         self.ovs_information = {} 
 
-        self.context = zmq.Context()
+        context = zmq.Context()
 
         self.subscription = str(config.CONFIG["zeromq"]["subscription"])
         self.subscription_length = len(self.subscription)
