@@ -47,7 +47,7 @@ class WARPRadio:
         # we need to perform some actions asynchronously (delete slice) while preventing any sort of issues from arising in the meantime
         # format: {"<name of command>": {"success": <True/False>, "error": "<returned error>"}}
         self.pending_action = {}
-        
+
         self.ovs_information = {} 
 
         self.context = zmq.Context()
@@ -294,17 +294,17 @@ class WARPRadio:
                     elif WARP_response["command"][0] == "_":
                         # any command beginning with an underscore is related to the setup/change process,
                         # thus we route the info returned from the WARP board to the receive action_result_reception function
-                        try:                            
-                            command_json  = {"changes": WARP_response["changes"], "radio": WARP_response["radio"]}
-                        except:
-                            command_json  = {"changes": WARP_response["changes"]}
+                        if WARP_response["command"] == "_ovs_socket_path_cmd":
+                            self.ovs_information = WARP_response["changes"]
+                        else:    
+                            try:                            
+                                command_json  = {"changes": WARP_response["changes"], "radio": WARP_response["radio"]}
+                            except:
+                                command_json  = {"changes": WARP_response["changes"]}
 
                         self.action_result_reception(WARP_response["command"],command_json)
                     elif WARP_response["command"] == "shutdown":
                         # we've received a reply from the cpp relay agent which is serving only to stop the recv function from blocking
                         # the shutdown
                         self.continue_to_receive = False
-                    elif "ovs" in WARP_response.keys():
-                        for key in WARP_response.keys():
-                            self.ovs_information[key] = WARP_response[key]
 

@@ -48,7 +48,8 @@ class OpenWRTWifi:
         self.setup()        
         self.hostapd_processes = {}
         self.ovs_information = {}
-        self.receive_thread = ReceiveThread.ReceiveThread(self.get_ovs_info)
+        self.sleep_time = 0.1
+        ReceiveThread.ReceiveThread(self.get_ovs_info)
 
     def shutdown(self):
         # shutdown the thread running in WARPRadio

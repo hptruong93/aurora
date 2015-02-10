@@ -30,9 +30,11 @@ class VirtualWifi:
         self.wifi = self.__load_module(self.database.hw_get_firmware_name(), json.load(json_file)["VirtualWifi"])
         json_file.close()
 
-        ovs_information = {}
+        self.ovs_information = {}
+        self.sleep_time = 0.1
 
-        self.receive_thread = ReceiveThread.ReceiveThread(self.get_ovs_info)
+
+        ReceiveThread.ReceiveThread(self.get_ovs_info)
 
         
     def shutdown(self):
