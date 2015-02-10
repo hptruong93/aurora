@@ -55,8 +55,26 @@ class WARPRadio:
         self.subscription = str(config.CONFIG["zeromq"]["subscription"])
         self.subscription_length = len(self.subscription)
 
-        self.start_sender()
-        self.start_receiver_thread()
+
+        # Start the receiver thread which will handle replies from relay agent and direct them to the function
+        # which parses the result of the actions sent to relay agent
+        self.receiving_socket = context.socket(zmq.SUB)
+        self.receiving_socket.connect("tcp://localhost:%s" % self.receiving_socket_number)
+        self.receiving_socket.setsockopt(zmq.SUBSCRIBE, self.subscription) 
+        self.test_thread = ZeroMQThread.ZeroMQThread(self.receive_WARP_info)
+        self.test_thread.start() 
+
+
+        # this will be the socket over which information is sent to relay agent server
+        # thus it should be a zmq client with PUB
+        self.sending_socket = context.socket(zmq.PUB)
+        self.sending_socket.bind("tcp://*:%s" % self.sending_socket_number)
+
+        # subscriber likely to miss first message
+        self.sending_socket.send("%s test" %self.subscription)
+
+        # self.start_sender()
+        # self.start_receiver_thread()
                
 
         
@@ -68,22 +86,10 @@ class WARPRadio:
         self.sending_socket.send("%s %s" % (self.subscription, shutdown_json))
 
     def start_receiver_thread(self):
-        # Start the receiver thread which will handle replies from relay agent and direct them to the function
-        # which parses the result of the actions sent to relay agent
-        self.receiving_socket = self.context.socket(zmq.SUB)
-        self.receiving_socket.connect("tcp://localhost:%s" % self.receiving_socket_number)
-        self.receiving_socket.setsockopt(zmq.SUBSCRIBE, self.subscription) 
-        self.test_thread = ZeroMQThread.ZeroMQThread(self.receive_WARP_info)
-        self.test_thread.start() 
+        pass
 
     def start_sender(self):
-        # this will be the socket over which information is sent to relay agent server
-        # thus it should be a zmq client with PUB
-        self.sending_socket = self.context.socket(zmq.PUB)
-        self.sending_socket.bind("tcp://*:%s" % self.sending_socket_number)
-
-        # subscriber likely to miss first message
-        self.sending_socket.send("%s test" %self.subscription)
+        pass
 
     def add_pending_action(self, action_title, command):
         # may have to add in an action ID in the future to distinguish between multiple pending actions of the same type
