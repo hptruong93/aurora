@@ -75,7 +75,7 @@ class OpenVSwitch:
 
     def load(self, ovs_arguments):
         """Load the information from a previous daemon/server"""
-        self.socket_file.name = ovs_arguments["socket_path"]
+        self.socket_file.name = ovs_arguments["socket"]
        
     def stop(self):
         """Stop all OVS daemons."""

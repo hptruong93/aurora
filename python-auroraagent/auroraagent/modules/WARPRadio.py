@@ -294,7 +294,7 @@ class WARPRadio:
                     elif WARP_response["command"][0] == "_":
                         # any command beginning with an underscore is related to the setup/change process,
                         # thus we route the info returned from the WARP board to the receive action_result_reception function
-                        if WARP_response["command"] == "_ovs_socket_path_cmd":
+                        if WARP_response["command"] == "_ovs_socket_path":
                             self.ovs_information = WARP_response["changes"]
                         else:    
                             try:                            
