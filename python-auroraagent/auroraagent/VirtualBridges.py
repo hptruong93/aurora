@@ -3,6 +3,12 @@
 
 # SAVI McGill: Heming Wen, Prabhat Tiwary, Kevin Han, Michael Smith
 import json, sys, exception, copy, os
+import inspect
+
+
+def ln(stringhere = 'was here', number_of_dash = 40):
+    print("%s:%s %s> %s"% (__file__, inspect.currentframe().f_back.f_lineno, '-'*number_of_dash, stringhere))
+
 class VirtualBridges:
     """Virtual Bridge class.
 
@@ -37,6 +43,7 @@ class VirtualBridges:
             module_class_name = self.metadata.get(flavor).get('class')
             module_class = getattr(module_file, module_class_name)
             module_instance = module_class(self.database)
+            ln("%s\n%s\n%s\n%s" % (module_file, module_class_name, module_class, module_instance))
             # Add to module list
             self.module_list[flavor] = module_instance
             # Give an instance
