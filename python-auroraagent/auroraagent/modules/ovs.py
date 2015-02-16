@@ -24,7 +24,7 @@ class OpenVSwitch:
     # and Ubuntu 13.04 w/ OVS 1.9 from apt
     ovs_schema = "/usr/share/openvswitch/vswitch.ovsschema"
     location = "/tmp/"
-    name = "
+    name = "socket_name"
     timeout = 2
 
     
@@ -54,7 +54,7 @@ class OpenVSwitch:
         # we will wait <timeout> seconds to see if the necessary temp file
         # has been created containing the location for the vswitch daemon
         while (time.time() - start_time < timeout):
-            if os.path.isfile("%s%s" % (location,name)):
+            if os.path.isfile("%s%s.file" % (location,name)):
                 # the daemon location file exists
 
                 start_time = time.time()
@@ -63,23 +63,20 @@ class OpenVSwitch:
                     # wait <timeout> seconds for the lock file to dissapear to know that we can access the 
                     # file containing the ovs daemon socket path
 
-                    if not(os.path.isfile("%s~%s" % (location, name))):
+                    if not(os.path.isfile("%s#%s.lock" % (location, name))):
                         # once the lock file has been closed, access the original file,
                         # read in the socket path and clean up
-                        f = open("%s%s" % (location,name),"r")
+                        f = open("%s%s.file" % (location,name),"r")
                         self.socket_file = f.readline()
 
                         f.close()
-                        os.remove("%s%s" % (location,name))
 
                         break
 
                 break
 
-        if os.path.isfile("%s%s" % (location,name)) or (self.socket_file.name == ""):
-            # the file containing the socket path should have been
-            # removed and the socket file name should have been changed
-            # if everything went to plan
+        if self.socket_file.name == "":
+            # the socket file name should have been changed if everything went to plan
             raise exception.InexistentOVSSocket()
 
 
