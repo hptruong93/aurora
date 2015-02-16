@@ -32,8 +32,6 @@ class SliceAgent:
 
         self.monitor = Monitor.Monitor(self.database)
 
-        self.sleep_time = 0.1
-
         # Clean up on exit
         atexit.register(self.__reset)
 
@@ -642,17 +640,17 @@ class SliceAgent:
         self.v_interfaces.reset()
         return "AP reset"
 
-    def load_ovs_info(self):
-        # we need the information on the location/names of ovs server and socket files
-        # in order to use this daemon/database to create any ovs bridges. While possible
-        # to have two ovs daemons, the implementation of such a setup is more complicated
-        # than necessary. Instead, we simply use the ovs information from datapath
-        # manager in relay agents
+    # def load_ovs_info(self):
+    #     # we need the information on the location/names of ovs server and socket files
+    #     # in order to use this daemon/database to create any ovs bridges. While possible
+    #     # to have two ovs daemons, the implementation of such a setup is more complicated
+    #     # than necessary. Instead, we simply use the ovs information from datapath
+    #     # manager in relay agents
 
-        while not(self.wifi.ovs_information):
-            time.sleep(self.sleep_time)
+    #     while not(self.wifi.ovs_information):
+    #         time.sleep(self.sleep_time)
 
-        self.v_bridges.add_module_instance("ovs", self.ovs_information)
+    #     self.v_bridges.add_module_instance("ovs", self.ovs_information)
 
 
 def main():

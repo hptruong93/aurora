@@ -10,7 +10,7 @@
 # but more complicated cases (i.e. optional parameters) can easily be added.
 
 import tempfile, subprocess, psutil, os
-
+import time
 import exception
 
 
@@ -23,14 +23,15 @@ class OpenVSwitch:
     # both OpenWRT (Attitude Adjustment w/ OVS from Julius Schulz-Zander)
     # and Ubuntu 13.04 w/ OVS 1.9 from apt
     ovs_schema = "/usr/share/openvswitch/vswitch.ovsschema"
+    location = "/tmp/"
+    name = "
+    timeout = 2
+
     
-    def __init__(self, database, *arguments):
+    def __init__(self, database):
         self.database = database
         
-        if len(arguments) == 0:
-            self.start()
-        else:
-            self.load(arguments)
+        self.start()
     
     def __exec_command(self, args):
         # Want to throw exception if we give an invalid command
@@ -42,31 +43,67 @@ class OpenVSwitch:
         subprocess.check_call(command)
     
     def start(self):
-        """Start required ovs daemons."""
-        self.database_file = tempfile.NamedTemporaryFile()
+        """Work with the ovs daemon created by relay_agent"""
         self.socket_file = tempfile.NamedTemporaryFile()
+        self.socket_file.close()
+        os.remove(self.socket_file.name)
+
+        self.socket_file.name = ""
+        start_time = time.time()
+
+        # we will wait <timeout> seconds to see if the necessary temp file
+        # has been created containing the location for the vswitch daemon
+        while (time.time() - start_time < timeout):
+            if os.path.isfile("%s%s" % (location,name)):
+                # the daemon location file exists
+
+                start_time = time.time()
+
+                while (time.time() - start_time < timeout):
+                    # wait <timeout> seconds for the lock file to dissapear to know that we can access the 
+                    # file containing the ovs daemon socket path
+
+                    if not(os.path.isfile("%s~%s" % (location, name))):
+                        # once the lock file has been closed, access the original file,
+                        # read in the socket path and clean up
+                        f = open("%s%s" % (location,name),"r")
+                        self.socket_file = f.readline()
+
+                        f.close()
+                        os.remove("%s%s" % (location,name))
+
+                        break
+
+                break
+
+        if os.path.isfile("%s%s" % (location,name)) or (self.socket_file.name == ""):
+            # the file containing the socket path should have been
+            # removed and the socket file name should have been changed
+            # if everything went to plan
+            raise exception.InexistentOVSSocket()
+
 
         # Close the files since we won't be writing to them
         # Also, tools like ovsdb-tool won't overwrite existing files
         # We are simply using temporary files to generate random names that don't conflict
-        self.database_file.close()
-        self.socket_file.close()
+        # self.database_file.close()
+        # self.socket_file.close()
 
         #os.remove(self.database_file.name)
         #os.remove(self.socket_file.name)
 
         # Create database in temporary file
         # Will raise exception if it fails
-        command = ["ovsdb-tool", "create", self.database_file.name, self.ovs_schema]
-        print "\n  $ "," ".join(command)
-        subprocess.check_call(["ovsdb-tool", "create", self.database_file.name, self.ovs_schema])
+        # command = ["ovsdb-tool", "create", self.database_file.name, self.ovs_schema]
+        # print "\n  $ "," ".join(command)
+        # subprocess.check_call(["ovsdb-tool", "create", self.database_file.name, self.ovs_schema])
        
-        # Start ovs database server
-        command = ["ovsdb-server", "--remote=punix:" + 
-                                                self.socket_file.name, self.database_file.name]
-        print "\n  $ "," ".join(command)
-        self.database_process = psutil.Popen(["ovsdb-server", "--remote=punix:" + 
-                                                self.socket_file.name, self.database_file.name])
+        # # Start ovs database server
+        # command = ["ovsdb-server", "--remote=punix:" + 
+        #                                         self.socket_file.name, self.database_file.name]
+        # print "\n  $ "," ".join(command)
+        # self.database_process = psutil.Popen(["ovsdb-server", "--remote=punix:" + 
+        #                                         self.socket_file.name, self.database_file.name])
        
         # Start vswitchd
         command = ["ovs-vswitchd", "unix:" + self.socket_file.name]
@@ -74,8 +111,7 @@ class OpenVSwitch:
         self.vswitch_process = psutil.Popen(["ovs-vswitchd", "unix:" + self.socket_file.name])
 
     def load(self, ovs_arguments):
-        """Load the information from a previous daemon/server"""
-        self.socket_file.name = ovs_arguments["socket"]
+        pass
        
     def stop(self):
         """Stop all OVS daemons."""

@@ -47,7 +47,6 @@ class OpenWRTWifi:
         self.radio = WARPRadio.WARPRadio(database)
         self.setup()        
         self.hostapd_processes = {}
-        self.ovs_information = {}
         self.sleep_time = 0.1
         ReceiveThread.ReceiveThread(self.get_ovs_info)
 
@@ -562,16 +561,16 @@ class OpenWRTWifi:
         mac_str = ':'.join(map(lambda x: "%02x" % x, mac))
         return mac_str
 
-    def get_ovs_info(self):
-        # we need the information on the location/names of ovs server and socket files
-        # in order to use this daemon/database to create any ovs bridges. While possible
-        # to have two ovs daemons, the implementation of such a setup is more complicated
-        # than necessary
+    # def get_ovs_info(self):
+    #     # we need the information on the location/names of ovs server and socket files
+    #     # in order to use this daemon/database to create any ovs bridges. While possible
+    #     # to have two ovs daemons, the implementation of such a setup is more complicated
+    #     # than necessary
 
-        # this may need to be changed to a continual loop that will update the ovs information
-        # should it be changed (i.e. we switch to a new daemon for some reason)
+    #     # this may need to be changed to a continual loop that will update the ovs information
+    #     # should it be changed (i.e. we switch to a new daemon for some reason)
 
-        while not(self.radio.ovs_information):
-            time.sleep(self.sleep_time)
+    #     while not(self.radio.ovs_socket_path):
+    #         time.sleep(self.sleep_time)
 
-        self.ovs_information = self.radio.ovs_information 
+    #     self.ovs_socket_path = self.radio.ovs_socket_path 

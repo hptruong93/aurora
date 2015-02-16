@@ -89,3 +89,6 @@ class NoUserIDForSlice(AuroraException):
 
 class NotImplementedError(AuroraException):
     message = "Functionality has not been implemented."
+
+class InexistentOVSSocket(AuroraException):
+    message = "Relay Agent has not started or has yet to create ovs daemon and database."
