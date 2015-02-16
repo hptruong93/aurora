@@ -7,6 +7,8 @@ import socket
 import time
 import config
 import inspect
+import os.path
+
 
 
 def ln(stringhere = 'was here', number_of_dash = 40):
@@ -50,8 +52,6 @@ class WARPRadio:
         # we need to perform some actions asynchronously (delete slice) while preventing any sort of issues from arising in the meantime
         # format: {"<name of command>": {"success": <True/False>, "error": "<returned error>"}}
         self.pending_action = {}
-
-        self.ovs_information = {} 
 
         context = zmq.Context()
 
@@ -280,9 +280,20 @@ class WARPRadio:
         else:
             pending_action["error"] = command_json["changes"]["error"]
 
-    def obtain_socket_path(self):
+    # def obtain_socket_path(self):
 
-	filepath = config.CONFIG
+    #     location = "/tmp/"
+    #     filename = "<name>"
+
+    #     while not(os.path.isfile("%s%s" % (location,filename))):
+    #         time.sleep(self.sleep_time)
+    #         pass
+
+    #     while os.path.isfile("%s~%s" % (location, filename)):
+    #         time.sleep(self.sleep_time)
+    #         pass
+
+
 
  
     def receive_WARP_info(self):

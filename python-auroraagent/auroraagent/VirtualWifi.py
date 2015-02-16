@@ -30,8 +30,6 @@ class VirtualWifi:
         json_file = open(self.MODULE_JSON_FILE)
         self.wifi = self.__load_module(self.database.hw_get_firmware_name(), json.load(json_file)["VirtualWifi"])
         json_file.close()
-
-        self.ovs_information = {}
         self.sleep_time = 0.1
 
 
@@ -139,19 +137,19 @@ class VirtualWifi:
                 pass
             # self.database.replace_entry("RadioInterfaces", )
 
-    def get_ovs_info(self):
-        # we need the information on the location/names of ovs server and socket files
-        # in order to use this daemon/database to create any ovs bridges. While possible
-        # to have two ovs daemons, the implementation of such a setup is more complicated
-        # than necessary
+    # def get_ovs_info(self):
+    #     # we need the information on the location/names of ovs server and socket files
+    #     # in order to use this daemon/database to create any ovs bridges. While possible
+    #     # to have two ovs daemons, the implementation of such a setup is more complicated
+    #     # than necessary
 
-        # this may need to be changed to a continual loop that will update the ovs information
-        # should it be changed (i.e. we switch to a new daemon for some reason)
+    #     # this may need to be changed to a continual loop that will update the ovs information
+    #     # should it be changed (i.e. we switch to a new daemon for some reason)
 
-        while not(self.wifi.ovs_information):
-            time.sleep(self.sleep_time)
+    #     while self.wifi.ovs_socket_path == "":
+    #         time.sleep(self.sleep_time)
 
-        self.ovs_information = self.wifi.ovs_information 
+    #     self.ovs_socket_path = self.wifi.ovs_socket_path
 
 
     # TODO(mike)!!!
