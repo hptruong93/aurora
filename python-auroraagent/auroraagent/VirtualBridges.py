@@ -73,6 +73,7 @@ class VirtualBridges:
         return self.__get_entry(bridge)["flavor"]        
 
     def add_module_instance(self, flavor, details):
+        ln("ovs module successfully added")
         module_file = __import__(self.MODULES_FOLDER,globals(),locals(),
                     [flavor]).__dict__[flavor]
         module_class_name = self.metadata.get(flavor).get('class')
