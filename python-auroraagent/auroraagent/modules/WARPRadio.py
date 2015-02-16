@@ -14,9 +14,12 @@ def ln(stringhere = 'was here', number_of_dash = 40):
 
 class WARPRadio:
 
-    def __init__(self, database, sending = config.CONFIG["zeromq"]["sending"], receiving  = config.CONFIG["zeromq"]["receiving"], macaddr = "40:d8:55:04:22:84"):
+    def __init__(self, database, sending = config.CONFIG["zeromq"]["sending"], receiving  = config.CONFIG["zeromq"]["receiving"], 
+        coordinator = config.CONFIG["zeromq"]["coordinator"], macaddr = "40:d8:55:04:22:84"):
+
         self.sending_socket_number = str(sending)
         self.receiving_socket_number = str(receiving)
+        self.coordinator_socket_number = str(coordinator)
         self.database = database
         self.WARP_mac = macaddr
 
@@ -61,17 +64,24 @@ class WARPRadio:
         self.sending_socket = context.socket(zmq.PUB)
         self.sending_socket.bind("tcp://*:%s" % self.sending_socket_number)
 
-
         # Start the receiver thread which will handle replies from relay agent and direct them to the function
         # which parses the result of the actions sent to relay agent
         self.receiving_socket = context.socket(zmq.SUB)
         self.receiving_socket.connect("tcp://localhost:%s" % self.receiving_socket_number)
         self.receiving_socket.setsockopt(zmq.SUBSCRIBE, self.subscription) 
         self.test_thread = ZeroMQThread.ZeroMQThread(self.receive_WARP_info)
+
+        self.coordinator_socket = context.socket(zmq.REQ)
+        self.coordinator_socket.connect("tcp://localhost:%s" % self.coordinator_socket_number)
+        self.coordinator_socket.send(" ")
+        synch_message = self.coordinator_socket.recv()        
+        
         self.test_thread.start() 
 
-        # subscriber likely to miss first message
-        self.sending_socket.send("%s test" %self.subscription)
+
+
+        # # subscriber likely to miss first message
+        # self.sending_socket.send("%s test" %self.subscription)
 
         # self.start_sender()
         # self.start_receiver_thread()
@@ -270,26 +280,44 @@ class WARPRadio:
         else:
             pending_action["error"] = command_json["changes"]["error"]
 
-    
+    def obtain_socket_path(self):
+
+	filepath = config.CONFIG
+
+ 
     def receive_WARP_info(self):
         # run as a server in thread
         # will be used in the secondary thread to listen for radio information from WARP via relayagent
+
+        ln("Receive thread started")
+
+        time.sleep(self.sleep_time)
+
+        test_num = 0
 
         while self.continue_to_receive: 
             # ln("here's where the error is likely occuring")
             #get the message
             message = self.receiving_socket.recv()
 
+            message = message[self.subscription_length+1:-1]
+
+
             #sometimes the test send might be seen at the beginning of sub/pub comms
             #we want to ignore it
             test = "%s test" % self.subscription
 
-            ln("Receiving: %s" % message)
+            ln("Receiving: %s" % (message))
+
+            # if message == "Test string":
+            #     test_num = test_num + 1
+            #     print "test_num is %s" % test_num
+            #     continue
                 
             if message != test:
                 # get the actual response by stripping the subscription number from the received string as well as
                 # its accompanying space (inherent to PUB/SUB comms) and the trailing null terminator from cpp
-                message = message[self.subscription_length+1:-1]
+                # message = message[self.subscription_length+1:-1]
 
                 WARP_response = json.loads(message)
 
@@ -300,15 +328,12 @@ class WARPRadio:
                     elif WARP_response["command"][0] == "_":
                         # any command beginning with an underscore is related to the setup/change process,
                         # thus we route the info returned from the WARP board to the receive action_result_reception function
-                        if WARP_response["command"] == "_ovs_socket_path":
-                            self.ovs_information = WARP_response["changes"]
-                        else:    
-                            try:                            
-                                command_json  = {"changes": WARP_response["changes"], "radio": WARP_response["radio"]}
-                            except:
-                                command_json  = {"changes": WARP_response["changes"]}
+                        try:                            
+                            command_json  = {"changes": WARP_response["changes"], "radio": WARP_response["radio"]}
+                        except:
+                            command_json  = {"changes": WARP_response["changes"]}
 
-                            self.action_result_reception(WARP_response["command"],command_json)
+                        self.action_result_reception(WARP_response["command"],command_json)
                     elif WARP_response["command"] == "shutdown":
                         # we've received a reply from the cpp relay agent which is serving only to stop the recv function from blocking
                         # the shutdown
