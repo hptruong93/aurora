@@ -8,8 +8,6 @@ import time
 import traceback
 import types
 
-import ReceiveThread
-
 class SliceAgent:
     """The Slice Agent is the high level interface to the creation,
     modification and deletion of slices."""

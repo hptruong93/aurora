@@ -71,10 +71,10 @@ class WARPRadio:
         self.receiving_socket.setsockopt(zmq.SUBSCRIBE, self.subscription) 
         self.test_thread = ZeroMQThread.ZeroMQThread(self.receive_WARP_info)
 
-        self.coordinator_socket = context.socket(zmq.REQ)
-        self.coordinator_socket.connect("tcp://localhost:%s" % self.coordinator_socket_number)
-        self.coordinator_socket.send(" ")
-        synch_message = self.coordinator_socket.recv()        
+        # self.coordinator_socket = context.socket(zmq.REQ)
+        # self.coordinator_socket.connect("tcp://localhost:%s" % self.coordinator_socket_number)
+        # self.coordinator_socket.send(" ")
+        # synch_message = self.coordinator_socket.recv()        
         
         self.test_thread.start() 
 

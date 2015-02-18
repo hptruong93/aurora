@@ -3,8 +3,6 @@ import json, os, pprint
 import exception
 import time
 
-import ReceiveThread
-
 class VirtualWifi:
     """Responsible for configuring the WiFi radio interfaces of a device.
     Abstracts away implementation specific code."""
@@ -30,10 +28,6 @@ class VirtualWifi:
         json_file = open(self.MODULE_JSON_FILE)
         self.wifi = self.__load_module(self.database.hw_get_firmware_name(), json.load(json_file)["VirtualWifi"])
         json_file.close()
-        self.sleep_time = 0.1
-
-
-        ReceiveThread.ReceiveThread(self.get_ovs_info)
 
         
     def shutdown(self):

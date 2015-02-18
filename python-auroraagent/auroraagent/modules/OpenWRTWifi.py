@@ -14,8 +14,6 @@ import config
 import WARPRadio
 import exception
 
-import ReceiveThread
-
 def ln(stringhere = 'was here', number_of_dash = 40):
     print("%s:%s %s> %s"% (__file__, inspect.currentframe().f_back.f_lineno, '-'*number_of_dash, stringhere))
 
@@ -48,7 +46,6 @@ class OpenWRTWifi:
         self.setup()        
         self.hostapd_processes = {}
         self.sleep_time = 0.1
-        ReceiveThread.ReceiveThread(self.get_ovs_info)
 
     def shutdown(self):
         # shutdown the thread running in WARPRadio
