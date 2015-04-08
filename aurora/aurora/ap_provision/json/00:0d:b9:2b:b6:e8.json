@@ -1,7 +1,6 @@
 {
     "last_known_config": {
         "init_user_id_database": {
-            "1": [], 
             "default_user": [
                 "default_slice"
             ]
@@ -20,16 +19,14 @@
                 "max_bss_per_radio": "4", 
                 "radio_list": [
                     {
-                        "disabled": 1, 
                         "macaddr": "00:80:48:7a:b3:6e", 
                         "name": "radio0", 
                         "bss_list": [], 
-                        "country": "CA", 
                         "if_name": "wlan0", 
-                        "txpower": "20", 
-                        "hwmode": "abg", 
+                        "disabled": 1, 
+                        "hwmode": "11g", 
                         "bss_limit": "4", 
-                        "channel": "2"
+                        "channel": "11"
                     }
                 ], 
                 "number_radio": 1
@@ -37,16 +34,16 @@
             "aurora_version": "0.2", 
             "firmware": "OpenWRT", 
             "memory_mb": 248, 
-            "free_disk": 195, 
+            "free_disk": 194, 
             "firmware_version": "r39154"
         }
     }, 
-    "rabbitmq_password": "let_me_in", 
+    "rabbitmq_reply_queue": "AuroraManager", 
     "rabbitmq_username": "access_point", 
     "rabbitmq_host": "10.5.8.3", 
     "region": "mcgill", 
-    "queue": "openflow2", 
-    "rabbitmq_reply_queue": "AuroraManager", 
+    "queue": "ICU", 
+    "rabbitmq_password": "let_me_in", 
     "default_config": {
         "init_hardware_database": {
             "wifi_radio": {
@@ -61,7 +58,6 @@
             "free_disk": "256", 
             "firmware_version": "r39154"
         }, 
-        "default_active_slice": "default_slice", 
         "init_database": {
             "default_slice": {
                 "VirtualInterfaces": [], 
@@ -73,6 +69,7 @@
             "default_user": [
                 "default_slice"
             ]
-        }
+        }, 
+        "default_active_slice": "default_slice"
     }
 }

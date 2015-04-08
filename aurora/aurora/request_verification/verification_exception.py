@@ -117,6 +117,15 @@ class VirtualInterfaceNumberInvalid(VerificationException):
     def _handle_exception(self):
         return self.message    
 
+#This exception is raised when a client attempts to create a slice with invalid or conflicting virtual interface information.
+class VirtualInterfaceInvalid(VerificationException):
+    def __init__(self, message = ""):
+        self.message = message
+        super(VirtualInterfaceInvalid, self).__init__(message)
+
+    def _handle_exception(self):
+        return self.message
+
 #This exception is raised when a client attempts to create a new slice with bridge/ virtual interface similar to another client
 #Different client should have different bridge and virtual interfaces.
 class AccessConflict(VerificationException):

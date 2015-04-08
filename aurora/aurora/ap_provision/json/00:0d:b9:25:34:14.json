@@ -1,16 +1,123 @@
 {
     "last_known_config": {
         "init_user_id_database": {
+            "1": [
+                "66efde61-12e1-4796-b76f-e2b0b263012d"
+            ], 
             "default_user": [
                 "default_slice"
             ]
         }, 
+        "region": "mcgill", 
         "init_database": {
             "default_slice": {
                 "VirtualInterfaces": [], 
                 "RadioInterfaces": [], 
                 "VirtualBridges": []
+            }, 
+            "66efde61-12e1-4796-b76f-e2b0b263012d": {
+                "VirtualInterfaces": [
+                    {
+                        "attributes": {
+                            "attach_to": "eth0", 
+                            "name": "veth0"
+                        }, 
+                        "flavor": "veth"
+                    }, 
+                    {
+                        "attributes": {
+                            "attach_to": "wlan0", 
+                            "name": "vwlan0"
+                        }, 
+                        "flavor": "veth"
+                    }
+                ], 
+                "RadioInterfaces": [
+                    {
+                        "attributes": {
+                            "disabled": "0", 
+                            "name": "radio0", 
+                            "country": "CA", 
+                            "txpower": "20", 
+                            "hwmode": "abg", 
+                            "channel": "2"
+                        }, 
+                        "flavor": "wifi_radio"
+                    }, 
+                    {
+                        "attributes": {
+                            "encryption_type": "wep-open", 
+                            "radio": "radio0", 
+                            "if_name": "wlan0", 
+                            "key": "23456", 
+                            "name": "111"
+                        }, 
+                        "flavor": "wifi_bss"
+                    }
+                ], 
+                "VirtualBridges": [
+                    {
+                        "attributes": {
+                            "interfaces": [
+                                "vwlan0", 
+                                "veth0"
+                            ], 
+                            "bridge_settings": {}, 
+                            "name": "linux-br", 
+                            "port_settings": {
+                                "vwlan0": {}, 
+                                "veth0": {}
+                            }
+                        }, 
+                        "flavor": "linux_bridge"
+                    }
+                ]
             }
+        }, 
+        "init_hardware_database": {
+            "wifi_radio": {
+                "number_radio_free": 1, 
+                "max_bss_per_radio": "4", 
+                "radio_list": [
+                    {
+                        "disabled": 0, 
+                        "macaddr": "00:80:48:75:1e:45", 
+                        "name": "radio0", 
+                        "bss_list": [
+                            {
+                                "macaddr": "00:80:48:75:1e:45", 
+                                "name": "111", 
+                                "encryption_type": "wep-open", 
+                                "mode": "ap", 
+                                "key": "23456", 
+                                "main": true
+                            }
+                        ], 
+                        "country": "CA", 
+                        "if_name": "wlan0", 
+                        "txpower": "20", 
+                        "hwmode": "abg", 
+                        "bss_limit": "4", 
+                        "channel": "2"
+                    }, 
+                    {
+                        "macaddr": "00:80:48:75:1e:44", 
+                        "name": "radio1", 
+                        "bss_list": [], 
+                        "if_name": "wlan1", 
+                        "disabled": 1, 
+                        "hwmode": "11g", 
+                        "bss_limit": "4", 
+                        "channel": "11"
+                    }
+                ], 
+                "number_radio": 2
+            }, 
+            "aurora_version": "0.2", 
+            "firmware": "OpenWRT", 
+            "memory_mb": 248, 
+            "free_disk": 204, 
+            "firmware_version": "r39154"
         }
     }, 
     "rabbitmq_password": "let_me_in", 

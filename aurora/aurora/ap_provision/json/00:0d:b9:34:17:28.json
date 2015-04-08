@@ -16,17 +16,17 @@
         }, 
         "init_hardware_database": {
             "wifi_radio": {
-                "number_radio_free": 1, 
+                "number_radio_free": 2, 
                 "max_bss_per_radio": "4", 
                 "radio_list": [
                     {
-                        "disabled": 1, 
-                        "macaddr": "00:80:48:7a:b3:70", 
+                        "txpower": "20", 
+                        "macaddr": "02:00:00:00:00:00", 
                         "name": "radio0", 
                         "bss_list": [], 
                         "country": "CA", 
                         "if_name": "wlan0", 
-                        "txpower": "20", 
+                        "disabled": 1, 
                         "hwmode": "abg", 
                         "bss_limit": "4", 
                         "channel": "2"
@@ -36,16 +36,16 @@
             }, 
             "aurora_version": "0.2", 
             "firmware": "OpenWRT", 
-            "memory_mb": 248, 
-            "free_disk": 199, 
+            "memory_mb": 898, 
+            "free_disk": 838, 
             "firmware_version": "r39154"
         }
     }, 
     "rabbitmq_reply_queue": "AuroraManager", 
     "rabbitmq_username": "access_point", 
-    "rabbitmq_host": "10.5.8.3", 
+    "rabbitmq_host": "192.168.0.88", 
     "region": "mcgill", 
-    "queue": "Triage", 
+    "queue": "APU-AP", 
     "rabbitmq_password": "let_me_in", 
     "default_config": {
         "init_hardware_database": {
@@ -61,6 +61,7 @@
             "free_disk": "256", 
             "firmware_version": "r39154"
         }, 
+        "default_active_slice": "default_slice", 
         "init_database": {
             "default_slice": {
                 "VirtualInterfaces": [], 
@@ -72,7 +73,6 @@
             "default_user": [
                 "default_slice"
             ]
-        }, 
-        "default_active_slice": "default_slice"
+        }
     }
 }

@@ -210,6 +210,27 @@ class VirtualInterfaceNumberVerification(RequestVerification):
         except KeyError, e:
             raise exceptions.MissingKeyInRequest(str(e.args[0]))
         
+#See VirtualInterfaceInvalid exception for what this class is verifying
+class VirtualInterfaceConflictVerification(RequestVerification):
+    @classmethod
+    def _get_exception(cls):
+        return exceptions.VirtualInterfaceInvalid
+
+    def _detail_verification(self, command, request):
+        try:
+            if request is None:
+                return None
+            else:
+                #Check for number of VirtualInterface in the request
+                interface_names = set([interface['attributes']['name'] for interface in config['VirtualInterfaces']])
+                bridge_interface_names = set(config['VirtualBridges']['attributes']['interfaces'])
+                if (len(interface_names.difference(bridge_interface_names)) != 0):
+                    return "Interface names in bridge does not agree with interfaces names"
+            return None
+        except KeyError, e:
+            raise exceptions.MissingKeyInRequest(str(e.args[0]))
+
+
 #See AccessConflict exception for what this class is verifying
 #This class assumes the request has been checked with APSliceNumberVerification, BridgeNumberVerification and
 #VirtualInterfaceNumberVerification

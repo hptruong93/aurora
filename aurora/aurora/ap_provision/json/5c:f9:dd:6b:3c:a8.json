@@ -17,41 +17,61 @@
         "init_hardware_database": {
             "wifi_radio": {
                 "number_radio_free": 1, 
-                "max_bss_per_radio": "4", 
+                "max_bss_per_radio": "1", 
                 "radio_list": [
                     {
-                        "disabled": 1, 
-                        "macaddr": "00:80:48:7a:b3:70", 
+                        "disabled": 0, 
+                        "macaddr": "02:08:aa:32:39:8e", 
                         "name": "radio0", 
-                        "bss_list": [], 
+                        "bss_list": [
+                            {
+                                "encryption_type": "none", 
+                                "main": true, 
+                                "mode": "ap", 
+                                "if_name": "wlan0", 
+                                "name": "slice-1-warp-ap"
+                            }
+                        ], 
                         "country": "CA", 
                         "if_name": "wlan0", 
-                        "txpower": "20", 
+                        "txpower": 20, 
                         "hwmode": "abg", 
-                        "bss_limit": "4", 
-                        "channel": "2"
+                        "bss_limit": "1", 
+                        "channel": 2
+                    }, 
+                    {
+                        "disabled": 1, 
+                        "macaddr": "02:91:b8:1b:68:eb", 
+                        "name": "radio1", 
+                        "bss_list": [], 
+                        "country": "CA", 
+                        "if_name": "wlan1", 
+                        "txpower": 20, 
+                        "hwmode": "abg", 
+                        "bss_limit": "1", 
+                        "channel": 3
                     }
                 ], 
-                "number_radio": 1
+                "number_radio": 2
             }, 
             "aurora_version": "0.2", 
             "firmware": "OpenWRT", 
-            "memory_mb": 248, 
-            "free_disk": 199, 
+            "memory_mb": 16282, 
+            "free_disk": 10880, 
             "firmware_version": "r39154"
         }
     }, 
-    "rabbitmq_reply_queue": "AuroraManager", 
+    "rabbitmq_password": "let_me_in", 
     "rabbitmq_username": "access_point", 
     "rabbitmq_host": "10.5.8.3", 
     "region": "mcgill", 
-    "queue": "Triage", 
-    "rabbitmq_password": "let_me_in", 
+    "queue": "HPtest", 
+    "rabbitmq_reply_queue": "AuroraManager", 
     "default_config": {
         "init_hardware_database": {
             "wifi_radio": {
                 "number_radio_free": "0", 
-                "max_bss_per_radio": "4", 
+                "max_bss_per_radio": "1", 
                 "radio_list": [], 
                 "number_radio": "0"
             }, 

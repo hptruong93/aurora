@@ -425,10 +425,12 @@ class OpenWRTWifi:
 
         # Encryption complete; finish up other parameters
         # and apply
-        if new_entry:
-            final_mac = self._generate_random_MAC_addr()
-        else:
-            final_mac = macaddr
+        # if new_entry:
+        #     final_mac = self._generate_random_MAC_addr()
+        # else:
+        #     final_mac = macaddr
+
+        final_mac = "00:01:02:03:04:05"
 
         self.change_pending[radio]["macaddr"] = final_mac
 
