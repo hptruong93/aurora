@@ -30,6 +30,7 @@ from aurora import query_agent as filter
 from aurora.exc import *
 from aurora.ap_provision import http_srv as provision_srv
 from aurora import query_agent as query
+from aurora import floodlight
 
 from aurora.request_verification import request_verify_API as Verify
 
@@ -666,6 +667,39 @@ class Manager(object):
                     traceback.print_exc(file=sys.stdout)
                 else:
                     message += "Modified %s on %s\n" % (ap_slice_id, ap_name)
+
+        #return response
+        response = {"status":True, "message":message}
+        return response
+
+    def ap_flow_modify(self, ap, sliceID, flow, source, dest):
+        """This method will take parameters from the user and modify
+        a slice by pushing a simple flow to the floodlight module.
+
+        Valid choices for the command line include:
+
+        --ap <AP>               AP?
+        --slice <SSID>          SSID of a slice
+        --flow <FLOW NAME>      Unique name of a flow
+        --src <source>          Source MAC address
+        --dst <interface>       Destination interface
+
+        """
+
+        # TODO: GET THE ID OF THE BRIDGE OVER WHICH TO APPLY THE FLOW (LIKELY DIFFERENT THAN SLICE_ID)
+        #       USE A LOOKUP TABLE FOR SLICE_ID TO BRIDGE_ID TRANSLATION? MABYE STORE IN DB?
+        
+        # push via Floodlight API
+        OFC = floodlight.OpenFlowController(config['floodlight']['host'], config['floodlight']['port'])
+        flow = {
+            "name":flow,
+            "bridge":sliceID,
+            "action":"output=" + dest
+        }
+
+        self.LOGGER.debug("Pushing flow: %s", flow)
+
+        message = OFC.add_flow_json(flow)
 
         #return response
         response = {"status":True, "message":message}
